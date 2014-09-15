@@ -1,0 +1,26 @@
+{
+  "name": "osrm",
+  "version": "0.0.1",
+  "description": "Front-end for the OSRM API",
+  "main": "src/osrm.js",
+  "scripts": {
+    "test": "jshint src",
+    "watch": "watchify -v -d src/index.js -s osrm -o js/osrm.dev.js",
+    "build-dev": "browserify -d src/index.js -s osrm > js/osrm.dev.js",
+    "build-min": "browserify src/index.js -s osrm | uglifyjs -c warnings=false -m > js/osrm.min.js",
+    "prepublish": "npm run build-dev && npm run build-min"
+  },
+  "dependencies": {
+    "leaflet": "0.7.2",
+    "leaflet-routing-machine": "1.0.0",
+    "polyline": "0.0.3"
+  },
+  "devDependencies": {
+    "browserify": "2",
+    "uglifyjs": "^2.3.6",
+    "watchify": "^1.0.2",
+    "jshint": "2",
+    "smash": "0.0"
+  },
+  "license": "BSD-2-Clause"
+}
