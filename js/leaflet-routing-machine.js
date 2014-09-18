@@ -57,16 +57,12 @@
 		},
 
 		_open: function() {
-			var sibling = this._elem.nextSibling;
+			var rect = this._elem.getBoundingClientRect();
 			if (!this._container.parentElement) {
-				if (sibling) {
-					this._elem.parentElement.insertBefore(this._container, sibling);
-				} else {
-					this._elem.parentElement.appendChild(this._container);
-				}
-				this._container.style.left = this._elem.offsetLeft + 'px';
-				this._container.style.top = (this._elem.offsetTop + this._elem.offsetHeight) + 'px';
-				this._container.style.width = this._elem.offsetWidth + 'px';
+				this._container.style.left = rect.left + 'px';
+				this._container.style.top = rect.bottom + 'px';
+				this._container.style.width = (rect.right - rect.left) + 'px';
+				document.body.appendChild(this._container);
 			}
 
 			L.DomUtil.addClass(this._container, 'leaflet-routing-geocoder-result-open');
@@ -92,7 +88,7 @@
 				td = L.DomUtil.create('td', '', tr);
 				text = document.createTextNode(results[i].name);
 				td.appendChild(text);
-				// mousedown + click because: 
+				// mousedown + click because:
 				// http://stackoverflow.com/questions/10652852/jquery-fire-click-before-blur-event
 				L.DomEvent.addListener(td, 'mousedown', L.DomEvent.preventDefault);
 				L.DomEvent.addListener(td, 'click', this._resultSelected(results[i]), this);
@@ -214,6 +210,143 @@
 (function() {
 	'use strict';
 
+	L.Routing = L.Routing || {};
+
+	L.Routing.Formatter = L.Class.extend({
+		options: {
+			units: 'metric',
+			unitNames: {
+				meters: 'm',
+				kilometers: 'km',
+				yards: 'yd',
+				miles: 'mi',
+				hours: 'h',
+				minutes: 'mín',
+				seconds: 's'
+			},
+			roundingSensitivity: 1,
+			distanceTemplate: '{value} {unit}'
+		},
+
+		statics: {
+			DIR: {
+				N: 'north',
+				NE: 'northeast',
+				E: 'east',
+				SE: 'southeast',
+				S: 'south',
+				SW: 'southwest',
+				W: 'west',
+				NW: 'northwest'
+			}
+		},
+
+		initialize: function(options) {
+			L.setOptions(this, options);
+		},
+
+		formatDistance: function(d /* Number (meters) */) {
+			var un = this.options.unitNames,
+			    v,
+				data;
+
+			if (this.options.units === 'imperial') {
+				d = d / 1.609344;
+				if (d >= 1000) {
+					data = {
+						value: (this._round(d) / 1000),
+						unit: un.miles
+					};
+				} else {
+					data = {
+						value: this._round(d / 1.760),
+						unit: un.yards
+					};
+				}
+			} else {
+				v = this._round(d);
+				data = {
+					value: v >= 1000 ? (v / 1000) : v,
+					unit: v >= 1000 ? un.kilometers : un.meters
+				};
+			}
+
+			return L.Util.template(this.options.distanceTemplate, data);
+		},
+
+		_round: function(d) {
+			var pow10 = Math.pow(10, (Math.floor(d / this.options.roundingSensitivity) + '').length - 1),
+				r = Math.floor(d / pow10),
+				p = (r > 5) ? pow10 : pow10 / 2;
+
+			return Math.round(d / p) * p;
+		},
+
+		formatTime: function(t /* Number (seconds) */) {
+			if (t > 86400) {
+				return Math.round(t / 3600) + ' h';
+			} else if (t > 3600) {
+				return Math.floor(t / 3600) + ' h ' +
+					Math.round((t % 3600) / 60) + ' min';
+			} else if (t > 300) {
+				return Math.round(t / 60) + ' min';
+			} else if (t > 60) {
+				return Math.floor(t / 60) + ' min' +
+					(t % 60 !== 0 ? ' ' + (t % 60) + ' s' : '');
+			} else {
+				return t + ' s';
+			}
+		},
+
+		formatInstruction: function(instr, i) {
+			if (instr.type !== undefined) {
+				return L.Util.template(this._getInstructionTemplate(instr, i),
+					L.extend({exit: this._formatOrder(instr.exit), dir: L.Routing.Formatter.DIR[instr.direction]},
+						instr));
+			} else {
+				return instr.text;
+			}
+		},
+
+		_getInstructionTemplate: function(instr, i) {
+			switch (instr.type) {
+			case 'Straight':
+				return (i === 0 ? 'Head' : 'Continue') + ' {dir}' + (instr.road ? ' on {road}' : '');
+			case 'SlightRight':
+				return 'Slight right' + (instr.road ? ' onto {road}' : '');
+			case 'Right':
+				return 'Right' + (instr.road ? ' onto {road}' : '');
+			case 'SharpRight':
+				return 'Sharp right' + (instr.road ? ' onto {road}' : '');
+			case 'TurnAround':
+				return 'Turn around';
+			case 'SharpLeft':
+				return 'Sharp left' + (instr.road ? ' onto {road}' : '');
+			case 'Left':
+				return 'Left' + (instr.road ? ' onto {road}' : '');
+			case 'SlightLeft':
+				return 'Slight left' + (instr.road ? ' onto {road}' : '');
+			case 'WaypointReached':
+				return 'Waypoint reached';
+			case 'Roundabout':
+				return  'Take the {exit} exit in the roundabout';
+			case 'DestinationReached':
+				return  'Destination reached';
+			}
+		},
+
+		_formatOrder: function(n) {
+			var i = n % 10 - 1,
+				suffix = ['st', 'nd', 'rd'];
+
+			return suffix[i] ? n + suffix[i] : n + 'th';
+		}
+	});
+})();
+
+(function() {
+	'use strict';
+
 	// Ignore camelcase naming for this file, since OSRM's API uses
 	// underscores.
 	/* jshint camelcase: false */
@@ -235,8 +368,8 @@
 
 	L.Routing.OSRM = L.Class.extend({
 		options: {
-			serviceUrl: 'http://router.project-osrm.org/viaroute',
-			geometryPrecision: 6
+			serviceUrl: '//router.project-osrm.org/viaroute',
+			timeout: 30 * 1000
 		},
 
 		initialize: function(options) {
@@ -246,11 +379,22 @@
 			};
 		},
 
-		route: function(waypoints, callback, context) {
-			var url = this._buildRouteUrl(waypoints);
+		route: function(waypoints, callback, context, options) {
+			var url = this._buildRouteUrl(waypoints, options),
+				timedOut = false,
+				timer = setTimeout(function() {
+					timedOut = true;
+					callback.call(context || callback, {
+						status: -1,
+						message: 'OSRM request timed out.'
+					});
+				}, this.options.timeout);
 
 			L.Routing._jsonp(url, function(data) {
-				this._routeDone(data, waypoints, callback, context);
+				clearTimeout(timer);
+				if (!timedOut) {
+					this._routeDone(data, waypoints, callback, context);
+				}
 			}, this, 'jsonp');
 
 			return this;
@@ -268,9 +412,9 @@
 
 			var alts = [{
 					name: response.route_name.join(', '),
-					coordinates: this._decode(response.route_geometry, this.options.geometryPrecision),
-					instructions: this._convertInstructions(response.route_instructions),
-					summary: this._convertSummary(response.route_summary),
+					coordinates: this._decode(response.route_geometry, 6),
+					instructions: response.route_instructions ? this._convertInstructions(response.route_instructions) : [],
+					summary: response.route_summary ? this._convertSummary(response.route_summary) : [],
 					waypoints: response.via_points
 				}],
 			    i;
@@ -279,9 +423,9 @@
 				for (i = 0; i < response.alternative_geometries.length; i++) {
 					alts.push({
 						name: response.alternative_names[i].join(', '),
-						coordinates: this._decode(response.alternative_geometries[i], this.options.geometryPrecision),
-						instructions: this._convertInstructions(response.alternative_instructions[i]),
-						summary: this._convertSummary(response.alternative_summaries[i]),
+						coordinates: this._decode(response.alternative_geometries[i], 6),
+						instructions: response.alternative_instructions[i] ? this._convertInstructions(response.alternative_instructions[i]) : [],
+						summary: response.alternative_summaries[i] ? this._convertSummary(response.alternative_summaries[i]) : [],
 						waypoints: response.via_points
 					});
 				}
@@ -291,8 +435,10 @@
 			callback.call(context, null, alts);
 		},
 
-		_buildRouteUrl: function(waypoints) {
+		_buildRouteUrl: function(waypoints, options) {
 			var locs = [],
+			    computeInstructions,
+			    computeAlternative,
 			    locationKey,
 			    hint;
 
@@ -306,8 +452,12 @@
 				}
 			}
 
+			computeAlternative = computeInstructions =
+				!(options && options.geometryOnly);
+
 			return this.options.serviceUrl + '?' +
-				'instructions=true&' +
+				'instructions=' + computeInstructions + '&' +
+				'alt=' + computeAlternative + '&' +
 				locs.join('&') +
 				(this._hints.checksum !== undefined ? '&checksum=' + this._hints.checksum : '');
 		},
@@ -444,7 +594,7 @@
 
 	L.Routing = L.Routing || {};
 
-	L.Routing.Line = L.Class.extend({
+	L.Routing.Line = L.LayerGroup.extend({
 		includes: L.Mixin.Events,
 
 		options: {
@@ -457,43 +607,29 @@
 		},
 
 		initialize: function(route, options) {
-			L.Util.setOptions(this, options);
+			var geom = route.coordinates,
+			    i,
+			    pl;
+
+			L.setOptions(this, options);
+			L.LayerGroup.prototype.initialize.call(this, options);
 			this._route = route;
 
 			this._wpIndices = this._findWaypointIndices();
+
+			for (i = 0; i < this.options.styles.length; i++) {
+				pl = L.polyline(geom, this.options.styles[i]);
+				this.addLayer(pl);
+				if (this.options.addWaypoints) {
+					pl.on('mousedown', this._onLineTouched, this);
+				}
+			}
 		},
 
 		addTo: function(map) {
 			map.addLayer(this);
 			return this;
 		},
-
-		onAdd: function(map) {
-			var geom = this._route.coordinates,
-			    i,
-			    pl;
-
-			this._map = map;
-			this._layers = [];
-			for (i = 0; i < this.options.styles.length; i++) {
-				pl = L.polyline(geom, this.options.styles[i])
-					.addTo(map);
-				if (this.options.addWaypoints) {
-					pl.on('mousedown', this._onLineTouched, this);
-				}
-				this._layers.push(pl);
-			}
-		},
-
-		onRemove: function(map) {
-			var i;
-			for (i = 0; i < this._layers.length; i++) {
-				map.removeLayer(this._layers[i]);
-			}
-
-			delete this._map;
-		},
-
 		getBounds: function() {
 			return L.latLngBounds(this._route.coordinates);
 		},
@@ -558,7 +694,6 @@
 		includes: L.Mixin.Events,
 
 		options: {
-			units: 'metric',
 			pointMarkerStyle: {
 				radius: 5,
 				color: '#03f',
@@ -567,33 +702,25 @@
 				fillOpacity: 0.7
 			},
 			summaryTemplate: '<h2>{name}</h2><h3>{distance}, {time}</h3>',
-			distanceTemplate: '{value} {unit}',
 			timeTemplate: '{time}',
-			unitNames: {
-				meters: 'm',
-				kilometers: 'km',
-				yards: 'yd',
-				miles: 'mi',
-				hours: 'h',
-				minutes: 'mín',
-				seconds: 's'
-			},
 			containerClassName: '',
 			alternativeClassName: '',
 			minimizedClassName: '',
 			itineraryClassName: '',
-			roundingSensitivity: 1,
 			show: true
 		},
 
 		initialize: function(options) {
 			L.setOptions(this, options);
+			this._formatter = this.options.formatter || new L.Routing.Formatter(this.options);
 		},
 
 		onAdd: function() {
 			this._container = L.DomUtil.create('div', 'leaflet-routing-container leaflet-bar ' +
 				(!this.options.show ? 'leaflet-routing-container-hide' : '') +
 				this.options.containerClassName);
+			this._altContainer = this.createAlternativesContainer();
+			this._container.appendChild(this._altContainer);
 			L.DomEvent.disableClickPropagation(this._container);
 			L.DomEvent.addListener(this._container, 'mousewheel', function(e) {
 				L.DomEvent.stopPropagation(e);
@@ -602,6 +729,10 @@
 		},
 
 		onRemove: function() {
+		},
+
+		createAlternativesContainer: function() {
+			return L.DomUtil.create('div', 'leaflet-routing-alternatives-container');
 		},
 
 		setAlternatives: function(routes) {
@@ -616,7 +747,7 @@
 			for (i = 0; i < this._routes.length; i++) {
 				alt = this._routes[i];
 				altDiv = this._createAlternative(alt, i);
-				this._container.appendChild(altDiv);
+				this._altContainer.appendChild(altDiv);
 				this._altElements.push(altDiv);
 			}
 
@@ -639,8 +770,8 @@
 				(i > 0 ? ' leaflet-routing-alt-minimized ' + this.options.minimizedClassName : ''));
 			altDiv.innerHTML = L.Util.template(this.options.summaryTemplate, {
 				name: alt.name,
-				distance: this._formatDistance(alt.summary.totalDistance),
-				time: this._formatTime(alt.summary.totalTime)
+				distance: this._formatter.formatDistance(alt.summary.totalDistance),
+				time: this._formatter.formatTime(alt.summary.totalTime)
 			});
 			L.DomEvent.addListener(altDiv, 'click', this._onAltClicked, this);
 
@@ -649,15 +780,9 @@
 		},
 
 		_clearAlts: function() {
-			var i,
-				alt;
-			// TODO: this is really inelegant
-			for (i = 0; this._container && i < this._container.children.length; i++) {
-				alt = this._container.children[i];
-				if (L.DomUtil.hasClass(alt, 'leaflet-routing-alt')) {
-					this._container.removeChild(alt);
-					i--;
-				}
+			var el = this._altContainer;
+			while (el && el.firstChild) {
+				el.removeChild(el.firstChild);
 			}
 
 			this._altElements = [];
@@ -675,9 +800,9 @@
 				instr = r.instructions[i];
 				row = L.DomUtil.create('tr', '', body);
 				td = L.DomUtil.create('td', '', row);
-				td.appendChild(document.createTextNode(this._instruction(instr, i)));
+				td.appendChild(document.createTextNode(this._formatter.formatInstruction(instr, i)));
 				td = L.DomUtil.create('td', '', row);
-				td.appendChild(document.createTextNode(this._formatDistance(instr.distance)));
+				td.appendChild(document.createTextNode(this._formatter.formatDistance(instr.distance)));
 				this._addRowListeners(row, r.coordinates[instr.index]);
 			}
 
@@ -728,124 +853,15 @@
 					if (isCurrentSelection) {
 						// TODO: don't fire if the currently active is clicked
 						this.fire('routeselected', {route: this._routes[j]});
+					} else {
+						n.scrollTop = 0;
 					}
 				}
 			}
 
 			L.DomEvent.stop(e);
 		},
-
-		_formatDistance: function(d /* Number (meters) */) {
-			var un = this.options.unitNames,
-			    v,
-				data;
-
-			if (this.options.units === 'imperial') {
-				d = d / 1.609344;
-				if (d >= 1000) {
-					data = {
-						value: (this._round(d) / 1000),
-						unit: un.miles
-					};
-				} else {
-					data = {
-						value: this._round(d / 1.760),
-						unit: un.yards
-					};
-				}
-			} else {
-				v = this._round(d);
-				data = {
-					value: v >= 1000 ? (v / 1000) : v,
-					unit: v >= 1000 ? un.kilometers : un.meters
-				};
-			}
-
-			return L.Util.template(this.options.distanceTemplate, data);
-		},
-
-		_round: function(d) {
-			var pow10 = Math.pow(10, (Math.floor(d / this.options.roundingSensitivity) + '').length - 1),
-				r = Math.floor(d / pow10),
-				p = (r > 5) ? pow10 : pow10 / 2;
-
-			return Math.round(d / p) * p;
-		},
-
-		_formatTime: function(t /* Number (seconds) */) {
-			if (t > 86400) {
-				return Math.round(t / 3600) + ' h';
-			} else if (t > 3600) {
-				return Math.floor(t / 3600) + ' h ' +
-					Math.round((t % 3600) / 60) + ' min';
-			} else if (t > 300) {
-				return Math.round(t / 60) + ' min';
-			} else if (t > 60) {
-				return Math.floor(t / 60) + ' min ' +
-					(t % 60) + ' s';
-			} else {
-				return t + ' s';
-			}
-		},
-
-		_instruction: function(instr, i) {
-			if (instr.type !== undefined) {
-				return L.Util.template(this._getInstructionTemplate(instr, i),
-					L.extend({exit: this._formatOrder(instr.exit), dir: this._dir[instr.direction]},
-						instr));
-			} else {
-				return instr.text;
-			}
-		},
-
-		_getInstructionTemplate: function(instr, i) {
-			switch (instr.type) {
-			case 'Straight':
-				return (i === 0 ? 'Head' : 'Continue') + ' {dir}' + (instr.road ? ' on {road}' : '');
-			case 'SlightRight':
-				return 'Slight right' + (instr.road ? ' onto {road}' : '');
-			case 'Right':
-				return 'Right' + (instr.road ? ' onto {road}' : '');
-			case 'SharpRight':
-				return 'Sharp right' + (instr.road ? ' onto {road}' : '');
-			case 'TurnAround':
-				return 'Turn around';
-			case 'SharpLeft':
-				return 'Sharp left' + (instr.road ? ' onto {road}' : '');
-			case 'Left':
-				return 'Left' + (instr.road ? ' onto {road}' : '');
-			case 'SlightLeft':
-				return 'Slight left' + (instr.road ? ' onto {road}' : '');
-			case 'WaypointReached':
-				return 'Waypoint reached';
-			case 'Roundabout':
-				return  'Take the {exit} exit in the roundabout';
-			case 'DestinationReached':
-				return  'Destination reached';
-			}
-		},
-
-		_formatOrder: function(n) {
-			var i = n % 10 - 1,
-				suffix = ['st', 'nd', 'rd'];
-
-			return suffix[i] ? n + suffix[i] : n + 'th';
-		},
-
-		_dir: {
-			N: 'north',
-			NE: 'northeast',
-			E: 'east',
-			SE: 'southeast',
-			S: 'south',
-			SW: 'southwest',
-			W: 'west',
-			NW: 'northwest'
-		}
 	});
-
-	L.Routing.Itinerary._instructions = {
-	};
 
 	L.Routing.itinerary = function(router) {
 		return new L.Routing.Itinerary(router);
@@ -1158,6 +1174,7 @@
 				this.fire('waypointdragstart', this._createWaypointEvent(i, e));
 			}, this);
 			m.on('drag', function(e) {
+				this._waypoints[i].latLng = e.target.getLatLng();
 				this.fire('waypointdrag', this._createWaypointEvent(i, e));
 			}, this);
 			m.on('dragend', function(e) {
@@ -1223,30 +1240,54 @@
 
 	L.Routing.Control = L.Routing.Itinerary.extend({
 		options: {
-			fitSelectedRoutes: true
+			fitSelectedRoutes: true,
+			routeLine: function(route, options) { return L.Routing.line(route, options); },
+			autoRoute: true,
+			routeWhileDragging: false,
+			routeDragInterval: 500
 		},
 
 		initialize: function(options) {
 			L.Util.setOptions(this, options);
 
-			this._router = this.options.router || new L.Routing.OSRM();
-			this._plan = this.options.plan || L.Routing.plan(undefined, { geocoder: this.options.geocoder });
-			if (this.options.geocoder) {
-				this._plan.options.geocoder = this.options.geocoder;
-			}
-			if (this.options.waypoints) {
-				this._plan.setWaypoints(this.options.waypoints);
-			}
+			this._router = this.options.router || new L.Routing.OSRM(options);
+			this._plan = this.options.plan || L.Routing.plan(this.options.waypoints, options);
 
 			L.Routing.Itinerary.prototype.initialize.call(this, options);
 
 			this.on('routeselected', this._routeSelected, this);
 			this._plan.on('waypointschanged', function(e) {
-				this._route();
+				if (this.options.autoRoute) {
+					this.route({});
+				}
 				this.fire('waypointschanged', {waypoints: e.waypoints});
 			}, this);
+			if (options.routeWhileDragging) {
+				(function() {
+					var lastCalled = 0,
+						restore;
 
-			this._route();
+					this._plan.on('waypointdragstart', function() {
+						restore = this.options.fitSelectedRoutes;
+						this.options.fitSelectedRoutes = false;
+					}, this);
+					this._plan.on('waypointdrag', L.bind(function(e) {
+						var now = new Date().getTime();
+						if (now - lastCalled >= this.options.routeDragInterval) {
+							this.route({waypoints: e.waypoints, geometryOnly: true});
+							lastCalled = now;
+						}
+					}, this));
+					this._plan.on('waypointdragend', function() {
+						this.options.fitSelectedRoutes = restore;
+						this.route();
+					}, this);
+				}).call(this);
+			}
+
+			if (this.options.autoRoute) {
+				this.route();
+			}
 		},
 
 		onAdd: function(map) {
@@ -1255,7 +1296,7 @@
 			this._map = map;
 			this._map.addLayer(this._plan);
 
-			if (this.options.geocoder) {
+			if (this._plan.options.geocoder) {
 				container.insertBefore(this._plan.createGeocoders(), container.firstChild);
 			}
 
@@ -1292,7 +1333,7 @@
 			var route = e.route;
 			this._clearLine();
 
-			this._line = L.Routing.line(route, this.options.lineOptions);
+			this._line = this.options.routeLine(route, this.options.lineOptions);
 			this._line.addTo(this._map);
 			this._hookEvents(this._line);
 
@@ -1307,23 +1348,37 @@
 			}, this);
 		},
 
-		_route: function() {
-			var wps;
+		route: function(options) {
+			var ts = new Date().getTime(),
+				wps;
 
-			this._clearLine();
-			this._clearAlts();
+			options = options || {};
+			this._lastRequestTimestamp = ts;
 
 			if (this._plan.isReady()) {
-				wps = this._plan.getWaypoints();
+				wps = options && options.waypoints || this._plan.getWaypoints();
 				this.fire('routingstart', {waypoints: wps});
 				this._router.route(wps, function(err, routes) {
-					if (err) {
-						this.fire('routingerror', {error: err});
-						return;
+					// Prevent race among multiple requests,
+					// by checking the current request's timestamp
+					// against the last request's; ignore result if
+					// this isn't the latest request.
+					if (ts === this._lastRequestTimestamp) {
+						this._clearLine();
+						this._clearAlts();
+						if (err) {
+							this.fire('routingerror', {error: err});
+							return;
+						}
+
+						if (!options.geometryOnly) {
+							this.fire('routesfound', {waypoints: wps, routes: routes});
+							this.setAlternatives(routes);
+						} else {
+							this._routeSelected({route: routes[0]});
+						}
 					}
-					this.fire('routesfound', {waypoints: wps, routes: routes});
-					this.setAlternatives(routes);
-				}, this);
+				}, this, options);
 			}
 		},
 
