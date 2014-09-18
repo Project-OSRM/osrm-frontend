@@ -15,6 +15,7 @@ var baseMaps = {
 L.control.layers(baseMaps).addTo(map);
 
 L.Routing.control({
-    geocoder: L.Control.Geocoder.nominatim()
+    geocoder: L.Control.Geocoder.nominatim(),
+    routeWhileDragging: true
 }).addTo(map);
 
