@@ -11,9 +11,6 @@
     "prepublish": "npm run build-dev && npm run build-min"
   },
   "dependencies": {
-    "leaflet": "0.7.2",
-    "leaflet-routing-machine": "1.0.0",
-    "polyline": "0.0.3"
   },
   "devDependencies": {
     "browserify": "2",
