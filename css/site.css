@@ -1,0 +1,62 @@
+#map {
+    width: 100%;
+    height: 100%;
+	z-index: 0;
+}
+
+.leaflet-routing-container
+{
+    position: fixed;
+    width: 33.3333%;
+    max-width: 300px;
+    min-width: 200px;
+}
+
+.leaflet-routing-alt
+{
+    max-height: 100%;
+}
+
+.leaflet-routing-container.dark
+{
+   z-index: 9;
+   background: none repeat scroll 0% 0% rgba(0, 0, 0, 0.8);
+   top: 0px;
+   right: 0px;
+   bottom: 0px;
+   overflow: auto;
+   margin: 0px !important;
+}
+
+.leaflet-routing-container-hide.dark
+{
+   margin: -300px !important;
+}
+
+.mapbox-directions-inputs
+{
+   position: fixed;
+   z-index:10;
+   left: 10px;
+   top: 10px;
+   width: 33%;
+   max-width: 500px;
+   min-width: 200px;
+}
+
+.mapbox-directions-via {
+    background-color: white;
+    position: relative;
+}
+.mapbox-directions-via .mapbox-form-label {
+    background-color: #CCC;
+}
+
+.mapbox-directions-icon {
+    -webkit-background-size: 320px 20px;
+    background-size: 320px 20px;
+}
+
+.mapbox-add-icon  { background-position: -280px 0; }
+.mapbox-via-icon  { background-position: -300px 0; }
+
