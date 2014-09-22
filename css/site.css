@@ -4,12 +4,33 @@
 	z-index: 0;
 }
 
+/*
+ * Somehow we need this for chrome. Works fine in FF.
+ */
+.leaflet-map-pane
+{
+	z-index: -1;
+}
+
+.leaflet-routing-geocoders
+{
+    margin: 0 0 0 0;
+	border-bottom: 0px solid #000;
+}
+
 .leaflet-routing-container
 {
     position: fixed;
     width: 33.3333%;
     max-width: 300px;
     min-width: 200px;
+}
+
+.leaflet-routing-container::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+    border-left: 0;
+    background: none;
 }
 
 .leaflet-routing-alt
@@ -52,9 +73,17 @@
     background-color: #CCC;
 }
 
+.mapbox-directions-via input {
+    border-top: 1px solid rgba(0,0,0,.1);
+}
+
 .mapbox-directions-icon {
     -webkit-background-size: 320px 20px;
     background-size: 320px 20px;
+}
+
+.mapbox-directions-inputs input {
+    padding: 10px 28px 10px 50px;
 }
 
 .mapbox-add-icon  { background-position: -280px 0; }
