@@ -49,7 +49,7 @@ var lrm = L.Routing.control({
     geocodersClassName: "mapbox-directions-inputs",
     geocoderSetup: function(geocoder, i, num, input) {
       var label = L.DomUtil.create('label', 'mapbox-form-label'),
-          close = L.DomUtil.create('div', 'mapbox-directions-icon mapbox-close-icon'),
+          close = L.DomUtil.create('span', 'mapbox-directions-icon mapbox-close-icon'),
           icon,
           iconName;
       if (i === 0) {
@@ -59,7 +59,10 @@ var lrm = L.Routing.control({
       } else {
         iconName = "via";
       }
-      icon  = L.DomUtil.create('span', 'mapbox-directions-icon mapbox-' + iconName  + '-icon', label);
+      icon  = L.DomUtil.create('div', 'mapbox-directions-icon mapbox-' + iconName  + '-icon', label);
+      L.DomEvent.on(close, 'click', function(e) {
+        input.value = "";
+      });
       geocoder.appendChild(label);
       geocoder.appendChild(input);
       geocoder.appendChild(close);
