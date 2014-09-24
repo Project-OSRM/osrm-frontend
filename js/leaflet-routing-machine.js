@@ -374,6 +374,43 @@
 (function() {
 	'use strict';
 
+	L.Routing = L.Routing || {};
+
+	L.Routing.ItineraryBuilder = L.Class.extend({
+		options: {
+			containerClassName: ''
+		},
+
+		initialize: function(options) {
+			L.setOptions(this, options);
+		},
+
+		createContainer: function() {
+			return L.DomUtil.create('table', this.options.containerClassName);
+		},
+
+		createStepsContainer: function() {
+			return L.DomUtil.create('tbody', '');
+		},
+
+		createStep: function(text, distance, icon, steps) {
+			var row = L.DomUtil.create('tr', '', steps),
+				span,
+				td;
+			td = L.DomUtil.create('td', '', row);
+			span = L.DomUtil.create('span', 'leaflet-routing-icon leaflet-routing-icon-'+icon, td);
+			td.appendChild(span);
+			td = L.DomUtil.create('td', '', row);
+			td.appendChild(document.createTextNode(text));
+			td = L.DomUtil.create('td', '', row);
+			td.appendChild(document.createTextNode(distance));
+			return row;
+		}
+	});
+})();
+(function() {
+	'use strict';
+
 	// Ignore camelcase naming for this file, since OSRM's API uses
 	// underscores.
 	/* jshint camelcase: false */
@@ -811,29 +848,9 @@
 		initialize: function(options) {
 			L.setOptions(this, options);
 			this._formatter = this.options.formatter || new L.Routing.Formatter(this.options);
-			this._itineraryFormatter = this.options.itineraryFormatter || {
-				createContainer: function(className) {
-					return L.DomUtil.create('table', className);
-				},
-
-				createStepsContainer: function(container) {
-					return L.DomUtil.create('tbody', '', container);
-				},
-
-				createStep: function(text, distance, icon, steps) {
-					var row = L.DomUtil.create('tr', '', steps),
-							span,
-							td;
-					td = L.DomUtil.create('td', '', row);
-					span = L.DomUtil.create('span', 'leaflet-routing-icon leaflet-routing-icon-'+icon, td);
-					td.appendChild(span);
-					td = L.DomUtil.create('td', '', row);
-					td.appendChild(document.createTextNode(text));
-					td = L.DomUtil.create('td', '', row);
-					td.appendChild(document.createTextNode(distance));
-					return row;
-				},
-			};
+			this._itineraryBuilder = this.options.itineraryBuilder || new L.Routing.ItineraryBuilder({
+				containerClassName: this.options.itineraryClassName
+			});
 		},
 
 		onAdd: function() {
@@ -911,8 +928,8 @@
 
 
 		_createItineraryContainer: function(r) {
-			var container = this._itineraryFormatter.createContainer(this.options.itineraryClassName),
-			    steps = this._itineraryFormatter.createStepsContainer(container),
+			var container = this._itineraryBuilder.createContainer(),
+			    steps = this._itineraryBuilder.createStepsContainer(),
 			    i,
 			    instr,
 			    step,
@@ -920,12 +937,14 @@
 			    text,
 			    icon;
 
+			container.appendChild(steps);
+
 			for (i = 0; i < r.instructions.length; i++) {
 				instr = r.instructions[i];
 				text = this._formatter.formatInstruction(instr, i);
 				distance = this._formatter.formatDistance(instr.distance);
 				icon = this._formatter.getIconName(instr, i);
-				step = this._itineraryFormatter.createStep(text, distance, icon, steps);
+				step = this._itineraryBuilder.createStep(text, distance, icon, steps);
 
 				this._addRowListeners(step, r.coordinates[instr.index]);
 			}
@@ -1017,6 +1036,7 @@
 			maxGeocoderTolerance: 200,
 			autocompleteOptions: {},
 			geocodersClassName: '',
+			geocoderClassName: '',
 			geocoderPlaceholder: function(i, numberWaypoints) {
 				return i === 0 ?
 					'Start' :
@@ -1027,8 +1047,12 @@
 			geocoderClass: function() {
 				return '';
 			},
-			geocoderSetup: function(geocoder, i, num, input) {
-				geocoder.appendChild(input);
+			createGeocoder: function() {
+				var e = L.DomUtil.create('input', '');
+				return {
+					container: e,
+					input: e
+				};
 			}
 		},
 
@@ -1117,7 +1141,7 @@
 
 			for (i = 0; i < waypoints.length; i++) {
 				geocoderElem = this._createGeocoder(i);
-				container.appendChild(geocoderElem);
+				container.appendChild(geocoderElem.container);
 				this._geocoderElems.push(geocoderElem);
 			}
 
@@ -1138,13 +1162,12 @@
 		},
 
 		_createGeocoder: function(i) {
-			var geocoderElem = L.DomUtil.create('div', ''),
-				geocoderInput = L.DomUtil.create('input', ''),
+			var nWps = this._waypoints.length,
+				g = this.options.createGeocoder(i, nWps),
+				geocoderInput = g.input,
 				wp = this._waypoints[i];
-			geocoderInput.setAttribute('placeholder', this.options.geocoderPlaceholder(i, this._waypoints.length));
-			geocoderElem.className = this.options.geocoderClass(i, this._waypoints.length);
-			geocoderElem.input = geocoderInput;
-			this.options.geocoderSetup(geocoderElem, i, this._waypoints.length, geocoderInput);
+			geocoderInput.setAttribute('placeholder', this.options.geocoderPlaceholder(i, nWps));
+			geocoderInput.className = this.options.geocoderClass(i, nWps);
 
 			this._updateWaypointName(i, geocoderInput);
 			// This has to be here, or geocoder's value will not be properly
@@ -1169,7 +1192,7 @@
 					autocompleteContext: this.options.geocoder
 				}, this.options.autocompleteOptions));
 
-			return geocoderElem;
+			return g;
 		},
 
 		_updateGeocoders: function(e) {
@@ -1183,19 +1206,19 @@
 				// lastChild is the "add new wp" button
 				beforeElem = this._geocoderContainer.lastChild;
 			} else {
-				beforeElem = this._geocoderElems[e.index];
+				beforeElem = this._geocoderElems[e.index].container;
 			}
 
 			// Insert new geocoders for new waypoints
 			for (i = 0; i < e.added.length; i++) {
 				geocoderElem = this._createGeocoder(e.index + i);
-				this._geocoderContainer.insertBefore(geocoderElem, beforeElem);
+				this._geocoderContainer.insertBefore(geocoderElem.container, beforeElem);
 				newElems.push(geocoderElem);
 			}
 			//newElems.reverse();
 
 			for (i = e.index; i < e.index + e.nRemoved; i++) {
-				this._geocoderContainer.removeChild(this._geocoderElems[i]);
+				this._geocoderContainer.removeChild(this._geocoderElems[i].container);
 			}
 
 			newElems.splice(0, 0, e.index, e.nRemoved);
@@ -1203,14 +1226,16 @@
 
 			for (i = 0; i < this._geocoderElems.length; i++) {
 				this._geocoderElems[i].input.placeholder = this.options.geocoderPlaceholder(i, this._waypoints.length);
-				this._geocoderElems[i].className = this.options.geocoderClass(i, this._waypoints.length);
+				this._geocoderElems[i].input.className = this.options.geocoderClass(i, this._waypoints.length);
 			}
 		},
 
 		_updateGeocoder: function(i, geocoderElem) {
 			var wp = this._waypoints[i],
 			    value = wp && wp.name ? wp.name : '';
-			geocoderElem.value = value;
+			if (geocoderElem) {
+				geocoderElem.value = value;
+			}
 		},
 
 		_updateWaypointName: function(i, geocoderElem, force) {
@@ -1313,7 +1338,7 @@
 				this.fire('waypointdragend', this._createWaypointEvent(i, e));
 				this._waypoints[i].latLng = e.target.getLatLng();
 				this._waypoints[i].name = '';
-				this._updateWaypointName(i, this._geocoderElems[i], true);
+				this._updateWaypointName(i, this._geocoderElems && this._geocoderElems[i].input, true);
 				this._fireChanged();
 			}, this);
 		},

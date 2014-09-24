@@ -239,8 +239,10 @@ input:not(:valid) + .mapbox-close-icon {
 }
 /* leaflet overrides */
 
+/* FIXME this is really bad. Breaks LRM.
 path.leaflet-clickable {
     stroke: #3BB2D0;
     stroke-width: 4px;
     stroke-opacity:.75;
 }
+*/
