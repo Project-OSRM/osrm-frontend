@@ -54,6 +54,12 @@
    margin: -300px !important;
 }
 
+.leaflet-osrm-tools-container
+{
+   background: none repeat scroll 0% 0% rgba(0, 0, 0, 0.8);
+   cursor: pointer;
+}
+
 .mapbox-directions-inputs
 {
    position: fixed;
@@ -78,8 +84,8 @@
 }
 
 .mapbox-directions-icon {
-    -webkit-background-size: 320px 20px;
-    background-size: 320px 20px;
+    -webkit-background-size: 340px 20px;
+    background-size: 340px 20px;
 }
 
 .mapbox-directions-inputs input {
@@ -88,4 +94,11 @@
 
 .mapbox-add-icon  { background-position: -280px 0; }
 .mapbox-via-icon  { background-position: -300px 0; }
+.mapbox-link-icon  { background-position: -320px 0; }
+
+
+.leaflet-osrm-tools-link:hover
+{
+   background-color: rgba(255, 255, 255, 0.2);
+}
 
