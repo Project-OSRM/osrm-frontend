@@ -11,16 +11,11 @@ var parsedOptions = links.parseLink(window.location.search);
 console.log(parsedOptions);
 var viewOptions = L.extend(options.viewDefaults, parsedOptions);
 
-var mapbox = L.tileLayer('https://{s}.tiles.mapbox.com/v3/dennisl.4e2aab76/{z}/{x}/{y}.png',
-    {attribution: '&copy; <a href="http://mapbox.com/">MapBox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'}
-    );
-
 var map = L.map('map', {layers: [mapbox], zoomControl: false}).setView(viewOptions.center, viewOptions.zoom);
 
-var baseMaps = {
-  'Mapbox': mapbox,
-};
-L.control.layers(baseMaps).addTo(map);
+var mapbox = L.tileLayer('https://{s}.tiles.mapbox.com/v3/dennisl.4e2aab76/{z}/{x}/{y}.png',
+    {attribution: '&copy; <a href="http://mapbox.com/">MapBox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'}
+    ).addTo(map);
 
 var controlOptions = L.extend(options.controlDefaults, theme.options);
 
