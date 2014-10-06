@@ -11,6 +11,7 @@
     "prepublish": "npm run build-dev && npm run build-min"
   },
   "dependencies": {
+    "jsonp": "^0.0.4"
   },
   "devDependencies": {
     "browserify": "2",

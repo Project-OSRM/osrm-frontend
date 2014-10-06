@@ -5,7 +5,10 @@ var links = require('./links.js');
 var Control = L.Control.extend({
   include: L.Mixin.Events,
   options: {
-    linkButtonClass: ""
+    linkButtonClass: "",
+    popupWindowClass: "",
+    popupCloseButtonClass: "",
+    toolContainerClass: "",
   },
 
   initialize: function(lrm, options) {
@@ -14,15 +17,25 @@ var Control = L.Control.extend({
   },
 
   onAdd: function() {
-    var linkContainer;
+    var linkContainer,
+        linkButton,
+        popupCloseButton;
 
-    this._container = L.DomUtil.create('div', 'leaflet-osrm-tools-container leaflet-bar');
+    this._container = L.DomUtil.create('div', 'leaflet-osrm-tools-container leaflet-bar ' + this.options.toolsContainerClass);
     L.DomEvent.disableClickPropagation(this._container);
 
     linkContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-link', this._container);
-    this._linkButton = L.DomUtil.create('span', this.options.linkButtonClass, linkContainer);
-    this._linkButton.title = "Link";
-    L.DomEvent.on(this._linkButton, 'click', this._createLink, this);
+    linkButton = L.DomUtil.create('span', this.options.linkButtonClass, linkContainer);
+    // FIXME i18n
+    linkButton.title = "Link";
+    L.DomEvent.on(linkButton, 'click', this._createLink, this);
+
+    this._popupWindow = L.DomUtil.create('div',
+                                         'leaflet-osrm-tools-popup leaflet-osrm-tools-popup-hide ' + this.options.popupWindowClass,
+                                         this._container);
+    this._popupContainer = L.DomUtil.create('div', '', this._popupWindow);
+    popupCloseButton = L.DomUtil.create('span', 'leaflet-osrm-tools-popup-close ' + this.options.popupCloseButtonClass, this._popupWindow);
+    L.DomEvent.on(popupCloseButton, 'click', this._closePopup, this);
 
     return this._container;
   },
@@ -36,8 +49,65 @@ var Control = L.Control.extend({
         center: this._map.getCenter(),
         waypoints: this._lrm.getWaypoints(),
         },
-        link = links.formatLink(window.location.search, options);
-    window.location.href = link;
+        shortener,
+        link,
+        linkContainer,
+        linkInput,
+        linkShortener,
+        linkShortenerLabel;
+
+    link = links.format(window.location.href, options);
+    shortener = links.shortener();
+    //window.location.href = link;
+    
+    linkContainer = L.DomUtil.create('div', 'dark checkbox-pill');
+    linkInput = L.DomUtil.create('input', '', linkContainer);
+    linkInput.value = link;
+    linkShortener = L.DomUtil.create('input', 'dark stretch', linkContainer);
+    linkShortener.type = 'checkbox';
+    linkShortener.id = 'short';
+    linkShortenerLabel = L.DomUtil.create('label', 'button icon check', linkContainer);
+    linkShortenerLabel.setAttribute("for", "short");
+    // FIXME i18n
+    linkShortenerLabel.innerHTML = "Short";
+
+    L.DomEvent.on(linkShortener, 'click', function() {
+      shortener.shorten(link, function(result) {
+        if (result === "") {
+          linkShortener.checked = false;
+        } else {
+          linkInput.value = result;
+        }
+      });
+    }, this);
+
+    this._openPopup(linkContainer);
+  },
+
+  _updatePopupPosition: function() {
+    var rect = this._container.getBoundingClientRect();
+    this._popupWindow.style.position = 'absolute';
+    this._popupWindow.style.left = '0px';
+    this._popupWindow.style.bottom = rect.height + 'px';
+  },
+
+  _openPopup: function(content) {
+    var children = this._popupContainer.children,
+        i;
+
+    this._updatePopupPosition();
+
+    for (i = 0; i < children.length; i++)
+    {
+      this._popupContainer.removeChild(children[i]);
+    }
+    this._popupContainer.appendChild(content);
+
+    L.DomUtil.removeClass(this._popupWindow, 'leaflet-osrm-tools-popup-hide');
+  },
+
+  _closePopup: function() {
+    L.DomUtil.addClass(this._popupWindow, 'leaflet-osrm-tools-popup-hide');
   }
 
 });

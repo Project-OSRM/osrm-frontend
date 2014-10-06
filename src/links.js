@@ -1,6 +1,7 @@
 "use strict";
 
-var url = require('url');
+var url = require('url'),
+    jsonp = require('jsonp');
 
 function _formatCoord(latLng)
 {
@@ -42,7 +43,10 @@ function formatLink(baseURL, options)
         query: {
           z: options.zoom,
           center: options.center ? _formatCoord(options.center) : undefined,
-          loc: options.waypoints ? options.waypoints.map(function(wp) {return wp.latLng;}).map(_formatCoord) : undefined,
+          loc: options.waypoints ? options.waypoints.filter(function(wp) { return wp.latLng !== undefined;})
+                                                    .map(function(wp) {return wp.latLng;})
+                                                    .map(_formatCoord)
+                                 : undefined,
         },
       });
   return formated;
@@ -86,7 +90,41 @@ function parseLink(link)
   return options;
 }
 
+var Shortener = L.Class.extend({
+  options: {
+    baseURL: 'http://short.project-osrm.org/'
+  },
+
+  initialize: function(options) {
+    L.Util.setOptions(this, options);
+  },
+
+  shorten: function(link, callback, context) {
+    var requestURL = this.options.baseURL + link;
+    jsonp(requestURL, {param: 'jsonp'},
+      function(error, resp) {
+        if (error) {
+          console.log("Error: " + error);
+          callback.call(context, "");
+          return;
+        }
+        if (resp.ShortURL === undefined)
+        {
+          console.log("Error: " + resp.Error);
+          callback.call(context, "");
+          return;
+        }
+        callback.call(context, resp.ShortURL);
+      }
+    );
+  }
+
+});
+
 module.exports = {
-  'parseLink': parseLink,
-  'formatLink': formatLink,
+  'parse': parseLink,
+  'format': formatLink,
+  'shortener': function(options) {
+    return new Shortener(options || {});
+  }
 };

@@ -1,7 +1,7 @@
 #map {
     width: 100%;
     height: 100%;
-	z-index: 0;
+    z-index: 0;
 }
 
 /*
@@ -9,13 +9,13 @@
  */
 .leaflet-map-pane
 {
-	z-index: -1;
+    z-index: -1;
 }
 
 .leaflet-routing-geocoders
 {
     margin: 0 0 0 0;
-	border-bottom: 0px solid #000;
+    border-bottom: 0px solid #000;
 }
 
 .leaflet-routing-container
@@ -56,7 +56,6 @@
 
 .leaflet-osrm-tools-container
 {
-   background: none repeat scroll 0% 0% rgba(0, 0, 0, 0.8);
    cursor: pointer;
 }
 
@@ -96,9 +95,51 @@
 .mapbox-via-icon  { background-position: -300px 0; }
 .mapbox-link-icon  { background-position: -320px 0; }
 
-
 .leaflet-osrm-tools-link:hover
 {
    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.leaflet-osrm-tools-popup
+{
+   border: 1px solid rgba(0,0,0,0.1);
+   position: absolute;
+   min-width: 440px;
+   min-height: 60px;
+   padding: 10px;
+}
+
+.leaflet-osrm-tools-popup-close
+{
+  position: absolute;
+  top: 20px;
+  right: 10px;
+}
+
+.leaflet-osrm-tools-popup-close:hover {
+    opacity: .3;
+}
+
+.leaflet-osrm-tools-popup input
+{
+  position: absolute;
+  min-width: 300px;
+  min-height: 40px;
+  border: 0px solid;
+  margin-top: 0px;
+  margin-left: 85px;
+  padding: 5px;
+}
+
+.leaflet-osrm-tools-popup label
+{
+  position: absolute;
+  margin-top: 0px;
+  margin-left: 0px;
+}
+
+.leaflet-osrm-tools-popup-hide
+{
+  display: none;
 }
 
