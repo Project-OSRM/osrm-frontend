@@ -33,6 +33,11 @@ var options = {
     geocodersClassName: "mapbox-directions-inputs",
     createGeocoder: createGeocoder,
     itineraryBuilder: itineraryBuilder({containerClassName: "mapbox-directions-steps"}),
+
+    popupWindowClass: "fill-dark dark",
+    popupCloseButtonClass: 'mapbox-directions-icon mapbox-close-icon',
+    linkButtonClass: 'mapbox-directions-icon mapbox-link-icon',
+    toolsContainerClass: 'fill-dark dark',
 };
 
 module.exports = {
