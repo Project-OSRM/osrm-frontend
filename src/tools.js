@@ -16,9 +16,11 @@ var Control = L.Control.extend({
     this._lrm = lrm;
   },
 
-  onAdd: function() {
+  onAdd: function(map) {
     var linkContainer,
         linkButton,
+        editorContainer,
+        editorButton,
         popupCloseButton;
 
     this._container = L.DomUtil.create('div', 'leaflet-osrm-tools-container leaflet-bar ' + this.options.toolsContainerClass);
@@ -29,6 +31,12 @@ var Control = L.Control.extend({
     // FIXME i18n
     linkButton.title = "Link";
     L.DomEvent.on(linkButton, 'click', this._createLink, this);
+
+    editorContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-editor', this._container);
+    editorButton = L.DomUtil.create('span', this.options.editorButtonClass, editorContainer);
+    // FIXME i18n
+    editorButton.title = "Open in editor";
+    L.DomEvent.on(editorButton, 'click', this._openEditor, this);
 
     this._popupWindow = L.DomUtil.create('div',
                                          'leaflet-osrm-tools-popup leaflet-osrm-tools-popup-hide ' + this.options.popupWindowClass,
@@ -41,6 +49,13 @@ var Control = L.Control.extend({
   },
 
   onRemove: function() {
+  },
+
+  _openEditor: function() {
+    var position = this._map.getCenter(),
+        zoom = this._map.getZoom(),
+        prec = 6;
+    window.open("http://www.openstreetmap.org/edit?lat=" + position.lat.toFixed(prec) + "&lon=" + position.lng.toFixed(prec) + "&zoom=" + zoom);
   },
 
   _createLink: function() {

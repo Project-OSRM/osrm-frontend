@@ -37,6 +37,7 @@ var options = {
     popupWindowClass: "fill-dark dark",
     popupCloseButtonClass: 'mapbox-directions-icon mapbox-close-icon',
     linkButtonClass: 'mapbox-directions-icon mapbox-link-icon',
+    editorButtonClass: 'mapbox-directions-icon mapbox-editor-icon',
     toolsContainerClass: 'fill-dark dark',
 };
 
