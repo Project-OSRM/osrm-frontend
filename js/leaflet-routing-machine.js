@@ -384,6 +384,10 @@
 			if (this.options.autoRoute) {
 				this.route({});
 			}
+			if (!this._plan.isReady()) {
+				this._clearLine();
+				this._clearAlts();
+			}
 			this.fire('waypointschanged', {waypoints: e.waypoints});
 		},
 
@@ -410,6 +414,15 @@
 			if (!err) {
 				this._updateLine(routes[0]);
 			}
+		},
+
+		getDownloadURL: function(format) {
+			if (!this._plan.isReady()) {
+				return '';
+			}
+			return this._router.buildRouteUrl(this._plan.getWaypoints(), {
+				fileformat: format
+			});
 		},
 
 		route: function(options) {
@@ -1068,7 +1081,7 @@
 		},
 
 		route: function(waypoints, callback, context, options) {
-			var url = this._buildRouteUrl(waypoints, options),
+			var url = this.buildRouteUrl(waypoints, options),
 				timedOut = false,
 				timer = setTimeout(function() {
 					timedOut = true;
@@ -1151,7 +1164,7 @@
 			return wps;
 		},
 
-		_buildRouteUrl: function(waypoints, options) {
+		buildRouteUrl: function(waypoints, options) {
 			var locs = [],
 			    computeInstructions,
 			    computeAlternative,
@@ -1176,7 +1189,8 @@
 				'alt=' + computeAlternative + '&' +
 				(options.z ? 'z=' + options.z + '&' : '') +
 				locs.join('&') +
-				(this._hints.checksum !== undefined ? '&checksum=' + this._hints.checksum : '');
+				(this._hints.checksum !== undefined ? '&checksum=' + this._hints.checksum : '') +
+				(options.fileformat ? '?output=' + options.fileformat : '');
 		},
 
 		_locationKey: function(location) {
@@ -1355,6 +1369,7 @@
 			],
 			draggableWaypoints: true,
 			addWaypoints: true,
+			addButtonClassName: '',
 			maxGeocoderTolerance: 200,
 			autocompleteOptions: {},
 			geocodersClassName: '',
@@ -1474,7 +1489,7 @@
 				this._geocoderElems.push(geocoderElem);
 			}
 
-			addWpBtn = L.DomUtil.create('button', '', container);
+			addWpBtn = L.DomUtil.create('button', this.options.addButtonClassName, container);
 			addWpBtn.setAttribute('type', 'button');
 			addWpBtn.innerHTML = '+';
 			if (this.options.addWaypoints) {
@@ -1493,6 +1508,7 @@
 		_createGeocoder: function(i) {
 			var nWps = this._waypoints.length,
 				g = this.options.createGeocoder(i, nWps),
+				closeButton = g.closeButton,
 				geocoderInput = g.input,
 				wp = this._waypoints[i];
 			geocoderInput.setAttribute('placeholder', this.options.geocoderPlaceholder(i, nWps));
@@ -1507,6 +1523,12 @@
 			L.DomEvent.addListener(geocoderInput, 'click', function() {
 				selectInputText(this);
 			}, geocoderInput);
+
+			if (closeButton) {
+				L.DomEvent.addListener(closeButton, 'click', function() {
+					this.spliceWaypoints(i, 1);
+				}, this);
+			}
 
 			new L.Routing.Autocomplete(geocoderInput, function(r) {
 					geocoderInput.value = r.name;
