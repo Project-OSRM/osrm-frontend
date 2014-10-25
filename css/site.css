@@ -36,6 +36,7 @@ button.mapbox-directions-button-add
     width: 33.3333%;
     max-width: 300px;
     min-width: 200px;
+    padding-right: 0px;
 }
 
 .leaflet-routing-container::-webkit-scrollbar {
@@ -47,7 +48,14 @@ button.mapbox-directions-button-add
 
 .leaflet-routing-alt
 {
+    height: 92%;
     max-height: 100%;
+    border: 0px solid;
+}
+
+.leaflet-routing-alt-minimized
+{
+    height: 7%;
 }
 
 .leaflet-routing-container.dark
