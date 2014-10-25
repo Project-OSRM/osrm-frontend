@@ -74,7 +74,7 @@
 				// mousedown + click because:
 				// http://stackoverflow.com/questions/10652852/jquery-fire-click-before-blur-event
 				L.DomEvent.addListener(td, 'mousedown', L.DomEvent.preventDefault);
-				L.DomEvent.addListener(td, 'click', this._resultSelected(results[i]), this);
+				L.DomEvent.addListener(td, 'click', this._createClickListener(results[i]));
 			}
 
 			if (!i) {
@@ -89,6 +89,14 @@
 				// Select the first entry
 				this._select(1);
 			}
+		},
+
+		_createClickListener: function(r) {
+			var resultSelected = this._resultSelected(r);
+			return L.bind(function() {
+				this._elem.blur();
+				resultSelected();
+			}, this);
 		},
 
 		_resultSelected: function(r) {
@@ -153,6 +161,11 @@
 		_keyDown: function(e) {
 			if (this._isOpen) {
 				switch (e.keyCode) {
+				// Escape
+				case 27:
+					this.close();
+					L.DomEvent.preventDefault(e);
+					return;
 				// Up
 				case 38:
 					this._select(-1);
@@ -206,16 +219,13 @@
 
 	L.Routing.Control = L.Routing.Itinerary.extend({
 		options: {
-			fitSelectedRoutes: true,
+			fitSelectedRoutes: 'smart',
 			routeLine: function(route, options) { return L.Routing.line(route, options); },
 			autoRoute: true,
 			routeWhileDragging: false,
 			routeDragInterval: 500,
-			waypointMode: 'connect'
-		},
-
-		// used to temporary overide options, e.g. fitSelectedRoutes while dragging
-		_optionsOverride : {
+			waypointMode: 'connect',
+			useZoomParameter: false
 		},
 
 		initialize: function(options) {
@@ -242,10 +252,14 @@
 
 			this._map = map;
 			this._map.addLayer(this._plan);
-			this._map.on('zoomend', function() {
-				this._optionsOverride.fitSelectedRoutes = false;
-				this.route();
-			}, this);
+
+			if (this.options.useZoomParameter) {
+				this._map.on('zoomend', function() {
+					this.route({
+						callback: L.bind(this._updateLineCallback, this)
+					});
+				}, this);
+			}
 
 			if (this._plan.options.geocoder) {
 				container.insertBefore(this._plan.createGeocoders(), container.firstChild);
@@ -280,41 +294,84 @@
 			return this._plan;
 		},
 
-		_override: function(defaultValue, overrideValue) {
-			if (typeof(overrideValue) !== 'undefined')
-			{
-				return overrideValue;
-			}
-			return defaultValue;
-		},
-
 		_routeSelected: function(e) {
 			var route = e.route,
-			    fitSelectedRoutes = this._override(this.options.fitSelectedRoutes,
-			                                       this._optionsOverride.fitSelectedRoutes),
-			    waypointMode = this._override(this.options.waypointMode,
-			                                  this._optionsOverride.waypointMode);
+				fitMode = this.options.fitSelectedRoutes,
+				fitBounds =
+					(fitMode === 'smart' && !this._waypointsVisible()) ||
+					(fitMode !== 'smart' && fitMode);
 
-			this._clearLine();
+			this._updateLine(route);
 
-			this._line = this.options.routeLine(route,
-				L.extend({extendToWaypoints: waypointMode === 'connect'},
-					this.options.lineOptions));
-			this._line.addTo(this._map);
-			this._hookEvents(this._line);
-
-			if (fitSelectedRoutes) {
+			if (fitBounds) {
 				this._map.fitBounds(this._line.getBounds());
 			}
 
-			if (waypointMode === 'snap') {
+			if (this.options.waypointMode === 'snap') {
 				this._plan.off('waypointschanged', this._onWaypointsChanged, this);
 				this.setWaypoints(route.waypoints);
 				this._plan.on('waypointschanged', this._onWaypointsChanged, this);
 			}
+		},
 
-			this._optionsOverride.fitSelectedRoutes = undefined;
-			this._optionsOverride.waypointMode = undefined;
+		_waypointsVisible: function() {
+			var wps = this.getWaypoints(),
+				mapSize,
+				bounds,
+				boundsSize,
+				i,
+				p;
+
+			try {
+				mapSize = this._map.getSize();
+
+				for (i = 0; i < wps.length; i++) {
+					p = this._map.latLngToLayerPoint(wps[i].latLng);
+
+					if (bounds) {
+						bounds.extend(p);
+					} else {
+						bounds = L.bounds([p]);
+					}
+				}
+
+				boundsSize = bounds.getSize();
+				return (boundsSize.x > mapSize.x / 5 ||
+					boundsSize.y > mapSize.y / 5) && this._waypointsInViewport();
+					
+			} catch (e) {
+				return false;
+			}
+		},
+
+		_waypointsInViewport: function() {
+			var wps = this.getWaypoints(),
+				mapBounds,
+				i;
+
+			try {
+				mapBounds = this._map.getBounds();
+			} catch (e) {
+				return false;
+			}
+
+			for (i = 0; i < wps.length; i++) {
+				if (mapBounds.contains(wps[i].latLng)) {
+					return true;
+				}
+			}
+
+			return false;
+		},
+
+		_updateLine: function(route) {
+			this._clearLine();
+
+			this._line = this.options.routeLine(route,
+				L.extend({extendToWaypoints: this.options.waypointMode === 'connect'},
+					this.options.lineOptions));
+			this._line.addTo(this._map);
+			this._hookEvents(this._line);
 		},
 
 		_hookEvents: function(l) {
@@ -336,17 +393,23 @@
 			this._plan.on('waypointdrag', L.bind(function(e) {
 				var now = new Date().getTime();
 				if (now - lastCalled >= this.options.routeDragInterval) {
-					this._optionsOverride.fitSelectedRoutes = false;
-					this._optionsOverride.waypointMode = 'connect';
-					this.route({waypoints: e.waypoints, geometryOnly: true});
+					this.route({
+						waypoints: e.waypoints,
+						geometryOnly: true,
+						callback: L.bind(this._updateLineCallback, this)
+					});
 					lastCalled = now;
 				}
 			}, this));
 			this._plan.on('waypointdragend', function() {
-				this._optionsOverride.fitSelectedRoutes = undefined;
-				this._optionsOverride.waypointMode = undefined;
 				this.route();
 			}, this);
+		},
+
+		_updateLineCallback: function(err, routes) {
+			if (!err) {
+				this._updateLine(routes[0]);
+			}
 		},
 
 		route: function(options) {
@@ -357,10 +420,13 @@
 			this._lastRequestTimestamp = ts;
 
 			if (this._plan.isReady()) {
-				options.z = this._map.getZoom();
+				if (this.options.useZoomParameter) {
+					options.z = this._map && this._map.getZoom();
+				}
+
 				wps = options && options.waypoints || this._plan.getWaypoints();
 				this.fire('routingstart', {waypoints: wps});
-				this._router.route(wps, function(err, routes) {
+				this._router.route(wps, options.callback || function(err, routes) {
 					// Prevent race among multiple requests,
 					// by checking the current request's timestamp
 					// against the last request's; ignore result if
@@ -849,8 +915,6 @@
 			L.LayerGroup.prototype.initialize.call(this, options);
 			this._route = route;
 
-			this._wpIndices = route.waypointIndices || this._findWaypointIndices();
-
 			if (this.options.extendToWaypoints) {
 				this._extendToWaypoints();
 			}
@@ -900,13 +964,14 @@
 
 		_extendToWaypoints: function() {
 			var wps = this._route.inputWaypoints,
+				wpIndices = this._getWaypointIndices(),
 			    i,
 			    wpLatLng,
 			    routeCoord;
 
 			for (i = 0; i < wps.length; i++) {
 				wpLatLng = wps[i].latLng;
-				routeCoord = L.latLng(this._route.coordinates[this._wpIndices[i]]);
+				routeCoord = L.latLng(this._route.coordinates[wpIndices[i]]);
 				if (wpLatLng.distanceTo(routeCoord) >
 					this.options.missingRouteTolerance) {
 					this._addSegment([wpLatLng, routeCoord],
@@ -929,8 +994,9 @@
 		},
 
 		_findNearestWpBefore: function(i) {
-			var j = this._wpIndices.length - 1;
-			while (j >= 0 && this._wpIndices[j] > i) {
+			var wpIndices = this._getWaypointIndices(),
+				j = wpIndices.length - 1;
+			while (j >= 0 && wpIndices[j] > i) {
 				j--;
 			}
 
@@ -944,6 +1010,14 @@
 				latlng: e.latlng
 			});
 		},
+
+		_getWaypointIndices: function() {
+			if (!this._wpIndices) {
+				this._wpIndices = this._route.waypointIndices || this._findWaypointIndices();
+			}
+
+			return this._wpIndices;
+		}
 	});
 
 	L.Routing.line = function(route, options) {
@@ -1260,6 +1334,16 @@
 	L.Routing = L.Routing || {};
 	L.extend(L.Routing, require('./L.Routing.Autocomplete'));
 
+	function selectInputText(input) {
+		if (input.setSelectionRange) {
+			// On iOS, select() doesn't work
+			input.setSelectionRange(0, 9999);
+		} else {
+			// On at least IE8, setSeleectionRange doesn't exist
+			input.select();
+		}
+	}
+
 	L.Routing.Plan = L.Class.extend({
 		includes: L.Mixin.Events,
 
@@ -1421,7 +1505,7 @@
 			geocoderInput.value = wp.name;
 
 			L.DomEvent.addListener(geocoderInput, 'click', function() {
-				this.select();
+				selectInputText(this);
 			}, geocoderInput);
 
 			new L.Routing.Autocomplete(geocoderInput, function(r) {
@@ -1430,6 +1514,7 @@
 					wp.latLng = r.center;
 					this._updateMarkers();
 					this._fireChanged();
+					this._focusGeocoder(i + 1);
 				}, this, L.extend({
 					resultFn: this.options.geocoder.geocode,
 					resultContext: this.options.geocoder,
@@ -1630,6 +1715,17 @@
 			}
 			this.spliceWaypoints(this._newWp.afterIndex + 1, 0, e.latlng);
 			delete this._newWp;
+		},
+
+		_focusGeocoder: function(i) {
+			var input;
+			if (this._geocoderElems[i]) {
+				input = this._geocoderElems[i].input;
+				input.focus();
+				selectInputText(input);
+			} else {
+				document.activeElement.blur();
+			}
 		}
 	});
 
