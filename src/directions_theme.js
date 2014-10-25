@@ -5,7 +5,8 @@ var createGeocoder = require('./geocoder.js');
 
 var options = {
     routeWhileDragging: true,
-    addWaypoints: false,
+    addWaypoints: true,
+    addButtonClassName: 'mapbox-directions-button-add',
     waypointMode: 'snap',
     pointMarkerStyle: {
       radius: 7,

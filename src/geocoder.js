@@ -23,13 +23,11 @@ var geocoder = function(i, num) {
     iconName = "via";
   }
   icon  = L.DomUtil.create('div', 'mapbox-directions-icon mapbox-' + iconName  + '-icon', label);
-  L.DomEvent.on(close, 'click', function(e) {
-    input.value = "";
-  });
 
   return {
     container: container,
     input: input,
+    closeButton: close,
   };
 };
 
