@@ -9,11 +9,13 @@ var Control = L.Control.extend({
     popupWindowClass: "",
     popupCloseButtonClass: "",
     toolContainerClass: "",
+    gpxLinkClass: "",
   },
 
   initialize: function(lrm, options) {
     L.setOptions(this, options);
     this._lrm = lrm;
+    lrm.on('routesfound', this._updateDownloadLink, this);
   },
 
   onAdd: function(map) {
@@ -21,7 +23,8 @@ var Control = L.Control.extend({
         linkButton,
         editorContainer,
         editorButton,
-        popupCloseButton;
+        popupCloseButton,
+        gpxContainer;
 
     this._container = L.DomUtil.create('div', 'leaflet-osrm-tools-container leaflet-bar ' + this.options.toolsContainerClass);
     L.DomEvent.disableClickPropagation(this._container);
@@ -37,6 +40,12 @@ var Control = L.Control.extend({
     // FIXME i18n
     editorButton.title = "Open in editor";
     L.DomEvent.on(editorButton, 'click', this._openEditor, this);
+
+    gpxContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-gpx', this._container);
+    this._gpxLink = L.DomUtil.create('a', this.options.gpxLinkClass, gpxContainer);
+    this._gpxLink.innerHTML = "GPX";
+    // FIXME i18n
+    this._gpxLink.alt = "Download as GPX";
 
     this._popupWindow = L.DomUtil.create('div',
                                          'leaflet-osrm-tools-popup leaflet-osrm-tools-popup-hide ' + this.options.popupWindowClass,
@@ -74,7 +83,7 @@ var Control = L.Control.extend({
     link = links.format(window.location.href, options);
     shortener = links.shortener();
     //window.location.href = link;
-    
+
     linkContainer = L.DomUtil.create('div', 'dark checkbox-pill');
     linkInput = L.DomUtil.create('input', '', linkContainer);
     linkInput.value = link;
@@ -97,6 +106,11 @@ var Control = L.Control.extend({
     }, this);
 
     this._openPopup(linkContainer);
+  },
+
+  _updateDownloadLink: function() {
+    var url = this._lrm.getDownloadURL('gpx');
+    this._gpxLink.href = url;
   },
 
   _updatePopupPosition: function() {
