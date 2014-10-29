@@ -39,6 +39,7 @@ var options = {
     popupCloseButtonClass: 'mapbox-directions-icon mapbox-close-icon',
     linkButtonClass: 'mapbox-directions-icon mapbox-link-icon',
     editorButtonClass: 'mapbox-directions-icon mapbox-editor-icon',
+    josmButtonClass: 'mapbox-directions-icon mapbox-josm-icon',
     toolsContainerClass: 'fill-dark dark',
 };
 

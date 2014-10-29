@@ -9,6 +9,8 @@ var Control = L.Control.extend({
     popupWindowClass: "",
     popupCloseButtonClass: "",
     toolContainerClass: "",
+    editorButtonClass: "",
+    josmButtonClass: "",
     gpxLinkClass: "",
   },
 
@@ -23,6 +25,8 @@ var Control = L.Control.extend({
         linkButton,
         editorContainer,
         editorButton,
+        josmContainer,
+        josmButton,
         popupCloseButton,
         gpxContainer;
 
@@ -40,6 +44,12 @@ var Control = L.Control.extend({
     // FIXME i18n
     editorButton.title = "Open in editor";
     L.DomEvent.on(editorButton, 'click', this._openEditor, this);
+
+    josmContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-josm', this._container);
+    josmButton = L.DomUtil.create('span', this.options.josmButtonClass, josmContainer);
+    // FIXME i18n
+    josmButton.title = "Open in JOSM";
+    L.DomEvent.on(josmButton, 'click', this._openJOSM, this);
 
     gpxContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-gpx', this._container);
     this._gpxLink = L.DomUtil.create('a', this.options.gpxLinkClass, gpxContainer);
@@ -65,6 +75,16 @@ var Control = L.Control.extend({
         zoom = this._map.getZoom(),
         prec = 6;
     window.open("http://www.openstreetmap.org/edit?lat=" + position.lat.toFixed(prec) + "&lon=" + position.lng.toFixed(prec) + "&zoom=" + zoom);
+  },
+
+  _openJOSM: function() {
+    var bounds = this._map.getBounds(),
+        url = 'http://127.0.0.1:8111/load_and_zoom' +
+              '?left=' + bounds.getWest() +
+              '&right=' + bounds.getEast() +
+              '&bottom=' + bounds.getSouth() +
+              '&top=' + bounds.getNorth();
+    window.open(url);
   },
 
   _createLink: function() {

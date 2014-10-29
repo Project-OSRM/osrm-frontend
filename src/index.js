@@ -25,6 +25,7 @@ var toolsControl = tools.control(lrm, {
   position: 'bottomleft',
   linkButtonClass: theme.options.linkButtonClass,
   editorButtonClass: theme.options.editorButtonClass,
+  josmButtonClass: theme.options.josmButtonClass,
   popupWindowClass: theme.options.popupWindowClass,
   popupCloseButtonClass: theme.options.popupCloseButtonClass,
   toolsContainerClass: theme.options.toolsContainerClass,
