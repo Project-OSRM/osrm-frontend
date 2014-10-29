@@ -32,6 +32,20 @@ var toolsControl = tools.control(lrm, {
   });
 toolsControl.addTo(map);
 
+map.on('click', function(e) {
+  var plan = lrm.getPlan(),
+      wps = plan.getWaypoints(),
+      i;
+  for (i = 0; i < wps.length; i++)
+  {
+    if (wps[i].latLng === undefined || wps[i].latLng === null)
+    {
+      plan.spliceWaypoints(i, 1, e.latlng);
+      break;
+    }
+  }
+});
+
 theme.setup(lrm);
 
 lrm.setWaypoints(viewOptions.waypoints);
