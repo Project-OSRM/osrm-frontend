@@ -1053,6 +1053,7 @@
 	/* jshint camelcase: false */
 
 	L.Routing = L.Routing || {};
+	L.extend(L.Routing, require('./L.Routing.Waypoint'));
 
 	L.Routing._jsonpCallbackId = 0;
 	L.Routing._jsonp = function(url, callback, context, jsonpParam) {
@@ -1117,7 +1118,7 @@
 			}
 
 			coordinates = this._decode(response.route_geometry, 6);
-			actualWaypoints = this._toWaypoints(response.via_points);
+			actualWaypoints = this._toWaypoints(inputWaypoints, response.via_points);
 			alts = [{
 				name: response.route_name.join(', '),
 				coordinates: coordinates,
@@ -1152,13 +1153,13 @@
 			callback.call(context, null, alts);
 		},
 
-		_toWaypoints: function(vias) {
+		_toWaypoints: function(inputWaypoints, vias) {
 			var wps = [],
 			    i;
 			for (i = 0; i < vias.length; i++) {
-				wps.push({
-					latLng: L.latLng(vias[i])
-				});
+				wps.push(L.Routing.waypoint(L.latLng(vias[i]),
+				                            inputWaypoints[i].name,
+				                            inputWaypoints[i].options));
 			}
 
 			return wps;
@@ -1179,6 +1180,11 @@
 				if (hint) {
 					locs.push('hint=' + hint);
 				}
+
+				if (waypoints[i].options.allowUTurn)
+				{
+					locs.push('u=true');
+				}
 			}
 
 			computeAlternative = computeInstructions =
@@ -1190,7 +1196,8 @@
 				(options.z ? 'z=' + options.z + '&' : '') +
 				locs.join('&') +
 				(this._hints.checksum !== undefined ? '&checksum=' + this._hints.checksum : '') +
-				(options.fileformat ? '?output=' + options.fileformat : '');
+				(options.fileformat ? '?output=' + options.fileformat : '') +
+				(options.allowUTurns ? '?uturns=' + options.allowUTurns : '');
 		},
 
 		_locationKey: function(location) {
@@ -1332,21 +1339,16 @@
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],8:[function(require,module,exports){
+},{"./L.Routing.Waypoint":9}],8:[function(require,module,exports){
 (function (global){
 (function() {
 	'use strict';
 
-	var L = (typeof window !== "undefined" ? window.L : typeof global !== "undefined" ? global.L : null),
-		Waypoint = L.Class.extend({
-			initialize: function(latLng, name) {
-				this.latLng = latLng;
-				this.name = name;
-			}
-		});
+	var L = (typeof window !== "undefined" ? window.L : typeof global !== "undefined" ? global.L : null);
 
 	L.Routing = L.Routing || {};
 	L.extend(L.Routing, require('./L.Routing.Autocomplete'));
+	L.extend(L.Routing, require('./L.Routing.Waypoint'));
 
 	function selectInputText(input) {
 		if (input.setSelectionRange) {
@@ -1440,13 +1442,13 @@
 			    wp;
 
 			for (i = 2; i < arguments.length; i++) {
-				args.push(arguments[i] && arguments[i].hasOwnProperty('latLng') ? arguments[i] : new Waypoint(arguments[i]));
+				args.push(arguments[i] && arguments[i].hasOwnProperty('latLng') ? arguments[i] : L.Routing.waypoint(arguments[i]));
 			}
 
 			[].splice.apply(this._waypoints, args);
 
 			while (this._waypoints.length < 2) {
-				wp = new Waypoint();
+				wp = L.Routing.waypoint();
 				this._waypoints.push(wp);
 				args.push(wp);
 			}
@@ -1631,6 +1633,7 @@
 		_updateMarkers: function() {
 			var i,
 			    icon,
+			    popup,
 			    m;
 
 			if (!this._map) {
@@ -1644,7 +1647,10 @@
 					icon = (typeof(this.options.waypointIcon) === 'function') ?
 						this.options.waypointIcon(i, this._waypoints[i].name, this._waypoints.length) :
 						this.options.waypointIcon;
-					m = this._createMarker(icon, i);
+					popup = (typeof(this.options.waypointPopup) === 'function') ?
+						this.options.waypointPopup(i, this._waypoints[i].name, this._waypoints.length) :
+						this.options.waypointPopup;
+					m = this._createMarker(icon, popup, i);
 					if (this.options.draggableWaypoints) {
 						this._hookWaypointEvents(m, i);
 					}
@@ -1655,15 +1661,21 @@
 			}
 		},
 
-		_createMarker: function(icon, i) {
+		_createMarker: function(icon, popup, i) {
 			var options = {
 				draggable: true
-			};
+			},
+				 marker;
 			if (icon) {
 				options.icon = icon;
 			}
 
-			return L.marker(this._waypoints[i].latLng, options).addTo(this._map);
+			marker = L.marker(this._waypoints[i].latLng, options).addTo(this._map);
+			if (popup) {
+				marker.bindPopup(popup);
+			}
+
+			return marker;
 		},
 
 		_fireChanged: function() {
@@ -1759,5 +1771,32 @@
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./L.Routing.Autocomplete":1}]},{},[2])(2)
+},{"./L.Routing.Autocomplete":1,"./L.Routing.Waypoint":9}],9:[function(require,module,exports){
+(function (global){
+(function() {
+	'use strict';
+
+	var L = (typeof window !== "undefined" ? window.L : typeof global !== "undefined" ? global.L : null);
+	L.Routing = L.Routing || {};
+
+	L.Routing.Waypoint = L.Class.extend({
+			options: {
+				allowUTurn: false,
+			},
+			initialize: function(latLng, name, options) {
+				L.Util.setOptions(this, options);
+				this.latLng = latLng;
+				this.name = name;
+			}
+		});
+
+	L.Routing.waypoint = function(latLng, name, options) {
+		return new L.Routing.Waypoint(latLng, name, options);
+	};
+
+	module.exports = L.Routing;
+})();
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}]},{},[2])(2)
 });
