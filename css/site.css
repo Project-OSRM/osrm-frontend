@@ -105,8 +105,8 @@ button.mapbox-directions-button-add
 }
 
 .mapbox-directions-icon {
-    -webkit-background-size: 380px 20px;
-    background-size: 380px 20px;
+    -webkit-background-size: 400px 20px;
+    background-size: 400px 20px;
 }
 
 .mapbox-directions-inputs input {
@@ -118,6 +118,7 @@ button.mapbox-directions-button-add
 .mapbox-link-icon  { background-position: -320px 0; }
 .mapbox-editor-icon  { background-position: -340px 0; }
 .mapbox-josm-icon  { background-position: -360px 0; }
+.mapbox-close-light-icon  { background-position: -380px 0; }
 
 .leaflet-osrm-tools-link
 {
@@ -213,4 +214,20 @@ button.mapbox-directions-button-add
 {
   display: none;
 }
+
+.leaflet-osrm-waypoint-popup .leaflet-popup-content-wrapper
+{
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.leaflet-osrm-waypoint-popup .leaflet-popup-tip-container .leaflet-popup-tip
+{
+  background-color: rgba(0, 0, 0, 0.5);
+}
+.leaflet-osrm-waypoint-popup .leaflet-popup-content { margin: 3px; }
+
+.leaflet-osrm-waypoint-popup .mapbox-close-light-icon:hover { opacity: 0.5; }
+.leaflet-osrm-waypoint-popup .mapbox-u-turn-icon:hover { opacity: 0.5; }
+.leaflet-osrm-waypoint-popup .mapbox-u-turn-icon.leaflet-osrm-popup-inactive { opacity: 0.5; }
+.leaflet-osrm-waypoint-popup .mapbox-u-turn-icon:hover.leaflet-osrm-popup-inactive { opacity: 1.0; }
 

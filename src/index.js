@@ -6,6 +6,7 @@ var theme = require('./directions_theme.js');
 var links = require('./links.js');
 var options = require('./options.js');
 var tools = require('./tools.js');
+var popupFactory = require('./waypoint_popup.js');
 
 var parsedOptions = links.parse(window.location.search);
 var viewOptions = L.extend(options.viewDefaults, parsedOptions);
@@ -16,20 +17,16 @@ var mapbox = L.tileLayer('https://{s}.tiles.mapbox.com/v3/dennisl.4e2aab76/{z}/{
     {attribution: '&copy; <a href="http://mapbox.com/">MapBox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'}
     ).addTo(map);
 
-var controlOptions = L.extend(options.controlDefaults, theme.options);
 
-var lrm = L.Routing.control(controlOptions);
+var lrm = L.Routing.control(L.extend(options.controlDefaults,
+                                     theme.options.lrm));
 lrm.addTo(map);
 
-var toolsControl = tools.control(lrm, {
-  position: 'bottomleft',
-  linkButtonClass: theme.options.linkButtonClass,
-  editorButtonClass: theme.options.editorButtonClass,
-  josmButtonClass: theme.options.josmButtonClass,
-  popupWindowClass: theme.options.popupWindowClass,
-  popupCloseButtonClass: theme.options.popupCloseButtonClass,
-  toolsContainerClass: theme.options.toolsContainerClass,
-  });
+// We need to do this the ugly way because of cyclic dependencies...
+lrm.getPlan().options.waypointPopup = popupFactory(lrm, theme.options.popup);
+
+var toolsControl = tools.control(lrm, L.extend({ position: 'bottomleft' },
+                                               theme.options.tools));
 toolsControl.addTo(map);
 
 map.on('click', function(e) {

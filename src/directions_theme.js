@@ -2,8 +2,10 @@
 
 var itineraryBuilder = require('./itinerary_builder.js');
 var createGeocoder = require('./geocoder.js');
+var createPopup = require('./waypoint_popup.js');
 
 var options = {
+  lrm: {
     routeWhileDragging: true,
     addWaypoints: true,
     addButtonClassName: 'mapbox-directions-button-add',
@@ -34,13 +36,21 @@ var options = {
     geocodersClassName: "mapbox-directions-inputs",
     createGeocoder: createGeocoder,
     itineraryBuilder: itineraryBuilder({containerClassName: "mapbox-directions-steps"}),
+  },
 
+  popup: {
+    removeButtonClass: 'mapbox-directions-icon mapbox-close-light-icon',
+    uturnButtonClass: 'mapbox-directions-icon mapbox-u-turn-icon'
+  },
+
+  tools: {
     popupWindowClass: "fill-dark dark",
     popupCloseButtonClass: 'mapbox-directions-icon mapbox-close-icon',
     linkButtonClass: 'mapbox-directions-icon mapbox-link-icon',
     editorButtonClass: 'mapbox-directions-icon mapbox-editor-icon',
     josmButtonClass: 'mapbox-directions-icon mapbox-josm-icon',
     toolsContainerClass: 'fill-dark dark',
+  }
 };
 
 module.exports = {
