@@ -72,7 +72,7 @@ function parseLink(link)
     parsedValues.center    = q.center && _parseCoord(q.center);
     parsedValues.waypoints = q.loc    && q.loc.map(_parseCoord).map(
       function (coord) {
-        return { latLng: coord, };
+        return L.Routing.waypoint(coord);
       }
     );
   } catch (e) {
