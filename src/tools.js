@@ -1,6 +1,7 @@
 "use strict";
 
-var links = require('./links.js');
+var links = require('./links.js'),
+    localization = require('./localization.js');
 
 var Control = L.Control.extend({
   include: L.Mixin.Events,
@@ -12,6 +13,7 @@ var Control = L.Control.extend({
     editorButtonClass: "",
     josmButtonClass: "",
     gpxLinkClass: "",
+    language: "en"
   },
 
   initialize: function(lrm, options) {
@@ -35,27 +37,23 @@ var Control = L.Control.extend({
 
     linkContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-link', this._container);
     linkButton = L.DomUtil.create('span', this.options.linkButtonClass, linkContainer);
-    // FIXME i18n
-    linkButton.title = "Link";
+    linkButton.title = localization[this.options.language]['Link'];
     L.DomEvent.on(linkButton, 'click', this._createLink, this);
 
     editorContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-editor', this._container);
     editorButton = L.DomUtil.create('span', this.options.editorButtonClass, editorContainer);
-    // FIXME i18n
-    editorButton.title = "Open in editor";
+    editorButton.title = localization[this.options.language]['Open in editor'];
     L.DomEvent.on(editorButton, 'click', this._openEditor, this);
 
     josmContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-josm', this._container);
     josmButton = L.DomUtil.create('span', this.options.josmButtonClass, josmContainer);
-    // FIXME i18n
-    josmButton.title = "Open in JOSM";
+    josmButton.title = localization[this.options.language]['Open in JOSM'];
     L.DomEvent.on(josmButton, 'click', this._openJOSM, this);
 
     gpxContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-gpx', this._container);
     this._gpxLink = L.DomUtil.create('a', this.options.gpxLinkClass, gpxContainer);
     this._gpxLink.innerHTML = "GPX";
-    // FIXME i18n
-    this._gpxLink.alt = "Download as GPX";
+    this._gpxLink.alt = localization[this.options.language]['Download as GPX'];
 
     this._popupWindow = L.DomUtil.create('div',
                                          'leaflet-osrm-tools-popup leaflet-osrm-tools-popup-hide ' + this.options.popupWindowClass,
@@ -112,8 +110,7 @@ var Control = L.Control.extend({
     linkShortener.id = 'short';
     linkShortenerLabel = L.DomUtil.create('label', 'button icon check', linkContainer);
     linkShortenerLabel.setAttribute("for", "short");
-    // FIXME i18n
-    linkShortenerLabel.innerHTML = "Short";
+    linkShortenerLabel.innerHTML = localization[this.options.language]['Short'];
 
     L.DomEvent.on(linkShortener, 'click', function() {
       shortener.shorten(link, function(result) {

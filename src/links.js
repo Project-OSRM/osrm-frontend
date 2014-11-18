@@ -75,6 +75,7 @@ function parseLink(link)
         return L.Routing.waypoint(coord);
       }
     );
+    parsedValues.language = q.hl;
   } catch (e) {
     console.log("Exception " + e.name + ": " + e.message);
   }
