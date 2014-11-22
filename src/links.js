@@ -47,6 +47,7 @@ function formatLink(baseURL, options)
                                                     .map(function(wp) {return wp.latLng;})
                                                     .map(_formatCoord)
                                  : undefined,
+          hl: options.language,
         },
       });
   return formated;
@@ -75,6 +76,7 @@ function parseLink(link)
         return L.Routing.waypoint(coord);
       }
     );
+    parsedValues.language = q.hl;
   } catch (e) {
     console.log("Exception " + e.name + ": " + e.message);
   }

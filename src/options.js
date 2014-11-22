@@ -4,6 +4,7 @@ var defaultView = {
   center: L.latLng(48.84, 10.10),
   zoom: 5,
   waypoints: [],
+  language: 'en'
 };
 
 var defaultControl = {

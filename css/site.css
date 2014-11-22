@@ -77,7 +77,7 @@ button.mapbox-directions-button-add
 .leaflet-osrm-tools-container
 {
    cursor: pointer;
-   width: 106px;
+   width: 136px;
    height: 26px;
 }
 
@@ -105,8 +105,8 @@ button.mapbox-directions-button-add
 }
 
 .mapbox-directions-icon {
-    -webkit-background-size: 400px 20px;
-    background-size: 400px 20px;
+    -webkit-background-size: 420px 20px;
+    background-size: 420px 20px;
 }
 
 .mapbox-directions-inputs input {
@@ -119,6 +119,7 @@ button.mapbox-directions-button-add
 .mapbox-editor-icon  { background-position: -340px 0; }
 .mapbox-josm-icon  { background-position: -360px 0; }
 .mapbox-close-light-icon  { background-position: -380px 0; }
+.mapbox-flag-icon  { background-position: -400px 0; }
 
 .leaflet-osrm-tools-link
 {
@@ -151,24 +152,51 @@ button.mapbox-directions-button-add
    background-color: rgba(255, 255, 255, 0.2);
 }
 
-.leaflet-osrm-tools-gpx
+.leaflet-osrm-tools-language-list a
+{
+    width: 90%;
+    height: auto;
+    color: #fff;
+    background-color: inherit;
+}
+
+.leaflet-osrm-tools-language-list a:hover
+{
+    width: 90%;
+    height: auto;
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.leaflet-osrm-tools-language
 {
   position: absolute;
   top: 3px;
   left: 78px;
+}
+.leaflet-osrm-tools-language:hover
+{
+   background-color: rgba(255, 255, 255, 0.2);
+}
+
+.leaflet-osrm-tools-gpx
+{
+  position: absolute;
+  top: 3px;
+  left: 103px;
   text-align: center;
 }
 .leaflet-osrm-tools-gpx a {
   color: #fff;
   background-color: rgba(0, 0, 0, 0);
-  width: 25px;
+  width: 30px;
   height: 20px;
 }
 .leaflet-osrm-tools-gpx a:hover
 {
   color: #fff;
   background-color: rgba(255, 255, 255, 0.2);
-  width: 25px;
+  width: 30px;
   height: 20px;
 }
 

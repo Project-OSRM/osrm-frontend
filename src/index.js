@@ -18,14 +18,16 @@ var mapbox = L.tileLayer('https://{s}.tiles.mapbox.com/v3/dennisl.4e2aab76/{z}/{
     ).addTo(map);
 
 
-var lrm = L.Routing.control(L.extend(options.controlDefaults,
-                                     theme.options.lrm));
+var lrm = L.Routing.control(L.extend({language: viewOptions.language},
+                                     L.extend(options.controlDefaults,
+                                              theme.options.lrm)
+                                    ));
 lrm.addTo(map);
 
 // We need to do this the ugly way because of cyclic dependencies...
 lrm.getPlan().options.waypointPopup = popupFactory(lrm, theme.options.popup);
 
-var toolsControl = tools.control(lrm, L.extend({ position: 'bottomleft' },
+var toolsControl = tools.control(lrm, L.extend({ position: 'bottomleft', language: viewOptions.language},
                                                theme.options.tools));
 toolsControl.addTo(map);
 
