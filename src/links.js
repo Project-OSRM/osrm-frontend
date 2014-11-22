@@ -47,6 +47,7 @@ function formatLink(baseURL, options)
                                                     .map(function(wp) {return wp.latLng;})
                                                     .map(_formatCoord)
                                  : undefined,
+          hl: options.language,
         },
       });
   return formated;

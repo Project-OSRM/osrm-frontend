@@ -12,6 +12,7 @@ var Control = L.Control.extend({
     toolContainerClass: "",
     editorButtonClass: "",
     josmButtonClass: "",
+    languageButtonClass: "",
     gpxLinkClass: "",
     language: "en"
   },
@@ -30,6 +31,8 @@ var Control = L.Control.extend({
         josmContainer,
         josmButton,
         popupCloseButton,
+        languageContainer,
+        languageButton,
         gpxContainer;
 
     this._container = L.DomUtil.create('div', 'leaflet-osrm-tools-container leaflet-bar ' + this.options.toolsContainerClass);
@@ -38,7 +41,7 @@ var Control = L.Control.extend({
     linkContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-link', this._container);
     linkButton = L.DomUtil.create('span', this.options.linkButtonClass, linkContainer);
     linkButton.title = localization[this.options.language]['Link'];
-    L.DomEvent.on(linkButton, 'click', this._createLink, this);
+    L.DomEvent.on(linkButton, 'click', this._showLink, this);
 
     editorContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-editor', this._container);
     editorButton = L.DomUtil.create('span', this.options.editorButtonClass, editorContainer);
@@ -49,6 +52,11 @@ var Control = L.Control.extend({
     josmButton = L.DomUtil.create('span', this.options.josmButtonClass, josmContainer);
     josmButton.title = localization[this.options.language]['Open in JOSM'];
     L.DomEvent.on(josmButton, 'click', this._openJOSM, this);
+
+    languageContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-language', this._container);
+    languageButton = L.DomUtil.create('span', this.options.languageButtonClass, languageContainer);
+    languageButton.title = localization[this.options.language]['Select Language'];
+    L.DomEvent.on(languageButton, 'click', this._selectLanguage, this);
 
     gpxContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-gpx', this._container);
     this._gpxLink = L.DomUtil.create('a', this.options.gpxLinkClass, gpxContainer);
@@ -85,20 +93,24 @@ var Control = L.Control.extend({
     window.open(url);
   },
 
-  _createLink: function() {
-    var options = {
-        zoom: this._map.getZoom(),
-        center: this._map.getCenter(),
-        waypoints: this._lrm.getWaypoints(),
-        },
-        shortener,
+  _getLinkOptions: function() {
+    return {
+      zoom: this._map.getZoom(),
+      center: this._map.getCenter(),
+      waypoints: this._lrm.getWaypoints(),
+      language: this.options.language,
+    };
+  },
+
+  _showLink: function() {
+    var shortener,
         link,
         linkContainer,
         linkInput,
         linkShortener,
         linkShortenerLabel;
 
-    link = links.format(window.location.href, options);
+    link = links.format(window.location.href, this._getLinkOptions());
     shortener = links.shortener();
     //window.location.href = link;
 
@@ -123,6 +135,26 @@ var Control = L.Control.extend({
     }, this);
 
     this._openPopup(linkContainer);
+  },
+
+  _selectLanguage: function() {
+    var list = L.DomUtil.create('ul', 'leaflet-osrm-tools-language-list'),
+        options = this._getLinkOptions(),
+        language,
+        item,
+        link;
+
+    for (language in localization)
+    {
+      item = L.DomUtil.create('il', '', list);
+      link = L.DomUtil.create('a', '', item);
+      options.language = language;
+      link.href = links.format(window.location.href, options);
+      link.alt = localization[language].name;
+      link.innerHTML = localization[language].name;
+    }
+
+    this._openPopup(list);
   },
 
   _updateDownloadLink: function() {
