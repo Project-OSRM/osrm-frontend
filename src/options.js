@@ -10,6 +10,7 @@ var defaultView = {
 var defaultControl = {
   geocoder: L.Control.Geocoder.nominatim(),
   routeWhileDragging: true,
+  routeDragInterval: 2,
   addWaypoints: false,
   waypointMode: 'snap',
 };
