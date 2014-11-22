@@ -479,7 +479,7 @@
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./L.Routing.Itinerary":4,"./L.Routing.Line":6,"./L.Routing.OSRM":7,"./L.Routing.Plan":8}],3:[function(require,module,exports){
+},{"./L.Routing.Itinerary":4,"./L.Routing.Line":6,"./L.Routing.OSRM":8,"./L.Routing.Plan":9}],3:[function(require,module,exports){
 (function (global){
 (function() {
 	'use strict';
@@ -487,6 +487,8 @@
 	var L = (typeof window !== "undefined" ? window.L : typeof global !== "undefined" ? global.L : null);
 
 	L.Routing = L.Routing || {};
+
+	L.extend(L.Routing, require('./L.Routing.Localization'));
 
 	L.Routing.Formatter = L.Class.extend({
 		options: {
@@ -500,21 +502,9 @@
 				minutes: 'mín',
 				seconds: 's'
 			},
+      language: 'en',
 			roundingSensitivity: 1,
 			distanceTemplate: '{value} {unit}'
-		},
-
-		statics: {
-			DIR: {
-				N: 'north',
-				NE: 'northeast',
-				E: 'east',
-				SE: 'southeast',
-				S: 'south',
-				SW: 'southwest',
-				W: 'west',
-				NW: 'northwest'
-			}
 		},
 
 		initialize: function(options) {
@@ -577,7 +567,10 @@
 		formatInstruction: function(instr, i) {
 			if (instr.type !== undefined) {
 				return L.Util.template(this._getInstructionTemplate(instr, i),
-					L.extend({exit: this._formatOrder(instr.exit), dir: L.Routing.Formatter.DIR[instr.direction]},
+					L.extend({
+							exit: L.Routing.Localization[this.options.language].formatOrder(instr.exit),
+							dir: L.Routing.Localization[this.options.language].directions[instr.direction]
+						},
 						instr));
 			} else {
 				return instr.text;
@@ -612,38 +605,12 @@
 		},
 
 		_getInstructionTemplate: function(instr, i) {
-			switch (instr.type) {
-			case 'Straight':
-				return (i === 0 ? 'Head' : 'Continue') + ' {dir}' + (instr.road ? ' on {road}' : '');
-			case 'SlightRight':
-				return 'Slight right' + (instr.road ? ' onto {road}' : '');
-			case 'Right':
-				return 'Right' + (instr.road ? ' onto {road}' : '');
-			case 'SharpRight':
-				return 'Sharp right' + (instr.road ? ' onto {road}' : '');
-			case 'TurnAround':
-				return 'Turn around';
-			case 'SharpLeft':
-				return 'Sharp left' + (instr.road ? ' onto {road}' : '');
-			case 'Left':
-				return 'Left' + (instr.road ? ' onto {road}' : '');
-			case 'SlightLeft':
-				return 'Slight left' + (instr.road ? ' onto {road}' : '');
-			case 'WaypointReached':
-				return 'Waypoint reached';
-			case 'Roundabout':
-				return  'Take the {exit} exit in the roundabout';
-			case 'DestinationReached':
-				return  'Destination reached';
-			}
+			var type = instr.type === 'Straight' ? (i === 0 ? 'Head' : 'Continue') : instr.type,
+					strings = L.Routing.Localization[this.options.language].instructions[type];
+
+			return strings[0] + (strings.length > 1 && instr.road ? strings[1] : '');
 		},
 
-		_formatOrder: function(n) {
-			var i = n % 10 - 1,
-				suffix = ['st', 'nd', 'rd'];
-
-			return suffix[i] ? n + suffix[i] : n + 'th';
-		}
 	});
 
 	module.exports = L.Routing;
@@ -651,7 +618,7 @@
 
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],4:[function(require,module,exports){
+},{"./L.Routing.Localization":7}],4:[function(require,module,exports){
 (function (global){
 (function() {
 	'use strict';
@@ -1042,6 +1009,105 @@
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],7:[function(require,module,exports){
+(function() {
+	'use strict';
+	L.Routing = L.Routing || {};
+
+	L.Routing.Localization = {
+		'en': {
+			directions: {
+				N: 'north',
+				NE: 'northeast',
+				E: 'east',
+				SE: 'southeast',
+				S: 'south',
+				SW: 'southwest',
+				W: 'west',
+				NW: 'northwest'
+			},
+			instructions: {
+				// instruction, postfix if the road is named
+				'Head':
+					['Head {dir}', ' on {road}'],
+				'Continue':
+					['Continue {dir}', ' on {road}'],
+				'SlightRight':
+					['Slight right', ' onto {road}'],
+				'Right':
+					['Right', ' onto {road}'],
+				'SharpRight':
+					['Sharp right', ' onto {road}'],
+				'TurnAround':
+					['Turn around'],
+				'SharpLeft':
+					['Sharp left', ' onto {road}'],
+				'Left':
+					['Left', ' onto {road}'],
+				'SlightLeft':
+					['Slight left', ' onto {road}'],
+				'WaypointReached':
+					['Waypoint reached'],
+				'Roundabout':
+					['Take the {exit} exit in the roundabout'],
+				'DestinationReached':
+					['Destination reached'],
+			},
+			formatOrder: function(n) {
+				var i = n % 10 - 1,
+				suffix = ['st', 'nd', 'rd'];
+
+				return suffix[i] ? n + suffix[i] : n + 'th';
+			}
+		},
+
+		'de': {
+			directions: {
+				N: 'Norden',
+				NE: 'Nordosten',
+				E: 'Osten',
+				SE: 'Südosten',
+				S: 'Süden',
+				SW: 'Südwesten',
+				W: 'Westen',
+				NW: 'Nordwesten'
+			},
+			instructions: {
+				// instruction, postfix if the road is named
+				'Head':
+					['Richtung {dir}', ' auf {road}'],
+				'Continue':
+					['Geradeaus Richtung {dir}', ' auf {road}'],
+				'SlightRight':
+					['Leicht rechts abbiegen', ' auf {road}'],
+				'Right':
+					['Rechts abbiegen', ' auf {road}'],
+				'SharpRight':
+					['Scharf rechts abbiegen', ' auf {road}'],
+				'TurnAround':
+					['Wenden'],
+				'SharpLeft':
+					['Scharf links abbiegen', ' auf {road}'],
+				'Left':
+					['Links abbiegen', ' auf {road}'],
+				'SlightLeft':
+					['Leicht links abbiegen', ' auf {road}'],
+				'WaypointReached':
+					['Zwischenhalt erreicht'],
+				'Roundabout':
+					['Nehmen Sie die {exit} Ausfahrt im Kreisverkehr'],
+				'DestinationReached':
+					['Sie haben ihr Ziel erreicht'],
+			},
+			formatOrder: function(n) {
+				return n + '.';
+			}
+		},
+	};
+
+	module.exports = L.Routing;
+})();
+
+},{}],8:[function(require,module,exports){
 (function (global){
 (function() {
 	'use strict';
@@ -1339,7 +1405,7 @@
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./L.Routing.Waypoint":9}],8:[function(require,module,exports){
+},{"./L.Routing.Waypoint":10}],9:[function(require,module,exports){
 (function (global){
 (function() {
 	'use strict';
@@ -1387,10 +1453,14 @@
 				return '';
 			},
 			createGeocoder: function() {
-				var e = L.DomUtil.create('input', '');
+				var container = L.DomUtil.create('div', ''),
+					input = L.DomUtil.create('input', '', container),
+					remove = L.DomUtil.create('span', 'leaflet-routing-remove-waypoint', container);
+
 				return {
-					container: e,
-					input: e
+					container: container,
+					input: input,
+					closeButton: remove
 				};
 			},
 			waypointNameFallback: function(latLng) {
@@ -1771,7 +1841,7 @@
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./L.Routing.Autocomplete":1,"./L.Routing.Waypoint":9}],9:[function(require,module,exports){
+},{"./L.Routing.Autocomplete":1,"./L.Routing.Waypoint":10}],10:[function(require,module,exports){
 (function (global){
 (function() {
 	'use strict';
