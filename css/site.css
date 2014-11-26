@@ -77,7 +77,7 @@ button.mapbox-directions-button-add
 .leaflet-osrm-tools-container
 {
    cursor: pointer;
-   width: 136px;
+   width: 161px;
    height: 26px;
 }
 
@@ -193,7 +193,20 @@ button.mapbox-directions-button-add
   top: 3px;
   left: 78px;
 }
+
+
 .leaflet-osrm-tools-language:hover
+{
+   background-color: rgba(255, 255, 255, 0.2);
+}
+
+.leaflet-osrm-tools-print
+{
+  position: absolute;
+  top: 3px;
+  left: 103px;
+}
+.leaflet-osrm-tools-print:hover
 {
    background-color: rgba(255, 255, 255, 0.2);
 }
@@ -202,7 +215,7 @@ button.mapbox-directions-button-add
 {
   position: absolute;
   top: 3px;
-  left: 103px;
+  left: 128px;
   text-align: center;
 }
 .leaflet-osrm-tools-gpx a {

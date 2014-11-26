@@ -51,6 +51,7 @@ var options = {
     editorButtonClass: 'mapbox-directions-icon mapbox-editor-icon',
     josmButtonClass: 'mapbox-directions-icon mapbox-josm-icon',
     languageButtonClass: 'mapbox-directions-icon mapbox-flag-icon',
+    printButtonClass: 'icon printer',
     toolsContainerClass: 'fill-dark dark',
   }
 };

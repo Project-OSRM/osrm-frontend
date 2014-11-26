@@ -6,4 +6,5 @@ module.exports = {
   'Download as GPX': 'Als GPX herunterladen',
   'Short': 'Verkürzt',
   'Select Language': 'Sprache auswählen',
+  'Print': 'Drucken',
 };

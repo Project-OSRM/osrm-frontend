@@ -13,6 +13,7 @@ var Control = L.Control.extend({
     editorButtonClass: "",
     josmButtonClass: "",
     languageButtonClass: "",
+    printButtonClass: "",
     gpxLinkClass: "",
     language: "en"
   },
@@ -33,6 +34,8 @@ var Control = L.Control.extend({
         popupCloseButton,
         languageContainer,
         languageButton,
+        printContainer,
+        printButton,
         gpxContainer;
 
     this._container = L.DomUtil.create('div', 'leaflet-osrm-tools-container leaflet-bar ' + this.options.toolsContainerClass);
@@ -57,6 +60,11 @@ var Control = L.Control.extend({
     languageButton = L.DomUtil.create('span', this.options.languageButtonClass, languageContainer);
     languageButton.title = localization[this.options.language]['Select Language'];
     L.DomEvent.on(languageButton, 'click', this._selectLanguage, this);
+
+    printContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-print', this._container);
+    printButton = L.DomUtil.create('span', this.options.printButtonClass, printContainer);
+    printButton.title = localization[this.options.language]['Print'];
+    L.DomEvent.on(printButton, 'click', this._printPage, this);
 
     gpxContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-gpx', this._container);
     this._gpxLink = L.DomUtil.create('a', this.options.gpxLinkClass, gpxContainer);
@@ -135,6 +143,20 @@ var Control = L.Control.extend({
     }, this);
 
     this._openPopup(linkContainer);
+  },
+
+  _printPage: function() {
+    var options = this._getLinkOptions(),
+        validWPs = options.waypoints.filter(function(wp) { return wp.latLng !== undefined; }),
+        link = window.location.href.replace("/index.html?", "/printing.html?").replace("/?", "/printing.html?");
+    if (link.slice(-1) === '/') {
+      link += "printing.html";
+    }
+    if (validWPs.length < 2 ) {
+      return;
+    }
+    console.log(links.format(link, options));
+    window.location.href = links.format(link, options);
   },
 
   _selectLanguage: function() {
