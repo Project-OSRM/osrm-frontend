@@ -7,8 +7,10 @@
     "test": "jshint src",
     "watch": "watchify -v -d src/index.js -s osrm -o js/osrm.dev.js",
     "build-dev": "browserify -d src/index.js -s osrm > js/osrm.dev.js",
+    "build-printing-dev": "browserify -d src/printing.js -s osrm > js/osrm.printing.dev.js",
     "build-min": "browserify src/index.js -s osrm | uglifyjs -c warnings=false -m > js/osrm.min.js",
-    "prepublish": "npm run build-dev && npm run build-min"
+    "build-printing-min": "browserify src/printing.js -s osrm | uglifyjs -c warnings=false -m > js/osrm.priting.min.js",
+    "prepublish": "npm run build-dev && npm run build-min && npm run build-printing-dev && npm run build-printing-min"
   },
   "dependencies": {
     "jsonp": "^0.0.4"
