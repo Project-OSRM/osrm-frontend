@@ -1,6 +1,5 @@
 "use strict";
 
-var itineraryBuilder = require('./itinerary_builder.js');
 var createGeocoder = require('./geocoder.js');
 var theme = require('./directions_theme.js');
 var links = require('./links.js');
