@@ -81,6 +81,25 @@ button.mapbox-directions-button-add
    height: 26px;
 }
 
+.mapbox-directions-summary
+{
+  border-left: solid 2px;
+  padding-left: 20px;
+}
+
+.leaflet-routing-alt .mapbox-directions-summary
+{
+  color: #3bb2d0;
+  border-color: #3bb2d0;
+}
+
+.leaflet-routing-alt-minimized .mapbox-directions-summary
+{
+  color: #fff;
+  border-color: #fff;
+}
+
+
 .mapbox-directions-inputs
 {
    position: fixed;

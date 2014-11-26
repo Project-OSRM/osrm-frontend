@@ -30,6 +30,7 @@ var options = {
       {color: 'white', opacity: 0.3, weight: 4},
       {color: '#3BB2D0', opacity: 1, weight: 2, dashArray: '7,12'}
     ],
+    summaryTemplate: '<div class="mapbox-directions-summary"><h2>{name}</h2><h3>{distance}, {time}</h3></div>',
     containerClassName: "dark pad2",
     alternativeClassName: "mapbox-directions-instructions",
     stepClassName: "mapbox-directions-step",
