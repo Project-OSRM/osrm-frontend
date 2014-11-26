@@ -1,0 +1,16 @@
+#map {
+    width: 18cm;
+    height: 10cm;
+    z-index: 0;
+}
+
+.leaflet-routing-container {
+    width: 18cm;
+    height: auto !important;
+}
+
+.leaflet-routing-alt {
+  max-height: none !important;
+  overflow-y: auto !important;
+}
+
