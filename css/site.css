@@ -18,6 +18,14 @@
     border-bottom: 0px solid #000;
 }
 
+.leaflet-control-scale
+{
+  position: absolute;
+  left: 180px;
+  bottom: 5px;
+}
+
+
 button.mapbox-directions-button-add
 {
     margin: 0 0 0 0;

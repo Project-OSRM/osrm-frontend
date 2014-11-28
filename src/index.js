@@ -36,6 +36,8 @@ toolsControl.addTo(map);
 
 L.control.layers(options.layers, {}, {position: 'bottomleft'}).addTo(map);
 
+L.control.scale({position: 'bottomleft'}).addTo(map);
+
 map.on('click', function(e) {
   var plan = lrm.getPlan(),
       wps = plan.getWaypoints(),
