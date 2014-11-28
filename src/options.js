@@ -15,7 +15,7 @@ var defaultControl = {
   waypointMode: 'snap',
 };
 
-var servers = {
+var services = {
  'Car (fastest)': '//router.project-osrm.org/viaroute'
 };
 
@@ -59,14 +59,14 @@ var layers = {
   })
 };
 
-var defaultServer = 'Car (fastest)';
+var defaultService = 'Car (fastest)';
 var defaultLayer = 'OSRM bright';
 
 module.exports = {
   viewDefaults: defaultView,
   controlDefaults: defaultControl,
-  serverDefaults: defaultServer,
-  layerDefaults: defaultLayer,
+  service: defaultService,
+  layer: defaultLayer,
   layers: layers,
-  servers: servers,
+  services: services,
 };

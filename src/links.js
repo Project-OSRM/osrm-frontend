@@ -48,18 +48,15 @@ function formatLink(baseURL, options)
                                                     .map(_formatCoord)
                                  : undefined,
           hl: options.language,
+          ly: options.layer,
+          alt: options.isAlternative,
+          df: options.units,
+          srv: options.service,
         },
       });
   return formated;
 }
 
-/*
- * TODO:
- * hl -> language
- * ly -> layer
- * alt -> isAlternative
- * df -> distanceUnit
- */
 function parseLink(link)
 {
   var parsed = url.parse(link, true),
@@ -77,6 +74,10 @@ function parseLink(link)
       }
     );
     parsedValues.language = q.hl;
+    parsedValues.isAlternative = q.alt;
+    parsedValues.units = q.df;
+    parsedValues.layer = q.ly;
+    parsedValues.service = q.srv;
   } catch (e) {
     console.log("Exception " + e.name + ": " + e.message);
   }

@@ -12,7 +12,7 @@ var viewOptions = L.extend(options.viewDefaults, parsedOptions);
 
 var map = L.map('map', {
   zoomControl: false,
-  layers: [options.layers[options.layerDefaults]]
+  layers: [options.layers[viewOptions.layer]]
 }).setView(viewOptions.center, viewOptions.zoom);
 
 /*var mapbox = L.tileLayer('https://{s}.tiles.mapbox.com/v3/dennisl.4e2aab76/{z}/{x}/{y}.png',
@@ -21,7 +21,10 @@ var map = L.map('map', {
 */
 
 
-var lrm = L.Routing.control(L.extend({language: viewOptions.language},
+var lrm = L.Routing.control(L.extend({language: viewOptions.language,
+                                      units: viewOptions.units,
+                                      serviceURL: viewOptions.service,
+                                     },
                                      L.extend(options.controlDefaults,
                                               theme.options.lrm)
                                     ));
