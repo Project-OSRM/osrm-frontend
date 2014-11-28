@@ -15,7 +15,58 @@ var defaultControl = {
   waypointMode: 'snap',
 };
 
+var servers = {
+ 'Car (fastest)': '//router.project-osrm.org/viaroute'
+};
+
+var layers = {
+  'OSRM bright': L.tileLayer('https://{s}.tiles.mapbox.com/v3/dennisl.4e2aab76/{z}/{x}/{y}.png',
+  {
+    attribution:'<a href="https://www.mapbox.com/about/maps">© Mapbox</a> <a href="http://openstreetmap.org/copyright">© OpenStreetMap</a> | <a href="http://mapbox.com/map-feedback/">Improve this map</a>',
+    maxZoom: 18
+  }),
+  'Mapbox Terrain': L.tileLayer('https://{s}.tiles.mapbox.com/v3/dennisl.map-dfbkqsr2/{z}/{x}/{y}.png',
+  {
+    attribution:'<a href="https://www.mapbox.com/about/maps">© Mapbox</a> <a href="http://openstreetmap.org/copyright">© OpenStreetMap</a> | <a href="http://mapbox.com/map-feedback/">Improve this map</a>',
+    maxZoom: 18
+  }),
+
+  'Mapbox Labelled Satellite': L.tileLayer('https://{s}.tiles.mapbox.com/v3/dennisl.map-6g3jtnzm/{z}/{x}/{y}.png',
+  {
+    attribution: '<a href="https://www.mapbox.com/about/maps">© Mapbox</a> <a href="http://openstreetmap.org/copyright">© OpenStreetMap</a> | <a href="http://mapbox.com/map-feedback/">Improve this map</a>',
+    maxZoom: 18
+  }),
+  'Mapbox Satellite': L.tileLayer('https://{s}.tiles.mapbox.com/v3/dennisl.map-inp5al1s/{z}/{x}/{y}.png',
+  {
+    attribution: '<a href="https://www.mapbox.com/about/maps">© Mapbox</a> <a href="http://openstreetmap.org/copyright">© OpenStreetMap</a> | <a href="http://mapbox.com/map-feedback/">Improve this map</a>',
+    maxZoom: 18
+  }),
+  'osm.org': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  {
+    attribution: '© <a href="http://www.openstreetmap.org/copyright/en">OpenStreetMap</a> contributors',
+    maxZoom: 18
+  }),
+  'osm.de': L.tileLayer('http://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png',
+  {
+    attribution: '© <a href="http://www.openstreetmap.org/copyright/en">OpenStreetMap</a> contributors',
+    maxZoom: 18
+  }),
+  'MapQuest': L.tileLayer('http://otile{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png',
+  {
+      attribution:'© <a href="http://www.openstreetmap.org/copyright/en">OpenStreetMap</a> contributors, Imagery © <a href="http://www.mapquest.de/">MapQuest</a>',
+      maxZoom: 18,
+      subdomains: '1234'
+  })
+};
+
+var defaultServer = 'Car (fastest)';
+var defaultLayer = 'OSRM bright';
+
 module.exports = {
   viewDefaults: defaultView,
   controlDefaults: defaultControl,
+  serverDefaults: defaultServer,
+  layerDefaults: defaultLayer,
+  layers: layers,
+  servers: servers,
 };

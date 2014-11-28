@@ -10,11 +10,15 @@ var popupFactory = require('./waypoint_popup.js');
 var parsedOptions = links.parse(window.location.search);
 var viewOptions = L.extend(options.viewDefaults, parsedOptions);
 
-var map = L.map('map', {zoomControl: false}).setView(viewOptions.center, viewOptions.zoom);
+var map = L.map('map', {
+  zoomControl: false,
+  layers: [options.layers[options.layerDefaults]]
+}).setView(viewOptions.center, viewOptions.zoom);
 
-var mapbox = L.tileLayer('https://{s}.tiles.mapbox.com/v3/dennisl.4e2aab76/{z}/{x}/{y}.png',
+/*var mapbox = L.tileLayer('https://{s}.tiles.mapbox.com/v3/dennisl.4e2aab76/{z}/{x}/{y}.png',
     {attribution: '&copy; <a href="http://mapbox.com/">MapBox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'}
     ).addTo(map);
+*/
 
 
 var lrm = L.Routing.control(L.extend({language: viewOptions.language},
@@ -29,6 +33,8 @@ lrm.getPlan().options.waypointPopup = popupFactory(lrm, theme.options.popup);
 var toolsControl = tools.control(lrm, L.extend({ position: 'bottomleft', language: viewOptions.language},
                                                theme.options.tools));
 toolsControl.addTo(map);
+
+L.control.layers(options.layers, {}, {position: 'bottomleft'}).addTo(map);
 
 map.on('click', function(e) {
   var plan = lrm.getPlan(),
