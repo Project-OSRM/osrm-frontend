@@ -106,14 +106,24 @@ button.mapbox-directions-button-add
 
 .mapbox-directions-summary
 {
-  border-left: solid 2px;
+  border-top: solid 1px;
   padding-left: 20px;
 }
 
 .leaflet-routing-alt .mapbox-directions-summary
 {
-  color: #3bb2d0;
-  border-color: #3bb2d0;
+  color: #ee8a65;
+  border-color: #ee8a65;
+}
+
+.mapbox-directions-summary h2
+{
+  font-size: 22px;
+  font-weight: normal;
+}
+.mapbox-directions-summary h3
+{
+  font-weight: normal;
 }
 
 .leaflet-routing-alt-minimized .mapbox-directions-summary
@@ -133,7 +143,13 @@ button.mapbox-directions-button-add
    max-width: 500px;
    min-width: 200px;
 }
+.mapbox-form-label {
+  cursor: default;
+}
 
+.mapbox-directions-origin .mapbox-form-label {
+    background-color: #ee8a65;
+}
 .mapbox-directions-via {
     background-color: white;
     position: relative;
@@ -314,9 +330,28 @@ button.mapbox-directions-button-add
   display: none;
 }
 
+.leaflet-osrm-geocoder-label
+{
+  width: 20px;
+  height: 20px;
+  font-family: Arial;
+  font-variant: bold;
+  font-size: 20px;
+  color: #fff;
+}
+
+.leaflet-osrm-waypoint-label
+{
+  background-color: rgba(0, 0, 0, 0.5);
+  border-color: rgba(0, 0, 0, 0.5);
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+  color: #fff;
+}
+
 .leaflet-osrm-waypoint-popup .leaflet-popup-content-wrapper
 {
   background-color: rgba(0, 0, 0, 0.5);
+  color: #fff;
 }
 
 .leaflet-osrm-waypoint-popup .leaflet-popup-tip-container .leaflet-popup-tip

@@ -4,7 +4,9 @@ var MarkerFactory = L.Class.extend({
   include: L.Mixin.Events,
   options: {
     removeButtonClass: '',
-    uturnButtonClass: ''
+    uturnButtonClass: '',
+    markerOptions: {
+    },
   },
 
   initialize: function(lrm, options) {
@@ -47,11 +49,17 @@ var MarkerFactory = L.Class.extend({
   },
 
   createMarker: function(i, wp, n) {
-    var options = {
-          draggable: true
-        },
+    var label = String.fromCharCode(65 + i),
+        options = L.extend({
+          draggable: true,
+        }, this.options.markerOptions),
         marker = L.marker(wp.latLng, options);
 
+    marker.bindLabel(label, {
+                      direction: 'auto',
+                      noHide: true,
+                      className: 'leaflet-osrm-waypoint-label'
+                    });
     marker.bindPopup(this._createPopup(i));
 
     return marker;

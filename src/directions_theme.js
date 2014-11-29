@@ -3,6 +3,11 @@
 var itineraryBuilder = require('./itinerary_builder.js');
 var createGeocoder = require('./geocoder.js');
 
+// Mapbox Blue
+// var primiaryColor = '#3BB2D0';
+var primarayColor = '#ee8a65';
+var secondaryColor = '#f1f075';
+
 var options = {
   lrm: {
     routeWhileDragging: true,
@@ -10,24 +15,24 @@ var options = {
     addButtonClassName: 'mapbox-directions-button-add',
     waypointMode: 'snap',
     pointMarkerStyle: {
-      radius: 7,
-      color: 'white',
-      fillColor: '#3BB2D0',
-      opacity: 1,
-      fillOpacity: 0.7,
+      radius: 6,
+      color: 'black',
+      fillColor: secondaryColor,
+      opacity: 0.35,
+      fillOpacity: 1.0,
       weight: 1,
     },
     lineOptions: {
       styles: [
-        {color: 'black', opacity: 0.35, weight: 7},
-        {color: 'white', opacity: 0.8, weight: 5},
-        {color: '#3BB2D0', opacity: 1, weight: 3}
+        {color: 'black', opacity: 0.35, weight: 8},
+        {color: 'white', opacity: 0.8, weight: 6},
+        {color: primarayColor, opacity: 1, weight: 4}
       ],
     },
     dragStyles: [
-      {color: 'black', opacity: 0.15, weight: 7},
-      {color: 'white', opacity: 0.3, weight: 4},
-      {color: '#3BB2D0', opacity: 1, weight: 2, dashArray: '7,12'}
+      {color: 'black', opacity: 0.35, weight: 9},
+      {color: 'white', opacity: 0.8, weight: 7},
+      {color: primarayColor, opacity: 1, weight: 5, dashArray: '7,12'}
     ],
     summaryTemplate: '<div class="mapbox-directions-summary"><h2>{name}</h2><h3>{distance}, {time}</h3></div>',
     containerClassName: "dark pad2",
@@ -40,7 +45,9 @@ var options = {
 
   popup: {
     removeButtonClass: 'mapbox-directions-icon mapbox-close-light-icon',
-    uturnButtonClass: 'mapbox-directions-icon mapbox-u-turn-icon'
+    uturnButtonClass: 'mapbox-directions-icon mapbox-u-turn-icon',
+    markerOptions: {
+    }
   },
 
   tools: {

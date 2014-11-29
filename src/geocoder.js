@@ -13,16 +13,10 @@ var geocoder = function(i, num) {
       label = L.DomUtil.create('label', 'mapbox-form-label', container),
       input = L.DomUtil.create('input', '', container),
       close = L.DomUtil.create('span', 'mapbox-directions-icon mapbox-close-icon', container),
-      icon,
-      iconName;
-  if (i === 0) {
-    iconName = "depart";
-  } else if (i === num-1){
-    iconName = "arrive";
-  } else {
-    iconName = "via";
-  }
-  icon  = L.DomUtil.create('div', 'mapbox-directions-icon mapbox-' + iconName  + '-icon', label);
+      name = String.fromCharCode(65 + i),
+      icon = L.DomUtil.create('div', 'leaflet-osrm-geocoder-label', label);
+
+  icon.innerHTML = name;
 
   return {
     container: container,
