@@ -194,23 +194,39 @@ button.mapbox-directions-button-add
    background-color: rgba(255, 255, 255, 0.2);
 }
 
-.leaflet-osrm-tools-language-list a
+.leaflet-osrm-tools-localization-popup
 {
-    width: 90%;
+  width: 90%;
+}
+
+.leaflet-osrm-tools-language-list
+{
+  float: left;
+  width: 50%;
+}
+.leaflet-osrm-tools-units-list
+{
+  float: right;
+  width: 50%;
+}
+
+.leaflet-osrm-tools-localization-popup a
+{
+    width: 100%;
     height: auto;
     color: #fff;
     background-color: inherit;
 }
 
-.leaflet-osrm-tools-language-list a:hover
+.leaflet-osrm-tools-localization-popup a:hover
 {
-    width: 90%;
+    width: 100%;
     height: auto;
     color: #fff;
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-.leaflet-osrm-tools-language
+.leaflet-osrm-tools-localization
 {
   position: absolute;
   top: 3px;
@@ -218,7 +234,7 @@ button.mapbox-directions-button-add
 }
 
 
-.leaflet-osrm-tools-language:hover
+.leaflet-osrm-tools-localization:hover
 {
    background-color: rgba(255, 255, 255, 0.2);
 }

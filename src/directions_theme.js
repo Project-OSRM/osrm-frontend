@@ -50,7 +50,7 @@ var options = {
     linkButtonClass: 'mapbox-directions-icon mapbox-link-icon',
     editorButtonClass: 'mapbox-directions-icon mapbox-editor-icon',
     josmButtonClass: 'mapbox-directions-icon mapbox-josm-icon',
-    languageButtonClass: 'mapbox-directions-icon mapbox-flag-icon',
+    localizationButtonClass: 'mapbox-directions-icon mapbox-flag-icon',
     printButtonClass: 'icon printer',
     toolsContainerClass: 'fill-dark dark',
   }

@@ -4,7 +4,9 @@ var defaultView = {
   center: L.latLng(48.84, 10.10),
   zoom: 5,
   waypoints: [],
-  language: 'en'
+  language: 'en',
+  service: 'Car (fastest)',
+  layer: 'OSRM bright',
 };
 
 var defaultControl = {
@@ -59,14 +61,9 @@ var layers = {
   })
 };
 
-var defaultService = 'Car (fastest)';
-var defaultLayer = 'OSRM bright';
-
 module.exports = {
   viewDefaults: defaultView,
   controlDefaults: defaultControl,
-  service: defaultService,
-  layer: defaultLayer,
   layers: layers,
   services: services,
 };

@@ -12,10 +12,11 @@ var Control = L.Control.extend({
     toolContainerClass: "",
     editorButtonClass: "",
     josmButtonClass: "",
-    languageButtonClass: "",
+    localizationButtonClass: "",
     printButtonClass: "",
     gpxLinkClass: "",
-    language: "en"
+    language: "en",
+    units: "metric"
   },
 
   initialize: function(lrm, options) {
@@ -32,8 +33,8 @@ var Control = L.Control.extend({
         josmContainer,
         josmButton,
         popupCloseButton,
-        languageContainer,
-        languageButton,
+        localizationContainer,
+        localizationButton,
         printContainer,
         printButton,
         gpxContainer;
@@ -56,10 +57,10 @@ var Control = L.Control.extend({
     josmButton.title = localization[this.options.language]['Open in JOSM'];
     L.DomEvent.on(josmButton, 'click', this._openJOSM, this);
 
-    languageContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-language', this._container);
-    languageButton = L.DomUtil.create('span', this.options.languageButtonClass, languageContainer);
-    languageButton.title = localization[this.options.language]['Select Language'];
-    L.DomEvent.on(languageButton, 'click', this._selectLanguage, this);
+    localizationContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-localization', this._container);
+    localizationButton = L.DomUtil.create('span', this.options.localizationButtonClass, localizationContainer);
+    localizationButton.title = localization[this.options.language]['Select language and units'];
+    L.DomEvent.on(localizationButton, 'click', this._selectLocalization, this);
 
     printContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-print', this._container);
     printButton = L.DomUtil.create('span', this.options.printButtonClass, printContainer);
@@ -107,6 +108,7 @@ var Control = L.Control.extend({
       center: this._map.getCenter(),
       waypoints: this._lrm.getWaypoints(),
       language: this.options.language,
+      units: this.options.units,
     };
   },
 
@@ -159,16 +161,20 @@ var Control = L.Control.extend({
     window.location.href = links.format(link, options);
   },
 
-  _selectLanguage: function() {
-    var list = L.DomUtil.create('ul', 'leaflet-osrm-tools-language-list'),
+  _selectLocalization: function() {
+    var container = L.DomUtil.create('div', 'leaflet-osrm-tools-localization-popup'),
+        languageList = L.DomUtil.create('ul', 'leaflet-osrm-tools-language-list', container),
+        unitsList = L.DomUtil.create('ul', 'leaflet-osrm-tools-units-list', container),
         options = this._getLinkOptions(),
         language,
+        unitSystems,
+        i,
         item,
         link;
 
     for (language in localization)
     {
-      item = L.DomUtil.create('il', '', list);
+      item = L.DomUtil.create('il', '', languageList);
       link = L.DomUtil.create('a', '', item);
       options.language = language;
       link.href = links.format(window.location.href, options);
@@ -176,7 +182,19 @@ var Control = L.Control.extend({
       link.innerHTML = localization[language].name;
     }
 
-    this._openPopup(list);
+    options.language = this.options.language;
+    unitSystems = ['Metric', 'Imperial'];
+    for (i = 0; i < unitSystems.length; i++)
+    {
+      item = L.DomUtil.create('il', '', unitsList);
+      link = L.DomUtil.create('a', '', item);
+      options.units = unitSystems[i].toLowerCase();
+      link.href = links.format(window.location.href, options);
+      link.alt = unitSystems[i];
+      link.innerHTML = unitSystems[i];
+    }
+
+    this._openPopup(container);
   },
 
   _updateDownloadLink: function() {

@@ -5,6 +5,6 @@ module.exports = {
   'Open in JOSM': 'Open in JSOM',
   'Download as GPX': 'Download as GPX',
   'Short': 'Short',
-  'Select Language': 'Select Language',
+  'Select language and units': 'Select language and units',
   'Print': 'Print',
 };

@@ -15,12 +15,6 @@ var map = L.map('map', {
   layers: [options.layers[viewOptions.layer]]
 }).setView(viewOptions.center, viewOptions.zoom);
 
-/*var mapbox = L.tileLayer('https://{s}.tiles.mapbox.com/v3/dennisl.4e2aab76/{z}/{x}/{y}.png',
-    {attribution: '&copy; <a href="http://mapbox.com/">MapBox</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'}
-    ).addTo(map);
-*/
-
-
 var lrm = L.Routing.control(L.extend({language: viewOptions.language,
                                       units: viewOptions.units,
                                       serviceURL: viewOptions.service,
