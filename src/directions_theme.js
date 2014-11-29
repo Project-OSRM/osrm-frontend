@@ -2,7 +2,6 @@
 
 var itineraryBuilder = require('./itinerary_builder.js');
 var createGeocoder = require('./geocoder.js');
-var createPopup = require('./waypoint_popup.js');
 
 var options = {
   lrm: {

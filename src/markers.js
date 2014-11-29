@@ -1,6 +1,6 @@
 "use strict";
 
-var PopupFactory = L.Class.extend({
+var MarkerFactory = L.Class.extend({
   include: L.Mixin.Events,
   options: {
     removeButtonClass: '',
@@ -23,7 +23,7 @@ var PopupFactory = L.Class.extend({
       }
   },
 
-  createPopup: function(i, name, n) {
+  _createPopup: function(i) {
     var container = L.DomUtil.create('div', 'leaflet-osrm-popup-container'),
         removeButton = L.DomUtil.create('span', this.options.removeButtonClass, container),
         uturnButton = L.DomUtil.create('span', this.options.uturnButtonClass, container),
@@ -45,11 +45,22 @@ var PopupFactory = L.Class.extend({
     popup.setContent(container);
     return popup;
   },
+
+  createMarker: function(i, wp, n) {
+    var options = {
+          draggable: true
+        },
+        marker = L.marker(wp.latLng, options);
+
+    marker.bindPopup(this._createPopup(i));
+
+    return marker;
+  },
 });
 
 module.exports = function (lrm, options) {
-  var factory = new PopupFactory(lrm, options);
-  return function(i, name, n) {
-    return factory.createPopup(i, name, n);
+  var factory = new MarkerFactory(lrm, options);
+  return function(i, wp, n) {
+    return factory.createMarker(i, wp, n);
   };
 };

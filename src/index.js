@@ -1,11 +1,10 @@
 "use strict";
 
-var createGeocoder = require('./geocoder.js');
 var theme = require('./directions_theme.js');
 var links = require('./links.js');
 var options = require('./options.js');
 var tools = require('./tools.js');
-var popupFactory = require('./waypoint_popup.js');
+var markerFactory = require('./markers.js');
 
 var parsedOptions = links.parse(window.location.search);
 var viewOptions = L.extend(options.viewDefaults, parsedOptions);
@@ -25,7 +24,7 @@ var lrm = L.Routing.control(L.extend({language: viewOptions.language,
 lrm.addTo(map);
 
 // We need to do this the ugly way because of cyclic dependencies...
-lrm.getPlan().options.waypointPopup = popupFactory(lrm, theme.options.popup);
+lrm.getPlan().options.createMarker = markerFactory(lrm, theme.options.popup);
 
 var toolsControl = tools.control(lrm, L.extend({ position: 'bottomleft', language: viewOptions.language},
                                                theme.options.tools));

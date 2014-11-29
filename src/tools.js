@@ -198,7 +198,18 @@ var Control = L.Control.extend({
   },
 
   _updateDownloadLink: function() {
-    var url = this._lrm.getDownloadURL('gpx');
+    var plan = this._lrm.getPlan(),
+        router = this._lrm.getRouter(),
+        url;
+
+    if (!plan.isReady()) {
+      return;
+    }
+
+    url = router.buildRouteUrl(plan.getWaypoints(), {
+                                fileformat: 'gpx'
+                               });
+
     this._gpxLink.href = url;
   },
 

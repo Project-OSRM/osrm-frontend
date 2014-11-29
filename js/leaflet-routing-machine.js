@@ -294,6 +294,10 @@
 			return this._plan;
 		},
 
+		getRouter: function() {
+			return this._router;
+		},
+
 		_routeSelected: function(e) {
 			var route = e.route,
 				fitMode = this.options.fitSelectedRoutes,
@@ -416,15 +420,6 @@
 			}
 		},
 
-		getDownloadURL: function(format) {
-			if (!this._plan.isReady()) {
-				return '';
-			}
-			return this._router.buildRouteUrl(this._plan.getWaypoints(), {
-				fileformat: format
-			});
-		},
-
 		route: function(options) {
 			var ts = new Date().getTime(),
 				wps;
@@ -502,7 +497,7 @@
 				minutes: 'mín',
 				seconds: 's'
 			},
-      language: 'en',
+			language: 'en',
 			roundingSensitivity: 1,
 			distanceTemplate: '{value} {unit}'
 		},
@@ -568,7 +563,7 @@
 			if (instr.type !== undefined) {
 				return L.Util.template(this._getInstructionTemplate(instr, i),
 					L.extend({
-							exit: L.Routing.Localization[this.options.language].formatOrder(instr.exit),
+							exitStr: L.Routing.Localization[this.options.language].formatOrder(instr.exit),
 							dir: L.Routing.Localization[this.options.language].directions[instr.direction]
 						},
 						instr));
@@ -810,8 +805,8 @@
 		},
 	});
 
-	L.Routing.itinerary = function(router) {
-		return new L.Routing.Itinerary(router);
+	L.Routing.itinerary = function(options) {
+		return new L.Routing.Itinerary(options);
 	};
 
 	module.exports = L.Routing;
@@ -1048,7 +1043,7 @@
 				'WaypointReached':
 					['Waypoint reached'],
 				'Roundabout':
-					['Take the {exit} exit in the roundabout'],
+					['Take the {exitStr} exit in the roundabout'],
 				'DestinationReached':
 					['Destination reached'],
 			},
@@ -1094,7 +1089,7 @@
 				'WaypointReached':
 					['Zwischenhalt erreicht'],
 				'Roundabout':
-					['Nehmen Sie die {exit} Ausfahrt im Kreisverkehr'],
+					['Nehmen Sie die {exitStr} Ausfahrt im Kreisverkehr'],
 				'DestinationReached':
 					['Sie haben ihr Ziel erreicht'],
 			},
@@ -1102,6 +1097,51 @@
 				return n + '.';
 			}
 		},
+
+		'sv': {
+			directions: {
+				N: 'norr',
+				NE: 'nordost',
+				E: 'öst',
+				SE: 'sydost',
+				S: 'syd',
+				SW: 'sydväst',
+				W: 'väst',
+				NW: 'nordväst'
+			},
+			instructions: {
+				// instruction, postfix if the road is named
+				'Head':
+					['Åk åt {dir}', ' på {road}'],
+				'Continue':
+					['Fortsätt {dir}', ' på {road}'],
+				'SlightRight':
+					['Svagt höger', ' på {road}'],
+				'Right':
+					['Sväng höger', ' på {road}'],
+				'SharpRight':
+					['Skarpt höger', ' på {road}'],
+				'TurnAround':
+					['Vänd'],
+				'SharpLeft':
+					['Skarpt vänster', ' på {road}'],
+				'Left':
+					['Sväng vänster', ' på {road}'],
+				'SlightLeft':
+					['Svagt vänster', ' på {road}'],
+				'WaypointReached':
+					['Viapunkt nådd'],
+				'Roundabout':
+					['Tag {exitStr} avfarten i rondellen'],
+				'DestinationReached':
+					['Framme vid resans mål'],
+			},
+			formatOrder: function(n) {
+				return ['första', 'andra', 'tredje', 'fjärde', 'femte',
+					'sjätte', 'sjunde', 'åttonde', 'nionde', 'tionde'
+					/* Can't possibly be more than ten exits, can there? */][n - 1];
+			}
+		}
 	};
 
 	module.exports = L.Routing;
@@ -1262,8 +1302,8 @@
 				(options.z ? 'z=' + options.z + '&' : '') +
 				locs.join('&') +
 				(this._hints.checksum !== undefined ? '&checksum=' + this._hints.checksum : '') +
-				(options.fileformat ? '?output=' + options.fileformat : '') +
-				(options.allowUTurns ? '?uturns=' + options.allowUTurns : '');
+				(options.fileformat ? '&output=' + options.fileformat : '') +
+				(options.allowUTurns ? '&uturns=' + options.allowUTurns : '');
 		},
 
 		_locationKey: function(location) {
@@ -1462,6 +1502,14 @@
 					input: input,
 					closeButton: remove
 				};
+			},
+			createMarker: function(i, wp, n) {
+				var options = {
+				      draggable: true
+				    },
+				    marker = L.marker(wp.latLng, options);
+
+				return marker;
 			},
 			waypointNameFallback: function(latLng) {
 				var ns = latLng.lat < 0 ? 'S' : 'N',
@@ -1702,8 +1750,6 @@
 
 		_updateMarkers: function() {
 			var i,
-			    icon,
-			    popup,
 			    m;
 
 			if (!this._map) {
@@ -1714,13 +1760,8 @@
 
 			for (i = 0; i < this._waypoints.length; i++) {
 				if (this._waypoints[i].latLng) {
-					icon = (typeof(this.options.waypointIcon) === 'function') ?
-						this.options.waypointIcon(i, this._waypoints[i].name, this._waypoints.length) :
-						this.options.waypointIcon;
-					popup = (typeof(this.options.waypointPopup) === 'function') ?
-						this.options.waypointPopup(i, this._waypoints[i].name, this._waypoints.length) :
-						this.options.waypointPopup;
-					m = this._createMarker(icon, popup, i);
+					m = this.options.createMarker(i, this._waypoints[i], this._waypoints.length);
+					m.addTo(this._map);
 					if (this.options.draggableWaypoints) {
 						this._hookWaypointEvents(m, i);
 					}
@@ -1731,22 +1772,6 @@
 			}
 		},
 
-		_createMarker: function(icon, popup, i) {
-			var options = {
-				draggable: true
-			},
-				 marker;
-			if (icon) {
-				options.icon = icon;
-			}
-
-			marker = L.marker(this._waypoints[i].latLng, options).addTo(this._map);
-			if (popup) {
-				marker.bindPopup(popup);
-			}
-
-			return marker;
-		},
 
 		_fireChanged: function() {
 			this.fire('waypointschanged', {waypoints: this.getWaypoints()});
