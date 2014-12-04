@@ -27,7 +27,8 @@ var itineraryContainer = itinerary.onAdd();
 document.getElementById("instructions").appendChild(itineraryContainer);
 
 osrm.route(viewOptions.waypoints, function(error, alts) {
-  var line = L.Routing.line(alts[0], {}),
+  var altIdx = viewOptions.alternative ? viewOptions.alternative : 0,
+      line = L.Routing.line(alts[altIdx], {}),
       bounds,
       i;
   line.addTo(map);
@@ -37,5 +38,6 @@ osrm.route(viewOptions.waypoints, function(error, alts) {
     L.marker(wp.latLng).addTo(map);
   });
   itinerary.setAlternatives(alts);
+  itinerary.selectAlternative(altIdx);
 }, null, {});
 
