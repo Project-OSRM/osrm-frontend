@@ -109,6 +109,7 @@ var Control = L.Control.extend({
       waypoints: this._lrm.getWaypoints(),
       language: this.options.language,
       units: this.options.units,
+      alternative: this._lrm.getSelectedAlternative(),
     };
   },
 

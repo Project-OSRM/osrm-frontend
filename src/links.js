@@ -49,7 +49,7 @@ function formatLink(baseURL, options)
                                  : undefined,
           hl: options.language,
           ly: options.layer,
-          alt: options.isAlternative,
+          alt: options.alternative,
           df: options.units,
           srv: options.service,
         },
@@ -74,7 +74,7 @@ function parseLink(link)
       }
     );
     parsedValues.language = q.hl;
-    parsedValues.isAlternative = q.alt;
+    parsedValues.alternative = q.alt;
     parsedValues.units = q.df;
     parsedValues.layer = q.ly;
     parsedValues.service = q.srv;

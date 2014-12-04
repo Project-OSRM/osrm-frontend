@@ -14,26 +14,27 @@ var map = L.map('map', {
   layers: [options.layers[viewOptions.layer]]
 }).setView(viewOptions.center, viewOptions.zoom);
 
+/*
+ * Setup controls
+ */
 var lrm = L.Routing.control(L.extend({language: viewOptions.language,
                                       units: viewOptions.units,
                                       serviceURL: viewOptions.service,
                                      },
                                      L.extend(options.controlDefaults,
                                               theme.options.lrm)
-                                    ));
-lrm.addTo(map);
-
+                                    )).addTo(map);
 // We need to do this the ugly way because of cyclic dependencies...
 lrm.getPlan().options.createMarker = markerFactory(lrm, theme.options.popup);
-
-var toolsControl = tools.control(lrm, L.extend({ position: 'bottomleft', language: viewOptions.language},
-                                               theme.options.tools));
-toolsControl.addTo(map);
-
+tools.control(lrm, L.extend({
+                              position: 'bottomleft',
+                              language: viewOptions.language
+                            },
+                            theme.options.tools)).addTo(map);
 L.control.layers(options.layers, {}, {position: 'bottomleft'}).addTo(map);
-
 L.control.scale({position: 'bottomleft'}).addTo(map);
 
+// Click handler that adds waypoints
 map.on('click', function(e) {
   var plan = lrm.getPlan(),
       wps = plan.getWaypoints(),
@@ -50,4 +51,20 @@ map.on('click', function(e) {
 
 theme.setup(lrm);
 
+/*
+ * Initial route request
+ */
+function initialRouteCallback() {
+  lrm.off('routeselected', initialRouteCallback);
+  lrm.off('routingerror', initialRouteCallback);
+
+  lrm.selectAlternative(viewOptions.alternative);
+}
+
+if (viewOptions.alternative) {
+  lrm.on('routeselected', initialRouteCallback);
+  lrm.on('routingerror', initialRouteCallback);
+}
+
 lrm.setWaypoints(viewOptions.waypoints);
+
