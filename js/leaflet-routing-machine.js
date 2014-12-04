@@ -770,36 +770,64 @@
 			});
 		},
 
+		selectAlternative: function(i) {
+			var selectedElem = this._altElements[i],
+					minimizedClassName = 'leaflet-routing-alt-minimized',
+					isSelected,
+					elem,
+					j;
+
+			if (L.DomUtil.hasClass(selectedElem, minimizedClassName)) {
+				for (j = 0; j < this._altElements.length; j++) {
+					elem = this._altElements[j];
+					isSelected = selectedElem === elem;
+
+					if (isSelected) {
+						L.DomUtil.removeClass(elem, minimizedClassName);
+						if (this.options.minimizedClassName) {
+							L.DomUtil.removeClass(elem, this.options.minimizedClassName);
+						}
+
+						// TODO: don't fire if the currently active is clicked
+						this.fire('routeselected', {route: this._routes[j]});
+					} else {
+						L.DomUtil.addClass(elem, minimizedClassName);
+						if (this.options.minimizedClassName) {
+							L.DomUtil.addClass(elem, this.options.minimizedClassName);
+						}
+
+						elem.scrollTop = 0;
+					}
+				}
+			}
+		},
+
+		getSelectedAlternative: function() {
+			var minimizedClassName = 'leaflet-routing-alt-minimized',
+					altClassName = 'leaflet-routing-alt',
+					elem,
+					j;
+
+			for (j = 0; j < this._altElements.length; j++) {
+				elem = this._altElements[j];
+				if (L.DomUtil.hasClass(elem, altClassName) && !L.DomUtil.hasClass(elem, minimizedClassName))
+				{
+					return j;
+				}
+			}
+		},
+
 		_onAltClicked: function(e) {
 			var altElem,
-			    j,
-			    n,
-			    isCurrentSelection,
-			    classFn;
+					idx;
 
 			altElem = e.target || window.event.srcElement;
 			while (!L.DomUtil.hasClass(altElem, 'leaflet-routing-alt')) {
 				altElem = altElem.parentElement;
 			}
 
-			if (L.DomUtil.hasClass(altElem, 'leaflet-routing-alt-minimized')) {
-				for (j = 0; j < this._altElements.length; j++) {
-					n = this._altElements[j];
-					isCurrentSelection = altElem === n;
-					classFn = isCurrentSelection ? 'removeClass' : 'addClass';
-					L.DomUtil[classFn](n, 'leaflet-routing-alt-minimized');
-					if (this.options.minimizedClassName) {
-						L.DomUtil[classFn](n, this.options.minimizedClassName);
-					}
-
-					if (isCurrentSelection) {
-						// TODO: don't fire if the currently active is clicked
-						this.fire('routeselected', {route: this._routes[j]});
-					} else {
-						n.scrollTop = 0;
-					}
-				}
-			}
+			idx = this._altElements.indexOf(altElem);
+			this.selectAlternative(idx);
 
 			L.DomEvent.stop(e);
 		},
