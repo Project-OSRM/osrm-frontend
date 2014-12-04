@@ -5,6 +5,7 @@
 }
 
 .leaflet-routing-container {
+    page-break-before: always;
     width: 18cm;
     height: auto !important;
 }
