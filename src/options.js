@@ -18,7 +18,7 @@ var defaultControl = {
 };
 
 var services = {
- 'Car (fastest)': '//router.project-osrm.org/match'
+ 'Car (fastest)': '//router.project-osrm.org/viaroute'
 };
 
 var layers = {

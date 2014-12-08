@@ -20,7 +20,7 @@ var map = L.map('map', {
  */
 var lrm = L.Routing.control(L.extend({language: viewOptions.language,
                                       units: viewOptions.units,
-                                      serviceURL: options.services[viewOptions.service],
+                                      serviceUrl: options.services[viewOptions.service],
                                      },
                                      L.extend(options.controlDefaults,
                                               theme.options.lrm)
