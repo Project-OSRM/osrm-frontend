@@ -5,6 +5,7 @@ var links = require('./links.js');
 var options = require('./options.js');
 var tools = require('./tools.js');
 var markerFactory = require('./markers.js');
+var hideButton = require('./hide_button.js');
 
 var parsedOptions = links.parse(window.location.search);
 var viewOptions = L.extend(options.viewDefaults, parsedOptions);
@@ -33,6 +34,18 @@ tools.control(lrm, L.extend({
                             theme.options.tools)).addTo(map);
 L.control.layers(options.layers, {}, {position: 'bottomleft'}).addTo(map);
 L.control.scale({position: 'bottomleft'}).addTo(map);
+
+hideButton({
+  showFunction: function() { lrm.show(); },
+  hideFunction: function() { lrm.hide(); },
+  isHidden: function() { return L.DomUtil.hasClass(lrm.getPlan()._geocoderContainer.parentNode, 'leaflet-routing-container-hide'); },
+}).addTo(lrm.getPlan()._geocoderContainer);
+hideButton({
+  showFunction: function() { lrm.show(); },
+  hideFunction: function() { lrm.hide(); },
+  isHidden: function() { return L.DomUtil.hasClass(lrm.getPlan()._geocoderContainer.parentNode, 'leaflet-routing-container-hide'); },
+  border: 'left'
+}).addTo(lrm._container);
 
 // Click handler that adds waypoints
 map.on('click', function(e) {
