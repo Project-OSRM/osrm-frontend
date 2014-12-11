@@ -5,7 +5,8 @@ var createGeocoder = require('./geocoder.js');
 
 // Mapbox Blue
 // var primiaryColor = '#3BB2D0';
-var primarayColor = '#ee8a65';
+var primarayColor = '#3c4e5a';
+//var primarayColor = '#ee8a65';
 var secondaryColor = '#f1f075';
 
 var options = {
@@ -25,8 +26,8 @@ var options = {
     lineOptions: {
       styles: [
         {color: 'black', opacity: 0.35, weight: 8},
-        {color: 'white', opacity: 0.8, weight: 6},
-        {color: primarayColor, opacity: 1, weight: 4}
+        {color: 'white', opacity: 0.3, weight: 6},
+        {color: primarayColor, opacity: 1.0, weight: 4}
       ],
     },
     dragStyles: [
