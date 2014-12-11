@@ -66,6 +66,7 @@ module.exports = {
   options: options,
   // this hides the sidebar before the first route
   setup: function(lrm) {
+      lrm.hide();
       lrm.on('routeselected', function(r) { lrm.show(); });
     }
 };
