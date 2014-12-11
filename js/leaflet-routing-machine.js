@@ -233,6 +233,8 @@
 
 			this._router = this.options.router || new L.Routing.OSRM(options);
 			this._plan = this.options.plan || L.Routing.plan(this.options.waypoints, options);
+			this._requestCount = 0;
+			this._lastReceived = -1;
 
 			L.Routing.Itinerary.prototype.initialize.call(this, options);
 
@@ -369,11 +371,15 @@
 		},
 
 		_updateLine: function(route) {
+			var addWaypoints = this.options.addWaypoints !== undefined ?
+				this.options.addWaypoints : true;
 			this._clearLine();
 
 			this._line = this.options.routeLine(route,
-				L.extend({extendToWaypoints: this.options.waypointMode === 'connect'},
-					this.options.lineOptions));
+				L.extend({
+					addWaypoints: addWaypoints,
+					extendToWaypoints: this.options.waypointMode === 'connect'
+				}, this.options.lineOptions));
 			this._line.addTo(this._map);
 			this._hookEvents(this._line);
 		},
@@ -396,20 +402,28 @@
 		},
 
 		_setupRouteDragging: function() {
-			var lastCalled = 0;
+			var timer = 0,
+				waypoints;
 
 			this._plan.on('waypointdrag', L.bind(function(e) {
-				var now = new Date().getTime();
-				if (now - lastCalled >= this.options.routeDragInterval) {
-					this.route({
-						waypoints: e.waypoints,
-						geometryOnly: true,
-						callback: L.bind(this._updateLineCallback, this)
-					});
-					lastCalled = now;
+				waypoints = e.waypoints;
+
+				if (!timer) {
+					timer = setTimeout(L.bind(function() {
+						this.route({
+							waypoints: waypoints,
+							geometryOnly: true,
+							callback: L.bind(this._updateLineCallback, this)
+						});
+						timer = undefined;
+					}, this), this.options.routeDragInterval);
 				}
 			}, this));
 			this._plan.on('waypointdragend', function() {
+				if (timer) {
+					clearTimeout(timer);
+					timer = undefined;
+				}
 				this.route();
 			}, this);
 		},
@@ -421,11 +435,10 @@
 		},
 
 		route: function(options) {
-			var ts = new Date().getTime(),
+			var ts = ++this._requestCount,
 				wps;
 
 			options = options || {};
-			this._lastRequestTimestamp = ts;
 
 			if (this._plan.isReady()) {
 				if (this.options.useZoomParameter) {
@@ -439,7 +452,8 @@
 					// by checking the current request's timestamp
 					// against the last request's; ignore result if
 					// this isn't the latest request.
-					if (ts === this._lastRequestTimestamp) {
+					if (ts > this._lastReceived) {
+						this._lastReceived = ts;
 						this._clearLine();
 						this._clearAlts();
 						if (err) {
@@ -1169,6 +1183,95 @@
 					'sjätte', 'sjunde', 'åttonde', 'nionde', 'tionde'
 					/* Can't possibly be more than ten exits, can there? */][n - 1];
 			}
+		},
+
+		'sp': {
+			directions: {
+				N: 'norte',
+				NE: 'noreste',
+				E: 'este',
+				SE: 'sureste',
+				S: 'sur',
+				SW: 'suroeste',
+				W: 'oeste',
+				NW: 'noroeste'
+			},
+			instructions: {
+				// instruction, postfix if the road is named
+				'Head':
+					['Derecho {dir}', ' sobre {road}'],
+				'Continue':
+					['Continuar {dir}', ' en {road}'],
+				'SlightRight':
+					['Leve giro a la derecha', ' sobre {road}'],
+				'Right':
+					['Derecha', ' sobre {road}'],
+				'SharpRight':
+					['Giro pronunciado a la derecha', ' sobre {road}'],
+				'TurnAround':
+					['Dar vuelta'],
+				'SharpLeft':
+					['Giro pronunciado a la izquierda', ' sobre {road}'],
+				'Left':
+					['Izquierda', ' en {road}'],
+				'SlightLeft':
+					['Leve giro a la izquierda', ' en {road}'],
+				'WaypointReached':
+					['Llegó a un punto del camino'],
+				'Roundabout':
+					['Tomar {exitStr} salida en la rotonda'],
+				'DestinationReached':
+					['Llegada a destino'],
+			},
+			formatOrder: function(n) {
+				return n + 'º';
+			}
+		},
+		'nl': {
+			directions: {
+				N: 'noordelijke',
+				NE: 'noordoostelijke',
+				E: 'oostelijke',
+				SE: 'zuidoostelijke',
+				S: 'zuidelijke',
+				SW: 'zuidewestelijke',
+				W: 'westelijke',
+				NW: 'noordwestelijke'
+			},
+			instructions: {
+				// instruction, postfix if the road is named
+				'Head':
+					['Vertrek in {dir} richting', ' de {road} op'],
+				'Continue':
+					['Ga in {dir} richting', ' de {road} op'],
+				'SlightRight':
+					['Volg de weg naar rechts', ' de {road} op'],
+				'Right':
+					['Ga rechtsaf', ' de {road} op'],
+				'SharpRight':
+					['Ga scherpe bocht naar rechts', ' de {road} op'],
+				'TurnAround':
+					['Keer om'],
+				'SharpLeft':
+					['Ga scherpe bocht naar links', ' de {road} op'],
+				'Left':
+					['Ga linksaf', ' de {road} op'],
+				'SlightLeft':
+					['Volg de weg naar links', ' de {road} op'],
+				'WaypointReached':
+					['Aangekomen bij tussenpunt'],
+				'Roundabout':
+					['Neem de {exitStr} afslag op de rotonde'],
+				'DestinationReached':
+					['Aangekomen op eindpunt'],
+			},
+			formatOrder: function(n) {
+				if (n == 1 || n >= 20) {
+					return n + "ste";
+				} else {
+					return n + "de";
+				}
+			}
 		}
 	};
 
@@ -1216,20 +1319,36 @@
 		},
 
 		route: function(waypoints, callback, context, options) {
-			var url = this.buildRouteUrl(waypoints, options),
-				timedOut = false,
-				timer = setTimeout(function() {
-					timedOut = true;
-					callback.call(context || callback, {
-						status: -1,
-						message: 'OSRM request timed out.'
-					});
-				}, this.options.timeout);
+			var timedOut = false,
+				wps = [],
+				url,
+				timer,
+				wp,
+				i;
+
+			options = options || {};
+			url = this.buildRouteUrl(waypoints, options);
+
+			timer = setTimeout(function() {
+								timedOut = true;
+								callback.call(context || callback, {
+									status: -1,
+									message: 'OSRM request timed out.'
+								});
+							}, this.options.timeout);
+
+			// Create a copy of the waypoints, since they
+			// might otherwise be asynchronously modified while
+			// the request is being processed.
+			for (i = 0; i < waypoints.length; i++) {
+				wp = waypoints[i];
+				wps.push(new L.Routing.Waypoint(wp.latLng, wp.name, wp.options));
+			}
 
 			L.Routing._jsonp(url, function(data) {
 				clearTimeout(timer);
 				if (!timedOut) {
-					this._routeDone(data, waypoints, callback, context);
+					this._routeDone(data, wps, callback, context);
 				}
 			}, this, 'jsonp');
 
@@ -1479,7 +1598,6 @@
 	'use strict';
 
 	var L = (typeof window !== "undefined" ? window.L : typeof global !== "undefined" ? global.L : null);
-
 	L.Routing = L.Routing || {};
 	L.extend(L.Routing, require('./L.Routing.Autocomplete'));
 	L.extend(L.Routing, require('./L.Routing.Waypoint'));
@@ -1509,7 +1627,6 @@
 			maxGeocoderTolerance: 200,
 			autocompleteOptions: {},
 			geocodersClassName: '',
-			geocoderClassName: '',
 			geocoderPlaceholder: function(i, numberWaypoints) {
 				return i === 0 ?
 					'Start' :
@@ -1533,7 +1650,7 @@
 			},
 			createMarker: function(i, wp, n) {
 				var options = {
-				      draggable: true
+				      draggable: this.draggableWaypoints
 				    },
 				    marker = L.marker(wp.latLng, options);
 
@@ -1800,7 +1917,6 @@
 			}
 		},
 
-
 		_fireChanged: function() {
 			this.fire('waypointschanged', {waypoints: this.getWaypoints()});
 
@@ -1822,10 +1938,10 @@
 				this.fire('waypointdrag', this._createWaypointEvent(i, e));
 			}, this);
 			m.on('dragend', function(e) {
-				this.fire('waypointdragend', this._createWaypointEvent(i, e));
 				this._waypoints[i].latLng = e.target.getLatLng();
 				this._waypoints[i].name = '';
 				this._updateWaypointName(i, this._geocoderElems && this._geocoderElems[i].input, true);
+				this.fire('waypointdragend', this._createWaypointEvent(i, e));
 				this._fireChanged();
 			}, this);
 		},
