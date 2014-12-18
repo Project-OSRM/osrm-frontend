@@ -1558,7 +1558,7 @@
 			case 7:
 				return 'Left';
 			case 8:
-				return 'SlightRight';
+				return 'SlightLeft';
 			case 9:
 				return 'WaypointReached';
 			case 10:
