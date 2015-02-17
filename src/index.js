@@ -5,11 +5,12 @@ var links = require('./links.js');
 var options = require('./options.js');
 var tools = require('./tools.js');
 var markerFactory = require('./markers.js');
+var OsrmMap = require('./osrm-map.js');
 
 var parsedOptions = links.parse(window.location.search);
 var viewOptions = L.extend(options.viewDefaults, parsedOptions);
 
-var map = L.map('map', {
+var map = new OsrmMap('map', {
   zoomControl: false,
   layers: [options.layers[viewOptions.layer]]
 }).setView(viewOptions.center, viewOptions.zoom);
