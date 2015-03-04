@@ -3,6 +3,10 @@
   "version": "0.0.1",
   "description": "Front-end for the OSRM API",
   "main": "src/osrm.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Project-OSRM/osrm-frontend-v2.git"
+  },
   "scripts": {
     "test": "jshint src",
     "watch": "watchify -v -d src/index.js -s osrm -o js/osrm.dev.js",
