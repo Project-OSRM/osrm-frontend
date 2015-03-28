@@ -63,7 +63,7 @@ var layers = {
   {
 	  attribution: '© <a href="http://www.openstreetmap.org/copyright/en">OpenStreetMap</a> contributors. Tiles courtesy of <a href="http://www.thunderforest.com">Andy Allan</a>',
     maxZoom: 18
-  }),
+  })
 };
 
 module.exports = {
