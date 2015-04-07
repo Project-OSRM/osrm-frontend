@@ -11,10 +11,7 @@ var secondaryColor = '#f1f075';
 
 var options = {
   lrm: {
-    routeWhileDragging: true,
-    addWaypoints: true,
     addButtonClassName: 'mapbox-directions-button-add',
-    waypointMode: 'snap',
     pointMarkerStyle: {
       radius: 6,
       color: 'black',
