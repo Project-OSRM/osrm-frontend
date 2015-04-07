@@ -58,6 +58,11 @@ var layers = {
       attribution:'© <a href="http://www.openstreetmap.org/copyright/en">OpenStreetMap</a> contributors, Imagery © <a href="http://www.mapquest.de/">MapQuest</a>',
       maxZoom: 18,
       subdomains: '1234'
+  }),
+  'OpenCycleMap': L.tileLayer('http://{s}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png',
+  {
+	  attribution: '© <a href="http://www.openstreetmap.org/copyright/en">OpenStreetMap</a> contributors. Tiles courtesy of <a href="http://www.thunderforest.com">Andy Allan</a>',
+    maxZoom: 18
   })
 };
 
