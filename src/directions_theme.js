@@ -66,6 +66,6 @@ module.exports = {
   setup: function(lrm) {
       lrm.hide();
       lrm.on('routeselected', function(r) { lrm.show(); });
-    }
+  }
 };
 

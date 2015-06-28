@@ -1,4 +1,190 @@
-!function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),(f.L||(f.L={})).Routing=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}(g.L || (g.L = {})).Routing = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+function corslite(url, callback, cors) {
+    var sent = false;
+
+    if (typeof window.XMLHttpRequest === 'undefined') {
+        return callback(Error('Browser not supported'));
+    }
+
+    if (typeof cors === 'undefined') {
+        var m = url.match(/^\s*https?:\/\/[^\/]*/);
+        cors = m && (m[0] !== location.protocol + '//' + location.domain +
+                (location.port ? ':' + location.port : ''));
+    }
+
+    var x = new window.XMLHttpRequest();
+
+    function isSuccessful(status) {
+        return status >= 200 && status < 300 || status === 304;
+    }
+
+    if (cors && !('withCredentials' in x)) {
+        // IE8-9
+        x = new window.XDomainRequest();
+
+        // Ensure callback is never called synchronously, i.e., before
+        // x.send() returns (this has been observed in the wild).
+        // See https://github.com/mapbox/mapbox.js/issues/472
+        var original = callback;
+        callback = function() {
+            if (sent) {
+                original.apply(this, arguments);
+            } else {
+                var that = this, args = arguments;
+                setTimeout(function() {
+                    original.apply(that, args);
+                }, 0);
+            }
+        }
+    }
+
+    function loaded() {
+        if (
+            // XDomainRequest
+            x.status === undefined ||
+            // modern browsers
+            isSuccessful(x.status)) callback.call(x, null, x);
+        else callback.call(x, x, null);
+    }
+
+    // Both `onreadystatechange` and `onload` can fire. `onreadystatechange`
+    // has [been supported for longer](http://stackoverflow.com/a/9181508/229001).
+    if ('onload' in x) {
+        x.onload = loaded;
+    } else {
+        x.onreadystatechange = function readystate() {
+            if (x.readyState === 4) {
+                loaded();
+            }
+        };
+    }
+
+    // Call the callback with the XMLHttpRequest object as an error and prevent
+    // it from ever being called again by reassigning it to `noop`
+    x.onerror = function error(evt) {
+        // XDomainRequest provides no evt parameter
+        callback.call(this, evt || true, null);
+        callback = function() { };
+    };
+
+    // IE9 must have onprogress be set to a unique function.
+    x.onprogress = function() { };
+
+    x.ontimeout = function(evt) {
+        callback.call(this, evt, null);
+        callback = function() { };
+    };
+
+    x.onabort = function(evt) {
+        callback.call(this, evt, null);
+        callback = function() { };
+    };
+
+    // GET is the only supported HTTP Verb by XDomainRequest and is the
+    // only one supported here.
+    x.open('GET', url, true);
+
+    // Send the request. Sending data is not supported.
+    x.send(null);
+    sent = true;
+
+    return x;
+}
+
+if (typeof module !== 'undefined') module.exports = corslite;
+
+},{}],2:[function(require,module,exports){
+var polyline = {};
+
+// Based off of [the offical Google document](https://developers.google.com/maps/documentation/utilities/polylinealgorithm)
+//
+// Some parts from [this implementation](http://facstaff.unca.edu/mcmcclur/GoogleMaps/EncodePolyline/PolylineEncoder.js)
+// by [Mark McClure](http://facstaff.unca.edu/mcmcclur/)
+
+function encode(coordinate, factor) {
+    coordinate = Math.round(coordinate * factor);
+    coordinate <<= 1;
+    if (coordinate < 0) {
+        coordinate = ~coordinate;
+    }
+    var output = '';
+    while (coordinate >= 0x20) {
+        output += String.fromCharCode((0x20 | (coordinate & 0x1f)) + 63);
+        coordinate >>= 5;
+    }
+    output += String.fromCharCode(coordinate + 63);
+    return output;
+}
+
+// This is adapted from the implementation in Project-OSRM
+// https://github.com/DennisOSRM/Project-OSRM-Web/blob/master/WebContent/routing/OSRM.RoutingGeometry.js
+polyline.decode = function(str, precision) {
+    var index = 0,
+        lat = 0,
+        lng = 0,
+        coordinates = [],
+        shift = 0,
+        result = 0,
+        byte = null,
+        latitude_change,
+        longitude_change,
+        factor = Math.pow(10, precision || 5);
+
+    // Coordinates have variable length when encoded, so just keep
+    // track of whether we've hit the end of the string. In each
+    // loop iteration, a single coordinate is decoded.
+    while (index < str.length) {
+
+        // Reset shift, result, and byte
+        byte = null;
+        shift = 0;
+        result = 0;
+
+        do {
+            byte = str.charCodeAt(index++) - 63;
+            result |= (byte & 0x1f) << shift;
+            shift += 5;
+        } while (byte >= 0x20);
+
+        latitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
+
+        shift = result = 0;
+
+        do {
+            byte = str.charCodeAt(index++) - 63;
+            result |= (byte & 0x1f) << shift;
+            shift += 5;
+        } while (byte >= 0x20);
+
+        longitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
+
+        lat += latitude_change;
+        lng += longitude_change;
+
+        coordinates.push([lat / factor, lng / factor]);
+    }
+
+    return coordinates;
+};
+
+polyline.encode = function(coordinates, precision) {
+    if (!coordinates.length) return '';
+
+    var factor = Math.pow(10, precision || 5),
+        output = encode(coordinates[0][0], factor) + encode(coordinates[0][1], factor);
+
+    for (var i = 1; i < coordinates.length; i++) {
+        var a = coordinates[i], b = coordinates[i - 1];
+        output += encode(a[0] - b[0], factor);
+        output += encode(a[1] - b[1], factor);
+    }
+
+    return output;
+};
+
+if (typeof module !== undefined) module.exports = polyline;
+
+},{}],3:[function(require,module,exports){
 (function() {
 	'use strict';
 
@@ -42,8 +228,8 @@
 		_open: function() {
 			var rect = this._elem.getBoundingClientRect();
 			if (!this._container.parentElement) {
-				this._container.style.left = rect.left + 'px';
-				this._container.style.top = rect.bottom + 'px';
+				this._container.style.left = (rect.left + window.scrollX) + 'px';
+				this._container.style.top = (rect.bottom + window.scrollY) + 'px';
 				this._container.style.width = (rect.right - rect.left) + 'px';
 				document.body.appendChild(this._container);
 			}
@@ -204,7 +390,7 @@
 	});
 })();
 
-},{}],2:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 (function (global){
 (function() {
 	'use strict';
@@ -234,7 +420,6 @@
 			this._router = this.options.router || new L.Routing.OSRM(options);
 			this._plan = this.options.plan || L.Routing.plan(this.options.waypoints, options);
 			this._requestCount = 0;
-			this._lastReceived = -1;
 
 			L.Routing.Itinerary.prototype.initialize.call(this, options);
 
@@ -452,8 +637,7 @@
 					// by checking the current request's timestamp
 					// against the last request's; ignore result if
 					// this isn't the latest request.
-					if (ts > this._lastReceived) {
-						this._lastReceived = ts;
+					if (ts === this._requestCount) {
 						this._clearLine();
 						this._clearAlts();
 						if (err) {
@@ -488,7 +672,7 @@
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./L.Routing.Itinerary":4,"./L.Routing.Line":6,"./L.Routing.OSRM":8,"./L.Routing.Plan":9}],3:[function(require,module,exports){
+},{"./L.Routing.Itinerary":6,"./L.Routing.Line":8,"./L.Routing.OSRM":10,"./L.Routing.Plan":11}],5:[function(require,module,exports){
 (function (global){
 (function() {
 	'use strict';
@@ -574,13 +758,13 @@
 		},
 
 		formatInstruction: function(instr, i) {
-			if (instr.type !== undefined) {
+			if (instr.text === undefined) {
 				return L.Util.template(this._getInstructionTemplate(instr, i),
 					L.extend({
-							exitStr: L.Routing.Localization[this.options.language].formatOrder(instr.exit),
-							dir: L.Routing.Localization[this.options.language].directions[instr.direction]
-						},
-						instr));
+						exitStr: instr.exit ? L.Routing.Localization[this.options.language].formatOrder(instr.exit) : '',
+						dir: L.Routing.Localization[this.options.language].directions[instr.direction]
+					},
+					instr));
 			} else {
 				return instr.text;
 			}
@@ -603,9 +787,9 @@
 			case 'Left':
 				return 'turn-left';
 			case 'SlightLeft':
-				return 'slight-left';
+				return 'bear-left';
 			case 'WaypointReached':
-				return 'arrive';
+				return 'via';
 			case 'Roundabout':
 				return 'enter-roundabout';
 			case 'DestinationReached':
@@ -615,11 +799,10 @@
 
 		_getInstructionTemplate: function(instr, i) {
 			var type = instr.type === 'Straight' ? (i === 0 ? 'Head' : 'Continue') : instr.type,
-					strings = L.Routing.Localization[this.options.language].instructions[type];
+				strings = L.Routing.Localization[this.options.language].instructions[type];
 
 			return strings[0] + (strings.length > 1 && instr.road ? strings[1] : '');
-		},
-
+		}
 	});
 
 	module.exports = L.Routing;
@@ -627,7 +810,7 @@
 
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./L.Routing.Localization":7}],4:[function(require,module,exports){
+},{"./L.Routing.Localization":9}],6:[function(require,module,exports){
 (function (global){
 (function() {
 	'use strict';
@@ -655,7 +838,8 @@
 			alternativeClassName: '',
 			minimizedClassName: '',
 			itineraryClassName: '',
-			show: true
+			show: true,
+			collapsible: undefined
 		},
 
 		initialize: function(options) {
@@ -666,9 +850,15 @@
 			});
 		},
 
-		onAdd: function() {
+		onAdd: function(map) {
+			var collapsible = this.options.collapsible,
+				collapseBtn;
+
+			collapsible = collapsible || (collapsible === undefined && map.getSize().x <= 640);
+
 			this._container = L.DomUtil.create('div', 'leaflet-routing-container leaflet-bar ' +
-				(!this.options.show ? 'leaflet-routing-container-hide' : '') +
+				(!this.options.show ? 'leaflet-routing-container-hide ' : '') +
+				(collapsible ? 'leaflet-routing-collapsible ' : '') +
 				this.options.containerClassName);
 			this._altContainer = this.createAlternativesContainer();
 			this._container.appendChild(this._altContainer);
@@ -676,6 +866,13 @@
 			L.DomEvent.addListener(this._container, 'mousewheel', function(e) {
 				L.DomEvent.stopPropagation(e);
 			});
+
+			if (collapsible) {
+				collapseBtn = L.DomUtil.create('span', 'leaflet-routing-collapse-btn');
+				L.DomEvent.on(collapseBtn, 'click', this._toggle, this);
+				this._container.insertBefore(collapseBtn, this._container.firstChild);
+			}
+
 			return this._container;
 		},
 
@@ -715,15 +912,22 @@
 			L.DomUtil.addClass(this._container, 'leaflet-routing-container-hide');
 		},
 
+		_toggle: function() {
+			var collapsed = L.DomUtil.hasClass(this._container, 'leaflet-routing-container-hide');
+			this[collapsed ? 'show' : 'hide']();
+		},
+
 		_createAlternative: function(alt, i) {
 			var altDiv = L.DomUtil.create('div', 'leaflet-routing-alt ' +
 				this.options.alternativeClassName +
-				(i > 0 ? ' leaflet-routing-alt-minimized ' + this.options.minimizedClassName : ''));
-			altDiv.innerHTML = L.Util.template(this.options.summaryTemplate, {
-				name: alt.name,
-				distance: this._formatter.formatDistance(alt.summary.totalDistance),
-				time: this._formatter.formatTime(alt.summary.totalTime)
-			});
+				(i > 0 ? ' leaflet-routing-alt-minimized ' + this.options.minimizedClassName : '')),
+				template = this.options.summaryTemplate,
+				data = L.extend({
+					name: alt.name,
+					distance: this._formatter.formatDistance(alt.summary.totalDistance),
+					time: this._formatter.formatTime(alt.summary.totalTime)
+				}, alt);
+			altDiv.innerHTML = typeof(template) === 'function' ? template(data) : L.Util.template(template, data);
 			L.DomEvent.addListener(altDiv, 'click', this._onAltClicked, this);
 
 			altDiv.appendChild(this._createItineraryContainer(alt));
@@ -784,64 +988,36 @@
 			});
 		},
 
-		selectAlternative: function(i) {
-			var selectedElem = this._altElements[i],
-					minimizedClassName = 'leaflet-routing-alt-minimized',
-					isSelected,
-					elem,
-					j;
-
-			if (L.DomUtil.hasClass(selectedElem, minimizedClassName)) {
-				for (j = 0; j < this._altElements.length; j++) {
-					elem = this._altElements[j];
-					isSelected = selectedElem === elem;
-
-					if (isSelected) {
-						L.DomUtil.removeClass(elem, minimizedClassName);
-						if (this.options.minimizedClassName) {
-							L.DomUtil.removeClass(elem, this.options.minimizedClassName);
-						}
-
-						// TODO: don't fire if the currently active is clicked
-						this.fire('routeselected', {route: this._routes[j]});
-					} else {
-						L.DomUtil.addClass(elem, minimizedClassName);
-						if (this.options.minimizedClassName) {
-							L.DomUtil.addClass(elem, this.options.minimizedClassName);
-						}
-
-						elem.scrollTop = 0;
-					}
-				}
-			}
-		},
-
-		getSelectedAlternative: function() {
-			var minimizedClassName = 'leaflet-routing-alt-minimized',
-					altClassName = 'leaflet-routing-alt',
-					elem,
-					j;
-
-			for (j = 0; j < this._altElements.length; j++) {
-				elem = this._altElements[j];
-				if (L.DomUtil.hasClass(elem, altClassName) && !L.DomUtil.hasClass(elem, minimizedClassName))
-				{
-					return j;
-				}
-			}
-		},
-
 		_onAltClicked: function(e) {
 			var altElem,
-					idx;
+			    j,
+			    n,
+			    isCurrentSelection,
+			    classFn;
 
 			altElem = e.target || window.event.srcElement;
 			while (!L.DomUtil.hasClass(altElem, 'leaflet-routing-alt')) {
 				altElem = altElem.parentElement;
 			}
 
-			idx = this._altElements.indexOf(altElem);
-			this.selectAlternative(idx);
+			if (L.DomUtil.hasClass(altElem, 'leaflet-routing-alt-minimized')) {
+				for (j = 0; j < this._altElements.length; j++) {
+					n = this._altElements[j];
+					isCurrentSelection = altElem === n;
+					classFn = isCurrentSelection ? 'removeClass' : 'addClass';
+					L.DomUtil[classFn](n, 'leaflet-routing-alt-minimized');
+					if (this.options.minimizedClassName) {
+						L.DomUtil[classFn](n, this.options.minimizedClassName);
+					}
+
+					if (isCurrentSelection) {
+						// TODO: don't fire if the currently active is clicked
+						this.fire('routeselected', {route: this._routes[j]});
+					} else {
+						n.scrollTop = 0;
+					}
+				}
+			}
 
 			L.DomEvent.stop(e);
 		},
@@ -855,7 +1031,7 @@
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./L.Routing.Formatter":3,"./L.Routing.ItineraryBuilder":5}],5:[function(require,module,exports){
+},{"./L.Routing.Formatter":5,"./L.Routing.ItineraryBuilder":7}],7:[function(require,module,exports){
 (function (global){
 (function() {
 	'use strict';
@@ -872,8 +1048,15 @@
 			L.setOptions(this, options);
 		},
 
-		createContainer: function() {
-			return L.DomUtil.create('table', this.options.containerClassName);
+		createContainer: function(className) {
+			var table = L.DomUtil.create('table', className || ''),
+				colgroup = L.DomUtil.create('colgroup', '', table);
+
+			L.DomUtil.create('col', 'leaflet-routing-instruction-icon', colgroup);
+			L.DomUtil.create('col', 'leaflet-routing-instruction-text', colgroup);
+			L.DomUtil.create('col', 'leaflet-routing-instruction-distance', colgroup);
+
+			return table;
 		},
 
 		createStepsContainer: function() {
@@ -899,7 +1082,7 @@
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],6:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 (function (global){
 (function() {
 	'use strict';
@@ -1045,7 +1228,7 @@
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],7:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 (function() {
 	'use strict';
 	L.Routing = L.Routing || {};
@@ -1085,7 +1268,7 @@
 				'WaypointReached':
 					['Waypoint reached'],
 				'Roundabout':
-					['Take the {exitStr} exit in the roundabout'],
+					['Take the {exitStr} exit in the roundabout', ' onto {road}'],
 				'DestinationReached':
 					['Destination reached'],
 			},
@@ -1131,7 +1314,7 @@
 				'WaypointReached':
 					['Zwischenhalt erreicht'],
 				'Roundabout':
-					['Nehmen Sie die {exitStr} Ausfahrt im Kreisverkehr'],
+					['Nehmen Sie die {exitStr} Ausfahrt im Kreisverkehr', ' auf {road}'],
 				'DestinationReached':
 					['Sie haben ihr Ziel erreicht'],
 			},
@@ -1174,7 +1357,7 @@
 				'WaypointReached':
 					['Viapunkt nådd'],
 				'Roundabout':
-					['Tag {exitStr} avfarten i rondellen'],
+					['Tag {exitStr} avfarten i rondellen', ' till {road}'],
 				'DestinationReached':
 					['Framme vid resans mål'],
 			},
@@ -1219,7 +1402,7 @@
 				'WaypointReached':
 					['Llegó a un punto del camino'],
 				'Roundabout':
-					['Tomar {exitStr} salida en la rotonda'],
+					['Tomar {exitStr} salida en la rotonda', ' en {road}'],
 				'DestinationReached':
 					['Llegada a destino'],
 			},
@@ -1261,7 +1444,7 @@
 				'WaypointReached':
 					['Aangekomen bij tussenpunt'],
 				'Roundabout':
-					['Neem de {exitStr} afslag op de rotonde'],
+					['Neem de {exitStr} afslag op de rotonde', ' de {road} op'],
 				'DestinationReached':
 					['Aangekomen op eindpunt'],
 			},
@@ -1272,18 +1455,62 @@
 					return n + "de";
 				}
 			}
+		},
+		'fr': {
+			directions: {
+				N: 'nord',
+				NE: 'nord-est',
+				E: 'est',
+				SE: 'sud-est',
+				S: 'sud',
+				SW: 'sud-ouest',
+				W: 'ouest',
+				NW: 'nord-ouest'
+			},
+			instructions: {
+				// instruction, postfix if the road is named
+				'Head':
+					['Tout droit au {dir}', ' sur {road}'],
+				'Continue':
+					['Continuer au {dir}', ' sur {road}'],
+				'SlightRight':
+					['Légèrement à droite', ' sur {road}'],
+				'Right':
+					['A droite', ' sur {road}'],
+				'SharpRight':
+					['Complètement à droite', ' sur {road}'],
+				'TurnAround':
+					['Faire demi-tour'],
+				'SharpLeft':
+					['Complètement à gauche', ' sur {road}'],
+				'Left':
+					['A gauche', ' sur {road}'],
+				'SlightLeft':
+					['Légèrement à gauche', ' sur {road}'],
+				'WaypointReached':
+					['Point d\'étape atteint'],
+				'Roundabout':
+					['Au rond-point, prenez la {exitStr} sortie', ' sur {road}'],
+				'DestinationReached':
+					['Destination atteinte'],
+			},
+			formatOrder: function(n) {
+				return n + 'º';
+			}
 		}
 	};
 
 	module.exports = L.Routing;
 })();
 
-},{}],8:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 (function (global){
 (function() {
 	'use strict';
 
-	var L = (typeof window !== "undefined" ? window.L : typeof global !== "undefined" ? global.L : null);
+	var L = (typeof window !== "undefined" ? window.L : typeof global !== "undefined" ? global.L : null),
+		corslite = require('corslite'),
+		polyline = require('polyline');
 
 	// Ignore camelcase naming for this file, since OSRM's API uses
 	// underscores.
@@ -1291,19 +1518,6 @@
 
 	L.Routing = L.Routing || {};
 	L.extend(L.Routing, require('./L.Routing.Waypoint'));
-
-	L.Routing._jsonpCallbackId = 0;
-	L.Routing._jsonp = function(url, callback, context, jsonpParam) {
-		var callbackId = '_l_routing_machine_' + (L.Routing._jsonpCallbackId++),
-		    script;
-		url += '&' + jsonpParam + '=' + callbackId;
-		window[callbackId] = L.Util.bind(callback, context);
-		script = document.createElement('script');
-		script.type = 'text/javascript';
-		script.src = url;
-		script.id = callbackId;
-		document.getElementsByTagName('head')[0].appendChild(script);
-	};
 
 	L.Routing.OSRM = L.Class.extend({
 		options: {
@@ -1330,12 +1544,12 @@
 			url = this.buildRouteUrl(waypoints, options);
 
 			timer = setTimeout(function() {
-								timedOut = true;
-								callback.call(context || callback, {
-									status: -1,
-									message: 'OSRM request timed out.'
-								});
-							}, this.options.timeout);
+				timedOut = true;
+				callback.call(context || callback, {
+					status: -1,
+					message: 'OSRM request timed out.'
+				});
+			}, this.options.timeout);
 
 			// Create a copy of the waypoints, since they
 			// might otherwise be asynchronously modified while
@@ -1345,12 +1559,22 @@
 				wps.push(new L.Routing.Waypoint(wp.latLng, wp.name, wp.options));
 			}
 
-			L.Routing._jsonp(url, function(data) {
+			corslite(url, L.bind(function(err, resp) {
+				var data;
+
 				clearTimeout(timer);
 				if (!timedOut) {
-					this._routeDone(data, wps, callback, context);
+					if (!err) {
+						data = JSON.parse(resp.responseText);
+						this._routeDone(data, wps, callback, context);
+					} else {
+						callback.call(context || callback, {
+							status: -1,
+							message: 'HTTP request failed: ' + err
+						});
+					}
 				}
-			}, this, 'jsonp');
+			}, this));
 
 			return this;
 		},
@@ -1370,7 +1594,7 @@
 				return;
 			}
 
-			coordinates = this._decode(response.route_geometry, 6);
+			coordinates = polyline.decode(response.route_geometry, 6);
 			actualWaypoints = this._toWaypoints(inputWaypoints, response.via_points);
 			alts = [{
 				name: response.route_name.join(', '),
@@ -1384,7 +1608,7 @@
 
 			if (response.alternative_geometries) {
 				for (i = 0; i < response.alternative_geometries.length; i++) {
-					coordinates = this._decode(response.alternative_geometries[i], 6);
+					coordinates = polyline.decode(response.alternative_geometries[i], 6);
 					alts.push({
 						name: response.alternative_names[i].join(', '),
 						coordinates: coordinates,
@@ -1402,7 +1626,10 @@
 				}
 			}
 
-			this._saveHintData(response, inputWaypoints);
+			// only versions <4.5.0 will support this flag
+			if (response.hint_data) {
+				this._saveHintData(response.hint_data, inputWaypoints);
+			}
 			callback.call(context, null, alts);
 		},
 
@@ -1420,13 +1647,15 @@
 
 		buildRouteUrl: function(waypoints, options) {
 			var locs = [],
+				wp,
 			    computeInstructions,
 			    computeAlternative,
 			    locationKey,
 			    hint;
 
 			for (var i = 0; i < waypoints.length; i++) {
-				locationKey = this._locationKey(waypoints[i].latLng);
+				wp = waypoints[i];
+				locationKey = this._locationKey(wp.latLng);
 				locs.push('loc=' + locationKey);
 
 				hint = this._hints.locations[locationKey];
@@ -1434,8 +1663,7 @@
 					locs.push('hint=' + hint);
 				}
 
-				if (waypoints[i].options.allowUTurn)
-				{
+				if (wp.options && wp.options.allowUTurn) {
 					locs.push('u=true');
 				}
 			}
@@ -1457,9 +1685,8 @@
 			return location.lat + ',' + location.lng;
 		},
 
-		_saveHintData: function(route, waypoints) {
-			var hintData = route.hint_data,
-			    loc;
+		_saveHintData: function(hintData, waypoints) {
+			var loc;
 			this._hints = {
 				checksum: hintData.checksum,
 				locations: {}
@@ -1558,7 +1785,7 @@
 			case 7:
 				return 'Left';
 			case 8:
-				return 'SlightRight';
+				return 'SlightLeft';
 			case 9:
 				return 'WaypointReached';
 			case 10:
@@ -1592,7 +1819,7 @@
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./L.Routing.Waypoint":10}],9:[function(require,module,exports){
+},{"./L.Routing.Waypoint":12,"corslite":1,"polyline":2}],11:[function(require,module,exports){
 (function (global){
 (function() {
 	'use strict';
@@ -1622,7 +1849,9 @@
 				{color: 'red', opacity: 1, weight: 2, dashArray: '7,12'}
 			],
 			draggableWaypoints: true,
+			routeWhileDragging: false,
 			addWaypoints: true,
+			reverseWaypoints: false,
 			addButtonClassName: '',
 			maxGeocoderTolerance: 200,
 			autocompleteOptions: {},
@@ -1638,7 +1867,7 @@
 				return '';
 			},
 			createGeocoder: function() {
-				var container = L.DomUtil.create('div', ''),
+				var container = L.DomUtil.create('div', 'leaflet-routing-geocoder'),
 					input = L.DomUtil.create('input', '', container),
 					remove = L.DomUtil.create('span', 'leaflet-routing-remove-waypoint', container);
 
@@ -1648,10 +1877,10 @@
 					closeButton: remove
 				};
 			},
-			createMarker: function(i, wp, n) {
+			createMarker: function(i, wp) {
 				var options = {
-				      draggable: this.draggableWaypoints
-				    },
+						draggable: this.draggableWaypoints
+					},
 				    marker = L.marker(wp.latLng, options);
 
 				return marker;
@@ -1701,8 +1930,7 @@
 
 		spliceWaypoints: function() {
 			var args = [arguments[0], arguments[1]],
-			    i,
-			    wp;
+			    i;
 
 			for (i = 2; i < arguments.length; i++) {
 				args.push(arguments[i] && arguments[i].hasOwnProperty('latLng') ? arguments[i] : L.Routing.waypoint(arguments[i]));
@@ -1710,14 +1938,13 @@
 
 			[].splice.apply(this._waypoints, args);
 
-			while (this._waypoints.length < 2) {
-				wp = L.Routing.waypoint();
-				this._waypoints.push(wp);
-				args.push(wp);
-			}
-
 			this._updateMarkers();
 			this._fireChanged.apply(this, args);
+
+			// Make sure there's always at least two waypoints
+			while (this._waypoints.length < 2) {
+				this.spliceWaypoints(this._waypoints.length, 0, null);
+			}
 		},
 
 		onAdd: function(map) {
@@ -1741,30 +1968,31 @@
 		createGeocoders: function() {
 			var container = L.DomUtil.create('div', 'leaflet-routing-geocoders ' + this.options.geocodersClassName),
 				waypoints = this._waypoints,
-			    i,
-			    geocoderElem,
-			    addWpBtn;
+			    addWpBtn,
+			    reverseBtn;
 
 			this._geocoderContainer = container;
 			this._geocoderElems = [];
 
-			for (i = 0; i < waypoints.length; i++) {
-				geocoderElem = this._createGeocoder(i);
-				container.appendChild(geocoderElem.container);
-				this._geocoderElems.push(geocoderElem);
-			}
 
-			addWpBtn = L.DomUtil.create('button', this.options.addButtonClassName, container);
-			addWpBtn.setAttribute('type', 'button');
-			addWpBtn.innerHTML = '+';
 			if (this.options.addWaypoints) {
+				addWpBtn = L.DomUtil.create('button', 'leaflet-routing-add-waypoint ' + this.options.addButtonClassName, container);
+				addWpBtn.setAttribute('type', 'button');
 				L.DomEvent.addListener(addWpBtn, 'click', function() {
 					this.spliceWaypoints(waypoints.length, 0, null);
 				}, this);
-			} else {
-				addWpBtn.style.display = 'none';
 			}
 
+			if (this.options.reverseWaypoints) {
+				reverseBtn = L.DomUtil.create('button', 'leaflet-routing-reverse-waypoints', container);
+				reverseBtn.setAttribute('type', 'button');
+				L.DomEvent.addListener(reverseBtn, 'click', function() {
+					this._waypoints.reverse();
+					this.setWaypoints(this._waypoints);
+				}, this);
+			}
+
+			this._updateGeocoders();
 			this.on('waypointsspliced', this._updateGeocoders);
 
 			return container;
@@ -1791,7 +2019,11 @@
 
 			if (closeButton) {
 				L.DomEvent.addListener(closeButton, 'click', function() {
-					this.spliceWaypoints(i, 1);
+					if (i > 0 || this._waypoints.length > 2) {
+						this.spliceWaypoints(i, 1);
+					} else {
+						this.spliceWaypoints(i, 1, new L.Routing.Waypoint());
+					}
 				}, this);
 			}
 
@@ -1812,39 +2044,22 @@
 			return g;
 		},
 
-		_updateGeocoders: function(e) {
-			var newElems = [],
-			    i,
-			    geocoderElem,
-			    beforeElem;
+		_updateGeocoders: function() {
+			var elems = [],
+				i,
+			    geocoderElem;
 
-			// Determine where to insert geocoders for new waypoints
-			if (e.index >= this._geocoderElems.length) {
-				// lastChild is the "add new wp" button
-				beforeElem = this._geocoderContainer.lastChild;
-			} else {
-				beforeElem = this._geocoderElems[e.index].container;
-			}
-
-			// Insert new geocoders for new waypoints
-			for (i = 0; i < e.added.length; i++) {
-				geocoderElem = this._createGeocoder(e.index + i);
-				this._geocoderContainer.insertBefore(geocoderElem.container, beforeElem);
-				newElems.push(geocoderElem);
-			}
-			//newElems.reverse();
-
-			for (i = e.index; i < e.index + e.nRemoved; i++) {
+			for (i = 0; i < this._geocoderElems.length; i++) {
 				this._geocoderContainer.removeChild(this._geocoderElems[i].container);
 			}
 
-			newElems.splice(0, 0, e.index, e.nRemoved);
-			[].splice.apply(this._geocoderElems, newElems);
-
-			for (i = 0; i < this._geocoderElems.length; i++) {
-				this._geocoderElems[i].input.placeholder = this.options.geocoderPlaceholder(i, this._waypoints.length);
-				this._geocoderElems[i].input.className = this.options.geocoderClass(i, this._waypoints.length);
+			for (i = this._waypoints.length - 1; i >= 0; i--) {
+				geocoderElem = this._createGeocoder(i);
+				this._geocoderContainer.insertBefore(geocoderElem.container, this._geocoderContainer.firstChild);
+				elems.push(geocoderElem);
 			}
+
+			this._geocoderElems = elems.reverse();
 		},
 
 		_updateGeocoder: function(i, geocoderElem) {
@@ -1906,9 +2121,11 @@
 			for (i = 0; i < this._waypoints.length; i++) {
 				if (this._waypoints[i].latLng) {
 					m = this.options.createMarker(i, this._waypoints[i], this._waypoints.length);
-					m.addTo(this._map);
-					if (this.options.draggableWaypoints) {
-						this._hookWaypointEvents(m, i);
+					if (m) {
+						m.addTo(this._map);
+						if (this.options.draggableWaypoints) {
+							this._hookWaypointEvents(m, i);
+						}
 					}
 				} else {
 					m = null;
@@ -1929,65 +2146,99 @@
 			}
 		},
 
-		_hookWaypointEvents: function(m, i) {
-			m.on('dragstart', function(e) {
-				this.fire('waypointdragstart', this._createWaypointEvent(i, e));
-			}, this);
-			m.on('drag', function(e) {
-				this._waypoints[i].latLng = e.target.getLatLng();
-				this.fire('waypointdrag', this._createWaypointEvent(i, e));
-			}, this);
-			m.on('dragend', function(e) {
-				this._waypoints[i].latLng = e.target.getLatLng();
-				this._waypoints[i].name = '';
-				this._updateWaypointName(i, this._geocoderElems && this._geocoderElems[i].input, true);
-				this.fire('waypointdragend', this._createWaypointEvent(i, e));
-				this._fireChanged();
-			}, this);
-		},
+		_hookWaypointEvents: function(m, i, trackMouseMove) {
+			var eventLatLng = function(e) {
+					return trackMouseMove ? e.latlng : e.target.getLatLng();
+				},
+				dragStart = L.bind(function(e) {
+					this.fire('waypointdragstart', {index: i, latlng: eventLatLng(e)});
+				}, this),
+				drag = L.bind(function(e) {
+					this._waypoints[i].latLng = eventLatLng(e);
+					this.fire('waypointdrag', {index: i, latlng: eventLatLng(e)});
+				}, this),
+				dragEnd = L.bind(function(e) {
+					this._waypoints[i].latLng = eventLatLng(e);
+					this._waypoints[i].name = '';
+					this._updateWaypointName(i, this._geocoderElems && this._geocoderElems[i].input, true);
+					this.fire('waypointdragend', {index: i, latlng: eventLatLng(e)});
+					this._fireChanged();
+				}, this),
+				mouseMove,
+				mouseUp;
 
-		_createWaypointEvent: function(i, e) {
-			return {index: i, latlng: e.target.getLatLng()};
+			if (trackMouseMove) {
+				mouseMove = L.bind(function(e) {
+					this._markers[i].setLatLng(e.latlng);
+					drag(e);
+				}, this);
+				mouseUp = L.bind(function(e) {
+					this._map.dragging.enable();
+					this._map.off('mouseup', mouseUp);
+					this._map.off('mousemove', mouseMove);
+					dragEnd(e);
+				}, this);
+				this._map.dragging.disable();
+				this._map.on('mousemove', mouseMove);
+				this._map.on('mouseup', mouseUp);
+				dragStart({latlng: this._waypoints[i].latLng});
+			} else {
+				m.on('dragstart', dragStart);
+				m.on('drag', drag);
+				m.on('dragend', dragEnd);
+			}
 		},
 
 		dragNewWaypoint: function(e) {
-			var i;
-			this._newWp = {
-				afterIndex: e.afterIndex,
-				marker: L.marker(e.latlng).addTo(this._map),
-				lines: []
-			};
+			var newWpIndex = e.afterIndex + 1;
+			if (this.options.routeWhileDragging) {
+				this.spliceWaypoints(newWpIndex, 0, e.latlng);
+				this._hookWaypointEvents(this._markers[newWpIndex], newWpIndex, true);
+			} else {
+				this._dragNewWaypoint(newWpIndex, e.latlng);
+			}
+		},
+
+		_dragNewWaypoint: function(newWpIndex, initialLatLng) {
+			var wp = new L.Routing.Waypoint(initialLatLng),
+				prevWp = this._waypoints[newWpIndex - 1],
+				nextWp = this._waypoints[newWpIndex],
+				marker = this.options.createMarker(newWpIndex, wp, this._waypoints.length + 1),
+				lines = [],
+				mouseMove = L.bind(function(e) {
+					var i;
+					if (marker) {
+						marker.setLatLng(e.latlng);
+					}
+					for (i = 0; i < lines.length; i++) {
+						lines[i].spliceLatLngs(1, 1, e.latlng);
+					}
+				}, this),
+				mouseUp = L.bind(function(e) {
+					var i;
+					if (marker) {
+						this._map.removeLayer(marker);
+					}
+					for (i = 0; i < lines.length; i++) {
+						this._map.removeLayer(lines[i]);
+					}
+					this._map.off('mousemove', mouseMove);
+					this._map.off('mouseup', mouseUp);
+					this.spliceWaypoints(newWpIndex, 0, e.latlng);
+				}, this),
+				i;
+
+			if (marker) {
+				marker.addTo(this._map);
+			}
 
 			for (i = 0; i < this.options.dragStyles.length; i++) {
-				this._newWp.lines.push(L.polyline([
-					this._waypoints[e.afterIndex].latLng,
-					e.latlng,
-					this._waypoints[e.afterIndex + 1].latLng
-				], this.options.dragStyles[i]).addTo(this._map));
+				lines.push(L.polyline([prevWp.latLng, initialLatLng, nextWp.latLng],
+					this.options.dragStyles[i]).addTo(this._map));
 			}
 
-			this._markers.splice(e.afterIndex + 1, 0, this._newWp.marker);
-			this._map.on('mousemove', this._onDragNewWp, this);
-			this._map.on('mouseup', this._onWpRelease, this);
-		},
-
-		_onDragNewWp: function(e) {
-			var i;
-			this._newWp.marker.setLatLng(e.latlng);
-			for (i = 0; i < this._newWp.lines.length; i++) {
-				this._newWp.lines[i].spliceLatLngs(1, 1, e.latlng);
-			}
-		},
-
-		_onWpRelease: function(e) {
-			var i;
-			this._map.off('mouseup', this._onWpRelease, this);
-			this._map.off('mousemove', this._onDragNewWp, this);
-			for (i = 0; i < this._newWp.lines.length; i++) {
-				this._map.removeLayer(this._newWp.lines[i]);
-			}
-			this.spliceWaypoints(this._newWp.afterIndex + 1, 0, e.latlng);
-			delete this._newWp;
+			this._map.on('mousemove', mouseMove);
+			this._map.on('mouseup', mouseUp);
 		},
 
 		_focusGeocoder: function(i) {
@@ -2010,7 +2261,7 @@
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./L.Routing.Autocomplete":1,"./L.Routing.Waypoint":10}],10:[function(require,module,exports){
+},{"./L.Routing.Autocomplete":3,"./L.Routing.Waypoint":12}],12:[function(require,module,exports){
 (function (global){
 (function() {
 	'use strict';
@@ -2037,5 +2288,5 @@
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}]},{},[2])(2)
+},{}]},{},[4])(4)
 });

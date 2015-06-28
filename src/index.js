@@ -50,7 +50,7 @@ map.on('click', function(e) {
   }
 });
 
-theme.setup(lrm);
+//theme.setup(lrm);
 
 /*
  * Initial route request
