@@ -1,7 +1,7 @@
 "use strict";
 
-var links = require('./links.js'),
-    localization = require('./localization.js');
+var links = require('./links'),
+    localization = require('./localization');
 
 var Control = L.Control.extend({
   include: L.Mixin.Events,
@@ -48,6 +48,7 @@ var Control = L.Control.extend({
     linkContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-link', this._container);
     linkButton = L.DomUtil.create('span', this.options.linkButtonClass, linkContainer);
     linkButton.title = localization[this.options.language]['Link'];
+    
     L.DomEvent.on(linkButton, 'click', this._showLink, this);
 
     editorContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-editor', this._container);
@@ -125,8 +126,11 @@ var Control = L.Control.extend({
         linkShortenerLabel;
 
     link = links.format(window.location.href, this._getLinkOptions());
+	// console.log(link);
+    this._map.fire('link', { link: link });
+
     shortener = links.shortener();
-    //window.location.href = link;
+    // window.location.href = link;  <= this was the error
 
     linkContainer = L.DomUtil.create('div', 'dark checkbox-pill');
     linkInput = L.DomUtil.create('input', '', linkContainer);
@@ -134,7 +138,7 @@ var Control = L.Control.extend({
     linkShortener = L.DomUtil.create('input', 'dark stretch', linkContainer);
     linkShortener.type = 'checkbox';
     linkShortener.id = 'short';
-    linkShortenerLabel = L.DomUtil.create('label', 'button icon check', linkContainer);
+    linkShortenerLabel = L.DomUtil.create('label', '', linkContainer);
     linkShortenerLabel.setAttribute("for", "short");
     linkShortenerLabel.innerHTML = localization[this.options.language]['Short'];
 
@@ -154,15 +158,17 @@ var Control = L.Control.extend({
   _printPage: function() {
     var options = this._getLinkOptions(),
         validWPs = options.waypoints.filter(function(wp) { return wp.latLng !== undefined; }),
-        link = window.location.href.replace("/index.html?", "/printing.html?").replace("/?", "/printing.html?");
-    if (link.slice(-1) === '/') {
+        link = window.location.href.replace("/index.html#", "/printing.html#").replace("/#", "/printing.html#")
+        window.open(link);
+
+
+    if (link.slice(-1) === '#') {
       link += "printing.html";
+	  alert('yes');
     }
     if (validWPs.length < 2 ) {
       return;
-    }
-    console.log(links.format(link, options));
-    window.location.href = links.format(link, options);
+    }   
   },
 
   _selectLocalization: function() {
@@ -185,7 +191,7 @@ var Control = L.Control.extend({
       link.alt = localization[language].name;
       link.innerHTML = localization[language].name;
     }
-
+        
     options.language = this.options.language;
     unitSystems = ['Metric', 'Imperial'];
     for (i = 0; i < unitSystems.length; i++)
@@ -197,11 +203,12 @@ var Control = L.Control.extend({
       link.alt = unitSystems[i];
       link.innerHTML = unitSystems[i];
     }
-
+    
     this._openPopup(container);
   },
 
   _updateDownloadLink: function() {
+    alert('hfaf');
     var plan = this._lrm.getPlan(),
         router = this._lrm.getRouter(),
         url;
@@ -248,5 +255,5 @@ var Control = L.Control.extend({
 module.exports = {
   control: function(lrm, options) {
     return new Control(lrm, options);
-  },
+  }
 };

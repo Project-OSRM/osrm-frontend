@@ -1,33 +1,92 @@
+<!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8" />
-    <title>Open Source Routing Machine - Demo</title>
+  <head>
+    <meta charset=utf-8 />
+    <title>OSRM | Mapbox</title>
+    <meta name='viewport' content='initial-scale=1.0 maximum-scale=1.0'>
+    <link rel='stylesheet' href='http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css' />
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js'></script>
+    <link href='home.css' rel='stylesheet' />
+    <link href='base.css' rel='stylesheet' />
+  </head>
+    
+  <body>
 
-    <link href='https://www.mapbox.com/base/latest/base.css' rel='stylesheet' />
-    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />
+    <div id='container' class='contain clearfix'>
+      <div class='row2'>
+        <div class='col3'><img class='logo' src='images/osrm-logo.svg'></div>
+        
+        <div class='col9'>
+        <div class='pill space-top2'><!--
+  --><a id='js-open-modalA' href='#' class='button short loud'>About</a><!--
+  --><a id='js-open-modalB' href='#' class='button short loud'>License</a><!--
+  --><a id='js-open-modalC' href='#' class='button short loud'>Support</a>
+        </div>
+        </div>
+      </div>
+      
+      <div id='body' class='row4 contain'>
+        <div id='map' class='map'></div>
+        
+        <div id='modalA' class='animate modal modal-content'>
+        <button id='js-close-modalA' class='fr close-link'>X</button> The Open Source Routing Machine (OSRM) is a C++ implementation of a high-performance routing engine for shortest paths in road networks. It combines sophisticated routing algorithms with the open and free road network data of the OpenStreetMap (OSM) project. Designed with OpenStreetMap compatibility in mind, OSM data files can be easily imported. A demo installation is sponsored by Karlsruhe Institute of Technology and previously by our friends at Geofabrik. OSRM is under active development.
+        </div>
+        
+        <div id='modalB' class='animate modal modal-content'>
+        <button id='js-close-modalB' class='fr close-link'>X</button> OSRM is free, open source, and available under the very permissive (simplified) 2-clause BSD license.
+        </div>
+        
+        <div id='modalC' class='animate modal modal-content'>
+        <button id='js-close-modalC' class='fr close-link'>X</button> Wiki [here]
+Mailing list [here]
+IRC Channel [server: irc.oftc.net, channel: #osrm]
+Bug Tracker [here]
 
-    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
-    <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
-    <!--script src="js/leaflet-src.js"></script-->
+        </div>
+        
+        
+      </div>
+      
+      <div id='footer' class='small fr row2 center copyright'>copyright</div>
+    </div>
+    
 
-    <link rel="stylesheet" href="css/Control.Geocoder.css" />
-    <script src="js/Control.Geocoder.js"></script>
+<script>
+var modalA = document.getElementById('modalA');
+var modalB = document.getElementById('modalB');
+var modalC = document.getElementById('modalC');
 
-    <link rel="stylesheet" href="css/leaflet-routing-machine.css" />
-    <script src="js/leaflet-routing-machine.js"></script>
+var triggerA = document.getElementById('js-open-modalA');
+var closeA = document.getElementById('js-close-modalA');
+var triggerB = document.getElementById('js-open-modalB');
+var closeB = document.getElementById('js-close-modalB');
+var triggerC = document.getElementById('js-open-modalC');
+var closeC = document.getElementById('js-close-modalC');
 
-    <link rel="stylesheet" href="css/leaflet.label.css" />
-    <script src="js/leaflet.label.js"></script>
+triggerA.addEventListener('click', function() {
+    modalA.classList.add('active');
+});
 
-    <link rel="stylesheet" href="css/mapbox.directions.css" />
-    <link rel="stylesheet" href="css/site.css" />
-</head>
-<body>
+triggerB.addEventListener('click', function() {
+    modalB.classList.add('active');
+});
 
-    <div id='map'></div>
-    <!--a href="http://mapbox.com/" class='mapbox-maplogo' target="_blank">Mapbox</a-->
+triggerC.addEventListener('click', function() {
+    modalC.classList.add('active');
+});
 
-    <!-- Local scripts -->
-    <script src="js/osrm.dev.js"></script>
-</body>
+closeA.addEventListener('click', function() {
+    modalA.classList.remove('active');
+});
+closeB.addEventListener('click', function() {
+    modalB.classList.remove('active');
+});
+closeC.addEventListener('click', function() {
+    modalC.classList.remove('active');
+});
+
+</script>
+  
+  <script src='js/osrm.bundle.js'></script>
+  </body>
 </html>

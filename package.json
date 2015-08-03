@@ -1,30 +1,39 @@
 {
-  "name": "osrm",
-  "version": "0.0.1",
-  "description": "Front-end for the OSRM API",
-  "main": "src/osrm.js",
+  "name": "osrm-frontend",
+  "version": "0.4.0",
+  "description": "frontend interface for project osrm",
+  "main": "index.js",
+  "scripts": {
+    "test": "eslint index.js src",
+    "build": "browserify -d index.js -s osrm > js/osrm.bundle.js",
+    "build-print": "browserify -d printing.js -s osrm > js/osrm.printing.dev.js",
+    "start-index": "budo index.js --serve=js/osrm.bundle.js --live -d | bistre",
+    "start-print": "budo printing.js --serve=js/osrm.printing.dev.js --live -d | bistre",
+    "start": "npm run build && npm run start-index",
+    "prepub": "npm run build && npm run build-print"
+  },
   "repository": {
     "type": "git",
-    "url": "git://github.com/Project-OSRM/osrm-frontend-v2.git"
+    "url": "osrm-frontend"
   },
-  "scripts": {
-    "test": "jshint src",
-    "watch": "watchify -v -d src/index.js -s osrm -o js/osrm.dev.js",
-    "build-dev": "browserify -d src/index.js -s osrm > js/osrm.dev.js",
-    "build-printing-dev": "browserify -d src/printing.js -s osrm > js/osrm.printing.dev.js",
-    "build-min": "browserify src/index.js -s osrm | uglifyjs -c warnings=false -m > js/osrm.min.js",
-    "build-printing-min": "browserify src/printing.js -s osrm | uglifyjs -c warnings=false -m > js/osrm.priting.min.js",
-    "prepublish": "npm run build-dev && npm run build-min && npm run build-printing-dev && npm run build-printing-min"
+  "keywords": [
+    "osrm",
+    "lrm",
+    "directions",
+    "routing",
+    "api"
+  ],
+  "author": "amy lee walton",
+  "license": "ISC",
+  "devDependencies": {
+    "bistre": "^1.0.1",
+    "browserify": "^10.2.4",
+    "budo": "^4.1.0",
+    "uglify-js": "^2.4.23"
   },
   "dependencies": {
-    "jsonp": "^0.0.4"
-  },
-  "devDependencies": {
-    "browserify": "2",
-    "uglify-js": "^2.3.6",
-    "watchify": "^1.0.2",
-    "jshint": "2",
-    "smash": "0.0"
-  },
-  "license": "BSD-2-Clause"
+    "jsonp": "^0.2.0",
+    "leaflet-control-geocoder": "^1.2.1",
+    "leaflet-routing-machine": "^2.3.0"
+  }
 }

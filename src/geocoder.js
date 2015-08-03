@@ -4,15 +4,15 @@ var geocoder = function(i, num) {
   var container = L.DomUtil.create('div',
                                    function() {
                                      if (i === 0) {
-                                       return "mapbox-directions-origin";
+                                       return "osrm-directions-origin";
                                      } else if (i === num-1) {
-                                       return "mapbox-directions-destination";
+                                       return "osrm-directions-destination";
                                      }
-                                     return "mapbox-directions-via";
+                                     return "osrm-directions-via";
                                    }()),
-      label = L.DomUtil.create('label', 'mapbox-form-label', container),
+      label = L.DomUtil.create('label', 'osrm-form-label', container),
       input = L.DomUtil.create('input', '', container),
-      close = L.DomUtil.create('span', 'mapbox-directions-icon mapbox-close-icon', container),
+      close = L.DomUtil.create('span', 'osrm-directions-icon osrm-close-icon', container),
       name = String.fromCharCode(65 + i),
       icon = L.DomUtil.create('div', 'leaflet-osrm-geocoder-label', label);
 
@@ -26,4 +26,3 @@ var geocoder = function(i, num) {
 };
 
 module.exports = geocoder;
-

@@ -1,5 +1,5 @@
 module.exports = {
-  name: "Deutsch",
+ name: "Deutsch",
   'Link': 'Link',
   'Open in editor': 'Im Editor öffnen',
   'Open in JOSM': 'In JSOM öffnen',

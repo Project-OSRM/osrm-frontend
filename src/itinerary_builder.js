@@ -5,6 +5,7 @@
  * This will override the LRM internal build that uses a table as container.
  * However using a table does not work with our theme.
  */
+
 var ItineraryBuilder = L.Class.extend({
   options: {
     containerClassName: ''
@@ -23,13 +24,13 @@ var ItineraryBuilder = L.Class.extend({
   },
 
   createStep: function(text, distance, icon, steps) {
-    var row = L.DomUtil.create('li', 'mapbox-directions-step', steps),
+    var row = L.DomUtil.create('li', 'osrm-directions-step', steps),
         td;
 
-    L.DomUtil.create('span', 'mapbox-directions-icon mapbox-'+icon+'-icon', row);
-    td = L.DomUtil.create('div', 'mapbox-directions-step-maneuver', row);
+    L.DomUtil.create('span', 'osrm-directions-icon osrm-'+icon+'-icon', row);
+    td = L.DomUtil.create('div', 'osrm-directions-step-maneuver', row);
     td.appendChild(document.createTextNode(text));
-    td = L.DomUtil.create('div', 'mapbox-directions-step-distance', row);
+    td = L.DomUtil.create('div', 'osrm-directions-step-distance', row);
     td.appendChild(document.createTextNode(distance));
     return row;
   }

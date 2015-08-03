@@ -1,3 +1,5 @@
+/* PRINTING */
+
 #map {
     width: 18cm;
     height: 10cm;
@@ -8,6 +10,8 @@
     page-break-before: always;
     width: 18cm;
     height: auto !important;
+    padding-left: 20px;
+    box-shadow: none;
 }
 
 .leaflet-routing-alt {
@@ -17,4 +21,23 @@
 
 .leaflet-routing-alt-minimized {
   display: none;
+}
+
+.leaflet-routing-alt  h2
+{
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 26px;
+  margin-right: 15px;
+}
+
+.leaflet-routing-alt h3
+{
+  font-weight: normal;
+  font-size: 18px;
+  margin-top: 0px;
+}
+
+.leaflet-bar {
+  box-shadow: none;
 }
