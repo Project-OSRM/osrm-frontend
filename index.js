@@ -86,12 +86,20 @@ var control = L.Routing.control({
   stepClassName: options.lrm.stepClassName
 }).addTo(map);
 
+var altRoute;
+
 control.on('routesfound', function(e) {
     if (e.routes.length > 1) {
-        var x = L.Routing.line(e.routes[1], options.lrm.altLineOptions);
-        x.addTo(map);
+        altRoute = L.Routing.line(e.routes[1], options.lrm.altLineOptions);
+        altRoute.addTo(map);
     }
 });
+
+control.on('routingstart', function(e) {
+    if (map.hasLayer(altRoute)) {
+        map.removeLayer(altRoute);
+    }
+})
 
 // set waypoints from hash values
 if (viewOptions.waypoints.length > 1) {
