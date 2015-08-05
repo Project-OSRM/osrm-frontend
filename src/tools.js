@@ -6,7 +6,7 @@ var links = require('./links'),
 var Control = L.Control.extend({
   include: L.Mixin.Events,
   options: {
-    linkButtonClass: "",
+    /*linkButtonClass: "",*/
     popupWindowClass: "",
     popupCloseButtonClass: "",
     toolContainerClass: "",
@@ -29,8 +29,8 @@ var Control = L.Control.extend({
   },
 
   onAdd: function(map) {
-    var linkContainer,
-        linkButton,
+    var /*linkContainer,
+        linkButton,*/
         editorContainer,
         editorButton,
         josmContainer,
@@ -44,13 +44,13 @@ var Control = L.Control.extend({
 
     this._container = L.DomUtil.create('div', 'leaflet-osrm-tools-container leaflet-bar ' + this.options.toolsContainerClass);
     L.DomEvent.disableClickPropagation(this._container);
-
+	/*
     linkContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-link', this._container);
     linkButton = L.DomUtil.create('span', this.options.linkButtonClass, linkContainer);
     linkButton.title = localization[this.options.language]['Link'];
     
     L.DomEvent.on(linkButton, 'click', this._showLink, this);
-
+	*/
     editorContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-editor', this._container);
     editorButton = L.DomUtil.create('span', this.options.editorButtonClass, editorContainer);
     editorButton.title = localization[this.options.language]['Open in editor'];
@@ -116,7 +116,7 @@ var Control = L.Control.extend({
       alternative: this._selectedAlternative,
     };
   },
-
+/*
   _showLink: function() {
     var shortener,
         link,
@@ -154,6 +154,7 @@ var Control = L.Control.extend({
 
     this._openPopup(linkContainer);
   },
+*/
 
   _printPage: function() {
     var options = this._getLinkOptions(),

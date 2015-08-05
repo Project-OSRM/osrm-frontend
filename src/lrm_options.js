@@ -12,7 +12,7 @@ module.exports = {
     },
     altLineOptions: {
       styles: [
-        {color: '#022bb1', opacity: 0.8, weight: 8},
+        {color: '#022bb1', opacity: 0.5, weight: 8},
         {color: 'white', opacity: 0.3, weight: 6}
       ]
     },
@@ -38,7 +38,7 @@ module.exports = {
   tools: {
     popupWindowClass: 'fill-osrm dark',
     popupCloseButtonClass: 'osrm-directions-icon osrm-close-icon',
-    linkButtonClass: 'osrm-directions-icon osrm-link-icon',
+    /*linkButtonClass: 'osrm-directions-icon osrm-link-icon',*/
     editorButtonClass: 'osrm-directions-icon osrm-editor-icon',
     josmButtonClass: 'osrm-directions-icon osrm-josm-icon',
     localizationButtonClass: 'osrm-directions-icon osrm-flag-icon',

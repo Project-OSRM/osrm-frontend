@@ -19,6 +19,7 @@ mapLayer = mapLayer.reduce(function(title, layer) {
   return title;
 });
 
+
 /* Add the map class */
 var map = L.map('map', {
   zoomControl: false,
@@ -56,33 +57,33 @@ L.control.layers(mapLayer,{}, {
 
 L.control.scale().addTo(map);
 
-var myIcon = L.icon({
-	iconUrl: 'images/marker.png',
-	iconSize: [38, 95],
-	iconAnchor: [22, 94],
-	popupAnchor: [-3, -76]
-});
-
 /* OSRM setup */
 var ReversablePlan = L.Routing.Plan.extend({
   createGeocoders: function() {
     var container = L.Routing.Plan.prototype.createGeocoders.call(this);
     return container;
-  },
-  createMarker: function(i, wp) {
-    var options = {
-      draggable: this.draggableWaypoints,
-			icon: myIcon
-    },
-    marker = L.marker(wp.latLng, options);
-
-    return marker;
   }
 });
+
+function makeIcon(i) {
+    var url = i == 0 ? 'images/marker_start.png' : 'images/marker_end.png';
+    return L.icon({
+        iconUrl: url,
+        iconSize: [40, 42]
+    });
+}
 
 var plan = new ReversablePlan([], {
   geocoder: Geocoder.nominatim(),
   routeWhileDragging: true,
+  createMarker: function(i, wp) {
+        var options = {
+                draggable: this.draggableWaypoints,
+                icon: makeIcon(i)
+            },
+            marker = L.marker(wp.latLng, options);
+        return marker;
+  },
   routeDragInterval: 2,
   addWaypoints: false,
   waypointMode: 'snap',
@@ -111,6 +112,7 @@ control.on('routesfound', function(e) {
     }
 });
 
+
 control.on('routingstart', function(e) {
     if (map.hasLayer(altRoute)) {
         map.removeLayer(altRoute);
@@ -126,6 +128,7 @@ var mapClick = map.on('click', mapChange);
 plan.on('waypointschanged', updateHash);
 
 function mapChange(e) {
+
   var length = control.getWaypoints().filter(function(pnt) {
     return pnt.latLng;
   });
@@ -157,3 +160,8 @@ function updateHash() {
   window.location.hash = hash[1];
 
 }
+
+
+
+
+

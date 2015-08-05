@@ -47,7 +47,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 /* tool colors and divs */
 
 .fill-osrm {
-  background-color: #002F53;
+  background-color: #8952cf;
 }
 
 .fill-dark {
@@ -62,7 +62,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 
 .leaflet-control-scale {
   position: absolute;
-  left: 180px;
+  left: 160px;
   bottom: 5px;
 }
 
@@ -118,9 +118,12 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
   margin-right: 3px;
   float: right;
   cursor: pointer;
-  background-color: #ccc;
+  background-color: #8952cf;
   transition: background-color 0.2s ease;
   border: 0px;
+  border-radius: 5px;
+  margin-top: -3px;
+  margin-right: 0px;
 }
 
 .leaflet-routing-add-waypoint {
@@ -132,8 +135,9 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 }
 
 .leaflet-routing-reverse-waypoints:after {
-  font-weight: normal;
+  font-weight: bold;
   content: '\21c5';
+  color: white;
 }
 
 
@@ -160,7 +164,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
   content: "\00d7";
   text-align: center;
   cursor: pointer;
-  color: #ccc;
+  color: #8952cf;
   background: white;
   padding-bottom: 16px;
   margin-top: -16px;
@@ -173,6 +177,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
     display: inline-block;
     vertical-align: middle;
     cursor: pointer;
+    margin-top: 10px;
 }
 
 
@@ -233,11 +238,12 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 {
    background-color: rgba(255, 255, 255, 0.2);
 }
+
 .leaflet-osrm-tools-editor
 {
   position: absolute;
   top: 3px;
-  left: 28px;
+  left: 3px;
 }
 .leaflet-osrm-tools-editor:hover
 {
@@ -247,7 +253,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 {
   position: absolute;
   top: 3px;
-  left: 53px;
+  left: 28px;
 }
 .leaflet-osrm-tools-josm:hover
 {
@@ -290,7 +296,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 {
   position: absolute;
   top: 3px;
-  left: 78px;
+  left: 53px;
 }
 
 
@@ -303,7 +309,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 {
   position: absolute;
   top: 3px;
-  left: 103px;
+  left: 78px;
 }
 .leaflet-osrm-tools-print:hover
 {
@@ -314,7 +320,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 {
   position: absolute;
   top: 3px;
-  left: 128px;
+  left: 103px;
   text-align: center;
 }
 .leaflet-osrm-tools-gpx a {
@@ -450,7 +456,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 .leaflet-osrm-tools-container
 {
    cursor: pointer;
-   width: 161px;
+   width: 140px;
    height: 26px;
 }
 
@@ -561,15 +567,13 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
   color: #fff;
 }
 
-
 .leaflet-routing-alt table td:hover {
-    color: rgba(255, 255, 255, 1);
     cursor: pointer;
-	background-color: rgba(0, 0, 0, 0.6);
+	background-color: white;
 }
 
 .leaflet-routing-alt table tr:hover {
-	background-color: rgba(0, 0, 0, 0.6);
+	background-color: white;
 }
 
 .leaflet-routing-icon {
