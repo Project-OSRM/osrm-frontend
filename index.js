@@ -27,7 +27,7 @@ var map = L.map('map', {
 
 /* Tile default layer */
 L.tileLayer('https://{s}.tiles.mapbox.com/v4/'+mapView.defaultView.layer+'/{z}/{x}/{y}@2x.png?access_token=pk.eyJ1IjoibXNsZWUiLCJhIjoiclpiTWV5SSJ9.P_h8r37vD8jpIH1A6i1VRg', {
-	attribution: 'Maps by <a href="https://www.mapbox.com/about/maps/">MapBox</a>. ' +
+	attribution: 'Maps by <a href="https://www.mapbox.com/about/maps/">Mapbox</a>. ' +
 		'Routes from <a href="http://project-osrm.org/">OSRM</a>, ' +
 		'data uses <a href="http://opendatacommons.org/licenses/odbl/">ODbL</a> license'
 }).addTo(map);
@@ -86,6 +86,13 @@ var control = L.Routing.control({
   stepClassName: options.lrm.stepClassName
 }).addTo(map);
 
+control.on('routesfound', function(e) {
+    if (e.routes.length > 1) {
+        var x = L.Routing.line(e.routes[1], options.lrm.altLineOptions);
+        x.addTo(map);
+    }
+});
+
 // set waypoints from hash values
 if (viewOptions.waypoints.length > 1) {
   control.setWaypoints(viewOptions.waypoints);
@@ -123,11 +130,5 @@ function updateHash() {
 
   var hash = links.format(window.location.href, linkOptions).split('?');
   window.location.hash = hash[1];
-  
+
 }
-
-
-
-
-
-
