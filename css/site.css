@@ -581,7 +581,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
     height: 20px;
 }
 
-.osrm-routing-icon .leaflet-routing-alt-minimized {
+.leaflet-routing-alt-minimized .leaflet-routing-icon {
     background-image: url('../images/osrm.directions.icons-blue.png');
 }
 
