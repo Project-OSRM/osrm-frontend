@@ -6,13 +6,13 @@ module.exports = {
   lrm: {
     lineOptions: {
       styles: [
-        {color: '#005492', opacity: 0.35, weight: 8},
+        {color: '#40007d', opacity: 0.8, weight: 8},
         {color: 'white', opacity: 0.3, weight: 6}
       ]
     },
     altLineOptions: {
       styles: [
-        {color: 'green', opacity: 0.35, weight: 8},
+        {color: '#022bb1', opacity: 0.8, weight: 8},
         {color: 'white', opacity: 0.3, weight: 6}
       ]
     },

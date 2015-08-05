@@ -83,7 +83,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 
 .leaflet-routing-container.dark {
    z-index: 10;
-   background: none repeat scroll 0% 0% rgba(0, 0, 0, 0.8);
+   background: none repeat scroll 0% 0% rgba(246, 239, 248, 0.8);
    top: 0px;
    right: 0px;
    bottom: 0px;
@@ -196,7 +196,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 }
 
 .osrm-directions-icon {
-    background-image: url('images/osrm.toolbar.icons.png');
+    background-image: url('../images/osrm.toolbar.icons.png');
     -webkit-background-size: 120px 20px;
     /* background-size: 280px 20px; 
     background-repeat: no-repeat; */
@@ -502,10 +502,37 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 }
 
 
-/* Summary color change */
-.leaflet-routing-alt .osrm-directions-summary
+/* Directions Summary */
+
+.osrm-directions-summary
 {
-  color: #ABCC9F;
+  color: #40007d;
+}
+
+.leaflet-routing-alt-minimized .osrm-directions-summary
+{
+  color: #022bb1;
+  padding-top: 10px;
+}
+
+.leaflet-routing-alt table td,
+.leaflet-routing-alt table { 
+  color: #61428A;
+  margin-top: 20px;
+  padding: 5px;
+  padding-bottom: 10px;
+  padding-left: 10px;
+  font-weight: 200;
+}
+
+.leaflet-routing-alt-minimized table td,
+.leaflet-routing-alt-minimized table { 
+  color: #022bb1;
+  margin-top: 20px;
+  padding: 5px;
+  padding-bottom: 10px;
+  padding-left: 10px;
+  font-weight: 200;
 }
 
 .osrm-directions-summary h2
@@ -530,21 +557,6 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
   color: #fff;
 }
 
-.leaflet-routing-alt-minimized .osrm-directions-summary
-{
-  color: #DB5C0A;
-  padding-top: 10px;
-}
-
-.leaflet-routing-alt table,
-.leaflet-routing-alt table td { 
-  color: rgba(255, 255, 255, 0.7);
-  margin-top: 20px;
-  padding: 5px;
-  padding-bottom: 10px;
-  padding-left: 10px;
-  font-weight: 200;
-}
 
 .leaflet-routing-alt table td:hover {
     color: rgba(255, 255, 255, 1);
@@ -557,7 +569,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 }
 
 .leaflet-routing-icon {
-    background-image: url('images/osrm.directions.icons.png');
+    background-image: url('../images/osrm.directions.icons-purp.png');
     -webkit-background-size: 280px 20px;
     background-size: 280px 20px;
     background-repeat: no-repeat;
@@ -567,6 +579,10 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
     vertical-align: top;
     width: 20px;
     height: 20px;
+}
+
+.osrm-routing-icon .leaflet-routing-alt-minimized {
+    background-image: url('../images/osrm.directions.icons-blue.png');
 }
 
 .leaflet-routing-icon-continue         { background-position: 0 0; }

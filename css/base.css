@@ -107,7 +107,8 @@ textarea {
   }
 
 body { background:#fff; }
-.dark { color:#fff; }
+/* IMPORTANT FOR ROUTE INSTRUCTIONS */
+.dark { color: #4d0c8e; }
 
 h1,
 h2,
