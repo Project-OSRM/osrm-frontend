@@ -58,43 +58,6 @@ button::-moz-focus-inner {
   font:15px/20px 'Open Sans', sans-serif;
 }
 
-/* @FontFace
-------------------------------------------------------- */
-@font-face {
-  font-family:'Brandon';
-    src:url('brandon_blk.eot');
-    src:url('brandon_blk.eot#iefix') format('embedded-opentype'),
-        url('brandon_blk.woff') format('woff');
-  }
-
-@font-face {
-  font-family:'Open Sans';
-    src:url('opensans-regular.eot');
-    src:url('opensans-regular.eot#iefix') format('embedded-opentype'),
-        url('opensans-regular.woff') format('woff');
-  }
-
-@font-face {
-  font-family:'Open Sans Italic';
-    src:url('opensans-italic.eot');
-    src:url('opensans-italic.eot#iefix') format('embedded-opentype'),
-        url('opensans-italic.woff') format('woff');
-  }
-
-@font-face {
-  font-family:'Open Sans Bold';
-    src:url('opensans-bold.eot');
-    src:url('opensans-bold.eot#iefix') format('embedded-opentype'),
-        url('opensans-bold.woff') format('woff');
-  }
-
-@font-face {
-  font-family:'Open Sans Bold Italic';
-    src:url('opensans-bolditalic.eot');
-    src:url('opensans-bolditalic.eot#iefix') format('embedded-opentype'),
-        url('opensans-bolditalic.woff') format('woff');
-  }
-
 /* Inline Elements: Defaults
 ------------------------------------------------------- */
 body,
