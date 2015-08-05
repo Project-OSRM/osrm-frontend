@@ -1,3 +1,31 @@
+/* @FontFace
+------------------------------------------------------- */
+
+@font-face {
+    font-family: 'Open Sans';
+    src: url('opensans-regular-webfont.eot');
+    src: url('opensans-regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('opensans-regular-webfont.woff2') format('woff2'),
+         url('opensans-regular-webfont.woff') format('woff'),
+}
+
+@font-face {
+    font-family: 'Open Sans Condensed Bold';
+    src: url('opensans-condbold-webfont.eot');
+    src: url('opensans-condbold-webfont.eot?#iefix') format('embedded-opentype'),
+         url('opensans-condbold-webfont.woff2') format('woff2'),
+         url('opensans-condbold-webfont.woff') format('woff'),
+}
+
+@font-face {
+    font-family: 'Open Sans Condensed Light';
+    src: url('opensans-condlight-webfont.eot');
+    src: url('opensans-condlight-webfont.eot?#iefix') format('embedded-opentype'),
+         url('opensans-condlight-webfont.woff2') format('woff2'),
+         url('opensans-condlight-webfont.woff') format('woff'),
+}
+
+
 /* Footer at the bottom */
 
 html,
@@ -77,7 +105,7 @@ body {
 .osrm-directions-errors,
 .osrm-directions-routes,
 .osrm-directions-instructions {
-  font:15px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+  font:15px/20px 'Open Sans', sans-serif;
   margin-bottom: 30px;
 }
 
