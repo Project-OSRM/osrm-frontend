@@ -46,6 +46,10 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 
 /* tool colors and divs */
 
+.fill-osrm {
+  background-color: #002F53;
+}
+
 .fill-dark {
   background-color: #404040;
 }

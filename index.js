@@ -56,11 +56,27 @@ L.control.layers(mapLayer,{}, {
 
 L.control.scale().addTo(map);
 
+var myIcon = L.icon({
+	iconUrl: 'images/marker.png',
+	iconSize: [38, 95],
+	iconAnchor: [22, 94],
+	popupAnchor: [-3, -76]
+});
+
 /* OSRM setup */
 var ReversablePlan = L.Routing.Plan.extend({
   createGeocoders: function() {
     var container = L.Routing.Plan.prototype.createGeocoders.call(this);
     return container;
+  },
+  createMarker: function(i, wp) {
+    var options = {
+      draggable: this.draggableWaypoints,
+			icon: myIcon
+    },
+    marker = L.marker(wp.latLng, options);
+
+    return marker;
   }
 });
 
@@ -124,6 +140,7 @@ function mapChange(e) {
     updateHash();
     map.off('click');
   }
+
 }
 
 function updateHash() {
