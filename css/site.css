@@ -166,9 +166,9 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
   cursor: pointer;
   color: #8952cf;
   background: white;
-  padding-bottom: 16px;
-  margin-top: -16px;
-  margin-left: -10px;
+  padding-bottom: 16px;    
+	margin-top: -10px;
+   margin-left: 0px;
   line-height: 1;
 }
 
@@ -392,10 +392,27 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
   min-width: 200px;
 }
 
+.osrm-directions-inputs input:first-child {
+	border-top: 0px;
+  border-right: 0px;
+  border-bottom: 0px;
+  border-left-width: 5px;
+  height: 100%;
+  border-left-color: blue;
+}
+
+.osrm-directions-inputs input:last-child {
+	border-top: 0px;
+  border-right: 0px;
+  border-bottom: 0px;
+  border-left-width: 5px;
+  height: 100%;
+  border-left-color: red;
+}
+
 .osrm-directions-inputs input {
   font-size: 11px;
   width: 90%;
-  border: 0;
   background-color: transparent;
   height: 30px;
   color: rgba(0,0,0,.5);
