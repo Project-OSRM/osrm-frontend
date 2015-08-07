@@ -47,7 +47,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 /* tool colors and divs */
 
 .fill-osrm {
-  background-color: #8952cf;
+  background-color: rgba(37,72,127, 0.8);
 }
 
 .fill-dark {
@@ -87,7 +87,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 
 .leaflet-routing-container.dark {
    z-index: 10;
-   background: none repeat scroll 0% 0% rgba(246, 239, 248, 0.8);
+   background: none repeat scroll 0% 0% rgba(173, 182, 196, 0.6);
    top: 0px;
    right: 0px;
    bottom: 0px;
@@ -118,7 +118,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
   margin-right: 3px;
   float: right;
   cursor: pointer;
-  background-color: #8952cf;
+  background-color: rgba(37,72,127, 0.8);
   transition: background-color 0.2s ease;
   border: 0px;
   border-radius: 5px;
@@ -164,7 +164,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
   content: "\00d7";
   text-align: center;
   cursor: pointer;
-  color: #8952cf;
+  color:  rgba(37,72,127, 0.8);
   background: white;
   padding-bottom: 16px;    
 	margin-top: -10px;
@@ -392,23 +392,25 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
   min-width: 200px;
 }
 
-.osrm-directions-inputs input:first-child {
-	border-top: 0px;
+
+.leaflet-routing-geocoder input:first-child {
+  border-top: 0px;
   border-right: 0px;
   border-bottom: 0px;
-  border-left-width: 5px;
+  border-left: 0px;  
   height: 100%;
-  border-left-color: blue;
 }
 
-.osrm-directions-inputs input:last-child {
-	border-top: 0px;
+/*
+.leaflet-routing-geocoder input:last-child {
+  border-top: 0px;
   border-right: 0px;
   border-bottom: 0px;
   border-left-width: 5px;
   height: 100%;
   border-left-color: red;
 }
+*/
 
 .osrm-directions-inputs input {
   font-size: 11px;

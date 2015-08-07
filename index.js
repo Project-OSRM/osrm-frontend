@@ -66,10 +66,10 @@ var ReversablePlan = L.Routing.Plan.extend({
 });
 
 function makeIcon(i) {
-    var url = i == 0 ? 'images/marker_start.png' : 'images/marker_end.png';
+    var url = i == 0 ? 'images/marker-icon-2x.png' : 'images/marker-icon-2x.png';
     return L.icon({
         iconUrl: url,
-        iconSize: [40, 42]
+        iconSize: [25, 41]
     });
 }
 
