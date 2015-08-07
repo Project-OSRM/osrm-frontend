@@ -17,18 +17,79 @@
 .leaflet-routing-alt {
   max-height: none !important;
   overflow-y: auto !important;
+  font-family: 'Open Sans';
 }
 
 .leaflet-routing-alt-minimized {
   display: none;
 }
 
+
+.leaflet-routing-alt-minimized .osrm-directions-summary
+{
+  color: #022bb1;
+  padding-top: 10px;
+}
+
+.leaflet-routing-alt table td,
+.leaflet-routing-alt table { 
+  color: #61428A;
+  margin-top: 20px;
+  padding-top: 5px;
+  padding-bottom: 10px;
+  font-weight: 200;
+}
+
+.leaflet-routing-alt-minimized table td,
+.leaflet-routing-alt-minimized table { 
+  color: #022bb1;
+  margin-top: 20px;
+  padding: 5px;
+  padding-bottom: 10px;
+  padding-left: 10px;
+  font-weight: 200;
+}
+
+
+.leaflet-routing-icon {
+    background-image: url('../images/osrm.directions.icons-purp.png');
+    -webkit-background-size: 280px 20px;
+    background-size: 280px 20px;
+    background-repeat: no-repeat;
+    margin: 0;
+    content: '';
+    display: inline-block;
+    vertical-align: top;
+    width: 20px;
+    height: 20px;
+}
+
+.leaflet-routing-alt-minimized .leaflet-routing-icon {
+    background-image: url('../images/osrm.directions.icons-blue.png');
+}
+
+.leaflet-routing-icon-continue         { background-position: 0 0; }
+.leaflet-routing-icon-sharp-right      { background-position: -20px 0; }
+.leaflet-routing-icon-turn-right       { background-position: -50px 0; }
+.leaflet-routing-icon-bear-right       { background-position: -70px 0; }
+.leaflet-routing-icon-u-turn           { background-position: -97px 0; }
+.leaflet-routing-icon-sharp-left       { background-position: -120px 0; }
+.leaflet-routing-icon-turn-left        { background-position: -140px 0; }
+.leaflet-routing-icon-bear-left        { background-position: -168px 0; }
+.leaflet-routing-icon-depart           { background-position: -188px 0; }
+.leaflet-routing-icon-enter-roundabout { background-position: -210px 0; }
+.leaflet-routing-icon-arrive           { background-position: -237px 0; }
+.leaflet-routing-icon-via              { background-position: -260px 0; }
+
+
 .leaflet-routing-alt  h2
 {
-  font-size: 24px;
-  font-weight: bold;
-  line-height: 26px;
-  margin-right: 15px;
+	font-family: 'Open Sans';
+    font-size: 19px;
+    font-weight: bold;
+    line-height: 22px;
+    margin-right: 15px;
+    color: #40007d;
 }
 
 .leaflet-routing-alt h3
@@ -36,8 +97,40 @@
   font-weight: normal;
   font-size: 18px;
   margin-top: 0px;
+  color: #40007d;
 }
 
 .leaflet-bar {
   box-shadow: none;
 }
+
+
+/* @FontFace
+------------------------------------------------------- */
+
+@font-face {
+    font-family: 'Open Sans';
+    src: url('opensans-regular-webfont.eot');
+    src: url('opensans-regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('opensans-regular-webfont.woff2') format('woff2'),
+         url('opensans-regular-webfont.woff') format('woff'),
+}
+
+@font-face {
+    font-family: 'Open Sans Condensed Bold';
+    src: url('opensans-condbold-webfont.eot');
+    src: url('opensans-condbold-webfont.eot?#iefix') format('embedded-opentype'),
+         url('opensans-condbold-webfont.woff2') format('woff2'),
+         url('opensans-condbold-webfont.woff') format('woff'),
+}
+
+@font-face {
+    font-family: 'Open Sans Condensed Light';
+    src: url('opensans-condlight-webfont.eot');
+    src: url('opensans-condlight-webfont.eot?#iefix') format('embedded-opentype'),
+         url('opensans-condlight-webfont.woff2') format('woff2'),
+         url('opensans-condlight-webfont.woff') format('woff'),
+}
+
+
+

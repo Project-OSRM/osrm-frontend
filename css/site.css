@@ -87,7 +87,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 
 .leaflet-routing-container.dark {
    z-index: 10;
-   background: none repeat scroll 0% 0% rgba(173, 182, 196, 0.6);
+   background: none repeat scroll 0% 0% rgba(206, 206, 206, 0.75);
    top: 0px;
    right: 0px;
    bottom: 0px;

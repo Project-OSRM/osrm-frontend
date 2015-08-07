@@ -4,6 +4,7 @@
 var LRM = require('leaflet-routing-machine');
 var links = require('./src/links');
 var mapView = require('./src/leaflet_options');
+var options = require('./src/lrm_options');
 
 var parsedOptions = links.parse(window.location.hash);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
@@ -30,7 +31,8 @@ var itineraryContainer = itinerary.onAdd(map);
 document.getElementById("instructions").appendChild(itineraryContainer);
 
 osrm.route(viewOptions.waypoints, function(error, alts) {
-  var line = L.Routing.line(alts[alts.length - 1], {});
+  var lineOptions = options.lrm.lineOptions;
+  var line = L.Routing.line(alts[alts.length - 1], lineOptions);
 
   line.addTo(map);
   map.fitBounds(line.getBounds());
