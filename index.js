@@ -34,22 +34,6 @@ L.tileLayer('https://{s}.tiles.mapbox.com/v4/'+mapView.defaultView.layer+'/{z}/{
 }).addTo(map);
 
 /* Leaflet Controls */
-var lrm = L.Routing.control(L.extend({
-  language: viewOptions.language,
-  units: viewOptions.units,
-  serviceUrl: mapView.services[0].path
-},
-  L.extend(
-    options.lrm)
-  )).addTo(map);
-
-// We need to do this the ugly way because of cyclic dependencies...
-// lrm.getPlan().options.createMarker = markerFactory(lrm, options.popup);
-
-var toolsControl = tools.control(lrm, L.extend({
-  position: 'bottomleft',
-  language: mapView.language
- }, options.tools)).addTo(map);
 
 L.control.layers(mapLayer,{}, {
     position: 'bottomleft',
@@ -100,8 +84,16 @@ var control = L.Routing.control({
   summaryTemplate: options.lrm.summaryTemplate,
   containerClassName: options.lrm.containerClassName,
   alternativeClassName: options.lrm.alternativeClassName,
-  stepClassName: options.lrm.stepClassName
+  stepClassName: options.lrm.stepClassName,
+  language: viewOptions.language,
+  units: viewOptions.units,
+  serviceUrl: mapView.services[0].path
 }).addTo(map);
+
+var toolsControl = tools.control(control, L.extend({
+  position: 'bottomleft',
+  language: mapView.language
+ }, options.tools)).addTo(map);
 
 var altRoute;
 

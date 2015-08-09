@@ -165,11 +165,10 @@ var Control = L.Control.extend({
 
     if (link.slice(-1) === '#') {
       link += "printing.html";
-	  alert('yes');
     }
     if (validWPs.length < 2 ) {
       return;
-    }   
+    }
   },
 
   _selectLocalization: function() {
@@ -209,7 +208,6 @@ var Control = L.Control.extend({
   },
 
   _updateDownloadLink: function() {
-    alert('hfaf');
     var plan = this._lrm.getPlan(),
         router = this._lrm.getRouter(),
         url;
