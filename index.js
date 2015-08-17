@@ -61,12 +61,12 @@ var plan = new ReversablePlan([], {
   geocoder: Geocoder.nominatim(),
   routeWhileDragging: true,
   createMarker: function(i, wp) {
-        var options = {
-                draggable: this.draggableWaypoints,
-                icon: makeIcon(i)
-            },
-            marker = L.marker(wp.latLng, options);
-        return marker;
+    var options = {
+      draggable: this.draggableWaypoints,
+      icon: makeIcon(i)
+    },
+      marker = L.marker(wp.latLng, options);
+      return marker;
   },
   routeDragInterval: 2,
   addWaypoints: true,
@@ -95,6 +95,7 @@ var toolsControl = tools.control(control, L.extend({
   language: mapView.language
  }, options.tools)).addTo(map);
 
+/*
 var altRoute;
 
 // this adds alt route line to map
@@ -102,13 +103,14 @@ control.on('routesfound', function(e) {
     if (e.routes.length > 1) {
         altRoute = L.Routing.line(e.routes[1], options.lrm.altLineOptions);
         altRoute.addTo(map);
-        console.log('yes');
+    }
+
+            console.log('yes');
 
         // start off NOT showing route 2
         var directions = document.querySelectorAll('.leaflet-routing-alt');
         console.log(directions);
         // directions[1].style.display = 'none';
-    }
 });
 
 
@@ -117,6 +119,14 @@ control.on('routingstart', function(e) {
         map.removeLayer(altRoute);
     }
 })
+
+*/
+
+if (viewOptions.waypoints.length < 1) {
+  //control.setWaypoints(viewOptions.waypoints);
+  console.log(viewOptions.waypoints);
+}
+
 
 // set waypoints from hash values
 if (viewOptions.waypoints.length > 1) {
@@ -158,6 +168,8 @@ function updateHash() {
   var hash = links.format(window.location.href, linkOptions).split('?');
   window.location.hash = hash[1];
 
+  console.log(length);
+
 }
 
 // figure out which route you are on
@@ -166,14 +178,14 @@ var onRoute1 = true;
 control.on('alternateChosen', function(e) {
   // console.log(document.querySelectorAll('.leaflet-routing-alt'));
   if (onRoute1) {
-    console.log("show route 2");
+    //console.log("show route 2");
     onRoute1 = false;
     var directions = document.querySelectorAll('.leaflet-routing-alt');
     directions[0].style.display = 'none';
     directions[1].style.display = 'block';
 
   } else {
-    console.log("show route 1");
+    //console.log("show route 1");
     onRoute1 = true;
     var directions = document.querySelectorAll('.leaflet-routing-alt');
     directions[1].style.display = 'none';
@@ -181,7 +193,7 @@ control.on('alternateChosen', function(e) {
   }
 });
 
-console.log(plan.options.addWaypoints);
+//console.log(plan.options.addWaypoints);
 
 
 /*

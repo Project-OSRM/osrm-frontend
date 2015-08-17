@@ -539,6 +539,11 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
   color: #40007d;
 }
 
+.leaflet-routing-alt.osrm-directions-instructions.leaflet-routing-alt-minimized 
+{
+  display: none;
+}
+
 .leaflet-routing-alt-minimized .osrm-directions-summary
 {
   color: #022bb1;
