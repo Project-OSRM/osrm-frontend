@@ -97,6 +97,7 @@ var toolsControl = tools.control(control, L.extend({
 
 var altRoute;
 
+// this adds alt route line to map
 control.on('routesfound', function(e) {
     if (e.routes.length > 1) {
         altRoute = L.Routing.line(e.routes[1], options.lrm.altLineOptions);
@@ -153,7 +154,17 @@ function updateHash() {
 
 }
 
+// figure out which route you are on
+var onRoute1 = true;
 
-
+control.on('alternateChosen', function(e) {
+  if (onRoute1) {
+    console.log("route 2");
+    onRoute1 = false;
+  } else {
+    console.log("route 1");
+    onRoute1 = true;
+  }
+});
 
 
