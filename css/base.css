@@ -485,33 +485,7 @@ a.quiet.dark.active, a.quiet.dark:hover { color:rgba(255,255,255,0.5); }
   background-color:rgba(255,255,255,0.25);
   }
 
-.button.disabled,
-.button:disabled {
-  background:rgba(0,0,0,.1);
-  color:rgba(0,0,0,0.25);
-  cursor: default;
-  }
 
-.button.disabled:hover,
-.button:disabled:hover {
-  background:rgba(0,0,0,.1);
-  }
-
-.button.disabled:focus,
-.button:disabled:focus {
-  box-shadow:none;
-  }
-
-.dark .button.disabled,
-.dark .button:disabled {
-  background:rgba(255,255,255,.05);
-  color: rgba(255,255,255,.5);
-  }
-
-.dark .button.disabled:hover,
-.dark .button:disabled:hover {
-  background:rgba(255,255,255,.05);
-  }
 
 /* Tab style for links that toggle between views
  * NOTE: THE .tabs class in DEPRECATED - for a similar UI component use rounded-toggle ;
@@ -1052,21 +1026,6 @@ input[type=number] {
       border-color:rgba(255,255,255,0.75);
       color:#fff;
       }
-
-textarea:disabled,
-input[type=text]:disabled,
-input[type=date]:disabled,
-input[type=email]:disabled,
-input[type=number]:disabled,
-input[type=password]:disabled {
-  border-color:rgba(0,0,0,0.125);
-  color: rgba(0,0,0,0.5);
-}
-  .dark textarea:disabled,
-  .dark input[type='text']:disabled {
-    border-color:rgba(255,255,255,0.25);
-    color: rgba(255,255,255,0.5);
-  }
 
 textarea.short,
 input[type=password].short,

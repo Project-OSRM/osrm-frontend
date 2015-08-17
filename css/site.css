@@ -124,6 +124,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
   border-radius: 5px;
   margin-top: -3px;
   margin-right: 0px;
+  color: white;
 }
 
 .leaflet-routing-add-waypoint {

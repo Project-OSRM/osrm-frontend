@@ -33,13 +33,13 @@ L.tileLayer('https://{s}.tiles.mapbox.com/v4/'+mapView.defaultView.layer+'/{z}/{
 		'data uses <a href="http://opendatacommons.org/licenses/odbl/">ODbL</a> license'
 }).addTo(map);
 
-/* Leaflet Controls */
 
+/* Leaflet Controls */
 L.control.layers(mapLayer,{}, {
     position: 'bottomleft',
   }).addTo(map);
-
 L.control.scale().addTo(map);
+
 
 /* OSRM setup */
 var ReversablePlan = L.Routing.Plan.extend({
@@ -69,7 +69,7 @@ var plan = new ReversablePlan([], {
         return marker;
   },
   routeDragInterval: 2,
-  addWaypoints: false,
+  addWaypoints: true,
   waypointMode: 'snap',
   position: 'topright',
   useZoomParameter: true,
@@ -102,6 +102,12 @@ control.on('routesfound', function(e) {
     if (e.routes.length > 1) {
         altRoute = L.Routing.line(e.routes[1], options.lrm.altLineOptions);
         altRoute.addTo(map);
+        console.log('yes');
+
+        // start off NOT showing route 2
+        var directions = document.querySelectorAll('.leaflet-routing-alt');
+        console.log(directions);
+        // directions[1].style.display = 'none';
     }
 });
 
@@ -158,13 +164,34 @@ function updateHash() {
 var onRoute1 = true;
 
 control.on('alternateChosen', function(e) {
+  // console.log(document.querySelectorAll('.leaflet-routing-alt'));
   if (onRoute1) {
-    console.log("route 2");
+    console.log("show route 2");
     onRoute1 = false;
+    var directions = document.querySelectorAll('.leaflet-routing-alt');
+    directions[0].style.display = 'none';
+    directions[1].style.display = 'block';
+
   } else {
-    console.log("route 1");
+    console.log("show route 1");
     onRoute1 = true;
+    var directions = document.querySelectorAll('.leaflet-routing-alt');
+    directions[1].style.display = 'none';
+    directions[0].style.display = 'block';
   }
 });
+
+console.log(plan.options.addWaypoints);
+
+
+/*
+  console.log(document.querySelectorAll('.leaflet-routing-alt'));
+
+  var directions = document.querySelectorAll('.leaflet-routing-alt');
+  directions[1].style.display = 'none';
+
+  */
+
+
 
 
