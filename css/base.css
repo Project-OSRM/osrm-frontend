@@ -63,8 +63,8 @@ button::-moz-focus-inner {
 body,
 input,
 textarea {
-  color:#404040;
-  color:rgba(0,0,0,0.75);
+  color: #404040;
+  color: rgba(20, 20, 20, 0.65);
   font:15px/20px 'Open Sans', sans-serif;
   -webkit-font-smoothing:antialiased;
   }
@@ -116,9 +116,9 @@ h4, h5, h6 {
   line-height:20px;
   }
 
-p { margin-bottom:20px; }
+p { margin-bottom: 20px; }
 
-p:last-child { margin-bottom:0; }
+p:last-child { margin-bottom: 0; }
 
 small,
 .prose.small,
@@ -987,8 +987,8 @@ input[type=text],
 input[type=date],
 input[type=email],
 input[type=number] {
-  background-color:#fff;
-  border:1px solid rgba(0,0,0,0.1);
+  background-color: #fff;
+  border: 1px solid rgba(0,0,0,0.1);
   -webkit-transition:border-color .05s;
      -moz-transition:border-color .05s;
       -ms-transition:border-color .05s;

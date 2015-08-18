@@ -4,7 +4,7 @@
 .osrm-directions-errors,
 .osrm-directions-routes,
 .osrm-directions-instructions {
-    font:15px/20px 'Open Sans', sans-serif;
+  font:15px/20px 'Open Sans', sans-serif;
 	margin-bottom: 30px;
 }
 
@@ -141,7 +141,6 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
   background-color: rgba(255,255,255,0.9);
   margin: 0 0 0 0;
   border-bottom: 0px solid #000;
-  border-radius: 4px;
 }
 
 .leaflet-container button {
@@ -432,32 +431,39 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
   min-width: 200px;
 }
 
-
-.leaflet-routing-geocoder input:first-child {
+.leaflet-routing-geocoders.osrm-directions-inputs .leaflet-routing-geocoder:first-child input {
   border-top: 0px;
   border-right: 0px;
   border-bottom: 0px;
-  border-left: 0px;  
   height: 100%;
+  border-left-color: lime;
+  border-left-width: thick;
 }
 
-/*
-.leaflet-routing-geocoder input:last-child {
+.leaflet-routing-geocoders.osrm-directions-inputs .leaflet-routing-geocoder:last-of-type input {
   border-top: 0px;
   border-right: 0px;
   border-bottom: 0px;
-  border-left-width: 5px;
   height: 100%;
   border-left-color: red;
+  border-left-width: thick;
 }
-*/
+
+.leaflet-routing-geocoders.osrm-directions-inputs .leaflet-routing-geocoder input {
+  border-top: 0px;
+  border-right: 0px;
+  border-bottom: 0px;
+  height: 100%;
+  border-left-color: white;
+  border-left-width: thick;
+}
 
 .osrm-directions-inputs input {
-  font-size: 11px;
+  font-size: 12px;
   width: 90%;
   background-color: transparent;
+  color: rgba(0, 0, 0, 0.5);
   height: 30px;
-  color: rgba(0,0,0,.5);
   padding: 10px 10px 10px 20px;
 }
 
