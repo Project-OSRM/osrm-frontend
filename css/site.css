@@ -66,6 +66,19 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
   bottom: 5px;
 }
 
+/* Layers position */
+
+.leaflet-control-layers {
+  position: absolute;
+  left: 0px;
+  bottom: 35px;
+}
+
+.leaflet-control-layers-expanded {
+  width: 180px;
+
+}
+
 /* Toolbar */
 
 .leaflet-osrm-tools-container

@@ -10,7 +10,7 @@ module.exports = {
     language: 'en',
     alternative: true,
 	// best way to pass??
-    layer: 'mapbox.emerald'
+    layer: 'mapbox.streets'
   },
 
   services: [
