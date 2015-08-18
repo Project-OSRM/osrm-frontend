@@ -6,24 +6,47 @@
     z-index: 0;
 }
 
+/* routing headlines */
+
+.leaflet-routing-alt  h2
+{
+  font-family: 'Verdana';
+  font-size: 22px;
+  font-weight: bold;
+  line-height: 30px;
+  margin-right: 15px;
+  color: rgba(37,72,127, 0.8);
+}
+
+.leaflet-routing-alt h3
+{
+  font-weight: normal;
+  font-size: 12px;
+  margin-top: 0px;
+  color: rgba(37,72,127, 0.8);
+}
+
+.leaflet-bar {
+  box-shadow: none;
+}
+
 .leaflet-routing-container {
     page-break-before: always;
     width: 18cm;
     height: auto !important;
-    padding-left: 20px;
+    padding-left: 10px;
     box-shadow: none;
 }
 
 .leaflet-routing-alt {
   max-height: none !important;
   overflow-y: auto !important;
-  font-family: 'Open Sans';
+  font-family: 'Verdana';
 }
 
 .leaflet-routing-alt-minimized {
   display: none;
 }
-
 
 .leaflet-routing-alt-minimized .osrm-directions-summary
 {
@@ -31,13 +54,24 @@
   padding-top: 10px;
 }
 
-.leaflet-routing-alt table td,
-.leaflet-routing-alt table { 
-  color: #61428A;
-  margin-top: 20px;
-  padding-top: 5px;
+.leaflet-routing-alt td {
+  color: rgba(37,72,127, 0.8);
+  margin-top: 30px;
+  padding-top: 15px;
   padding-bottom: 10px;
+  padding-right: 15px;
   font-weight: 200;
+  font-size: 16px;
+}
+
+.leaflet-routing-alt table { 
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
+
+
+tbody tr td:last-child {
+  font-size: 12px;
 }
 
 .leaflet-routing-alt-minimized table td,
@@ -50,9 +84,15 @@
   font-weight: 200;
 }
 
+.leaflet-routing-alt table tr:nth-child(even) {
+  background-color: rgba(0,0,0, 0.05);
+}
+
+
+/* routing icons */
 
 .leaflet-routing-icon {
-    background-image: url('../images/osrm.directions.icons-purp.png');
+    background-image: url('../images/osrm.directions.icons.svg');
     -webkit-background-size: 280px 20px;
     background-size: 280px 20px;
     background-repeat: no-repeat;
@@ -65,43 +105,43 @@
 }
 
 .leaflet-routing-alt-minimized .leaflet-routing-icon {
-    background-image: url('../images/osrm.directions.icons-blue.png');
+    background-image: url('../images/osrm.directions.icons.svg');
 }
 
-.leaflet-routing-icon-continue         { background-position: 0 0; }
+.leaflet-routing-icon-continue         { background-position: -15px 0; }
 .leaflet-routing-icon-sharp-right      { background-position: -20px 0; }
-.leaflet-routing-icon-turn-right       { background-position: -50px 0; }
-.leaflet-routing-icon-bear-right       { background-position: -70px 0; }
+.leaflet-routing-icon-turn-right       { background-position: -57px 0; }
+.leaflet-routing-icon-bear-right       { background-position: -76px 0; }
 .leaflet-routing-icon-u-turn           { background-position: -97px 0; }
 .leaflet-routing-icon-sharp-left       { background-position: -120px 0; }
 .leaflet-routing-icon-turn-left        { background-position: -140px 0; }
-.leaflet-routing-icon-bear-left        { background-position: -168px 0; }
-.leaflet-routing-icon-depart           { background-position: -188px 0; }
-.leaflet-routing-icon-enter-roundabout { background-position: -210px 0; }
-.leaflet-routing-icon-arrive           { background-position: -237px 0; }
-.leaflet-routing-icon-via              { background-position: -260px 0; }
+.leaflet-routing-icon-bear-left        { background-position: -155px 0; }
+.leaflet-routing-icon-depart           { background-position: -175px 0; }
+.leaflet-routing-icon-enter-roundabout { background-position: -196px 0; }
+.leaflet-routing-icon-arrive           { background-position: -217px 0; }
+.leaflet-routing-icon-via              { background-position: -237px 0; }
 
 
-.leaflet-routing-alt  h2
-{
-	font-family: 'Open Sans';
-    font-size: 19px;
-    font-weight: bold;
-    line-height: 22px;
-    margin-right: 15px;
-    color: #40007d;
+
+/*  FORM Labels */
+
+.osrm-form-label {
+  cursor: default;
 }
 
-.leaflet-routing-alt h3
-{
-  font-weight: normal;
-  font-size: 18px;
-  margin-top: 0px;
-  color: #40007d;
+.osrm-directions-origin .osrm-form-label {
+    background-color: #ee8a65;
+}
+.osrm-directions-via {
+    background-color: white;
+    position: relative;
+}
+.osrm-directions-via .osrm-form-label {
+    background-color: #CCC;
 }
 
-.leaflet-bar {
-  box-shadow: none;
+.osrm-directions-via input {
+    border-top: 1px solid rgba(0,0,0,.1);
 }
 
 
@@ -110,27 +150,26 @@
 
 @font-face {
     font-family: 'Open Sans';
-    src: url('opensans-regular-webfont.eot');
-    src: url('opensans-regular-webfont.eot?#iefix') format('embedded-opentype'),
-         url('opensans-regular-webfont.woff2') format('woff2'),
-         url('opensans-regular-webfont.woff') format('woff'),
+    src: url('../fonts/opensans-regular-webfont.eot');
+    src: url('../fonts/opensans-regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/opensans-regular-webfont.woff2') format('woff2'),
+         url('../fonts/opensans-regular-webfont.woff') format('woff'),
 }
 
 @font-face {
     font-family: 'Open Sans Condensed Bold';
-    src: url('opensans-condbold-webfont.eot');
-    src: url('opensans-condbold-webfont.eot?#iefix') format('embedded-opentype'),
-         url('opensans-condbold-webfont.woff2') format('woff2'),
-         url('opensans-condbold-webfont.woff') format('woff'),
+    src: url('../fonts/opensans-condbold-webfont.eot');
+    src: url('../fonts/opensans-condbold-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/opensans-condbold-webfont.woff2') format('woff2'),
+         url('../fonts/opensans-condbold-webfont.woff') format('woff'),
 }
 
 @font-face {
     font-family: 'Open Sans Condensed Light';
-    src: url('opensans-condlight-webfont.eot');
-    src: url('opensans-condlight-webfont.eot?#iefix') format('embedded-opentype'),
-         url('opensans-condlight-webfont.woff2') format('woff2'),
-         url('opensans-condlight-webfont.woff') format('woff'),
+    src: url('../fonts/opensans-condlight-webfont.eot');
+    src: url('../fonts/opensans-condlight-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/opensans-condlight-webfont.woff2') format('woff2'),
+         url('../fonts/opensans-condlight-webfont.woff') format('woff'),
 }
-
 
 
