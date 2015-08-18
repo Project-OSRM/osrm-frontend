@@ -19,11 +19,13 @@ mapLayer = mapLayer.reduce(function(title, layer) {
   return title;
 });
 
+console.log(mapView.defaultView.layer);
 
 /* Add the map class */
 var map = L.map('map', {
   zoomControl: false,
-  dragging: true
+  dragging: true,
+  maxZoom: 18
 }).setView(viewOptions.center, viewOptions.zoom);
 
 /* Tile default layer */

@@ -79,6 +79,28 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 
 }
 
+
+/* Layer styling */
+
+.leaflet-control-layers-toggle {
+  background-image: url(../images/layers.svg);
+  width: 36px;
+  height: 36px;
+}
+
+.leaflet-bar a, .leaflet-control-layers-toggle {
+  background-position: 70% 70%;
+  background-repeat: no-repeat;
+  display: block;
+  background-size: 90%;
+}
+
+.leaflet-control-layers-expanded {
+  padding: 6px 10px 6px 6px;
+  color: #000; /* #fff; */
+  }
+
+
 /* Toolbar */
 
 .leaflet-osrm-tools-container
