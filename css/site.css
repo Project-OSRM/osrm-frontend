@@ -126,7 +126,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 
 .leaflet-routing-container.dark {
    z-index: 10;
-   background: none repeat scroll 0% 0% rgba(206, 206, 206, 0.75);
+   background: none repeat scroll 0% 0% rgba(255, 255, 255, 0.85);
    top: 0px;
    right: 0px;
    bottom: 0px;
@@ -138,16 +138,17 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 
 .leaflet-routing-geocoder {
   position: relative;
-  background-color: white;
+  background-color: rgba(255,255,255,0.9);
   margin: 0 0 0 0;
   border-bottom: 0px solid #000;
+  border-radius: 4px;
 }
 
 .leaflet-container button {
   margin: 0 10px 0 0;
   float: left;
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
   background-color: white;
 }
 
@@ -157,7 +158,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
   margin-right: 3px;
   float: right;
   cursor: pointer;
-  background-color: rgba(37,72,127, 0.8);
+  background-color: rgba(37,72,127, 0.75);
   transition: background-color 0.2s ease;
   border: 0px;
   border-radius: 5px;
@@ -205,7 +206,6 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
   text-align: center;
   cursor: pointer;
   color:  rgba(37,72,127, 0.8);
-  background: white;
   padding-bottom: 16px;    
 	margin-top: -10px;
    margin-left: 0px;
@@ -575,7 +575,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 
 .osrm-directions-summary
 {
-  color: #40007d;
+  color: rgba(37,72,127, 0.8);
 }
 
 .leaflet-routing-alt.osrm-directions-instructions.leaflet-routing-alt-minimized 
@@ -585,28 +585,30 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 
 .leaflet-routing-alt-minimized .osrm-directions-summary
 {
-  color: #022bb1;
+  color: rgba(37,72,127, 0.8);
   padding-top: 10px;
 }
 
 .leaflet-routing-alt table td,
 .leaflet-routing-alt table { 
-  color: #61428A;
+  color: rgba(37,72,127, 0.8);
   margin-top: 20px;
   padding: 5px;
   padding-bottom: 10px;
   padding-left: 10px;
-  font-weight: 200;
+  font-weight: 400;
+  font-size: 14px;
 }
 
 .leaflet-routing-alt-minimized table td,
 .leaflet-routing-alt-minimized table { 
-  color: #022bb1;
+  color: rgba(37,72,127, 0.8);
   margin-top: 20px;
   padding: 5px;
   padding-bottom: 10px;
   padding-left: 10px;
-  font-weight: 200;
+  font-weight: 400;
+  font-size: 14px;
 }
 
 .osrm-directions-summary h2
@@ -632,7 +634,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 }
 
 .leaflet-routing-alt table td:hover {
-    cursor: pointer;
+  cursor: pointer;
 	background-color: white;
 }
 
@@ -641,7 +643,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 }
 
 .leaflet-routing-icon {
-    background-image: url('../images/osrm.directions.icons-purp.png');
+    background-image: url('../images/osrm.directions.icons.svg');
     -webkit-background-size: 280px 20px;
     background-size: 280px 20px;
     background-repeat: no-repeat;
@@ -654,21 +656,21 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 }
 
 .leaflet-routing-alt-minimized .leaflet-routing-icon {
-    background-image: url('../images/osrm.directions.icons-blue.png');
+    background-image: url('../images/osrm.directions.icons.svg');
 }
 
-.leaflet-routing-icon-continue         { background-position: 0 0; }
+.leaflet-routing-icon-continue         { background-position: -15px 0; }
 .leaflet-routing-icon-sharp-right      { background-position: -20px 0; }
-.leaflet-routing-icon-turn-right       { background-position: -50px 0; }
-.leaflet-routing-icon-bear-right       { background-position: -70px 0; }
+.leaflet-routing-icon-turn-right       { background-position: -57px 0; }
+.leaflet-routing-icon-bear-right       { background-position: -76px 0; }
 .leaflet-routing-icon-u-turn           { background-position: -97px 0; }
 .leaflet-routing-icon-sharp-left       { background-position: -120px 0; }
 .leaflet-routing-icon-turn-left        { background-position: -140px 0; }
-.leaflet-routing-icon-bear-left        { background-position: -168px 0; }
-.leaflet-routing-icon-depart           { background-position: -188px 0; }
-.leaflet-routing-icon-enter-roundabout { background-position: -210px 0; }
-.leaflet-routing-icon-arrive           { background-position: -237px 0; }
-.leaflet-routing-icon-via              { background-position: -260px 0; }
+.leaflet-routing-icon-bear-left        { background-position: -155px 0; }
+.leaflet-routing-icon-depart           { background-position: -175px 0; }
+.leaflet-routing-icon-enter-roundabout { background-position: -196px 0; }
+.leaflet-routing-icon-arrive           { background-position: -217px 0; }
+.leaflet-routing-icon-via              { background-position: -237px 0; }
 
 
 /*  FORM Labels */
