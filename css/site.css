@@ -86,19 +86,23 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
   background-image: url(../images/layers.svg);
   width: 36px;
   height: 36px;
+  background-color: rgba(37,72,127, 0.8);
+  box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+  border-radius: 4px;
 }
 
 .leaflet-bar a, .leaflet-control-layers-toggle {
-  background-position: 70% 70%;
+  background-position: 55% 70%;
   background-repeat: no-repeat;
   display: block;
-  background-size: 90%;
+  background-size: 85%;
 }
 
 .leaflet-control-layers-expanded {
   padding: 6px 10px 6px 6px;
-  color: #000; /* #fff; */
-  }
+  color: #fff;
+  background-color: rgba(37,72,127, 0.8);
+}
 
 
 /* Toolbar */
