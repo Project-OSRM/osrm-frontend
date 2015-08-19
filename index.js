@@ -77,7 +77,7 @@ var plan = new ReversablePlan([], {
     return L.marker(wp.latLng, options);
   },
   routeDragInterval: 2,
-  addWaypoints: true,
+  addWaypoints: false,
   waypointMode: 'snap',
   position: 'topright',
   useZoomParameter: true,
