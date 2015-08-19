@@ -45,25 +45,37 @@ var ReversablePlan = L.Routing.Plan.extend({
 });
 
 /* Setup markers */
-var list = [];
-
-function makeIcon(i) {
-    var url = i == 0 ? 'images/marker-start-icon-2x.png' : 'images/marker-end-icon-2x.png';
-    list.lastIndexOf(i);
-    //url = 'images/marker-via-icon-2x.png';
+function makeIcon(i, n) {
+  var url = 'images/marker-via-icon-2x.png';
+  var markerList = ['images/marker-start-icon-2x.png', 'images/marker-end-icon-2x.png'];
+  if (i == 0) {
+    //console.log(i==0);
     return L.icon({
-        iconUrl: url,
-        iconSize: [25, 41]
+      iconUrl: markerList[0],
+      iconSize: [25, 41]
     });
+  } if (i = n) {
+    //console.log(i == n);
+    return L.icon({
+      iconUrl: markerList[1],
+      iconSize: [25, 41]
+    });
+  } else {
+    //console.log(i != n && i !== 0);
+    return L.icon({
+      iconUrl: url,
+      iconSize: [25, 41]
+    });
+  }
 }
 
 var plan = new ReversablePlan([], {
   geocoder: Geocoder.nominatim(),
   routeWhileDragging: true,
-  createMarker: function(i, wp) {
+  createMarker: function(i, wp, n) {
     var options = {
       draggable: this.draggableWaypoints,
-      icon: makeIcon(i)
+      icon: makeIcon(i, n)
     };
     return L.marker(wp.latLng, options);
   },
