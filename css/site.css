@@ -114,6 +114,17 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
    height: 26px;
 }
 
+
+/* Waypoint marker labels */
+
+.leaflet-osrm-waypoint-label
+{
+  background-color: rgba(0, 0, 0, 0.5);
+  border-color: rgba(0, 0, 0, 0.5);
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+  color: #fff;
+}
+
 /* Geocode container */
 
 .leaflet-routing-container {
@@ -649,9 +660,9 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 }
 
 .leaflet-routing-icon {
-    background-image: url('../images/osrm.directions.icons.svg');
-    -webkit-background-size: 280px 20px;
-    background-size: 280px 20px;
+    background-image: url('../images/osrm.directions.icons.color.svg');
+    -webkit-background-size: 300px 20px;
+    background-size: 300px 20px;
     background-repeat: no-repeat;
     margin: 0;
     content: '';
@@ -662,21 +673,24 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 }
 
 .leaflet-routing-alt-minimized .leaflet-routing-icon {
-    background-image: url('../images/osrm.directions.icons.svg');
+    background-image: url('../images/osrm.directions.icons.color.svg');
 }
 
-.leaflet-routing-icon-continue         { background-position: -15px 0; }
-.leaflet-routing-icon-sharp-right      { background-position: -20px 0; }
-.leaflet-routing-icon-turn-right       { background-position: -57px 0; }
-.leaflet-routing-icon-bear-right       { background-position: -76px 0; }
-.leaflet-routing-icon-u-turn           { background-position: -97px 0; }
-.leaflet-routing-icon-sharp-left       { background-position: -120px 0; }
-.leaflet-routing-icon-turn-left        { background-position: -140px 0; }
-.leaflet-routing-icon-bear-left        { background-position: -155px 0; }
-.leaflet-routing-icon-depart           { background-position: -175px 0; }
-.leaflet-routing-icon-enter-roundabout { background-position: -196px 0; }
-.leaflet-routing-icon-arrive           { background-position: -217px 0; }
-.leaflet-routing-icon-via              { background-position: -237px 0; }
+.leaflet-routing-icon-continue         { background-position: 2px 4px; }
+.leaflet-routing-icon-sharp-right      { background-position: -24px 2px; }
+.leaflet-routing-icon-turn-right       { background-position: -50px 2px; }
+.leaflet-routing-icon-bear-right       { background-position: -74px 4px; }
+.leaflet-routing-icon-u-turn           { background-position: -101px 2px; }
+
+.leaflet-routing-icon-sharp-left       { background-position: -123px 3px; }
+
+.leaflet-routing-icon-turn-left        { background-position: -150px 1px; }
+.leaflet-routing-icon-bear-left        { background-position: -175px 4px; }
+.leaflet-routing-icon-depart           { background-position: -199px 4px; }
+
+.leaflet-routing-icon-enter-roundabout { background-position: -224px 1px; }
+.leaflet-routing-icon-arrive           { background-position: -249px 0; }
+.leaflet-routing-icon-via              { background-position: -275px 2px; }
 
 
 /*  FORM Labels */

@@ -36,7 +36,6 @@ L.control.layers(mapLayer, overlay, {
 
 L.control.scale().addTo(map);
 
-
 /* OSRM setup */
 var ReversablePlan = L.Routing.Plan.extend({
   createGeocoders: function() {
@@ -45,8 +44,15 @@ var ReversablePlan = L.Routing.Plan.extend({
   }
 });
 
+/* Setup markers */
+var list = [];
+
 function makeIcon(i) {
-    var url = i == 0 ? 'images/marker-icon-2x.png' : 'images/marker-icon-2x.png';
+    var url = i == 0 ? 'images/marker-start-icon-2x.png' : 'images/marker-end-icon-2x.png';
+    list.lastIndexOf(i);
+
+    //url = 'images/marker-end-icon-2x.png';
+
     return L.icon({
         iconUrl: url,
         iconSize: [25, 41]
@@ -64,6 +70,7 @@ var plan = new ReversablePlan([], {
       marker = L.marker(wp.latLng, options);
       return marker;
   },
+
   routeDragInterval: 2,
   addWaypoints: true,
   waypointMode: 'snap',
@@ -73,6 +80,8 @@ var plan = new ReversablePlan([], {
   dragStyles: options.lrm.dragStyles,
   geocodersClassName: options.lrm.geocodersClassName
 });
+
+console.log
 
 var control = L.Routing.control({
   plan: plan,
