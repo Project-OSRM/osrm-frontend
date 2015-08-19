@@ -9,9 +9,8 @@
 }
 
 .osrm-directions-summary {
-	border-top: solid 1px;
 	padding-left: 20px;
-	padding-top: 20px;
+	padding-top: 10px;
 }
 
 .osrm-directions-inputs,
@@ -538,8 +537,13 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 
 .osrm-directions-summary
 {
-  border-top: solid 1px;
-  padding-left: 20px;
+  background-image: url('../images/osrm_logo.svg');
+  -webkit-background-size: 300px 90px;
+  background-size: 300px 90px;
+  background-repeat: no-repeat;
+  margin: 0;
+  padding-top: 80px;
+  background-position: -35px -5px;
 }
 
 /* Instructions */
@@ -603,7 +607,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 .leaflet-routing-alt-minimized .osrm-directions-summary
 {
   color: rgba(37,72,127, 0.8);
-  padding-top: 10px;
+  padding-top: 80px;
 }
 
 .leaflet-routing-alt table td,
