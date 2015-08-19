@@ -67,9 +67,8 @@ var plan = new ReversablePlan([], {
       draggable: this.draggableWaypoints,
       icon: makeIcon(i)
     };
-      return L.marker(wp.latLng, options);
+    return L.marker(wp.latLng, options);
   },
-
   routeDragInterval: 2,
   addWaypoints: true,
   waypointMode: 'snap',
@@ -79,8 +78,6 @@ var plan = new ReversablePlan([], {
   dragStyles: options.lrm.dragStyles,
   geocodersClassName: options.lrm.geocodersClassName
 });
-
-console.log
 
 var control = L.Routing.control({
   plan: plan,
