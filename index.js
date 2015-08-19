@@ -66,9 +66,8 @@ var plan = new ReversablePlan([], {
     var options = {
       draggable: this.draggableWaypoints,
       icon: makeIcon(i)
-    },
-      marker = L.marker(wp.latLng, options);
-      return marker;
+    };
+      return L.marker(wp.latLng, options);
   },
 
   routeDragInterval: 2,
