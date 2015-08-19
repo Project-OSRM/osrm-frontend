@@ -6,13 +6,16 @@ module.exports = {
   lrm: {
     lineOptions: {
       styles: [
-        {color: '#40007d', opacity: 0.8, weight: 8},
+        {color: '#022bb1', opacity: 0.8, weight: 8},
+        //{color: '#40007d', opacity: 0.8, weight: 8},
         {color: 'white', opacity: 0.3, weight: 6}
       ]
     },
     altLineOptions: {
       styles: [
-        {color: '#022bb1', opacity: 0.5, weight: 8},
+        {color: '#40007d', opacity: 0.4, weight: 8},
+        //{color: '#022bb1', opacity: 0.4, weight: 8},
+        {color: 'black', opacity: 0.5, weight: 2, dashArray: '2,4' },
         {color: 'white', opacity: 0.3, weight: 6}
       ]
     },
@@ -38,7 +41,6 @@ module.exports = {
   tools: {
     popupWindowClass: 'fill-osrm dark',
     popupCloseButtonClass: 'osrm-directions-icon osrm-close-icon',
-    /*linkButtonClass: 'osrm-directions-icon osrm-link-icon',*/
     editorButtonClass: 'osrm-directions-icon osrm-editor-icon',
     josmButtonClass: 'osrm-directions-icon osrm-josm-icon',
     localizationButtonClass: 'osrm-directions-icon osrm-flag-icon',
