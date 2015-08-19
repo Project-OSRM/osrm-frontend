@@ -48,20 +48,17 @@ var ReversablePlan = L.Routing.Plan.extend({
 function makeIcon(i, n) {
   var url = 'images/marker-via-icon-2x.png';
   var markerList = ['images/marker-start-icon-2x.png', 'images/marker-end-icon-2x.png'];
-  if (i == 0) {
-    //console.log(i==0);
+  if (i === 0) {
     return L.icon({
       iconUrl: markerList[0],
       iconSize: [25, 41]
     });
-  } if (i = n) {
-    //console.log(i == n);
+  } if (i === n - 1) {
     return L.icon({
       iconUrl: markerList[1],
       iconSize: [25, 41]
     });
   } else {
-    //console.log(i != n && i !== 0);
     return L.icon({
       iconUrl: url,
       iconSize: [25, 41]
