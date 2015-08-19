@@ -7,6 +7,7 @@ var links = require('./src/links');
 var mapView = require('./src/leaflet_options');
 var tools = require('./src/tools');
 var mapLayer = mapView.layer;
+var overlay = mapView.overlay;
 
 var parsedOptions = links.parse(window.location.hash);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
@@ -29,9 +30,10 @@ var map = L.map('map', {
 
 
 /* Leaflet Controls */
-L.control.layers(mapLayer,{}, {
+L.control.layers(mapLayer, overlay, {
     position: 'bottomleft',
   }).addTo(map);
+
 L.control.scale().addTo(map);
 
 
@@ -92,7 +94,6 @@ var toolsControl = tools.control(control, L.extend({
 
 if (viewOptions.waypoints.length < 1) {
   //control.setWaypoints(viewOptions.waypoints);
-  console.log(viewOptions.waypoints);
 }
 
 // set waypoints from hash values
@@ -122,6 +123,7 @@ function mapChange(e) {
 
 }
 
+// Update browser url
 function updateHash() {
   var length = control.getWaypoints().filter(function(pnt) {
     return pnt.latLng;
@@ -134,12 +136,9 @@ function updateHash() {
 
   var hash = links.format(window.location.href, linkOptions).split('?');
   window.location.hash = hash[1];
-
-  console.log(length);
-
 }
 
-// figure out which route you are on
+// User selected routes
 var onRoute1 = true;
 
 control.on('alternateChosen', function(e) {
@@ -159,7 +158,6 @@ control.on('alternateChosen', function(e) {
     directions[0].style.display = 'block';
   }
 });
-
 
 
 

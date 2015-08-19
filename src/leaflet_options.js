@@ -14,7 +14,8 @@ var streets = L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.streets/{z}/{x}
     }),
     osm_de = L.tileLayer('http://{s}.tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png', {
       attribution: '© <a href="http://www.openstreetmap.org/copyright/en">OpenStreetMap</a> contributors'
-    })
+    }),
+    small_components = L.tileLayer('http://tools.geofabrik.de/osmi/tiles/routing_i/{z}/{x}/{y}.png', {})
 
 
 module.exports = {
@@ -26,7 +27,7 @@ module.exports = {
     waypoints: [],
     language: 'en',
     alternative: true,
-    layer: streets
+    layer: [streets, small_components]
   },
 
   services: [
@@ -42,8 +43,13 @@ module.exports = {
       'Mapbox Outdoors': outdoors,
       'Mapbox Streets Satellite': satellite,
       'openstreetmap.org': osm,
-      'openstreetmap.de.org': osm_de,
+      'openstreetmap.de.org': osm_de
     }
-  ]
+  ],
+
+  overlay: {
+    'Small Components': small_components
+    }
+
 };
 
