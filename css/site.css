@@ -256,8 +256,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 .osrm-directions-icon {
     background-image: url('../images/osrm.toolbar.icons.png');
     -webkit-background-size: 120px 20px;
-    /* background-size: 280px 20px; 
-    background-repeat: no-repeat; */
+    background-size: 120px 20px;
     margin: 0;
     content: '';
     display: inline-block;
