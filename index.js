@@ -50,9 +50,7 @@ var list = [];
 function makeIcon(i) {
     var url = i == 0 ? 'images/marker-start-icon-2x.png' : 'images/marker-end-icon-2x.png';
     list.lastIndexOf(i);
-
-    //url = 'images/marker-end-icon-2x.png';
-
+    //url = 'images/marker-via-icon-2x.png';
     return L.icon({
         iconUrl: url,
         iconSize: [25, 41]
