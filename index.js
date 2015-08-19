@@ -75,6 +75,7 @@ var plan = new ReversablePlan([], {
 var control = L.Routing.control({
   plan: plan,
   lineOptions: options.lrm.lineOptions,
+  altLineOptions: options.lrm.altLineOptions,
   summaryTemplate: options.lrm.summaryTemplate,
   containerClassName: options.lrm.containerClassName,
   alternativeClassName: options.lrm.alternativeClassName,
@@ -159,7 +160,3 @@ control.on('alternateChosen', function(e) {
     directions[0].style.display = 'block';
   }
 });
-
-
-
-
