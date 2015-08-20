@@ -248,6 +248,11 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 }
 
 .leaflet-bottom .leaflet-control {
+  margin-bottom: 0px;
+}
+
+.leaflet-left .leaflet-control {
+  margin-left: 10px;
   margin-bottom: 20px;
 }
 
@@ -789,7 +794,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
     overflow: scroll;
   }
   .leaflet-bottom .leaflet-control {
-    margin-bottom: 5px;
+    margin-bottom: 0px;
   }
 }
 
@@ -844,8 +849,13 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
     height: 100%;
     overflow: scroll;
   }
-  .leaflet-bottom .leaflet-control {
-    margin-bottom: 5px;
+  .leaflet-left .leaflet-control {
+    margin-left: 10px;
+    margin-bottom: 25px;
   }
+  .leaflet-control {
+    margin-bottom: 0px;
+  }
+
 }
 
