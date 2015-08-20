@@ -114,6 +114,7 @@ if (viewOptions.waypoints.length > 1) {
   control.setWaypoints(viewOptions.waypoints);
 }
 
+// add onDrag option
 var mapClick = map.on('click', mapChange);
 plan.on('waypointschanged', updateHash);
 
@@ -130,7 +131,8 @@ function mapChange(e) {
   } else {
     if (length === 1) length = length + 1;
     control.spliceWaypoints(length - 1, 1, e.latlng);
-    updateHash();
+    //updateHash();
+    updateSearch();
     map.off('click');
   }
 
@@ -149,6 +151,22 @@ function updateHash() {
 
   var hash = links.format(window.location.href, linkOptions).split('?');
   window.location.hash = hash[1];
+}
+
+
+// Add update search option
+function updateSearch() {
+  var length = control.getWaypoints().filter(function(pnt) {
+    return pnt.latLng;
+  }).length;
+
+  if (length < 2) return;
+
+  var linkOptions = toolsControl._getLinkOptions();
+  linkOptions.waypoints = plan._waypoints;
+
+  var search = links.format(window.location.href, linkOptions).split('?');
+  window.location.search = search[1];
 }
 
 // User selected routes
