@@ -172,7 +172,7 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 }
 
 .leaflet-routing-add-waypoint {
-
+  display: none;
 }
 
 .leaflet-routing-add-waypoint:after {
