@@ -74,10 +74,9 @@ var plan = new ReversablePlan([], {
       icon: makeIcon(i, n)
     };
     return L.marker(wp.latLng, options);
-    console.log(L.marker(wp.latLng, options));
   },
   routeDragInterval: 100,
-  addWaypoints: false,
+  addWaypoints: true,
   waypointMode: 'snap',
   position: 'topright',
   useZoomParameter: true,

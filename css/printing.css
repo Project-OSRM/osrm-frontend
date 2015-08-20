@@ -59,7 +59,7 @@
   margin-top: 30px;
   padding-top: 15px;
   padding-bottom: 10px;
-  padding-right: 15px;
+  padding-right: 10px;
   font-weight: 200;
   font-size: 16px;
 }
@@ -85,41 +85,45 @@ tbody tr td:last-child {
 }
 
 .leaflet-routing-alt table tr:nth-child(even) {
-  background-color: rgba(0,0,0, 0.05);
+  background-color: rgba(37,72,127, 0.15);
 }
 
 
 /* routing icons */
 
 .leaflet-routing-icon {
-    background-image: url('../images/osrm.directions.icons.svg');
-    -webkit-background-size: 280px 20px;
-    background-size: 280px 20px;
+    background-image: url('../images/osrm.directions.icons.color.svg');
+    -webkit-background-size: 300px 20px;
+    background-size: 300px 20px;
     background-repeat: no-repeat;
     margin: 0;
     content: '';
     display: inline-block;
     vertical-align: top;
-    width: 20px;
+    width: 30px;
     height: 20px;
 }
 
 .leaflet-routing-alt-minimized .leaflet-routing-icon {
-    background-image: url('../images/osrm.directions.icons.svg');
+    background-image: url('../images/osrm.directions.icons.color.svg');
 }
 
-.leaflet-routing-icon-continue         { background-position: -15px 0; }
-.leaflet-routing-icon-sharp-right      { background-position: -20px 0; }
-.leaflet-routing-icon-turn-right       { background-position: -57px 0; }
-.leaflet-routing-icon-bear-right       { background-position: -76px 0; }
-.leaflet-routing-icon-u-turn           { background-position: -97px 0; }
-.leaflet-routing-icon-sharp-left       { background-position: -120px 0; }
-.leaflet-routing-icon-turn-left        { background-position: -140px 0; }
-.leaflet-routing-icon-bear-left        { background-position: -155px 0; }
-.leaflet-routing-icon-depart           { background-position: -175px 0; }
-.leaflet-routing-icon-enter-roundabout { background-position: -196px 0; }
-.leaflet-routing-icon-arrive           { background-position: -217px 0; }
-.leaflet-routing-icon-via              { background-position: -237px 0; }
+/* move 6-7 pt up and 4px down */
+.leaflet-routing-icon-continue         { background-position: 6px 0px; }
+.leaflet-routing-icon-sharp-right      { background-position: -18px -2px; }
+.leaflet-routing-icon-turn-right       { background-position: -44px -2px; }
+.leaflet-routing-icon-bear-right       { background-position: -69px 0px; }
+.leaflet-routing-icon-u-turn           { background-position: -92px 0px; }
+
+.leaflet-routing-icon-sharp-left       { background-position: -121px 0px; }
+.leaflet-routing-icon-turn-left        { background-position: -143px -2px; }
+.leaflet-routing-icon-bear-left        { background-position: -168px 0px; }
+.leaflet-routing-icon-depart           { background-position: -192px 2px; }
+
+.leaflet-routing-icon-enter-roundabout { background-position: -218px -1px; }
+.leaflet-routing-icon-arrive           { background-position: -244px 0; }
+.leaflet-routing-icon-via              { background-position: -270px 0px; }
+
 
 
 
