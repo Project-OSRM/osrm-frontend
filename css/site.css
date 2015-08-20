@@ -75,12 +75,10 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 
 .leaflet-control-layers-expanded {
   width: 180px;
-
 }
 
 
 /* Layer styling */
-
 .leaflet-control-layers-toggle {
   background-image: url(../images/layers.svg);
   width: 36px;
@@ -105,7 +103,6 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 
 
 /* Toolbar */
-
 .leaflet-osrm-tools-container
 {
    cursor: pointer;
@@ -115,7 +112,6 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 
 
 /* Waypoint marker labels */
-
 .leaflet-osrm-waypoint-label
 {
   background-color: rgba(0, 0, 0, 0.5);
@@ -125,7 +121,6 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 }
 
 /* Geocode container */
-
 .leaflet-routing-container {
   position: fixed;
   width: 33.3333%;
@@ -489,8 +484,6 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
 
 
 /* directions icons */
-
-
 .osrm-directions-instructions .osrm-directions-icon {
     position: absolute;
     left: 10px;
@@ -748,4 +741,111 @@ while core is updatd. HERE into OSRM then fixes to OSRM for better pre-processin
          url('../fonts/opensans-condlight-webfont.woff') format('woff'),
 }
 
+
+/* Small Screen Layout
+------------------------------------------------------- */
+@media only screen and (max-width:880px) {
+  .osrm-directions-summary {
+    background-image: url('../images/osrm_logo.svg');
+    -webkit-background-size: 200px 45px;
+    background-size: 200px 45px;
+    background-repeat: no-repeat;
+    margin: 0;
+    padding-top: 40px;
+    padding-left: 5px;
+    background-position: -50px -5px;
+  }
+  .osrm-directions-summary h2 {
+    font-size: 15px;
+    font-weight: bold;
+    line-height: 18px;
+    margin-right: 15px;
+  }
+  .leaflet-routing-container.dark {
+    z-index: 10;
+    background: none repeat scroll 0% 0% rgba(255, 255, 255, 0.85);
+    top: 0px;
+    right: 0px;
+    bottom: 0px;
+    margin: 0px !important;
+    max-width: 58%;
+    min-width: 48%;
+  }
+  .leaflet-routing-alt table td, .leaflet-routing-alt table {
+    margin-top: 20px;
+    padding: 5px;
+    padding-bottom: 10px;
+    margin-left: 0%;
+    max-width: 95%;
+  }
+  .leaflet-routing-alternatives-container {
+    position: fixed;
+    right: 0px;
+    top: 10px;
+    width: 45%;
+    max-width: 55%;
+    min-width: 45%;
+    height: 100%;
+    overflow: scroll;
+  }
+  .leaflet-bottom .leaflet-control {
+    margin-bottom: 5px;
+  }
+}
+
+/* Mobile Layout
+------------------------------------------------------- */
+@media only screen and (max-width:400px) {
+  .osrm-directions-summary {
+    background-image: url('../images/osrm_logo.svg');
+    -webkit-background-size: 200px 45px;
+    background-size: 200px 45px;
+    background-repeat: no-repeat;
+    margin: 0;
+    padding-top: 40px;
+    padding-left: 35px;
+    background-position: -45px -5px;
+  }
+  .osrm-directions-summary h2 {
+    font-size: 15px;
+    font-weight: bold;
+    line-height: 18px;
+    margin-left: -25px;
+  }
+  .osrm-directions-summary h3 {
+    font-size: 12px;
+    margin-left: -25px;
+  }
+  .leaflet-routing-container.dark {
+    z-index: 10;
+    background: none repeat scroll 0% 0% rgba(255, 255, 255, 0.85);
+    top: 0px;
+    right: 0px;
+    bottom: 0px;
+    margin: 0px !important;
+    max-width: 58%;
+    min-width: 48%;
+  }
+  .leaflet-routing-alt table td, .leaflet-routing-alt table {
+    margin-top: 10px;
+    padding: 5px;
+    padding-bottom: 10px;
+    margin-left: 0%;
+    max-width: 95%;
+    font-size: 12px;
+  }
+  .leaflet-routing-alternatives-container {
+    position: fixed;
+    right: 0px;
+    top: 10px;
+    width: 45%;
+    max-width: 55%;
+    min-width: 45%;
+    height: 100%;
+    overflow: scroll;
+  }
+  .leaflet-bottom .leaflet-control {
+    margin-bottom: 5px;
+  }
+}
 
