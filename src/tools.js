@@ -116,45 +116,7 @@ var Control = L.Control.extend({
       alternative: this._selectedAlternative,
     };
   },
-/*
-  _showLink: function() {
-    var shortener,
-        link,
-        linkContainer,
-        linkInput,
-        linkShortener,
-        linkShortenerLabel;
 
-    link = links.format(window.location.href, this._getLinkOptions());
-	// console.log(link);
-    this._map.fire('link', { link: link });
-
-    shortener = links.shortener();
-    // window.location.href = link;  <= this was the error
-
-    linkContainer = L.DomUtil.create('div', 'dark checkbox-pill');
-    linkInput = L.DomUtil.create('input', '', linkContainer);
-    linkInput.value = link;
-    linkShortener = L.DomUtil.create('input', 'dark stretch', linkContainer);
-    linkShortener.type = 'checkbox';
-    linkShortener.id = 'short';
-    linkShortenerLabel = L.DomUtil.create('label', '', linkContainer);
-    linkShortenerLabel.setAttribute("for", "short");
-    linkShortenerLabel.innerHTML = localization[this.options.language]['Short'];
-
-    L.DomEvent.on(linkShortener, 'click', function() {
-      shortener.shorten(link, function(result) {
-        if (result === "") {
-          linkShortener.checked = false;
-        } else {
-          linkInput.value = result;
-        }
-      });
-    }, this);
-
-    this._openPopup(linkContainer);
-  },
-*/
 
   _printPage: function() {
     var options = this._getLinkOptions(),

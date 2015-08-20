@@ -76,7 +76,7 @@ var plan = new ReversablePlan([], {
     };
     return L.marker(wp.latLng, options);
   },
-  routeDragInterval: 2,
+  routeDragInterval: 100,
   addWaypoints: false,
   waypointMode: 'snap',
   position: 'topright',
@@ -114,9 +114,10 @@ if (viewOptions.waypoints.length > 1) {
   control.setWaypoints(viewOptions.waypoints);
 }
 
-// add onDrag option
+// add onClick option
 var mapClick = map.on('click', mapChange);
 plan.on('waypointschanged', updateHash);
+
 
 function mapChange(e) {
 
