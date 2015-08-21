@@ -14,9 +14,9 @@ var Control = L.Control.extend({
     josmButtonClass: "",
     localizationButtonClass: "",
     printButtonClass: "",
-    gpxLinkClass: "",
+    gpxLinkClass: ""/*,
     language: "en",
-    units: "metric"
+    units: "metric"*/
   },
 
   initialize: function(lrm, options) {
@@ -35,9 +35,9 @@ var Control = L.Control.extend({
         editorButton,
         josmContainer,
         josmButton,
-        popupCloseButton,
+        popupCloseButton,/*
         localizationContainer,
-        localizationButton,
+        localizationButton,*/
         printContainer,
         printButton,
         gpxContainer;
@@ -60,12 +60,12 @@ var Control = L.Control.extend({
     josmButton = L.DomUtil.create('span', this.options.josmButtonClass, josmContainer);
     josmButton.title = localization[this.options.language]['Open in JOSM'];
     L.DomEvent.on(josmButton, 'click', this._openJOSM, this);
-
+    /*
     localizationContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-localization', this._container);
     localizationButton = L.DomUtil.create('span', this.options.localizationButtonClass, localizationContainer);
     localizationButton.title = localization[this.options.language]['Select language and units'];
     L.DomEvent.on(localizationButton, 'click', this._selectLocalization, this);
-
+    */
     printContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-print', this._container);
     printButton = L.DomUtil.create('span', this.options.printButtonClass, printContainer);
     printButton.title = localization[this.options.language]['Print'];
@@ -133,7 +133,7 @@ var Control = L.Control.extend({
       return;
     }
   },
-
+  /*
   _selectLocalization: function() {
     var container = L.DomUtil.create('div', 'leaflet-osrm-tools-localization-popup'),
         languageList = L.DomUtil.create('ul', 'leaflet-osrm-tools-language-list', container),
@@ -154,7 +154,7 @@ var Control = L.Control.extend({
       link.alt = localization[language].name;
       link.innerHTML = localization[language].name;
     }
-        
+    
     options.language = this.options.language;
     unitSystems = ['Metric', 'Imperial'];
     for (i = 0; i < unitSystems.length; i++)
@@ -168,7 +168,7 @@ var Control = L.Control.extend({
     }
     
     this._openPopup(container);
-  },
+  },*/  
 
   _updateDownloadLink: function() {
     var plan = this._lrm.getPlan(),

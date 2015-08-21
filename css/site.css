@@ -55,7 +55,7 @@
 
 .leaflet-control-scale {
   position: absolute;
-  left: 160px;
+  left: 140px;
   bottom: 1px;
 }
 
@@ -298,7 +298,7 @@
 {
   position: absolute;
   top: 3px;
-  left: 28px;
+  left: 30px;
 }
 .leaflet-osrm-tools-josm:hover
 {
@@ -354,7 +354,7 @@
 {
   position: absolute;
   top: 3px;
-  left: 78px;
+  left: 60px;
 }
 .leaflet-osrm-tools-print:hover
 {
@@ -364,8 +364,8 @@
 .leaflet-osrm-tools-gpx
 {
   position: absolute;
-  top: 3px;
-  left: 103px;
+  top: 1px;
+  left: 90px;
   text-align: center;
 }
 .leaflet-osrm-tools-gpx a {
@@ -481,7 +481,6 @@
     display: block;
 }
 
-
 /* directions icons */
 .osrm-directions-instructions .osrm-directions-icon {
     position: absolute;
@@ -525,7 +524,7 @@
 .leaflet-osrm-tools-container
 {
    cursor: pointer;
-   width: 140px;
+   width: 125px;
    height: 26px;
 }
 
