@@ -78,7 +78,11 @@ var plan = new ReversablePlan([], {
       draggable: this.draggableWaypoints,
       icon: makeIcon(i, n)
     };
-    return L.marker(wp.latLng, options);
+    var marker = L.marker(wp.latLng, options);
+    marker.on('click', function() {
+        plan.spliceWaypoints(i, 1);
+    });
+    return marker;
   },
   routeDragInterval: 100,
   addWaypoints: true,
@@ -158,7 +162,6 @@ function updateHash() {
   var hash = links.format(window.location.href, linkOptions).split('?');
   history.pushState(hash, {}, '?'+hash[1]);
   window.location.hash = hash[1];
-  event.preventDefault();
   console.log('waypointschanged > updateHash');
 }
 
