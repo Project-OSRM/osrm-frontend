@@ -179,20 +179,15 @@ function updateSearch() {
 
 
 // User selected routes
-var onRoute1 = true;
-
 control.on('alternateChosen', function(e) {
-  if (onRoute1) {
-    onRoute1 = false;
-    var directions = document.querySelectorAll('.leaflet-routing-alt');
+  var directions = document.querySelectorAll('.leaflet-routing-alt');
+  if (directions[0].style.display != 'none') {
     directions[0].style.display = 'none';
     directions[1].style.display = 'block';
-
-  } else {
-    onRoute1 = true;
-    var directions = document.querySelectorAll('.leaflet-routing-alt');
-    directions[1].style.display = 'none';
+  }
+  else {
     directions[0].style.display = 'block';
+    directions[1].style.display = 'none';
   }
 });
 
