@@ -8,14 +8,12 @@ module.exports = {
     lineOptions: {
       styles: [
         {color: '#022bb1', opacity: 0.8, weight: 8},
-        //{color: '#40007d', opacity: 0.8, weight: 8},
         {color: 'white', opacity: 0.3, weight: 6}
       ]
     },
     altLineOptions: {
       styles: [
         {color: '#40007d', opacity: 0.4, weight: 8},
-        //{color: '#022bb1', opacity: 0.4, weight: 8},
         {color: 'black', opacity: 0.5, weight: 2, dashArray: '2,4' },
         {color: 'white', opacity: 0.3, weight: 6}
       ]

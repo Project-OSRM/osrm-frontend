@@ -154,6 +154,7 @@ function updateHash() {
   linkOptions.waypoints = plan._waypoints;
 
   var hash = links.format(window.location.href, linkOptions).split('?');
+  history.pushState(hash, {}, '?'+hash[1]);
   window.location.hash = hash[1];
 }
 
