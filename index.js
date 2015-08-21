@@ -144,7 +144,6 @@ function mapChange(e) {
   } else {
     if (length === 1) length = length + 1;
     control.spliceWaypoints(length - 1, 1, e.latlng);
-    updateSearch();
     map.off('click');
   }
 }
@@ -159,24 +158,8 @@ function updateHash() {
   linkOptions.waypoints = plan._waypoints;
 
   var hash = links.format(window.location.href, linkOptions).split('?');
-  history.pushState(hash, {}, '?'+hash[1]);
   window.location.hash = hash[1];
 }
-
-
-// Add update search option
-function updateSearch() {
-  var length = control.getWaypoints().filter(function(pnt) {
-    return pnt.latLng;
-  }).length;
-  if (length < 2) return;
-  var linkOptions = toolsControl._getLinkOptions();
-  linkOptions.waypoints = plan._waypoints;
-
-  var search = links.format(window.location.href, linkOptions).split('?');
-  window.location.search = search[1];
-}
-
 
 // User selected routes
 control.on('alternateChosen', function(e) {
