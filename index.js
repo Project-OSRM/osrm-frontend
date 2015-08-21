@@ -50,17 +50,20 @@ function makeIcon(i, n) {
   if (i === 0) {
     return L.icon({
       iconUrl: markerList[0],
-      iconSize: [25, 41]
+      iconSize: [20, 56],
+      iconAnchor: [10, 28]
     });
   } if (i === n - 1) {
     return L.icon({
       iconUrl: markerList[1],
-      iconSize: [25, 41]
+      iconSize: [20, 56],
+      iconAnchor: [10, 28]
     });
   } else {
     return L.icon({
       iconUrl: url,
-      iconSize: [25, 41]
+      iconSize: [20, 56],
+      iconAnchor: [10, 28]
     });
   }
 }
