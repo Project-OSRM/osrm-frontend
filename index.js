@@ -8,9 +8,11 @@ var mapView = require('./src/leaflet_options');
 var tools = require('./src/tools');
 var mapLayer = mapView.layer;
 var overlay = mapView.overlay;
+var markerFactory = require('./src/marker');
 
 var parsedOptions = links.parse(window.location.hash);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
+
 
 // Pass basemap layers
 mapLayer = mapLayer.reduce(function(title, layer) {
@@ -87,6 +89,11 @@ var plan = new ReversablePlan([], {
   dragStyles: options.lrm.dragStyles,
   geocodersClassName: options.lrm.geocodersClassName
 });
+
+// add marker labels
+//lrm.getPlan().options.createMarker = markerFactory(lrm, theme.options.popup);
+plan.createMarker = markerFactory(plan, options.popup);
+
 
 var control = L.Routing.control({
   plan: plan,
