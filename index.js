@@ -13,7 +13,6 @@ var markerFactory = require('./src/marker');
 var parsedOptions = links.parse(window.location.hash);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
 
-
 // Pass basemap layers
 mapLayer = mapLayer.reduce(function(title, layer) {
   title[layer.label] = L.tileLayer(layer.tileLayer, {id: layer.label});
@@ -44,6 +43,7 @@ var ReversablePlan = L.Routing.Plan.extend({
     return container;
   }
 });
+
 
 /* Setup markers */
 function makeIcon(i, n) {
@@ -95,9 +95,7 @@ var plan = new ReversablePlan([], {
 });
 
 // add marker labels
-//lrm.getPlan().options.createMarker = markerFactory(lrm, theme.options.popup);
 plan.createMarker = markerFactory(plan, options.popup);
-
 
 var control = L.Routing.control({
   plan: plan,
@@ -143,9 +141,11 @@ function mapChange(e) {
   } else {
     if (length === 1) length = length + 1;
     control.spliceWaypoints(length - 1, 1, e.latlng);
+    updateSearch();
     //map.off('click');
   }
 }
+
 
 // Update browser url
 function updateHash() {
@@ -156,7 +156,20 @@ function updateHash() {
   linkOptions.waypoints = plan._waypoints;
 
   var hash = links.format(window.location.href, linkOptions).split('?');
-  window.location.hash = hash[1];
+  window.location.hash= hash[1];
+}
+
+// Update browser url
+function updateSearch() {
+  var length = control.getWaypoints().filter(function(pnt) {
+    return pnt.latLng;
+  }).length;
+
+  var linkOptions = toolsControl._getLinkOptions();
+  linkOptions.waypoints = plan._waypoints;
+
+  var search = links.format(window.location.href, linkOptions).split('?');
+  window.location.search = search[1];
 }
 
 
@@ -173,6 +186,17 @@ control.on('alternateChosen', function(e) {
   }
 });
 
+
+/* // Add event listener for input box 
+var inputHere = document.querySelectorAll('.leaflet-routing-geocoders.osrm-directions-inputs')[0];
+
+if (inputHere) {
+  inputHere.addEventListener('keypress', function(e) {
+    if (13 == e.keyCode) {
+    }
+  });
+}
+*/
 
 
 
