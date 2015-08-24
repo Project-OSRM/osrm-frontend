@@ -153,7 +153,6 @@ function updateHash() {
   var length = control.getWaypoints().filter(function(pnt) {
     return pnt.latLng;
   }).length;
-  if (length < 2) return;
   var linkOptions = toolsControl._getLinkOptions();
   linkOptions.waypoints = plan._waypoints;
 
