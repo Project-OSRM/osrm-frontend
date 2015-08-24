@@ -27,7 +27,7 @@ module.exports = {
     waypoints: [],
     language: 'en',
     alternative: true,
-    layer: [streets, small_components]
+    layer: streets
   },
 
   services: [
