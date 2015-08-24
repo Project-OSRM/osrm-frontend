@@ -132,7 +132,6 @@ if (viewOptions.waypoints.length > 1) {
 var mapClick = map.on('click', mapChange);
 plan.on('waypointschanged', updateHash);
 
-
 function mapChange(e) {
   var length = control.getWaypoints().filter(function(pnt) {
     return pnt.latLng;
@@ -144,7 +143,7 @@ function mapChange(e) {
   } else {
     if (length === 1) length = length + 1;
     control.spliceWaypoints(length - 1, 1, e.latlng);
-    map.off('click');
+    //map.off('click');
   }
 }
 
@@ -159,6 +158,7 @@ function updateHash() {
   var hash = links.format(window.location.href, linkOptions).split('?');
   window.location.hash = hash[1];
 }
+
 
 // User selected routes
 control.on('alternateChosen', function(e) {
