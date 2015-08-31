@@ -11,7 +11,7 @@ var overlay = mapView.overlay;
 var markerFactory = require('./src/marker');
 var locate = require('leaflet.locatecontrol')
 
-var parsedOptions = links.parse(window.location.hash);
+var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
 
 // Pass basemap layers
@@ -19,7 +19,6 @@ mapLayer = mapLayer.reduce(function(title, layer) {
   title[layer.label] = L.tileLayer(layer.tileLayer, {id: layer.label});
   return title;
 });
-
 
 /* Add the map class */
 var map = L.map('map', {
@@ -149,9 +148,8 @@ function updateHash() {
   }).length;
   var linkOptions = toolsControl._getLinkOptions();
   linkOptions.waypoints = plan._waypoints;
-
   var hash = links.format(window.location.href, linkOptions).split('?');
-  window.location.hash= hash[1];
+  window.location.hash = hash[1];
 }
 
 // Update browser url
@@ -162,6 +160,7 @@ function updateSearch() {
   var linkOptions = toolsControl._getLinkOptions();
   linkOptions.waypoints = plan._waypoints;
   var search = links.format(window.location.href, linkOptions).split('?');
+  //window.location.search = search[1];
 }
 
 // User selected routes
@@ -190,4 +189,7 @@ L.control.locate({
     locateOptions: {}
 }).addTo(map);
 
+// var currentURL = window.location.href;
+// console.log(currentURL.split('#')[0]);
+// location.href = currentURL;
 
