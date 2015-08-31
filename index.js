@@ -155,9 +155,7 @@ function updateHash(e) {
   var newParms = window.location.hash = hash[1];
   var oldURL = window.location;
   var newURL = newBaseURL.concat(newParms);
-  history.replaceState(oldURL, 'Directions', newURL);
-  //alert(newHash);
-  //alert(newURL);
+  history.replaceState( {} , 'Directions', newURL);
 }
 
 // Update browser url
@@ -197,8 +195,3 @@ L.control.locate({
     showPopup: false,
     locateOptions: {}
 }).addTo(map);
-
-// var currentURL = window.location.href;
-// console.log(currentURL.split('#')[0]);
-// location.href = currentURL;
-
