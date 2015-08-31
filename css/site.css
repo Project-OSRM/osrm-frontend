@@ -73,6 +73,12 @@
 
 
 /* Layer styling */
+
+.leaflet-retina .leaflet-control-layers-toggle {
+    background-image: url(../images/layers.svg);
+    background-size: 26px 26px;
+}
+
 .leaflet-control-layers-toggle {
   background-image: url(../images/layers.svg);
   width: 36px;
@@ -251,7 +257,7 @@
 }
 
 .osrm-directions-icon {
-    background-image: url('../images/osrm.toolbar.icons.png');
+    background-image: url('../images/osrm.toolbar.icons.svg');
     -webkit-background-size: 120px 20px;
     background-size: 120px 20px;
     margin: 0;
