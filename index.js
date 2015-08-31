@@ -137,7 +137,7 @@ function mapChange(e) {
   } else {
     if (length === 1) length = length + 1;
     control.spliceWaypoints(length - 1, 1, e.latlng);
-    updateSearch();
+    //updateSearch();
   }
   //e.preventDefault();
 }
@@ -150,8 +150,14 @@ function updateHash(e) {
   var linkOptions = toolsControl._getLinkOptions();
   linkOptions.waypoints = plan._waypoints;
   var hash = links.format(window.location.href, linkOptions).split('?');
-  window.location.hash = hash[1];
-  e.preventDefault();
+  var baseURL = window.location.hash = hash[0];
+  var newBaseURL = baseURL.concat('?');
+  var newParms = window.location.hash = hash[1];
+  var oldURL = window.location;
+  var newURL = newBaseURL.concat(newParms);
+  history.replaceState(oldURL, 'Directions', newURL);
+  //alert(newHash);
+  //alert(newURL);
 }
 
 // Update browser url
@@ -163,7 +169,6 @@ function updateSearch(e) {
   linkOptions.waypoints = plan._waypoints;
   var search = links.format(window.location.href, linkOptions).split('?');
   window.location.search = search[1];
-  e.preventDefault();
 }
 
 
