@@ -139,10 +139,11 @@ function mapChange(e) {
     control.spliceWaypoints(length - 1, 1, e.latlng);
     updateSearch();
   }
+  //e.preventDefault();
 }
 
 // Update browser url
-function updateHash() {
+function updateHash(e) {
   var length = control.getWaypoints().filter(function(pnt) {
     return pnt.latLng;
   }).length;
@@ -150,18 +151,21 @@ function updateHash() {
   linkOptions.waypoints = plan._waypoints;
   var hash = links.format(window.location.href, linkOptions).split('?');
   window.location.hash = hash[1];
+  e.preventDefault();
 }
 
 // Update browser url
-function updateSearch() {
+function updateSearch(e) {
   var length = control.getWaypoints().filter(function(pnt) {
     return pnt.latLng;
   }).length;
   var linkOptions = toolsControl._getLinkOptions();
   linkOptions.waypoints = plan._waypoints;
   var search = links.format(window.location.href, linkOptions).split('?');
-  //window.location.search = search[1];
+  window.location.search = search[1];
+  e.preventDefault();
 }
+
 
 // User selected routes
 control.on('alternateChosen', function(e) {
