@@ -62,15 +62,12 @@ osrm.route(viewOptions.waypoints, function(error, alts) {
 }
 
 // add markers here
-viewOptions.waypoints.map(function (i, wp, n) {
-  createMarker: function(i, wp, n) {
-    var options = { icon: makeIcon(i, n) };
-    var colorMarkers = L.marker(wp.latLng, options);
-    colorMarkers.addTo(map);
-  }
+viewOptions.waypoints.map(function (currentVal, i, n) {
+  var options = { icon: makeIcon(currentVal, n.length) };
+  var colorMarkers = L.marker(i.latLng, options);
+  colorMarkers.addTo(map);
   itinerary.setAlternatives(alts);
-}, 
-null, {});
+});
 
 
 
