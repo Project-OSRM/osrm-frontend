@@ -117,17 +117,13 @@ var toolsControl = tools.control(control, L.extend({
   position: 'bottomleft',
   language: mapView.language
  }, options.tools)).addTo(map);
-
-
 if (viewOptions.waypoints.length < 1) {
   //control.setWaypoints(viewOptions.waypoints);
 }
-
 // set waypoints from hash values
 if (viewOptions.waypoints.length > 1) {
   control.setWaypoints(viewOptions.waypoints);
 }
-
 // add onClick option
 var mapClick = map.on('click', mapChange);
 plan.on('waypointschanged', updateHash);
@@ -137,14 +133,12 @@ function mapChange(e) {
     return pnt.latLng;
   });
   length = length.length;
-
   if (!length) {
     control.spliceWaypoints(0, 1, e.latlng);
   } else {
     if (length === 1) length = length + 1;
     control.spliceWaypoints(length - 1, 1, e.latlng);
     updateSearch();
-    //map.off('click');
   }
 }
 
@@ -165,14 +159,10 @@ function updateSearch() {
   var length = control.getWaypoints().filter(function(pnt) {
     return pnt.latLng;
   }).length;
-
   var linkOptions = toolsControl._getLinkOptions();
   linkOptions.waypoints = plan._waypoints;
-
   var search = links.format(window.location.href, linkOptions).split('?');
-  window.location.search = search[1];
 }
-
 
 // User selected routes
 control.on('alternateChosen', function(e) {
@@ -188,16 +178,16 @@ control.on('alternateChosen', function(e) {
 });
 
 L.control.locate({
-    follow: false,  // follow the user's location
-    setView: true, // automatically sets the map view to the user's location, enabled if `follow` is true
-    keepCurrentZoomLevel: false, // keep the current map zoom level when displaying the user's location. (if `false`, use maxZoom)
-    stopFollowingOnDrag: false, // stop following when the map is dragged if `follow` is true (deprecated, see below)
-    onLocationError: function(err) {alert(err.message)},  // define an error callback function
-    onLocationOutsideMapBounds:  function(context) { // called when outside map boundaries
-            alert(context.options.strings.outsideMapBoundsMsg);
+    follow: false,
+    setView: true,
+    keepCurrentZoomLevel: false,
+    stopFollowingOnDrag: false,
+    onLocationError: function(err) {alert(err.message)},
+    onLocationOutsideMapBounds:  function(context) { 
+      alert(context.options.strings.outsideMapBoundsMsg);
     },
-    showPopup: false, // display a popup when the user click on the inner marker
-    locateOptions: {}  // define location options e.g enableHighAccuracy: true or maxZoom: 10
+    showPopup: false,
+    locateOptions: {}
 }).addTo(map);
 
 
