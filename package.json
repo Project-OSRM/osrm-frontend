@@ -34,6 +34,7 @@
   "dependencies": {
     "jsonp": "^0.2.0",
     "leaflet-control-geocoder": "^1.2.1",
-    "leaflet-routing-machine": "git://github.com/lbud/leaflet-routing-machine.git#alternateLines"
+    "leaflet-routing-machine": "git://github.com/lbud/leaflet-routing-machine.git#alternateLines",
+    "leaflet.locatecontrol": "^0.44.0"
   }
 }

@@ -9,6 +9,7 @@ var tools = require('./src/tools');
 var mapLayer = mapView.layer;
 var overlay = mapView.overlay;
 var markerFactory = require('./src/marker');
+var locate = require('leaflet.locatecontrol')
 
 var parsedOptions = links.parse(window.location.hash);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
@@ -22,7 +23,7 @@ mapLayer = mapLayer.reduce(function(title, layer) {
 
 /* Add the map class */
 var map = L.map('map', {
-  zoomControl: false,
+  zoomControl: true,
   dragging: true,
   layers: mapView.defaultView.layer,
   maxZoom: 18
@@ -35,6 +36,7 @@ L.control.layers(mapLayer, overlay, {
   }).addTo(map);
 
 L.control.scale().addTo(map);
+
 
 /* OSRM setup */
 var ReversablePlan = L.Routing.Plan.extend({
@@ -146,7 +148,6 @@ function mapChange(e) {
   }
 }
 
-
 // Update browser url
 function updateHash() {
   var length = control.getWaypoints().filter(function(pnt) {
@@ -186,18 +187,17 @@ control.on('alternateChosen', function(e) {
   }
 });
 
-
-/* // Add event listener for input box 
-var inputHere = document.querySelectorAll('.leaflet-routing-geocoders.osrm-directions-inputs')[0];
-
-if (inputHere) {
-  inputHere.addEventListener('keypress', function(e) {
-    if (13 == e.keyCode) {
-    }
-  });
-}
-*/
-
-
+L.control.locate({
+    follow: false,  // follow the user's location
+    setView: true, // automatically sets the map view to the user's location, enabled if `follow` is true
+    keepCurrentZoomLevel: false, // keep the current map zoom level when displaying the user's location. (if `false`, use maxZoom)
+    stopFollowingOnDrag: false, // stop following when the map is dragged if `follow` is true (deprecated, see below)
+    onLocationError: function(err) {alert(err.message)},  // define an error callback function
+    onLocationOutsideMapBounds:  function(context) { // called when outside map boundaries
+            alert(context.options.strings.outsideMapBoundsMsg);
+    },
+    showPopup: false, // display a popup when the user click on the inner marker
+    locateOptions: {}  // define location options e.g enableHighAccuracy: true or maxZoom: 10
+}).addTo(map);
 
 
