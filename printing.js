@@ -23,7 +23,9 @@ var map = L.map('map', {
 
 /* Setup markers */
 function makeIcon(i, n) {
-  var url = 'images/marker-via-icon-2x.png';
+  // make url blue since we don't know which is start or end
+  //var url = 'images/marker-via-icon-2x.png';
+  var url = 'images/marker-icon-2x.png';
   var markerList = ['images/marker-start-icon-2x.png', 'images/marker-end-icon-2x.png'];
   if (i === 0) {
     return L.icon({
