@@ -9,7 +9,7 @@ var tools = require('./src/tools');
 var mapLayer = mapView.layer;
 var overlay = mapView.overlay;
 var markerFactory = require('./src/marker');
-var locate = require('leaflet.locatecontrol')
+var locate = require('leaflet.locatecontrol');
 
 var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
