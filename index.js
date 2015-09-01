@@ -92,7 +92,14 @@ var plan = new ReversablePlan([], {
   useZoomParameter: true,
   reverseWaypoints: true,
   dragStyles: options.lrm.dragStyles,
-  geocodersClassName: options.lrm.geocodersClassName
+  geocodersClassName: options.lrm.geocodersClassName,
+  geocoderPlaceholder: function(i,n) {
+    var startend = ['Start - press enter to drop marker', 'End - press enter to drop marker'];
+    var via = ['Via point - press enter to drop marker'];
+    if(i===0) { return startend[0]; }
+    if(i===(n-1)) { return startend[1]; }
+    else {return via; }
+  }
 });
 
 // add marker labels
