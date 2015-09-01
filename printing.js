@@ -43,7 +43,7 @@ function makeIcon(i, n) {
   }
 };
 
-L.tileLayer('https://{s}.tiles.mapbox.com/v4/'+mapView.defaultView.layer+'/{z}/{x}/{y}@2x.png?access_token=pk.eyJ1IjoibXNsZWUiLCJhIjoiclpiTWV5SSJ9.P_h8r37vD8jpIH1A6i1VRg', {
+L.tileLayer('https://{s}.tiles.mapbox.com/v4/mapbox.streets/{z}/{x}/{y}@2x.png?access_token=pk.eyJ1IjoibXNsZWUiLCJhIjoiclpiTWV5SSJ9.P_h8r37vD8jpIH1A6i1VRg', {
   attribution: 'Maps by <a href="https://www.mapbox.com/about/maps/">Mapbox</a>. ' +
     'Routes from <a href="http://project-osrm.org/">OSRM</a>, ' +
     'data uses <a href="http://opendatacommons.org/licenses/odbl/">ODbL</a> license'
@@ -64,7 +64,7 @@ osrm.route(viewOptions.waypoints, function(error, alts) {
 
 viewOptions.waypoints.map(function (currentVal, i, n) {
   var options = { icon: makeIcon(currentVal, n.length) };
-  var colorMarkers = L.marker(i.latLng, options);
+  var colorMarkers = L.marker(currentVal.latLng, options);
   colorMarkers.addTo(map);
   itinerary.setAlternatives(alts);
 });
