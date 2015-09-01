@@ -195,3 +195,20 @@ L.control.locate({
     showPopup: false,
     locateOptions: {}
 }).addTo(map);
+
+
+// pass print values
+console.log(window.location.search);
+console.log(window.map);
+
+
+
+
+
+
+
+
+
+
+
+
