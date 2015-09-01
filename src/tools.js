@@ -120,7 +120,6 @@ var Control = L.Control.extend({
   _printPage: function() {
     var options = this._getLinkOptions(),
         validWPs = options.waypoints.filter(function(wp) { return wp.latLng !== undefined; }),
-        //link = window.location.href.replace("/index.html#", "/printing.html#").replace("/#", "/printing.html#")
         link = window.location.href.replace("/index.html?", "/printing.html?").replace("/?", "/printing.html?")
         //window.open(link);
     if (link.slice(-1) === '/') {
@@ -129,7 +128,6 @@ var Control = L.Control.extend({
     if (validWPs.length < 2 ) {
       return;
     }
-    console.log(links.format(link, options));
     window.location.href = links.format(link, options);
   },
   
