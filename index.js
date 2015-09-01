@@ -130,9 +130,13 @@ if (viewOptions.waypoints.length < 1) {
 if (viewOptions.waypoints.length > 1) {
   control.setWaypoints(viewOptions.waypoints);
 }
-// add onClick option
+// add onClick event
 var mapClick = map.on('click', mapChange);
 plan.on('waypointschanged', updateHash);
+// add onZoom event
+map.on('zoomend', mapZoom);
+map.on('moveend', mapMove);
+
 
 function mapChange(e) {
   var length = control.getWaypoints().filter(function(pnt) {
@@ -146,8 +150,21 @@ function mapChange(e) {
     control.spliceWaypoints(length - 1, 1, e.latlng);
     //updateSearch();
   }
-  //e.preventDefault();
 }
+
+function mapZoom(e) {
+  var linkOptions = toolsControl._getLinkOptions();
+  var updateZoom = links.format(window.location.href, linkOptions);
+  history.replaceState( {} , 'Project OSRM Demo', updateZoom);
+}
+
+// actually just refocuses on the map but could reload on location
+function mapMove(e) {
+  var linkOptions = toolsControl._getLinkOptions();
+  var updateCenter = links.format(window.location.href, linkOptions);
+  history.replaceState( {} , 'Project OSRM Demo', updateCenter);
+}
+
 
 // Update browser url
 function updateHash(e) {
@@ -176,7 +193,6 @@ function updateSearch(e) {
   window.location.search = search[1];
 }
 
-
 // User selected routes
 control.on('alternateChosen', function(e) {
   var directions = document.querySelectorAll('.leaflet-routing-alt');
@@ -202,11 +218,6 @@ L.control.locate({
     showPopup: false,
     locateOptions: {}
 }).addTo(map);
-
-
-// pass print values
-console.log(window.location.search);
-console.log(window.map);
 
 
 
