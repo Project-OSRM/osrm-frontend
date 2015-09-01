@@ -59,7 +59,7 @@ osrm.route(viewOptions.waypoints, function(error, alts) {
   var line = L.Routing.line(alts[alts.length - 1], lineOptions);
   line.addTo(map);
   map.fitBounds(line.getBounds());
-}
+});
 
 // add markers here
 viewOptions.waypoints.map(function (currentVal, i, n) {
