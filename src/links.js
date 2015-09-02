@@ -6,8 +6,22 @@ var url = require('url'),
 function _formatCoord(latLng)
 {
   var precision = 6;
-  return latLng.lat.toFixed(precision) + "," + latLng.lng.toFixed(precision);
+  if (!latLng) {
+   return
 }
+  // console.log(latLng);
+  // read the var ^
+  // console.log(typeof latLng.lat.toFixed(precision));
+  // console.log(latLng.lat.toFixed(precision));
+  // check what type of value it is ^
+
+  return latLng.lat.toFixed(precision) + "," + latLng.lng.toFixed(precision);
+
+}
+
+// console.log(_formatCoord({lat: 32.333, lng: 14.12}));
+  // pass value to return
+
 
 function _parseCoord(coordStr)
 {
@@ -15,12 +29,17 @@ function _parseCoord(coordStr)
       lat = parseFloat(latLng[0]),
       lon = parseFloat(latLng[1]);
 
+// console.log(latLng)
   if (isNaN(lat) || isNaN(lon)) {
     throw {name: 'InvalidCoords', message: "\"" + coordStr + "\" is not a valid coordinate."};
   }
 
   return L.latLng(lat,lon);
 }
+
+// console.log(_parseCoord.coordStr);
+// console.log(coordStr);
+// console.log(_parseCoord({lat: 32.333, lng: 14.12}));
 
 function _parseInteger(intStr)
 {
@@ -54,11 +73,14 @@ function formatLink(baseURL, options)
           srv: options.service,
         },
       });
+	// no layer, no service
   return formated;
 }
 
 function parseLink(link)
 {
+  link = '?' + link.slice(1);
+
   var parsed = url.parse(link, true),
       q = parsed.query,
       parsedValues = {},
@@ -68,8 +90,10 @@ function parseLink(link)
   try {
     parsedValues.zoom      = q.zoom   && _parseInteger(q.zoom);
     parsedValues.center    = q.center && _parseCoord(q.center);
+	// console.log(q.loc);
     parsedValues.waypoints = q.loc    && q.loc.map(_parseCoord).map(
       function (coord) {
+        // console.log(coord);
         return L.Routing.waypoint(coord);
       }
     );

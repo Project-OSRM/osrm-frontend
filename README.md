@@ -1,7 +1,1 @@
-[Live demo](https://project-osrm.github.io/osrm-frontend-v2)
-
-This is a rewrite of the frontend for OSRM as discussed in [this issue](https://github.com/Project-OSRM/osrm-frontend/issues/51).
-
-Please note that ```gh-pages``` is the **stable branch** (e.g. what we serve as public frontend) and ```master``` the **unstable** development branch.
-
-This is very much **WIP**.
+In order to run this, add `window.localStorage.setItem('mapbox_access_token', 'YOUR TOKEN')`

@@ -1,12 +1,12 @@
 "use strict";
 
-var links = require('./links.js'),
-    localization = require('./localization.js');
+var links = require('./links'),
+    localization = require('./localization');
 
 var Control = L.Control.extend({
   include: L.Mixin.Events,
   options: {
-    linkButtonClass: "",
+    /*linkButtonClass: "",*/
     popupWindowClass: "",
     popupCloseButtonClass: "",
     toolContainerClass: "",
@@ -14,9 +14,9 @@ var Control = L.Control.extend({
     josmButtonClass: "",
     localizationButtonClass: "",
     printButtonClass: "",
-    gpxLinkClass: "",
+    gpxLinkClass: ""/*,
     language: "en",
-    units: "metric"
+    units: "metric"*/
   },
 
   initialize: function(lrm, options) {
@@ -29,27 +29,28 @@ var Control = L.Control.extend({
   },
 
   onAdd: function(map) {
-    var linkContainer,
-        linkButton,
+    var /*linkContainer,
+        linkButton,*/
         editorContainer,
         editorButton,
         josmContainer,
         josmButton,
-        popupCloseButton,
+        popupCloseButton,/*
         localizationContainer,
-        localizationButton,
+        localizationButton,*/
         printContainer,
         printButton,
         gpxContainer;
 
     this._container = L.DomUtil.create('div', 'leaflet-osrm-tools-container leaflet-bar ' + this.options.toolsContainerClass);
     L.DomEvent.disableClickPropagation(this._container);
-
+	/*
     linkContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-link', this._container);
     linkButton = L.DomUtil.create('span', this.options.linkButtonClass, linkContainer);
     linkButton.title = localization[this.options.language]['Link'];
+    
     L.DomEvent.on(linkButton, 'click', this._showLink, this);
-
+	*/
     editorContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-editor', this._container);
     editorButton = L.DomUtil.create('span', this.options.editorButtonClass, editorContainer);
     editorButton.title = localization[this.options.language]['Open in editor'];
@@ -59,12 +60,12 @@ var Control = L.Control.extend({
     josmButton = L.DomUtil.create('span', this.options.josmButtonClass, josmContainer);
     josmButton.title = localization[this.options.language]['Open in JOSM'];
     L.DomEvent.on(josmButton, 'click', this._openJOSM, this);
-
+    /*
     localizationContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-localization', this._container);
     localizationButton = L.DomUtil.create('span', this.options.localizationButtonClass, localizationContainer);
     localizationButton.title = localization[this.options.language]['Select language and units'];
     L.DomEvent.on(localizationButton, 'click', this._selectLocalization, this);
-
+    */
     printContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-print', this._container);
     printButton = L.DomUtil.create('span', this.options.printButtonClass, printContainer);
     printButton.title = localization[this.options.language]['Print'];
@@ -116,55 +117,21 @@ var Control = L.Control.extend({
     };
   },
 
-  _showLink: function() {
-    var shortener,
-        link,
-        linkContainer,
-        linkInput,
-        linkShortener,
-        linkShortenerLabel;
-
-    link = links.format(window.location.href, this._getLinkOptions());
-    shortener = links.shortener();
-    //window.location.href = link;
-
-    linkContainer = L.DomUtil.create('div', 'dark checkbox-pill');
-    linkInput = L.DomUtil.create('input', '', linkContainer);
-    linkInput.value = link;
-    linkShortener = L.DomUtil.create('input', 'dark stretch', linkContainer);
-    linkShortener.type = 'checkbox';
-    linkShortener.id = 'short';
-    linkShortenerLabel = L.DomUtil.create('label', 'button icon check', linkContainer);
-    linkShortenerLabel.setAttribute("for", "short");
-    linkShortenerLabel.innerHTML = localization[this.options.language]['Short'];
-
-    L.DomEvent.on(linkShortener, 'click', function() {
-      shortener.shorten(link, function(result) {
-        if (result === "") {
-          linkShortener.checked = false;
-        } else {
-          linkInput.value = result;
-        }
-      });
-    }, this);
-
-    this._openPopup(linkContainer);
-  },
-
   _printPage: function() {
     var options = this._getLinkOptions(),
         validWPs = options.waypoints.filter(function(wp) { return wp.latLng !== undefined; }),
-        link = window.location.href.replace("/index.html?", "/printing.html?").replace("/?", "/printing.html?");
+        link = window.location.href.replace("/index.html?", "/printing.html?").replace("/?", "/printing.html?")
+        //window.open(link);
     if (link.slice(-1) === '/') {
       link += "printing.html";
     }
     if (validWPs.length < 2 ) {
       return;
     }
-    console.log(links.format(link, options));
     window.location.href = links.format(link, options);
   },
-
+  
+  /*
   _selectLocalization: function() {
     var container = L.DomUtil.create('div', 'leaflet-osrm-tools-localization-popup'),
         languageList = L.DomUtil.create('ul', 'leaflet-osrm-tools-language-list', container),
@@ -185,7 +152,7 @@ var Control = L.Control.extend({
       link.alt = localization[language].name;
       link.innerHTML = localization[language].name;
     }
-
+    
     options.language = this.options.language;
     unitSystems = ['Metric', 'Imperial'];
     for (i = 0; i < unitSystems.length; i++)
@@ -197,9 +164,9 @@ var Control = L.Control.extend({
       link.alt = unitSystems[i];
       link.innerHTML = unitSystems[i];
     }
-
+    
     this._openPopup(container);
-  },
+  },*/  
 
   _updateDownloadLink: function() {
     var plan = this._lrm.getPlan(),
@@ -248,5 +215,5 @@ var Control = L.Control.extend({
 module.exports = {
   control: function(lrm, options) {
     return new Control(lrm, options);
-  },
+  }
 };
