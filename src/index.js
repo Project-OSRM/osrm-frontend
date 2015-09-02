@@ -138,7 +138,7 @@ plan.on('waypointschanged', updateHash);
 map.on('zoomend', mapZoom);
 map.on('moveend', mapMove);
 
-function mapChange(e) {
+function mapChange (e) {
   var length = control.getWaypoints().filter( function (pnt) {
     return pnt.latLng;
   });
@@ -151,20 +151,20 @@ function mapChange(e) {
   }
 }
 
-function mapZoom(e) {
+function mapZoom (e) {
   var linkOptions = toolsControl._getLinkOptions();
   var updateZoom = links.format(window.location.href, linkOptions);
   history.replaceState( {} , 'Project OSRM Demo', updateZoom);
 }
 
-function mapMove(e) {
+function mapMove (e) {
   var linkOptions = toolsControl._getLinkOptions();
   var updateCenter = links.format(window.location.href, linkOptions);
   history.replaceState( {} , 'Project OSRM Demo', updateCenter);
 }
 
 // Update browser url
-function updateHash(e) {
+function updateHash (e) {
   var length = control.getWaypoints().filter( function (pnt) {
     return pnt.latLng;
   }).length;
@@ -180,7 +180,7 @@ function updateHash(e) {
 }
 
 // Update browser url
-function updateSearch(e) {
+function updateSearch (e) {
   var length = control.getWaypoints().filter( function (pnt) {
     return pnt.latLng;
   }).length;

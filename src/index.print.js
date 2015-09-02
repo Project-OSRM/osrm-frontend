@@ -21,7 +21,7 @@ var map = L.map('map', {
 ).setView(parsedOptions.center, viewOptions.zoom);
 
 /* Setup markers */
-function makeIcon(i, n) {
+function makeIcon (i, n) {
   var url = 'images/marker-icon-2x.png';
   var markerList = ['images/marker-start-icon-2x.png', 'images/marker-end-icon-2x.png'];
   if (i === 0) {
@@ -56,7 +56,7 @@ var itinerary = L.Routing.itinerary({language: viewOptions.language});
 var itineraryContainer = itinerary.onAdd(map);
 document.getElementById("instructions").appendChild(itineraryContainer);
 
-osrm.route(viewOptions.waypoints, function(error, alts) {
+osrm.route(viewOptions.waypoints, function (error, alts) {
   var altIdx = viewOptions.alternative ? viewOptions.alternative : 0;
   var lineOptions = options.lrm.lineOptions;
   var line = L.Routing.line(alts[alts.length - 1], lineOptions);

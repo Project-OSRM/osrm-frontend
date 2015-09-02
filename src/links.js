@@ -3,7 +3,7 @@
 var url = require('url'),
     jsonp = require('jsonp');
 
-function _formatCoord(latLng) {
+function _formatCoord (latLng) {
   var precision = 6;
   if (!latLng) {
     return;
@@ -11,7 +11,7 @@ function _formatCoord(latLng) {
   return latLng.lat.toFixed(precision) + "," + latLng.lng.toFixed(precision);
 }
 
-function _parseCoord(coordStr) {
+function _parseCoord (coordStr) {
   var latLng = coordStr.split(','),
       lat = parseFloat(latLng[0]),
       lon = parseFloat(latLng[1]);
@@ -23,7 +23,7 @@ function _parseCoord(coordStr) {
   return L.latLng(lat,lon);
   }
 
-function _parseInteger(intStr) {
+function _parseInteger (intStr) {
   var integer = parseInt(intStr);
   if (isNaN(integer)) {
     throw {name: 'InvalidInt', message: "\"" + intStr + "\" is not a valid integer."};
@@ -31,7 +31,7 @@ function _parseInteger(intStr) {
   return integer;
 }
 
-function formatLink(baseURL, options) {
+function formatLink (baseURL, options) {
   var parsed = url.parse(baseURL),
       formated = url.format({
         protocol: parsed.protocol,
@@ -59,7 +59,7 @@ function formatLink(baseURL, options) {
   return formated;
 }
 
-function parseLink(link) {
+function parseLink (link) {
   link = '?' + link.slice(1);
   var parsed = url.parse(link, true),
       q = parsed.query,

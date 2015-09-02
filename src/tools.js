@@ -20,7 +20,7 @@ var Control = L.Control.extend({
     L.setOptions(this, options);
     this._lrm = lrm;
     lrm.on('routesfound', this._updateDownloadLink, this);
-    lrm.on('routeselected', function(e) {
+    lrm.on('routeselected', function (e) {
       this._selectedAlternative = e.route;
     }, this);
   },
