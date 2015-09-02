@@ -10,7 +10,6 @@ var tools = require('./tools');
 var mapLayer = mapView.layer;
 var overlay = mapView.overlay;
 var markerFactory = require('./marker');
-
 var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
 
@@ -122,7 +121,6 @@ var toolsControl = tools.control(control, L.extend({
   language: mapView.language
  }, options.tools)).addTo(map);
 if (viewOptions.waypoints.length < 1) {
-  //control.setWaypoints(viewOptions.waypoints);
 }
 // set waypoints from hash values
 if (viewOptions.waypoints.length > 1) {
@@ -135,7 +133,6 @@ plan.on('waypointschanged', updateHash);
 map.on('zoomend', mapZoom);
 map.on('moveend', mapMove);
 
-
 function mapChange(e) {
   var length = control.getWaypoints().filter(function(pnt) {
     return pnt.latLng;
@@ -146,7 +143,6 @@ function mapChange(e) {
   } else {
     if (length === 1) length = length + 1;
     control.spliceWaypoints(length - 1, 1, e.latlng);
-    //updateSearch();
   }
 }
 
@@ -156,13 +152,11 @@ function mapZoom(e) {
   history.replaceState( {} , 'Project OSRM Demo', updateZoom);
 }
 
-// actually just refocuses on the map but could reload on location
 function mapMove(e) {
   var linkOptions = toolsControl._getLinkOptions();
   var updateCenter = links.format(window.location.href, linkOptions);
   history.replaceState( {} , 'Project OSRM Demo', updateCenter);
 }
-
 
 // Update browser url
 function updateHash(e) {
@@ -217,15 +211,3 @@ L.control.locate({
     showPopup: false,
     locateOptions: {}
 }).addTo(map);
-
-
-
-
-
-
-
-
-
-
-
-

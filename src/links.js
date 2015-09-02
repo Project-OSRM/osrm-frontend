@@ -4,51 +4,31 @@ var url = require('url'),
     jsonp = require('jsonp');
 
 function _formatCoord(latLng)
-{
-  var precision = 6;
-  if (!latLng) {
-   return
-}
-  // console.log(latLng);
-  // read the var ^
-  // console.log(typeof latLng.lat.toFixed(precision));
-  // console.log(latLng.lat.toFixed(precision));
-  // check what type of value it is ^
-
+  {
+    var precision = 6;
+    if (!latLng) {
+     return
+  }
   return latLng.lat.toFixed(precision) + "," + latLng.lng.toFixed(precision);
-
 }
-
-// console.log(_formatCoord({lat: 32.333, lng: 14.12}));
-  // pass value to return
-
 
 function _parseCoord(coordStr)
-{
-  var latLng = coordStr.split(','),
-      lat = parseFloat(latLng[0]),
-      lon = parseFloat(latLng[1]);
-
-// console.log(latLng)
-  if (isNaN(lat) || isNaN(lon)) {
-    throw {name: 'InvalidCoords', message: "\"" + coordStr + "\" is not a valid coordinate."};
+  {
+    var latLng = coordStr.split(','),
+        lat = parseFloat(latLng[0]),
+        lon = parseFloat(latLng[1]);
+    if (isNaN(lat) || isNaN(lon)) {
+      throw {name: 'InvalidCoords', message: "\"" + coordStr + "\" is not a valid coordinate."};
+    }
+    return L.latLng(lat,lon);
   }
-
-  return L.latLng(lat,lon);
-}
-
-// console.log(_parseCoord.coordStr);
-// console.log(coordStr);
-// console.log(_parseCoord({lat: 32.333, lng: 14.12}));
 
 function _parseInteger(intStr)
 {
   var integer = parseInt(intStr);
-
   if (isNaN(integer)) {
     throw {name: 'InvalidInt', message: "\"" + intStr + "\" is not a valid integer."};
   }
-
   return integer;
 }
 
@@ -90,10 +70,8 @@ function parseLink(link)
   try {
     parsedValues.zoom      = q.zoom   && _parseInteger(q.zoom);
     parsedValues.center    = q.center && _parseCoord(q.center);
-	// console.log(q.loc);
     parsedValues.waypoints = q.loc    && q.loc.map(_parseCoord).map(
       function (coord) {
-        // console.log(coord);
         return L.Routing.waypoint(coord);
       }
     );
@@ -105,7 +83,6 @@ function parseLink(link)
   } catch (e) {
     console.log("Exception " + e.name + ": " + e.message);
   }
-
   for (k in parsedValues)
   {
     if (parsedValues[k] !== undefined && parsedValues[k] !== "")
@@ -113,7 +90,6 @@ function parseLink(link)
       options[k] = parsedValues[k];
     }
   }
-
   return options;
 }
 
@@ -121,11 +97,9 @@ var Shortener = L.Class.extend({
   options: {
     baseURL: 'http://short.project-osrm.org/'
   },
-
   initialize: function(options) {
     L.Util.setOptions(this, options);
   },
-
   shorten: function(link, callback, context) {
     var requestURL = this.options.baseURL + link;
     jsonp(requestURL, {param: 'jsonp'},
@@ -145,7 +119,6 @@ var Shortener = L.Class.extend({
       }
     );
   }
-
 });
 
 module.exports = {

@@ -30,7 +30,6 @@ var MarkerFactory = L.Class.extend({
         removeButton = L.DomUtil.create('span', this.options.removeButtonClass, container),
         uturnButton = L.DomUtil.create('span', this.options.uturnButtonClass, container),
         popup;
-
     L.DomEvent.addListener(removeButton, 'click', function() {
       this._lrm.spliceWaypoints(i, 1);
     }, this);
@@ -40,9 +39,7 @@ var MarkerFactory = L.Class.extend({
       wp.options.allowUTurn = wp.options.allowUTurn ? false : true;
       this._updateUTurnIcon(uturnButton, wp);
     }, this);
-
     this._updateUTurnIcon(uturnButton, this._lrm.getPlan().getWaypoints()[i]);
-
     popup = L.popup({className: 'leaflet-osrm-waypoint-popup', closeButton: false});
     popup.setContent(container);
     return popup;
@@ -54,14 +51,12 @@ var MarkerFactory = L.Class.extend({
           draggable: true,
         }, this.options.markerOptions),
         marker = L.marker(wp.latLng, options);
-
     marker.bindLabel(label, {
                       direction: 'auto',
                       noHide: true,
                       className: 'leaflet-osrm-waypoint-label'
                     });
     marker.bindPopup(this._createPopup(i));
-
     return marker;
   },
 });

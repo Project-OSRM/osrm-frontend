@@ -26,7 +26,6 @@ var ItineraryBuilder = L.Class.extend({
   createStep: function(text, distance, icon, steps) {
     var row = L.DomUtil.create('li', 'osrm-directions-step', steps),
         td;
-
     L.DomUtil.create('span', 'osrm-directions-icon osrm-'+icon+'-icon', row);
     td = L.DomUtil.create('div', 'osrm-directions-step-maneuver', row);
     td.appendChild(document.createTextNode(text));
