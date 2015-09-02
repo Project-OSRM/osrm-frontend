@@ -61,6 +61,7 @@ osrm.route(viewOptions.waypoints, function(error, alts) {
   var altIdx = viewOptions.alternative ? viewOptions.alternative : 0;
   var lineOptions = options.lrm.lineOptions;
   var line = L.Routing.line(alts[alts.length - 1], lineOptions);
+  //alert(alts);
   line.addTo(map);
   map.fitBounds(line.getBounds());
 
