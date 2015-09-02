@@ -209,7 +209,8 @@ control.on('alternateChosen', function(e) {
 L.control.locate({
     follow: false,
     setView: true,
-    keepCurrentZoomLevel: false,
+    remainActive: false,
+    keepCurrentZoomLevel: true,
     stopFollowingOnDrag: false,
     onLocationError: function(err) {alert(err.message)},
     onLocationOutsideMapBounds:  function(context) { 

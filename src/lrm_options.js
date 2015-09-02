@@ -28,7 +28,8 @@ module.exports = {
     stepClassName: 'osrm-directions-step',
     geocodersClassName: 'osrm-directions-inputs',
     createGeocoder: createGeocoder,
-    itineraryBuilder: 'osrm-directions-steps'
+    itineraryBuilder: 'osrm-directions-steps',
+    showAlternatives: true
   },
 
   popup: {
