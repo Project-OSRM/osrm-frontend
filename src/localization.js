@@ -1,6 +1,6 @@
 "use strict";
 
 module.exports = {
-  en: require('../i18n/en.js'),
-  de: require('../i18n/de.js')
+  en: require('../i18n/en'),
+  de: require('../i18n/de')
 };

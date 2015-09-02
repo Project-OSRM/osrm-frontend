@@ -2,14 +2,14 @@
 
 var Geocoder = require('leaflet-control-geocoder');
 var LRM = require('leaflet-routing-machine');
-var options = require('./src/lrm_options');
-var links = require('./src/links');
-var mapView = require('./src/leaflet_options');
-var tools = require('./src/tools');
+var locate = require('leaflet.locatecontrol');
+var options = require('./lrm_options');
+var links = require('./links');
+var mapView = require('./leaflet_options');
+var tools = require('./tools');
 var mapLayer = mapView.layer;
 var overlay = mapView.overlay;
-var markerFactory = require('./src/marker');
-var locate = require('leaflet.locatecontrol');
+var markerFactory = require('./marker');
 
 var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
@@ -28,14 +28,12 @@ var map = L.map('map', {
   maxZoom: 18
 }).setView(viewOptions.center, viewOptions.zoom);
 
-
 /* Leaflet Controls */
 L.control.layers(mapLayer, overlay, {
     position: 'bottomleft',
   }).addTo(map);
 
 L.control.scale().addTo(map);
-
 
 /* OSRM setup */
 var ReversablePlan = L.Routing.Plan.extend({
@@ -44,7 +42,6 @@ var ReversablePlan = L.Routing.Plan.extend({
     return container;
   }
 });
-
 
 /* Setup markers */
 function makeIcon(i, n) {

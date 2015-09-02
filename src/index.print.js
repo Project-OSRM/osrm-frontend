@@ -1,12 +1,11 @@
 'use strict';
 
 var LRM = require('leaflet-routing-machine');
-var links = require('./src/links');
-var mapView = require('./src/leaflet_options');
-var options = require('./src/lrm_options');
-var markerFactory = require('./src/marker');
 var locate = require('leaflet.locatecontrol');
-
+var links = require('./links');
+var mapView = require('./leaflet_options');
+var options = require('./lrm_options');
+var markerFactory = require('./marker');
 var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
 

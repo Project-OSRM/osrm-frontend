@@ -1,7 +1,7 @@
 'use strict';
 
 var mapView = require('./leaflet_options');
-var createGeocoder = require('./geocoder.js');
+var createGeocoder = require('./geocoder');
 
 module.exports = {
   lrm: {
