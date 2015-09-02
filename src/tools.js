@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 var links = require('./links'),
     localization = require('./localization');
@@ -16,7 +16,7 @@ var Control = L.Control.extend({
     gpxLinkClass: ""
   },
 
-  initialize: function(lrm, options) {
+  initialize: function (lrm, options) {
     L.setOptions(this, options);
     this._lrm = lrm;
     lrm.on('routesfound', this._updateDownloadLink, this);
@@ -25,7 +25,7 @@ var Control = L.Control.extend({
     }, this);
   },
 
-  onAdd: function(map) {
+  onAdd: function (map) {
     var editorContainer,
         editorButton,
         josmContainer,
@@ -61,17 +61,17 @@ var Control = L.Control.extend({
     return this._container;
   },
 
-  onRemove: function() {
+  onRemove: function () {
   },
 
-  _openEditor: function() {
+  _openEditor: function () {
     var position = this._map.getCenter(),
         zoom = this._map.getZoom(),
         prec = 6;
     window.open("http://www.openstreetmap.org/edit?lat=" + position.lat.toFixed(prec) + "&lon=" + position.lng.toFixed(prec) + "&zoom=" + zoom);
   },
 
-  _openJOSM: function() {
+  _openJOSM: function () {
     var bounds = this._map.getBounds(),
         url = 'http://127.0.0.1:8111/load_and_zoom' +
               '?left=' + bounds.getWest() +
@@ -81,7 +81,7 @@ var Control = L.Control.extend({
     window.open(url);
   },
 
-  _getLinkOptions: function() {
+  _getLinkOptions: function () {
     return {
       zoom: this._map.getZoom(),
       center: this._map.getCenter(),
@@ -92,9 +92,11 @@ var Control = L.Control.extend({
     };
   },
 
-  _printPage: function() {
+  _printPage: function () {
     var options = this._getLinkOptions(),
-        validWPs = options.waypoints.filter(function(wp) { return wp.latLng !== undefined; }),
+        validWPs = options.waypoints.filter(function (wp) { 
+          return wp.latLng !== undefined; 
+        }),
         link = window.location.href.replace("/index.html?", "/printing.html?").replace("/?", "/printing.html?")
     if (link.slice(-1) === '/') {
       link += "printing.html";
@@ -105,11 +107,10 @@ var Control = L.Control.extend({
     window.location.href = links.format(link, options);
   },
   
-  _updateDownloadLink: function() {
+  _updateDownloadLink: function () {
     var plan = this._lrm.getPlan(),
         router = this._lrm.getRouter(),
         url;
-
     if (!plan.isReady()) {
       return;
     }
@@ -119,32 +120,31 @@ var Control = L.Control.extend({
     this._gpxLink.href = url;
   },
 
-  _updatePopupPosition: function() {
+  _updatePopupPosition: function () {
     var rect = this._container.getBoundingClientRect();
     this._popupWindow.style.position = 'absolute';
     this._popupWindow.style.left = '0px';
     this._popupWindow.style.bottom = rect.height + 'px';
   },
 
-  _openPopup: function(content) {
+  _openPopup: function (content) {
     var children = this._popupContainer.children,
         i;
     this._updatePopupPosition();
-    for (i = 0; i < children.length; i++)
-    {
+    for (i = 0; i < children.length; i++) {
       this._popupContainer.removeChild(children[i]);
     }
     this._popupContainer.appendChild(content);
     L.DomUtil.removeClass(this._popupWindow, 'leaflet-osrm-tools-popup-hide');
   },
   
-  _closePopup: function() {
+  _closePopup: function () {
     L.DomUtil.addClass(this._popupWindow, 'leaflet-osrm-tools-popup-hide');
   }
 });
 
 module.exports = {
-  control: function(lrm, options) {
+  control: function (lrm, options) {
     return new Control(lrm, options);
   }
 };

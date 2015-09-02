@@ -1,3 +1,4 @@
+
 'use strict';
 
 var Geocoder = require('leaflet-control-geocoder');
@@ -14,8 +15,10 @@ var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
 
 // Pass basemap layers
-mapLayer = mapLayer.reduce(function(title, layer) {
-  title[layer.label] = L.tileLayer(layer.tileLayer, {id: layer.label});
+mapLayer = mapLayer.reduce( function (title, layer) {
+  title[layer.label] = L.tileLayer(layer.tileLayer, {
+    id: layer.label
+  });
   return title;
 });
 
@@ -36,14 +39,15 @@ L.control.scale().addTo(map);
 
 /* OSRM setup */
 var ReversablePlan = L.Routing.Plan.extend({
-  createGeocoders: function() {
+  createGeocoders: function () {
     var container = L.Routing.Plan.prototype.createGeocoders.call(this);
     return container;
   }
 });
 
 /* Setup markers */
-function makeIcon(i, n) {
+
+function makeIcon (i, n) {
   var url = 'images/marker-via-icon-2x.png';
   var markerList = ['images/marker-start-icon-2x.png', 'images/marker-end-icon-2x.png'];
   if (i === 0) {
@@ -66,17 +70,16 @@ function makeIcon(i, n) {
     });
   }
 }
-
 var plan = new ReversablePlan([], {
   geocoder: Geocoder.nominatim(),
   routeWhileDragging: true,
-  createMarker: function(i, wp, n) {
+  createMarker: function (i, wp, n) {
     var options = {
       draggable: this.draggableWaypoints,
       icon: makeIcon(i, n)
     };
     var marker = L.marker(wp.latLng, options);
-    marker.on('click', function() {
+    marker.on('click', function () {
         plan.spliceWaypoints(i, 1);
     });
     return marker;
@@ -89,18 +92,21 @@ var plan = new ReversablePlan([], {
   reverseWaypoints: true,
   dragStyles: options.lrm.dragStyles,
   geocodersClassName: options.lrm.geocodersClassName,
-  geocoderPlaceholder: function(i,n) {
+  geocoderPlaceholder: function (i,n) {
     var startend = ['Start - press enter to drop marker', 'End - press enter to drop marker'];
     var via = ['Via point - press enter to drop marker'];
-    if(i===0) { return startend[0]; }
-    if(i===(n-1)) { return startend[1]; }
-    else {return via; }
+    if (i===0) { 
+      return startend[0]; 
+    } if (i===(n-1)) { 
+      return startend[1]; 
+    } else {
+      return via; 
+    }
   }
 });
 
 // add marker labels
 plan.createMarker = markerFactory(plan, options.popup);
-
 var control = L.Routing.control({
   plan: plan,
   routeWhileDragging: true,
@@ -115,7 +121,6 @@ var control = L.Routing.control({
   units: viewOptions.units,
   serviceUrl: mapView.services[0].path
 }).addTo(map);
-
 var toolsControl = tools.control(control, L.extend({
   position: 'bottomleft',
   language: mapView.language
@@ -134,7 +139,7 @@ map.on('zoomend', mapZoom);
 map.on('moveend', mapMove);
 
 function mapChange(e) {
-  var length = control.getWaypoints().filter(function(pnt) {
+  var length = control.getWaypoints().filter( function (pnt) {
     return pnt.latLng;
   });
   length = length.length;
@@ -160,7 +165,7 @@ function mapMove(e) {
 
 // Update browser url
 function updateHash(e) {
-  var length = control.getWaypoints().filter(function(pnt) {
+  var length = control.getWaypoints().filter( function (pnt) {
     return pnt.latLng;
   }).length;
   var linkOptions = toolsControl._getLinkOptions();
@@ -176,7 +181,7 @@ function updateHash(e) {
 
 // Update browser url
 function updateSearch(e) {
-  var length = control.getWaypoints().filter(function(pnt) {
+  var length = control.getWaypoints().filter( function (pnt) {
     return pnt.latLng;
   }).length;
   var linkOptions = toolsControl._getLinkOptions();
@@ -186,13 +191,12 @@ function updateSearch(e) {
 }
 
 // User selected routes
-control.on('alternateChosen', function(e) {
+control.on('alternateChosen', function (e) {
   var directions = document.querySelectorAll('.leaflet-routing-alt');
   if (directions[0].style.display != 'none') {
     directions[0].style.display = 'none';
     directions[1].style.display = 'block';
-  }
-  else {
+  } else {
     directions[0].style.display = 'block';
     directions[1].style.display = 'none';
   }
@@ -204,8 +208,10 @@ L.control.locate({
     remainActive: false,
     keepCurrentZoomLevel: true,
     stopFollowingOnDrag: false,
-    onLocationError: function(err) {alert(err.message)},
-    onLocationOutsideMapBounds:  function(context) { 
+    onLocationError: function (err) {
+      alert(err.message)
+    },
+    onLocationOutsideMapBounds:  function (context) { 
       alert(context.options.strings.outsideMapBoundsMsg);
     },
     showPopup: false,

@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 module.exports = {
   en: require('../i18n/en'),
