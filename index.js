@@ -115,6 +115,7 @@ var control = L.Routing.control({
   alternativeClassName: options.lrm.alternativeClassName,
   stepClassName: options.lrm.stepClassName,
   language: viewOptions.language,
+  showAlternatives: true,
   units: viewOptions.units,
   serviceUrl: mapView.services[0].path
 }).addTo(map);
