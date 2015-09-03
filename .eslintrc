@@ -22,7 +22,6 @@
     "no-underscore-dangle": [0],
     "no-self-compare": 2,
     "no-void": 2,
-    "wrap-iife": 2,
     "no-eq-null": 2,
     "quotes": [0],
     "curly": 0,
