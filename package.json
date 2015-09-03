@@ -4,7 +4,7 @@
   "description": "frontend interface for project osrm",
   "main": "src/index.js",
   "scripts": {
-    "test": "eslint src/index.js src",
+    "test": "eslint src/*js i18n/*.js",
     "build": "browserify -d src/index.js -s osrm > bundle.js",
     "build-print": "browserify -d src/index.print.js -s osrm > bundle.print.js",
     "start-index": "budo src/index.js --serve=bundle.js --live -d | bistre",

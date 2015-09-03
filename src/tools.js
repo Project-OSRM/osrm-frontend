@@ -1,7 +1,7 @@
 'use strict';
 
 var links = require('./links'),
-    localization = require('./localization');
+  localization = require('./localization');
 
 var Control = L.Control.extend({
   include: L.Mixin.Events,
@@ -16,24 +16,24 @@ var Control = L.Control.extend({
     gpxLinkClass: ""
   },
 
-  initialize: function (lrm, options) {
+  initialize: function(lrm, options) {
     L.setOptions(this, options);
     this._lrm = lrm;
     lrm.on('routesfound', this._updateDownloadLink, this);
-    lrm.on('routeselected', function (e) {
+    lrm.on('routeselected', function(e) {
       this._selectedAlternative = e.route;
     }, this);
   },
 
-  onAdd: function (map) {
+  onAdd: function(map) {
     var editorContainer,
-        editorButton,
-        josmContainer,
-        josmButton,
-        popupCloseButton,
-        printContainer,
-        printButton,
-        gpxContainer;
+      editorButton,
+      josmContainer,
+      josmButton,
+      popupCloseButton,
+      printContainer,
+      printButton,
+      gpxContainer;
     this._container = L.DomUtil.create('div', 'leaflet-osrm-tools-container leaflet-bar ' + this.options.toolsContainerClass);
     L.DomEvent.disableClickPropagation(this._container);
     editorContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-editor', this._container);
@@ -53,83 +53,82 @@ var Control = L.Control.extend({
     this._gpxLink.innerHTML = "GPX";
     this._gpxLink.alt = localization[this.options.language]['Download as GPX'];
     this._popupWindow = L.DomUtil.create('div',
-                                         'leaflet-osrm-tools-popup leaflet-osrm-tools-popup-hide ' + this.options.popupWindowClass,
-                                         this._container);
+      'leaflet-osrm-tools-popup leaflet-osrm-tools-popup-hide ' + this.options.popupWindowClass,
+      this._container);
     this._popupContainer = L.DomUtil.create('div', '', this._popupWindow);
     popupCloseButton = L.DomUtil.create('span', 'leaflet-osrm-tools-popup-close ' + this.options.popupCloseButtonClass, this._popupWindow);
     L.DomEvent.on(popupCloseButton, 'click', this._closePopup, this);
     return this._container;
   },
 
-  onRemove: function () {
-  },
+  onRemove: function() {},
 
-  _openEditor: function () {
+  _openEditor: function() {
     var position = this._map.getCenter(),
-        zoom = this._map.getZoom(),
-        prec = 6;
+      zoom = this._map.getZoom(),
+      prec = 6;
     window.open("http://www.openstreetmap.org/edit?lat=" + position.lat.toFixed(prec) + "&lon=" + position.lng.toFixed(prec) + "&zoom=" + zoom);
   },
 
-  _openJOSM: function () {
+  _openJOSM: function() {
     var bounds = this._map.getBounds(),
-        url = 'http://127.0.0.1:8111/load_and_zoom' +
-              '?left=' + bounds.getWest() +
-              '&right=' + bounds.getEast() +
-              '&bottom=' + bounds.getSouth() +
-              '&top=' + bounds.getNorth();
+      url = 'http://127.0.0.1:8111/load_and_zoom' +
+      '?left=' + bounds.getWest() +
+      '&right=' + bounds.getEast() +
+      '&bottom=' + bounds.getSouth() +
+      '&top=' + bounds.getNorth();
     window.open(url);
   },
 
-  _getLinkOptions: function () {
+  _getLinkOptions: function() {
     return {
       zoom: this._map.getZoom(),
       center: this._map.getCenter(),
       waypoints: this._lrm.getWaypoints(),
       language: this.options.language,
       units: this.options.units,
-      alternative: this._selectedAlternative,
+      alternative: this._selectedAlternative
     };
   },
 
-  _printPage: function () {
+  _printPage: function() {
     var options = this._getLinkOptions(),
-        validWPs = options.waypoints.filter(function (wp) { 
-          return wp.latLng !== undefined; 
-        }),
-        link = window.location.href.replace("/index.html?", "/printing.html?").replace("/?", "/printing.html?")
+      validWPs = options.waypoints.filter(function(wp) {
+        return wp.latLng !== undefined;
+      }),
+      link = window.location.href.replace("/index.html?", "/printing.html?").replace("/?", "/printing.html?")
     if (link.slice(-1) === '/') {
       link += "printing.html";
     }
-    if (validWPs.length < 2 ) {
+    if (validWPs.length < 2) {
       return;
     }
     window.location.href = links.format(link, options);
   },
-  
-  _updateDownloadLink: function () {
+
+  _updateDownloadLink: function() {
     var plan = this._lrm.getPlan(),
-        router = this._lrm.getRouter(),
-        url;
+      router = this._lrm.getRouter(),
+      url;
     if (!plan.isReady()) {
       return;
     }
     url = router.buildRouteUrl(plan.getWaypoints(), {
-                                fileformat: 'gpx'
-                               });
+      fileformat: 'gpx'
+    });
     this._gpxLink.href = url;
   },
 
-  _updatePopupPosition: function () {
+  _updatePopupPosition: function() {
     var rect = this._container.getBoundingClientRect();
     this._popupWindow.style.position = 'absolute';
     this._popupWindow.style.left = '0px';
     this._popupWindow.style.bottom = rect.height + 'px';
   },
 
-  _openPopup: function (content) {
+  _openPopup: function(content) {
     var children = this._popupContainer.children,
-        i;
+      i;
     this._updatePopupPosition();
     for (i = 0; i < children.length; i++) {
       this._popupContainer.removeChild(children[i]);
@@ -137,14 +136,14 @@ var Control = L.Control.extend({
     this._popupContainer.appendChild(content);
     L.DomUtil.removeClass(this._popupWindow, 'leaflet-osrm-tools-popup-hide');
   },
-  
-  _closePopup: function () {
+
+  _closePopup: function() {
     L.DomUtil.addClass(this._popupWindow, 'leaflet-osrm-tools-popup-hide');
   }
 });
 
 module.exports = {
-  control: function (lrm, options) {
+  control: function(lrm, options) {
     return new Control(lrm, options);
   }
 };

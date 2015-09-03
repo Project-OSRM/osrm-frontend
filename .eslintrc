@@ -7,6 +7,8 @@
     "L": true
   },
   "rules": {
+    "indent": [2, 2],
+    "comma-dangle": [2, "never"],
     "space-before-blocks": 2,
     "space-after-keywords": 2,
     "space-unary-ops": 2,

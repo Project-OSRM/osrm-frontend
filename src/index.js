@@ -1,4 +1,3 @@
-
 'use strict';
 
 var Geocoder = require('leaflet-control-geocoder');
@@ -15,7 +14,7 @@ var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
 
 // Pass basemap layers
-mapLayer = mapLayer.reduce( function (title, layer) {
+mapLayer = mapLayer.reduce(function(title, layer) {
   title[layer.label] = L.tileLayer(layer.tileLayer, {
     id: layer.label
   });
@@ -32,14 +31,14 @@ var map = L.map('map', {
 
 /* Leaflet Controls */
 L.control.layers(mapLayer, overlay, {
-    position: 'bottomleft',
-  }).addTo(map);
+  position: 'bottomleft'
+}).addTo(map);
 
 L.control.scale().addTo(map);
 
 /* OSRM setup */
 var ReversablePlan = L.Routing.Plan.extend({
-  createGeocoders: function () {
+  createGeocoders: function() {
     var container = L.Routing.Plan.prototype.createGeocoders.call(this);
     return container;
   }
@@ -47,7 +46,7 @@ var ReversablePlan = L.Routing.Plan.extend({
 
 /* Setup markers */
 
-function makeIcon (i, n) {
+function makeIcon(i, n) {
   var url = 'images/marker-via-icon-2x.png';
   var markerList = ['images/marker-start-icon-2x.png', 'images/marker-end-icon-2x.png'];
   if (i === 0) {
@@ -56,7 +55,8 @@ function makeIcon (i, n) {
       iconSize: [20, 56],
       iconAnchor: [10, 28]
     });
-  } if (i === n - 1) {
+  }
+  if (i === n - 1) {
     return L.icon({
       iconUrl: markerList[1],
       iconSize: [20, 56],
@@ -73,14 +73,14 @@ function makeIcon (i, n) {
 var plan = new ReversablePlan([], {
   geocoder: Geocoder.nominatim(),
   routeWhileDragging: true,
-  createMarker: function (i, wp, n) {
+  createMarker: function(i, wp, n) {
     var options = {
       draggable: this.draggableWaypoints,
       icon: makeIcon(i, n)
     };
     var marker = L.marker(wp.latLng, options);
-    marker.on('click', function () {
-        plan.spliceWaypoints(i, 1);
+    marker.on('click', function() {
+      plan.spliceWaypoints(i, 1);
     });
     return marker;
   },
@@ -92,15 +92,16 @@ var plan = new ReversablePlan([], {
   reverseWaypoints: true,
   dragStyles: options.lrm.dragStyles,
   geocodersClassName: options.lrm.geocodersClassName,
-  geocoderPlaceholder: function (i,n) {
+  geocoderPlaceholder: function(i, n) {
     var startend = ['Start - press enter to drop marker', 'End - press enter to drop marker'];
     var via = ['Via point - press enter to drop marker'];
-    if (i===0) { 
-      return startend[0]; 
-    } if (i===(n-1)) { 
-      return startend[1]; 
+    if (i === 0) {
+      return startend[0];
+    }
+    if (i === (n - 1)) {
+      return startend[1];
     } else {
-      return via; 
+      return via;
     }
   }
 });
@@ -124,9 +125,8 @@ var control = L.Routing.control({
 var toolsControl = tools.control(control, L.extend({
   position: 'bottomleft',
   language: mapView.language
- }, options.tools)).addTo(map);
-if (viewOptions.waypoints.length < 1) {
-}
+}, options.tools)).addTo(map);
+if (viewOptions.waypoints.length < 1) {}
 // set waypoints from hash values
 if (viewOptions.waypoints.length > 1) {
   control.setWaypoints(viewOptions.waypoints);
@@ -138,8 +138,8 @@ plan.on('waypointschanged', updateHash);
 map.on('zoomend', mapZoom);
 map.on('moveend', mapMove);
 
-function mapChange (e) {
-  var length = control.getWaypoints().filter( function (pnt) {
+function mapChange(e) {
+  var length = control.getWaypoints().filter(function(pnt) {
     return pnt.latLng;
   });
   length = length.length;
@@ -151,21 +151,21 @@ function mapChange (e) {
   }
 }
 
-function mapZoom (e) {
+function mapZoom(e) {
   var linkOptions = toolsControl._getLinkOptions();
   var updateZoom = links.format(window.location.href, linkOptions);
-  history.replaceState( {} , 'Project OSRM Demo', updateZoom);
+  history.replaceState({}, 'Project OSRM Demo', updateZoom);
 }
 
-function mapMove (e) {
+function mapMove(e) {
   var linkOptions = toolsControl._getLinkOptions();
   var updateCenter = links.format(window.location.href, linkOptions);
-  history.replaceState( {} , 'Project OSRM Demo', updateCenter);
+  history.replaceState({}, 'Project OSRM Demo', updateCenter);
 }
 
 // Update browser url
-function updateHash (e) {
-  var length = control.getWaypoints().filter( function (pnt) {
+function updateHash(e) {
+  var length = control.getWaypoints().filter(function(pnt) {
     return pnt.latLng;
   }).length;
   var linkOptions = toolsControl._getLinkOptions();
@@ -176,12 +176,12 @@ function updateHash (e) {
   var newParms = window.location.hash = hash[1];
   var oldURL = window.location;
   var newURL = newBaseURL.concat(newParms);
-  history.replaceState( {} , 'Directions', newURL);
+  history.replaceState({}, 'Directions', newURL);
 }
 
 // Update browser url
-function updateSearch (e) {
-  var length = control.getWaypoints().filter( function (pnt) {
+function updateSearch(e) {
+  var length = control.getWaypoints().filter(function(pnt) {
     return pnt.latLng;
   }).length;
   var linkOptions = toolsControl._getLinkOptions();
@@ -191,7 +191,7 @@ function updateSearch (e) {
 }
 
 // User selected routes
-control.on('alternateChosen', function (e) {
+control.on('alternateChosen', function(e) {
   var directions = document.querySelectorAll('.leaflet-routing-alt');
   if (directions[0].style.display != 'none') {
     directions[0].style.display = 'none';
@@ -203,17 +203,17 @@ control.on('alternateChosen', function (e) {
 });
 
 L.control.locate({
-    follow: false,
-    setView: true,
-    remainActive: false,
-    keepCurrentZoomLevel: true,
-    stopFollowingOnDrag: false,
-    onLocationError: function (err) {
-      alert(err.message)
-    },
-    onLocationOutsideMapBounds:  function (context) { 
-      alert(context.options.strings.outsideMapBoundsMsg);
-    },
-    showPopup: false,
-    locateOptions: {}
+  follow: false,
+  setView: true,
+  remainActive: false,
+  keepCurrentZoomLevel: true,
+  stopFollowingOnDrag: false,
+  onLocationError: function(err) {
+    alert(err.message)
+  },
+  onLocationOutsideMapBounds: function(context) {
+    alert(context.options.strings.outsideMapBoundsMsg);
+  },
+  showPopup: false,
+  locateOptions: {}
 }).addTo(map);
