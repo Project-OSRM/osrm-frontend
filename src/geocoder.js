@@ -1,16 +1,15 @@
+"use strict";
 
-'use strict';
-
-var geocoder = ( function (i, num) {
+var geocoder = function(i, num) {
   var container = L.DomUtil.create('div',
-   function () {
+   function() {
      if (i === 0) {
        return "osrm-directions-origin";
      } else if (i === num-1) {
        return "osrm-directions-destination";
      }
      return "osrm-directions-via";
-   })();
+   }()),
   label = L.DomUtil.create('label', 'osrm-form-label', container),
   input = L.DomUtil.create('input', '', container),
   close = L.DomUtil.create('span', 'osrm-directions-icon osrm-close-icon', container),
@@ -22,6 +21,6 @@ var geocoder = ( function (i, num) {
     input: input,
     closeButton: close,
   };
-})();
+};
 
 module.exports = geocoder;

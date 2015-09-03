@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /*
  * Creats a itinerary container that contains the instructions.
@@ -10,18 +10,23 @@ var ItineraryBuilder = L.Class.extend({
   options: {
     containerClassName: ''
   },
-  initialize: function (options) {
+
+  initialize: function(options) {
     L.setOptions(this, options);
   },
-  createContainer: function () {
+
+  createContainer: function() {
     return L.DomUtil.create('div', this.options.containerClassName);
   },
-  createStepsContainer: function () {
+
+  createStepsContainer: function() {
     return L.DomUtil.create('ol', '');
   },
-  createStep: function (text, distance, icon, steps) {
+
+  createStep: function(text, distance, icon, steps) {
     var row = L.DomUtil.create('li', 'osrm-directions-step', steps),
         td;
+
     L.DomUtil.create('span', 'osrm-directions-icon osrm-'+icon+'-icon', row);
     td = L.DomUtil.create('div', 'osrm-directions-step-maneuver', row);
     td.appendChild(document.createTextNode(text));
@@ -31,6 +36,6 @@ var ItineraryBuilder = L.Class.extend({
   }
 });
 
-module.exports = function (options) {
+module.exports = function(options) {
   return new ItineraryBuilder(options);
 };

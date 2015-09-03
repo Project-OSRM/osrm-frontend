@@ -1,37 +1,59 @@
-'use strict';
+"use strict";
 
 var url = require('url'),
     jsonp = require('jsonp');
 
-function _formatCoord (latLng) {
+function _formatCoord(latLng)
+{
   var precision = 6;
   if (!latLng) {
-    return;
-  }
+   return
+}
+  // console.log(latLng);
+  // read the var ^
+  // console.log(typeof latLng.lat.toFixed(precision));
+  // console.log(latLng.lat.toFixed(precision));
+  // check what type of value it is ^
+
   return latLng.lat.toFixed(precision) + "," + latLng.lng.toFixed(precision);
+
 }
 
-function _parseCoord (coordStr) {
+// console.log(_formatCoord({lat: 32.333, lng: 14.12}));
+  // pass value to return
+
+
+function _parseCoord(coordStr)
+{
   var latLng = coordStr.split(','),
       lat = parseFloat(latLng[0]),
       lon = parseFloat(latLng[1]);
-      if (isNaN(lat) || isNaN(lon)) {
-        throw { 
-          name: 'InvalidCoords', message: "\"" + coordStr + "\" is not a valid coordinate." 
-        };
-     }
-  return L.latLng(lat,lon);
+
+// console.log(latLng)
+  if (isNaN(lat) || isNaN(lon)) {
+    throw {name: 'InvalidCoords', message: "\"" + coordStr + "\" is not a valid coordinate."};
   }
 
-function _parseInteger (intStr) {
+  return L.latLng(lat,lon);
+}
+
+// console.log(_parseCoord.coordStr);
+// console.log(coordStr);
+// console.log(_parseCoord({lat: 32.333, lng: 14.12}));
+
+function _parseInteger(intStr)
+{
   var integer = parseInt(intStr);
+
   if (isNaN(integer)) {
     throw {name: 'InvalidInt', message: "\"" + intStr + "\" is not a valid integer."};
   }
+
   return integer;
 }
 
-function formatLink (baseURL, options) {
+function formatLink(baseURL, options)
+{
   var parsed = url.parse(baseURL),
       formated = url.format({
         protocol: parsed.protocol,
@@ -40,12 +62,8 @@ function formatLink (baseURL, options) {
         query: {
           z: options.zoom,
           center: options.center ? _formatCoord(options.center) : undefined,
-          loc: options.waypoints ? options.waypoints.filter(function (wp) { 
-            return wp.latLng !== undefined;
-          })
-                                                    .map(function (wp) {
-                                                      return wp.latLng;
-                                                    })
+          loc: options.waypoints ? options.waypoints.filter(function(wp) { return wp.latLng !== undefined;})
+                                                    .map(function(wp) {return wp.latLng;})
                                                     .map(_formatCoord)
                                  : undefined,
           hl: options.language,
@@ -59,18 +77,23 @@ function formatLink (baseURL, options) {
   return formated;
 }
 
-function parseLink (link) {
+function parseLink(link)
+{
   link = '?' + link.slice(1);
+
   var parsed = url.parse(link, true),
       q = parsed.query,
       parsedValues = {},
       options = {},
       k;
+
   try {
     parsedValues.zoom      = q.zoom   && _parseInteger(q.zoom);
     parsedValues.center    = q.center && _parseCoord(q.center);
+	// console.log(q.loc);
     parsedValues.waypoints = q.loc    && q.loc.map(_parseCoord).map(
       function (coord) {
+        // console.log(coord);
         return L.Routing.waypoint(coord);
       }
     );
@@ -82,11 +105,15 @@ function parseLink (link) {
   } catch (e) {
     console.log("Exception " + e.name + ": " + e.message);
   }
-  for (k in parsedValues) {
-    if (parsedValues[k] !== undefined && parsedValues[k] !== "") {
+
+  for (k in parsedValues)
+  {
+    if (parsedValues[k] !== undefined && parsedValues[k] !== "")
+    {
       options[k] = parsedValues[k];
     }
   }
+
   return options;
 }
 
@@ -94,19 +121,22 @@ var Shortener = L.Class.extend({
   options: {
     baseURL: 'http://short.project-osrm.org/'
   },
-  initialize: function (options) {
+
+  initialize: function(options) {
     L.Util.setOptions(this, options);
   },
-  shorten: function (link, callback, context) {
+
+  shorten: function(link, callback, context) {
     var requestURL = this.options.baseURL + link;
     jsonp(requestURL, {param: 'jsonp'},
-      function (error, resp) {
+      function(error, resp) {
         if (error) {
           console.log("Error: " + error);
           callback.call(context, "");
           return;
         }
-        if (resp.ShortURL === undefined) {
+        if (resp.ShortURL === undefined)
+        {
           console.log("Error: " + resp.Error);
           callback.call(context, "");
           return;
@@ -115,12 +145,13 @@ var Shortener = L.Class.extend({
       }
     );
   }
+
 });
 
 module.exports = {
   'parse': parseLink,
   'format': formatLink,
-  'shortener': function (options) {
+  'shortener': function(options) {
     return new Shortener(options || {});
   }
 };

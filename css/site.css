@@ -1,4 +1,5 @@
 /* Basics */
+
 .osrm-directions-inputs,
 .osrm-directions-errors,
 .osrm-directions-routes,
@@ -37,6 +38,7 @@
 }
 
 /* tool colors and divs */
+
 .fill-osrm {
   background-color: rgba(37,72,127, 0.8);
 }
@@ -50,6 +52,7 @@
 }
 
 /* Scale position */
+
 .leaflet-control-scale {
   position: absolute;
   left: 140px;
@@ -57,6 +60,7 @@
 }
 
 /* Zoom control position */
+
 .leaflet-control-zoom {
   left: 355px;
     color: rgba(37,72,127, 0.8);
@@ -68,7 +72,7 @@
 
 .leaflet-control-locate.leaflet-bar a {
   color: rgba(37,72,127, 0.8);
-  background-image: url('../images/crosshairs.svg');
+  background-image: url(../images/crosshairs.svg);
   width: 26px;
   height: 26px;
   border-radius: 4px;
@@ -76,13 +80,14 @@
 }
 
 /* Locate control */
+
 .leaflet-control-locate {
   left: 355px;
   top: -20px;
 }
 
 {
-  background-image: url('../images/crosshairs.svg');
+  background-image: url(../images/crosshairs.svg);
   width: 36px;
   height: 36px;
   color: rgba(37,72,127, 0.8);
@@ -92,7 +97,11 @@
   z-index: 100;
 }
 
+
+
+
 /* Layers position */
+
 .leaflet-control-layers {
   position: absolute;
   left: 0px;
@@ -103,14 +112,16 @@
   width: 180px;
 }
 
+
 /* Layer styling */
+
 .leaflet-retina .leaflet-control-layers-toggle {
-    background-image: url('../images/layers.svg');
+    background-image: url(../images/layers.svg);
     background-size: 26px 26px;
 }
 
 .leaflet-control-layers-toggle {
-  background-image: url('../images/layers.svg');
+  background-image: url(../images/layers.svg);
   width: 36px;
   height: 36px;
   background-color: rgba(37,72,127, 0.8);
@@ -130,6 +141,7 @@
   color: #fff;
   background-color: rgba(37,72,127, 0.8);
 }
+
 
 /* Toolbar */
 .leaflet-osrm-tools-container
@@ -213,6 +225,7 @@
   content: '\21c5';
   color: white;
 }
+
 
 .leaflet-routing-remove-waypoint {
   background-color: transparent;
@@ -377,6 +390,7 @@
   left: 53px;
 }
 
+
 .leaflet-osrm-tools-localization:hover
 {
    background-color: rgba(255, 255, 255, 0.2);
@@ -436,6 +450,7 @@
 
 .leaflet-osrm-tools-popup input
 {
+  /* position: absolute; */
   min-width: 300px;
   min-height: 40px;
   border: 0px solid;
@@ -456,7 +471,9 @@
   display: none;
 }
 
+
 /* OSRM geocoder directions inputs */
+
 .osrm-directions-inputs {
   position: fixed;
   left: 10px;
@@ -569,6 +586,7 @@
 }
 
 /* Instructions */
+
 .osrm-directions-steps {
     position: relative;
     list-style: none;
@@ -612,7 +630,9 @@
     display: none;
 }
 
+
 /* Directions Summary */
+
 .osrm-directions-summary
 {
   color: rgba(37,72,127, 0.8);
@@ -715,7 +735,9 @@
 .leaflet-routing-icon-arrive           { background-position: -249px 0; }
 .leaflet-routing-icon-via              { background-position: -275px 2px; }
 
+
 /*  FORM Labels */
+
 .osrm-form-label {
   cursor: default;
 }
@@ -792,6 +814,37 @@
 }
 
 
+
+/* @FontFace
+------------------------------------------------------- */
+
+@font-face {
+    font-family: 'Open Sans';
+    src: url('../fonts/opensans-regular-webfont.eot');
+    src: url('../fonts/opensans-regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/opensans-regular-webfont.woff2') format('woff2'),
+         url('../fonts/opensans-regular-webfont.woff') format('woff'),
+}
+
+@font-face {
+    font-family: 'Open Sans Condensed Bold';
+    src: url('../fonts/opensans-condbold-webfont.eot');
+    src: url('../fonts/opensans-condbold-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/opensans-condbold-webfont.woff2') format('woff2'),
+         url('../fonts/opensans-condbold-webfont.woff') format('woff'),
+}
+
+@font-face {
+    font-family: 'Open Sans Condensed Light';
+    src: url('../fonts/opensans-condlight-webfont.eot');
+    src: url('../fonts/opensans-condlight-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/opensans-condlight-webfont.woff2') format('woff2'),
+         url('../fonts/opensans-condlight-webfont.woff') format('woff'),
+}
+
+
+
+
 /* Small Screen Layout
 ------------------------------------------------------- */
 @media only screen and (max-width:880px) {
@@ -843,8 +896,10 @@
   }
 .leaflet-control-zoom {
   display: hidden;
- }
 }
+
+}
+
 
 /* Mobile Layout
 ------------------------------------------------------- */
@@ -883,6 +938,7 @@
 .leaflet-routing-remove-waypoint:after {
   margin-left: 19px;
 }
+
 
 .leaflet-routing-container.dark {
   z-index: 10;
