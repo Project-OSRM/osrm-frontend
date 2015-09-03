@@ -1,4 +1,5 @@
 /* PRINTING */
+
 #map {
     width: 18cm;
     height: 10cm;
@@ -6,6 +7,7 @@
 }
 
 /* routing headlines */
+
 .leaflet-routing-alt  h2
 {
   font-family: 'Verdana';
@@ -86,7 +88,9 @@ tbody tr td:last-child {
   background-color: rgba(37,72,127, 0.15);
 }
 
+
 /* routing icons */
+
 .leaflet-routing-alt-minimized .leaflet-routing-icon,
 .leaflet-routing-icon {
     background-image: url('../images/osrm.directions.icons.color.svg');
@@ -115,6 +119,7 @@ tbody tr td:last-child {
   .leaflet-routing-icon-via              { background-position: -270px 0px; }
 
 /*  FORM Labels */
+
 .osrm-form-label {
   cursor: default;
 }
@@ -133,4 +138,33 @@ tbody tr td:last-child {
 .osrm-directions-via input {
     border-top: 1px solid rgba(0,0,0,.1);
 }
+
+
+/* @FontFace
+------------------------------------------------------- */
+
+@font-face {
+    font-family: 'Open Sans';
+    src: url('../fonts/opensans-regular-webfont.eot');
+    src: url('../fonts/opensans-regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/opensans-regular-webfont.woff2') format('woff2'),
+         url('../fonts/opensans-regular-webfont.woff') format('woff'),
+}
+
+@font-face {
+    font-family: 'Open Sans Condensed Bold';
+    src: url('../fonts/opensans-condbold-webfont.eot');
+    src: url('../fonts/opensans-condbold-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/opensans-condbold-webfont.woff2') format('woff2'),
+         url('../fonts/opensans-condbold-webfont.woff') format('woff'),
+}
+
+@font-face {
+    font-family: 'Open Sans Condensed Light';
+    src: url('../fonts/opensans-condlight-webfont.eot');
+    src: url('../fonts/opensans-condlight-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/opensans-condlight-webfont.woff2') format('woff2'),
+         url('../fonts/opensans-condlight-webfont.woff') format('woff'),
+}
+
 

@@ -17,6 +17,7 @@ var streets = L.tileLayer('https://api.tiles.mapbox.com/v4/mapbox.streets/{z}/{x
     }),
     small_components = L.tileLayer('http://tools.geofabrik.de/osmi/tiles/routing_i/{z}/{x}/{y}.png', {})
 
+
 module.exports = {
   defaultView: {
     centerLat: 38.8995,
@@ -28,12 +29,14 @@ module.exports = {
     alternative: true,
     layer: streets
   },
+
   services: [
     {
       label: 'Car (fastest)',
       path: '//router.project-osrm.org/viaroute'
     }
   ],
+
   layer: [
     {
       'Mapbox Streets': streets,
@@ -43,7 +46,10 @@ module.exports = {
       'openstreetmap.de.org': osm_de
     }
   ],
+
   overlay: {
     'Small Components': small_components
     }
+
 };
+
