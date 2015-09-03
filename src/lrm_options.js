@@ -1,7 +1,7 @@
 'use strict';
 
 var mapView = require('./leaflet_options');
-var createGeocoder = require('./geocoder.js');
+var createGeocoder = require('./geocoder');
 
 module.exports = {
   lrm: {
@@ -31,14 +31,12 @@ module.exports = {
     itineraryBuilder: 'osrm-directions-steps',
     showAlternatives: true
   },
-
   popup: {
     removeButtonClass: 'osrm-directions-icon osrm-close-light-icon',
     uturnButtonClass: 'osrm-directions-icon osrm-u-turn-icon',
     markerOptions: {
     }
   },
-
   tools: {
     popupWindowClass: 'fill-osrm dark',
     popupCloseButtonClass: 'osrm-directions-icon osrm-close-icon',
