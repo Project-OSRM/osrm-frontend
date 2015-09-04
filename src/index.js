@@ -39,12 +39,13 @@ L.control.layers(mapLayer, overlay, {
 L.control.scale().addTo(map);
 
 
-// read baselayer and checkbox changes
+// store baselayer changes
 map.on('baselayerchange', function(e) {
   console.log(e.name);
+  ls.set('layer', e.name);
 });
 
-
+console.log(ls.layer);
 
 /* OSRM setup */
 var ReversablePlan = L.Routing.Plan.extend({
