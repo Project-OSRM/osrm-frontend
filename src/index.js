@@ -20,8 +20,13 @@ window.onload = function() {
   var baselayer = ls.get('layer');
   var components = ls.get('overlay');
   console.log('your baselayer is '+baselayer+' and components are '+components);
-  
+
   if (baselayer) {
+    var order = [ 'Mapbox Streets', 'Mapbox Outdoors', 'Mapbox Streets Satellite', 'openstreetmap.org', 'openstreetmap.de.org' ];
+    var change = document.querySelectorAll('.leaflet-control-layers-base label span');
+    console.log(change[0].innerHTML);
+    
+    //change.children.input.span.innerHTML
     //this.addBaseLayer(baselayer, 'baselayer');
   }
   /*// Check for LocalStorage support.
