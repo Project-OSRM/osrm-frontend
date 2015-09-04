@@ -14,7 +14,33 @@ var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
 // storage item
 var ls = require('local-storage');
- 
+
+
+window.onload = function() {
+  var baselayer = ls.get('layer');
+  var components = ls.get('overlay');
+  console.log('your baselayer is '+baselayer+' and components are '+components);
+  
+  if (baselayer) {
+    //this.addBaseLayer(baselayer, 'baselayer');
+  }
+  /*// Check for LocalStorage support.
+  if (localStorage) {
+
+    // Add an event listener for form submissions
+    document.getElementById('contactForm').addEventListener('submit', function() {
+      // Get the value of the name field.
+      var name = document.getElementById('name').value;
+
+      // Save the name in localStorage.
+      localStorage.setItem('name', name);
+    });
+
+  }*/
+
+}
+
+
 // Pass basemap layers
 mapLayer = mapLayer.reduce(function(title, layer) {
   title[layer.label] = L.tileLayer(layer.tileLayer, {
@@ -47,8 +73,6 @@ map.on('baselayerchange', function(e) {
 });
 
 // store overlay add or remove
-ls.set('overlay', 'no');
-
 map.on('overlayadd', function(e) {
   ls.set('overlay', true);
   var isOverlay = ls('overlay');
@@ -60,25 +84,7 @@ map.on('overlayremove', function(e) {
 });
 
 
-window.onload = function() {
-  var baselayer = ls.get('layer');
-  var components = ls.get('overlay');
-  console.log('your baselayer is '+baselayer+' and components are '+components);
-  /*// Check for LocalStorage support.
-  if (localStorage) {
 
-    // Add an event listener for form submissions
-    document.getElementById('contactForm').addEventListener('submit', function() {
-      // Get the value of the name field.
-      var name = document.getElementById('name').value;
-
-      // Save the name in localStorage.
-      localStorage.setItem('name', name);
-    });
-
-  }*/
-
-}
 
 /* OSRM setup */
 var ReversablePlan = L.Routing.Plan.extend({
