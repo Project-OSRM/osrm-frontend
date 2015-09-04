@@ -23,29 +23,29 @@ window.onload = function() {
 
   if (baselayer) {
     var order = [ 'Mapbox Streets', 'Mapbox Outdoors', 'Mapbox Streets Satellite', 'openstreetmap.org', 'openstreetmap.de.org' ];
-    var change = document.querySelectorAll('.leaflet-control-layers-base label span');
-    console.log(change[0].innerHTML);
+    var change = document.querySelectorAll('form.leaflet-control-layers-list input');
     
-    //change.children.input.span.innerHTML
-    //this.addBaseLayer(baselayer, 'baselayer');
+    if (baselayer===order[0]) {
+      change[0].checked = false;
+      change[1].checked = true;
+    }
+    if (baselayer===order[1]) { 
+      console.log(change[1].innerHTML); 
+    }
+    if (baselayer===order[2]) { 
+      console.log(change[2].innerHTML); 
+    }
+    if (baselayer===order[3]) { 
+      console.log(change[3].innerHTML); 
+    }
+    if (baselayer===order[4]) { 
+      console.log(change[4].innerHTML); 
+    }
+
   }
-  /*// Check for LocalStorage support.
-  if (localStorage) {
-
-    // Add an event listener for form submissions
-    document.getElementById('contactForm').addEventListener('submit', function() {
-      // Get the value of the name field.
-      var name = document.getElementById('name').value;
-
-      // Save the name in localStorage.
-      localStorage.setItem('name', name);
-    });
-
-  }*/
-
 }
 
-
+  
 // Pass basemap layers
 mapLayer = mapLayer.reduce(function(title, layer) {
   title[layer.label] = L.tileLayer(layer.tileLayer, {
@@ -67,6 +67,7 @@ var map = L.map('map', {
 L.control.layers(mapLayer, overlay, {
   position: 'bottomleft'
 }).addTo(map);
+
 L.control.scale().addTo(map);
 
 
