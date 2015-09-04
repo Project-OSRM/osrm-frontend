@@ -12,7 +12,9 @@ var overlay = mapView.overlay;
 var markerFactory = require('./marker');
 var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
-
+// storage item
+var ls = require('local-storage');
+ 
 // Pass basemap layers
 mapLayer = mapLayer.reduce(function(title, layer) {
   title[layer.label] = L.tileLayer(layer.tileLayer, {
@@ -20,6 +22,7 @@ mapLayer = mapLayer.reduce(function(title, layer) {
   });
   return title;
 });
+
 
 /* Add the map class */
 var map = L.map('map', {
@@ -33,8 +36,15 @@ var map = L.map('map', {
 L.control.layers(mapLayer, overlay, {
   position: 'bottomleft'
 }).addTo(map);
-
 L.control.scale().addTo(map);
+
+
+// read baselayer and checkbox changes
+map.on('baselayerchange', function(e) {
+  console.log(e.name);
+});
+
+
 
 /* OSRM setup */
 var ReversablePlan = L.Routing.Plan.extend({
