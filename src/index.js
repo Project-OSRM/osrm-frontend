@@ -39,9 +39,8 @@ L.control.layers(mapLayer, overlay, {
 L.control.scale().addTo(map);
 
 
-// store baselayer changes
+// store baselayer changes and checkbox?
 map.on('baselayerchange', function(e) {
-  console.log(e.name);
   ls.set('layer', e.name);
 });
 
