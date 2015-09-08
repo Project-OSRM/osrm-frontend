@@ -12,39 +12,36 @@ var overlay = mapView.overlay;
 var markerFactory = require('./marker');
 var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
-// storage item
 var ls = require('local-storage');
 var layer;
 
 window.onload = function() {
   var baselayer = ls.get('layer');
   var components = ls.get('overlay');
-  console.log('your baselayer is '+baselayer+' and components are '+components);
-  //layer = streets;
-  
   if (baselayer) {
     var order = [ 'Mapbox Streets', 'Mapbox Outdoors', 'Mapbox Streets Satellite', 'openstreetmap.org', 'openstreetmap.de.org' ];
-    var change = document.querySelectorAll('form.leaflet-control-layers-list input');
-    // attach mapLayer to value
+
     if (baselayer===order[0]) {
-      layer === 'streets';
+      layer = mapView.baselayer.one;
     }
-    if (baselayer===order[1]) {       
-      layer === 'outdoors'; 
+    if (baselayer===order[1]) {   
+      layer = mapView.baselayer.two;
     }
-    if (baselayer===order[2]) { 
-      layer === 'satellite';
+    if (baselayer===order[2]) {       
+      layer = mapView.baselayer.three;
     }
-    if (baselayer===order[3]) { 
-      layer === 'osm';
+    if (baselayer===order[3]) {       
+      layer = mapView.baselayer.four;
     }
-    if (baselayer===order[4]) { 
-      layer === 'osm_de';
+    if (baselayer===order[4]) {       
+      layer = mapView.baselayer.five;
     }
     return layer;
+  } else {
+    layer = mapView.defaultView.layer;
   }
 }
-  
+
 // Pass basemap layers
 mapLayer = mapLayer.reduce(function(title, layer) {
   title[layer.label] = L.tileLayer(layer.tileLayer, {
@@ -53,7 +50,9 @@ mapLayer = mapLayer.reduce(function(title, layer) {
   return title;
 });
 
-alert(layer);
+//console.log(mapView.defaultView.layer);
+//console.log(mapView.baselayer.two);
+
 
 /* Add the map class */
 var map = L.map('map', {
@@ -63,6 +62,7 @@ var map = L.map('map', {
   //layers: mapView.defaultView.layer,
   maxZoom: 18
 }).setView(viewOptions.center, viewOptions.zoom);
+
 
 /* Leaflet Controls */
 L.control.layers(mapLayer, overlay, {
@@ -78,7 +78,7 @@ L.control.scale().addTo(map);
 map.on('baselayerchange', function(e) {
   ls.set('layer', e.name);
 });
-/*
+
 // store overlay add or remove
 map.on('overlayadd', function(e) {
   ls.set('overlay', true);
@@ -89,7 +89,6 @@ map.on('overlayremove', function(e) {
   ls.set('overlay', false);
   var isOverlay = ls('overlay');
 });
-*/
 
 
 /* OSRM setup */
