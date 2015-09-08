@@ -15,7 +15,7 @@ var viewOptions = L.extend(mapView.defaultView, parsedOptions);
 var ls = require('local-storage');
 var layer;
 
-window.onload = function() {
+window.load = function() {
   var baselayer = ls.get('layer');
   var components = ls.get('overlay');
   if (baselayer) {
@@ -73,7 +73,6 @@ L.control.scale().addTo(map);
 
 
 /* Store User preferences */
-
 // store baselayer changes
 map.on('baselayerchange', function(e) {
   ls.set('layer', e.name);
