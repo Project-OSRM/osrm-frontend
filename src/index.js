@@ -12,6 +12,35 @@ var overlay = mapView.overlay;
 var markerFactory = require('./marker');
 var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
+var ls = require('local-storage');
+var layer;
+
+window.load = function() {
+  var baselayer = ls.get('layer');
+  var components = ls.get('overlay');
+  if (baselayer) {
+    var order = [ 'Mapbox Streets', 'Mapbox Outdoors', 'Mapbox Streets Satellite', 'openstreetmap.org', 'openstreetmap.de.org' ];
+
+    if (baselayer===order[0]) {
+      layer = mapView.baselayer.one;
+    }
+    if (baselayer===order[1]) {   
+      layer = mapView.baselayer.two;
+    }
+    if (baselayer===order[2]) {       
+      layer = mapView.baselayer.three;
+    }
+    if (baselayer===order[3]) {       
+      layer = mapView.baselayer.four;
+    }
+    if (baselayer===order[4]) {       
+      layer = mapView.baselayer.five;
+    }
+    return layer;
+  } else {
+    layer = mapView.defaultView.layer;
+  }
+}
 
 // Pass basemap layers
 mapLayer = mapLayer.reduce(function(title, layer) {
@@ -21,13 +50,19 @@ mapLayer = mapLayer.reduce(function(title, layer) {
   return title;
 });
 
+//console.log(mapView.defaultView.layer);
+//console.log(mapView.baselayer.two);
+
+
 /* Add the map class */
 var map = L.map('map', {
   zoomControl: true,
   dragging: true,
-  layers: mapView.defaultView.layer,
+  layers: layer,
+  //layers: mapView.defaultView.layer,
   maxZoom: 18
 }).setView(viewOptions.center, viewOptions.zoom);
+
 
 /* Leaflet Controls */
 L.control.layers(mapLayer, overlay, {
@@ -35,6 +70,25 @@ L.control.layers(mapLayer, overlay, {
 }).addTo(map);
 
 L.control.scale().addTo(map);
+
+
+/* Store User preferences */
+// store baselayer changes
+map.on('baselayerchange', function(e) {
+  ls.set('layer', e.name);
+});
+
+// store overlay add or remove
+map.on('overlayadd', function(e) {
+  ls.set('overlay', true);
+  var isOverlay = ls('overlay');
+});
+
+map.on('overlayremove', function(e) {
+  ls.set('overlay', false);
+  var isOverlay = ls('overlay');
+});
+
 
 /* OSRM setup */
 var ReversablePlan = L.Routing.Plan.extend({
