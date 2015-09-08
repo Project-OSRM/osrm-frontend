@@ -14,37 +14,36 @@ var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
 // storage item
 var ls = require('local-storage');
-
+var layer;
 
 window.onload = function() {
   var baselayer = ls.get('layer');
   var components = ls.get('overlay');
   console.log('your baselayer is '+baselayer+' and components are '+components);
-
+  layer === streets;
+  
   if (baselayer) {
     var order = [ 'Mapbox Streets', 'Mapbox Outdoors', 'Mapbox Streets Satellite', 'openstreetmap.org', 'openstreetmap.de.org' ];
     var change = document.querySelectorAll('form.leaflet-control-layers-list input');
-    
+    // attach mapLayer to value
     if (baselayer===order[0]) {
-      change[0].checked = false;
-      change[1].checked = true;
+      layer = 'streets';
     }
-    if (baselayer===order[1]) { 
-      console.log(change[1].innerHTML); 
+    if (baselayer===order[1]) {       
+      layer = 'outdoors'; 
     }
     if (baselayer===order[2]) { 
-      console.log(change[2].innerHTML); 
+      layer === 'satellite';
     }
     if (baselayer===order[3]) { 
-      console.log(change[3].innerHTML); 
+      layer = 'osm';
     }
     if (baselayer===order[4]) { 
-      console.log(change[4].innerHTML); 
+      layer = 'osm_de';
     }
-
+    return layer;
   }
 }
-
   
 // Pass basemap layers
 mapLayer = mapLayer.reduce(function(title, layer) {
@@ -54,12 +53,14 @@ mapLayer = mapLayer.reduce(function(title, layer) {
   return title;
 });
 
+alert(layer);
 
 /* Add the map class */
 var map = L.map('map', {
   zoomControl: true,
   dragging: true,
-  layers: mapView.defaultView.layer,
+  layers: layer,
+  //layers: mapView.defaultView.layer,
   maxZoom: 18
 }).setView(viewOptions.center, viewOptions.zoom);
 
@@ -77,7 +78,7 @@ L.control.scale().addTo(map);
 map.on('baselayerchange', function(e) {
   ls.set('layer', e.name);
 });
-
+/*
 // store overlay add or remove
 map.on('overlayadd', function(e) {
   ls.set('overlay', true);
@@ -88,8 +89,7 @@ map.on('overlayremove', function(e) {
   ls.set('overlay', false);
   var isOverlay = ls('overlay');
 });
-
-
+*/
 
 
 /* OSRM setup */
