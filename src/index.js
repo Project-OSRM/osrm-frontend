@@ -20,26 +20,26 @@ window.onload = function() {
   var baselayer = ls.get('layer');
   var components = ls.get('overlay');
   console.log('your baselayer is '+baselayer+' and components are '+components);
-  layer === streets;
+  //layer = streets;
   
   if (baselayer) {
     var order = [ 'Mapbox Streets', 'Mapbox Outdoors', 'Mapbox Streets Satellite', 'openstreetmap.org', 'openstreetmap.de.org' ];
     var change = document.querySelectorAll('form.leaflet-control-layers-list input');
     // attach mapLayer to value
     if (baselayer===order[0]) {
-      layer = 'streets';
+      layer === 'streets';
     }
     if (baselayer===order[1]) {       
-      layer = 'outdoors'; 
+      layer === 'outdoors'; 
     }
     if (baselayer===order[2]) { 
       layer === 'satellite';
     }
     if (baselayer===order[3]) { 
-      layer = 'osm';
+      layer === 'osm';
     }
     if (baselayer===order[4]) { 
-      layer = 'osm_de';
+      layer === 'osm_de';
     }
     return layer;
   }
