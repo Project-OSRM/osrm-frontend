@@ -24,7 +24,6 @@ if (ls.get('getOverlay')==true) {
   }).setView(viewOptions.center, viewOptions.zoom);
 
 } else {
-  console.log('do that');
   var map = L.map('map', {
     zoomControl: true,
     dragging: true,
@@ -57,12 +56,10 @@ map.on('baselayerchange', function(e) {
 // store overlay add or remove
 map.on('overlayadd', function(e) {
   ls.set('getOverlay', true);
-  console.log(ls.get('getOverlay'));
 });
 
 map.on('overlayremove', function(e) {
   ls.set('getOverlay', false);
-  console.log(ls.get('getOverlay'));
 });
 
 
