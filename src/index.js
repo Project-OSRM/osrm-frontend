@@ -20,7 +20,6 @@ window.load = function() {
   var components = ls.get('overlay');
   if (baselayer) {
     var order = [ 'Mapbox Streets', 'Mapbox Outdoors', 'Mapbox Streets Satellite', 'openstreetmap.org', 'openstreetmap.de.org' ];
-
     if (baselayer===order[0]) {
       layer = mapView.baselayer.one;
     }
@@ -36,10 +35,20 @@ window.load = function() {
     if (baselayer===order[4]) {       
       layer = mapView.baselayer.five;
     }
-    return layer;
   } else {
     layer = mapView.defaultView.layer;
   }
+  
+  /* Add the map class */
+var map = L.map('map', {
+  zoomControl: true,
+  dragging: true,
+  layers: layer,
+  //layers: mapView.defaultView.layer,
+  maxZoom: 18
+}).setView(viewOptions.center, viewOptions.zoom);
+
+  return layer;
 }
 
 // Pass basemap layers
@@ -53,15 +62,8 @@ mapLayer = mapLayer.reduce(function(title, layer) {
 //console.log(mapView.defaultView.layer);
 //console.log(mapView.baselayer.two);
 
+console.log(layer);
 
-/* Add the map class */
-var map = L.map('map', {
-  zoomControl: true,
-  dragging: true,
-  layers: layer,
-  //layers: mapView.defaultView.layer,
-  maxZoom: 18
-}).setView(viewOptions.center, viewOptions.zoom);
 
 
 /* Leaflet Controls */
