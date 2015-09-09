@@ -16,39 +16,14 @@ var ls = require('local-storage');
 var layer;
 var map = L.map('map', {});
 
-window.load = function() {
-  var baselayer = ls.get('layer');
+
+window.onload = function() {
   var components = ls.get('overlay');
-  if (baselayer) {
-    var order = ['Mapbox Streets', 'Mapbox Outdoors', 'Mapbox Streets Satellite', 'openstreetmap.org', 'openstreetmap.de.org'];
-    if (baselayer === order[0]) {
-      layer = mapView.baselayer.one;
-    }
-    if (baselayer === order[1]) {
-      layer = mapView.baselayer.two;
-    }
-    if (baselayer === order[2]) {
-      layer = mapView.baselayer.three;
-    }
-    if (baselayer === order[3]) {
-      layer = mapView.baselayer.four;
-    }
-    if (baselayer === order[4]) {
-      layer = mapView.baselayer.five;
-    }
-  } else {
-    layer = mapView.defaultView.layer;
-  }
-
-  /* Add the map class */
-  map = L.map('map', {
-    zoomControl: true,
-    dragging: true,
-    layers: layer,
-    //layers: mapView.defaultView.layer,
-    maxZoom: 18
-  }).setView(viewOptions.center, viewOptions.zoom);
-
+  var baseLayer = ls.get('layer') ? mapView.layer[ls.get('layer')] : mapView.layer['Mapbox Streets'];
+  map.options.dragging=true;
+  map.options.center=viewOptions.center;
+  map.options.layers=mapView.layer;
+  map.options.maxZoom=18;
   return layer;
 }
 
@@ -60,21 +35,12 @@ mapLayer = mapLayer.reduce(function(title, layer) {
   return title;
 });
 
-
-//console.log(mapView.defaultView.layer);
-//console.log(mapView.baselayer.two);
-
-console.log(layer);
-
-
-
 /* Leaflet Controls */
 L.control.layers(mapLayer, overlay, {
   position: 'bottomleft'
 }).addTo(map);
 
 L.control.scale().addTo(map);
-
 
 /* Store User preferences */
 // store baselayer changes

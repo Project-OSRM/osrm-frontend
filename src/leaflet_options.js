@@ -41,12 +41,5 @@ module.exports = {
   }],
   overlay: {
     'Small Components': small_components
-  },
-  baselayer: {
-    one: streets,
-    two: outdoors,
-    three: satellite,
-    four: osm,
-    five: osm_de
   }
 };
