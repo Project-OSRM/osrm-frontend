@@ -13,19 +13,14 @@ var markerFactory = require('./marker');
 var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
 var ls = require('local-storage');
-var layer;
-var map = L.map('map', {});
 
-
-window.onload = function() {
-  var components = ls.get('overlay');
-  var baseLayer = ls.get('layer') ? mapView.layer[ls.get('layer')] : mapView.layer['Mapbox Streets'];
-  map.options.dragging=true;
-  map.options.center=viewOptions.center;
-  map.options.layers=mapView.layer;
-  map.options.maxZoom=18;
-  return layer;
-}
+var baselayer = ls.get('layer') ? mapView.layer[0][ls.get('layer')] : mapView.layer[0]['Mapbox Streets'];
+var map = L.map('map', {
+  zoomControl: true,
+  dragging: true,
+  layers: baselayer,
+  maxZoom: 18
+}).setView(viewOptions.center, viewOptions.zoom);
 
 // Pass basemap layers
 mapLayer = mapLayer.reduce(function(title, layer) {
@@ -49,7 +44,7 @@ map.on('baselayerchange', function(e) {
 });
 
 // store overlay add or remove
-map.on('overlayadd', function(e) {
+map.on('overlayadd', function addOverlay(e) {
   ls.set('overlay', true);
   var isOverlay = ls('overlay');
 });
