@@ -15,12 +15,23 @@ var viewOptions = L.extend(mapView.defaultView, parsedOptions);
 var ls = require('local-storage');
 
 var baselayer = ls.get('layer') ? mapView.layer[0][ls.get('layer')] : mapView.layer[0]['Mapbox Streets'];
-var map = L.map('map', {
-  zoomControl: true,
-  dragging: true,
-  layers: baselayer,
-  maxZoom: 18
-}).setView(viewOptions.center, viewOptions.zoom);
+if (ls.get('getOverlay')==true) {
+  var map = L.map('map', {
+    zoomControl: true,
+    dragging: true,
+    layers: [baselayer, overlay['Small Components']],
+    maxZoom: 18
+  }).setView(viewOptions.center, viewOptions.zoom);
+
+} else {
+  console.log('do that');
+  var map = L.map('map', {
+    zoomControl: true,
+    dragging: true,
+    layers: baselayer,
+    maxZoom: 18
+  }).setView(viewOptions.center, viewOptions.zoom);
+} 
 
 // Pass basemap layers
 mapLayer = mapLayer.reduce(function(title, layer) {
@@ -44,14 +55,14 @@ map.on('baselayerchange', function(e) {
 });
 
 // store overlay add or remove
-map.on('overlayadd', function addOverlay(e) {
-  ls.set('overlay', true);
-  var isOverlay = ls('overlay');
+map.on('overlayadd', function(e) {
+  ls.set('getOverlay', true);
+  console.log(ls.get('getOverlay'));
 });
 
 map.on('overlayremove', function(e) {
-  ls.set('overlay', false);
-  var isOverlay = ls('overlay');
+  ls.set('getOverlay', false);
+  console.log(ls.get('getOverlay'));
 });
 
 
