@@ -14,7 +14,7 @@ var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
 var ls = require('local-storage');
 var layer;
-var map;
+var map = L.map('map', {});
 
 window.load = function() {
   var baselayer = ls.get('layer');
@@ -59,6 +59,7 @@ mapLayer = mapLayer.reduce(function(title, layer) {
   });
   return title;
 });
+
 
 //console.log(mapView.defaultView.layer);
 //console.log(mapView.baselayer.two);
