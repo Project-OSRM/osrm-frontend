@@ -14,6 +14,7 @@ var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
 var ls = require('local-storage');
 var layer;
+var map;
 
 window.load = function() {
   var baselayer = ls.get('layer');
@@ -40,7 +41,7 @@ window.load = function() {
   }
 
   /* Add the map class */
-  var map = L.map('map', {
+  map = L.map('map', {
     zoomControl: true,
     dragging: true,
     layers: layer,
