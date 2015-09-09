@@ -12,6 +12,26 @@ var overlay = mapView.overlay;
 var markerFactory = require('./marker');
 var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
+var ls = require('local-storage');
+
+var baselayer = ls.get('layer') ? mapView.layer[0][ls.get('layer')] : mapView.layer[0]['Mapbox Streets'];
+if (ls.get('getOverlay')==true) {
+  var map = L.map('map', {
+    zoomControl: true,
+    dragging: true,
+    layers: [baselayer, overlay['Small Components']],
+    maxZoom: 18
+  }).setView(viewOptions.center, viewOptions.zoom);
+
+} else {
+  console.log('do that');
+  var map = L.map('map', {
+    zoomControl: true,
+    dragging: true,
+    layers: baselayer,
+    maxZoom: 18
+  }).setView(viewOptions.center, viewOptions.zoom);
+} 
 
 // Pass basemap layers
 mapLayer = mapLayer.reduce(function(title, layer) {
@@ -21,20 +41,30 @@ mapLayer = mapLayer.reduce(function(title, layer) {
   return title;
 });
 
-/* Add the map class */
-var map = L.map('map', {
-  zoomControl: true,
-  dragging: true,
-  layers: mapView.defaultView.layer,
-  maxZoom: 18
-}).setView(viewOptions.center, viewOptions.zoom);
-
 /* Leaflet Controls */
 L.control.layers(mapLayer, overlay, {
   position: 'bottomleft'
 }).addTo(map);
 
 L.control.scale().addTo(map);
+
+/* Store User preferences */
+// store baselayer changes
+map.on('baselayerchange', function(e) {
+  ls.set('layer', e.name);
+});
+
+// store overlay add or remove
+map.on('overlayadd', function(e) {
+  ls.set('getOverlay', true);
+  console.log(ls.get('getOverlay'));
+});
+
+map.on('overlayremove', function(e) {
+  ls.set('getOverlay', false);
+  console.log(ls.get('getOverlay'));
+});
+
 
 /* OSRM setup */
 var ReversablePlan = L.Routing.Plan.extend({
