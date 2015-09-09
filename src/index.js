@@ -19,34 +19,34 @@ window.load = function() {
   var baselayer = ls.get('layer');
   var components = ls.get('overlay');
   if (baselayer) {
-    var order = [ 'Mapbox Streets', 'Mapbox Outdoors', 'Mapbox Streets Satellite', 'openstreetmap.org', 'openstreetmap.de.org' ];
-    if (baselayer===order[0]) {
+    var order = ['Mapbox Streets', 'Mapbox Outdoors', 'Mapbox Streets Satellite', 'openstreetmap.org', 'openstreetmap.de.org'];
+    if (baselayer === order[0]) {
       layer = mapView.baselayer.one;
     }
-    if (baselayer===order[1]) {   
+    if (baselayer === order[1]) {
       layer = mapView.baselayer.two;
     }
-    if (baselayer===order[2]) {       
+    if (baselayer === order[2]) {
       layer = mapView.baselayer.three;
     }
-    if (baselayer===order[3]) {       
+    if (baselayer === order[3]) {
       layer = mapView.baselayer.four;
     }
-    if (baselayer===order[4]) {       
+    if (baselayer === order[4]) {
       layer = mapView.baselayer.five;
     }
   } else {
     layer = mapView.defaultView.layer;
   }
-  
+
   /* Add the map class */
-var map = L.map('map', {
-  zoomControl: true,
-  dragging: true,
-  layers: layer,
-  //layers: mapView.defaultView.layer,
-  maxZoom: 18
-}).setView(viewOptions.center, viewOptions.zoom);
+  var map = L.map('map', {
+    zoomControl: true,
+    dragging: true,
+    layers: layer,
+    //layers: mapView.defaultView.layer,
+    maxZoom: 18
+  }).setView(viewOptions.center, viewOptions.zoom);
 
   return layer;
 }
