@@ -170,6 +170,7 @@ if (viewOptions.waypoints.length > 1) {
 
 plan.on('waypointgeocoded', function(e) {
   console.log(e);
+  alert('hel');
 });
 
 // add onClick event
