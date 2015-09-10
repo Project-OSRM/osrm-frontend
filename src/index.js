@@ -231,18 +231,6 @@ function updateSearch(e) {
   window.location.search = search[1];
 }
 
-// User selected routes
-control.on('routeselected', function(e) {
-  var directions = document.querySelectorAll('.leaflet-routing-alt');
-  if (directions[0].style.display != 'none') {
-    directions[0].style.display = 'none';
-    directions[1].style.display = 'block';
-  } else {
-    directions[0].style.display = 'block';
-    directions[1].style.display = 'none';
-  }
-});
-
 L.control.locate({
   follow: false,
   setView: true,
