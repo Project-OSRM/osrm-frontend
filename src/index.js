@@ -66,8 +66,16 @@ map.on('overlayremove', function(e) {
 /* OSRM setup */
 var ReversablePlan = L.Routing.Plan.extend({
   createGeocoders: function() {
-    var container = L.Routing.Plan.prototype.createGeocoders.call(this);
+    var container = L.Routing.Plan.prototype.createGeocoders.call(this),
+        showBtn = L.DomUtil.create('span', 'leaflet-routing-show-waypoint', container.firstChild);
+        showBtn.title = 'Show';
+        showBtn.innerHTML = 'Show';
+        L.DomEvent.on(showBtn, 'click', function(e) {
+          alert('hey');
+          //map.panTo( <LatLng> latlng, <pan options> options? )
+        });
     return container;
+    return showBtn;
   }
 });
 
@@ -138,6 +146,7 @@ plan.createMarker = markerFactory(plan, options.popup);
 var control = L.Routing.control({
   plan: plan,
   routeWhileDragging: true,
+  useZoomParameter: true,
   lineOptions: options.lrm.lineOptions,
   altLineOptions: options.lrm.altLineOptions,
   summaryTemplate: options.lrm.summaryTemplate,
@@ -158,6 +167,7 @@ if (viewOptions.waypoints.length < 1) {}
 if (viewOptions.waypoints.length > 1) {
   control.setWaypoints(viewOptions.waypoints);
 }
+
 // add onClick event
 var mapClick = map.on('click', mapChange);
 plan.on('waypointschanged', updateHash);

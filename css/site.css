@@ -200,19 +200,62 @@
   color: white;
 }
 
-.leaflet-routing-add-waypoint {
-  display: none;
+/* Show waypoint */
+
+.leaflet-routing-show-waypoint {
+  content: "show";
+  color:  rgba(37,72,127, 0.6);
+  font-size: 12px;
+  background-color: transparent;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 5px;
+  border-color: rgba(37,72,127, 0.3);
+  padding: 3px;
+  display: inline-block;
+  cursor: pointer;
+  margin-left: -7px;
 }
 
-.leaflet-routing-add-waypoint:after {
-  content: ' + ';
+.leaflet-routing-show-waypoint:after {
+  position: absolute;
+  display: block;
+
+  /*
+  content: "show";
+  color:  rgba(37,72,127, 0.6);
+  font-size: 12px;
+  background-color: transparent;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 5px;
+  border-color: rgba(37,72,127, 0.3);
+  padding: 3px;
+  display: inline-block;
+  cursor: pointer;
+  margin-left: -7px;
+  */
+}
+/*
+.leaflet-routing-show-waypoint:after {
+  display: block;
+  width: 15px;
+  height: 1px;
+  z-index: 1;
+  content: "show";
+  cursor: pointer;
+  border-width: 1px;
+  border-color: blue;
+  padding-bottom: 16px;    
+  margin-top: -10px;
+  margin-left: -10px;
+  line-height: 1;
+}
+*/
+.leaflet-routing-show-waypoint:hover {
 }
 
-.leaflet-routing-reverse-waypoints:after {
-  font-weight: bold;
-  content: '\21c5';
-  color: white;
-}
+/* end show waypoint */
 
 .leaflet-routing-remove-waypoint {
   background-color: transparent;
@@ -230,7 +273,6 @@
   height: 1px;
   z-index: 1;
   bottom: 0;
-  margin: auto;
   font-size: 18px;
   font-weight: bold;
   content: "\00d7";
@@ -239,7 +281,7 @@
   color:  rgba(37,72,127, 0.6);
   padding-bottom: 16px;    
 	margin-top: -10px;
-   margin-left: 0px;
+  margin-left: 35px;
   line-height: 1;
 }
 
@@ -256,6 +298,23 @@
   color: black;
   transition: background-color 0.2s ease;
 }
+
+
+.leaflet-routing-add-waypoint {
+  display: none;
+}
+
+.leaflet-routing-add-waypoint:after {
+  content: ' + ';
+}
+
+.leaflet-routing-reverse-waypoints:after {
+  font-weight: bold;
+  content: '\21c5';
+  color: white;
+}
+
+
 
 .leaflet-routing-alternatives-container {
   position: fixed;
@@ -495,11 +554,11 @@
 
 .osrm-directions-inputs input {
   font-size: 12px;
-  width: 90%;
+  width: 80%;
   background-color: transparent;
   color: rgba(0, 0, 0, 0.5);
   height: 30px;
-  padding: 10px 10px 10px 20px;
+  padding: 10px 0px 10px 20px;
 }
 
 .osrm-directions-route-summary {
@@ -880,9 +939,6 @@
   min-width: 175px;
 }
 
-.leaflet-routing-remove-waypoint:after {
-  margin-left: 19px;
-}
 
 .leaflet-routing-container.dark {
   z-index: 10;
