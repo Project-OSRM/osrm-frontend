@@ -30,7 +30,7 @@ if (ls.get('getOverlay')==true) {
     layers: baselayer,
     maxZoom: 18
   }).setView(viewOptions.center, viewOptions.zoom);
-} 
+}
 
 // Pass basemap layers
 mapLayer = mapLayer.reduce(function(title, layer) {
@@ -75,7 +75,7 @@ var ReversablePlan = L.Routing.Plan.extend({
           //map.panTo( <LatLng> latlng, <pan options> options? )
         });
     return container;
-    return showBtn;
+    return showBtn;           // this will never be reached as it is after another `return`
   }
 });
 
@@ -168,6 +168,10 @@ if (viewOptions.waypoints.length > 1) {
   control.setWaypoints(viewOptions.waypoints);
 }
 
+plan.on('waypointgeocoded', function(e) {
+  console.log(e);
+});
+
 // add onClick event
 var mapClick = map.on('click', mapChange);
 plan.on('waypointschanged', updateHash);
@@ -228,7 +232,7 @@ function updateSearch(e) {
 }
 
 // User selected routes
-control.on('alternateChosen', function(e) {
+control.on('routeselected', function(e) {
   var directions = document.querySelectorAll('.leaflet-routing-alt');
   if (directions[0].style.display != 'none') {
     directions[0].style.display = 'none';
