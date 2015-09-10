@@ -169,7 +169,11 @@ if (viewOptions.waypoints.length > 1) {
 }
 
 plan.on('waypointgeocoded', function(e) {
-  console.log(e);
+  if (plan._waypoints.filter(function(wp) { return !!wp.latLng; }).length < 2) {
+    console.log('only one!', e);
+  } else {
+    console.log('got both :sunglasses:', e)
+  }
 });
 
 // add onClick event
