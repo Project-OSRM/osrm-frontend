@@ -30,7 +30,7 @@ if (ls.get('getOverlay')==true) {
     layers: baselayer,
     maxZoom: 18
   }).setView(viewOptions.center, viewOptions.zoom);
-} 
+}
 
 // Pass basemap layers
 mapLayer = mapLayer.reduce(function(title, layer) {
@@ -130,6 +130,12 @@ var plan = new ReversablePlan([], {
     } else {
       return via;
     }
+  }
+});
+
+plan.on('waypointgeocoded', function(e) {
+  if (plan._waypoints.filter(function(wp) { return !!wp.latLng; }).length < 2) {
+    map.panTo(e.waypoint.latLng);
   }
 });
 
