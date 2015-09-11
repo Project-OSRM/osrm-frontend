@@ -566,12 +566,6 @@
    height: 26px;
 }
 
-.osrm-directions-summary
-{
-  margin-top: 0px;
-  padding-top: 0px;
-}
-
 /* Instructions */
 .osrm-directions-steps {
     position: relative;
