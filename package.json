@@ -5,8 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "test": "eslint src/*js i18n/*.js",
-    "build": "browserify -d src/index.js -s osrm > bundle.js",
-    "build-print": "browserify -d src/index.print.js -s osrm > bundle.print.js",
+    "build": "browserify -d src/index.js -s osrm > bundle.raw.js && uglifyjs bundle.raw.js -c -m --source-map=bundle.js.map -o bundle.js",
+    "build-print": "browserify -d src/index.print.js -s osrm > bundle.print.raw.js && uglifyjs bundle.print.raw.js -c -m --source-map=bundle.print.js.map -o bundle.print.js",
     "start-index": "budo src/index.js --serve=bundle.js --live -d | bistre",
     "start-print": "budo src/index.print.js --serve=bundle.print.js --live -d | bistre",
     "start": "npm run build && npm run start-index",
@@ -29,7 +29,7 @@
     "bistre": "^1.0.1",
     "browserify": "^10.2.4",
     "budo": "^4.1.0",
-    "uglify-js": "^2.4.23"
+    "uglify-js": "^2.4.24"
   },
   "dependencies": {
     "jsonp": "^0.2.0",
