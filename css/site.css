@@ -560,12 +560,12 @@
 .osrm-directions-summary
 {
   background-image: url('../images/osrm_logo.svg');
-  -webkit-background-size: 300px 90px;
-  background-size: 300px 90px;
+  -webkit-background-size: 200px 60px;
+  background-size: 200px 60px;
   background-repeat: no-repeat;
   margin: 0;
-  padding-top: 80px;
-  background-position: -35px -5px;
+  padding-top: 50px;
+  background-position: -20px -5px;
 }
 
 /* Instructions */
