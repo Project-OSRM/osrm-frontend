@@ -1,8 +1,8 @@
 .PHONY: dev
 
 all:
-  npm run prepublish
+	npm run prepub
 
 dev:
-  npm run build
-  npm run build-print
+	npm run build
+	npm run build-print
