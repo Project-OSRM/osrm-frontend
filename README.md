@@ -4,4 +4,10 @@ This frontend is builds heavily ontop of [Leaflet Routing Machine](https://githu
 
 # Building
 
-To build this simply run `make`.
+Run this in the root folder:
+
+```bash
+npm install
+make
+```
+
