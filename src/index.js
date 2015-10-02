@@ -153,7 +153,9 @@ var control = L.Routing.control({
   language: viewOptions.language,
   showAlternatives: true,
   units: viewOptions.units,
-  serviceUrl: mapView.services[0].path
+  serviceUrl: mapView.services[0].path,
+  useZoomParameter: true,
+  routeDragInterval: 100
 }).addTo(map);
 var toolsControl = tools.control(control, L.extend({
   position: 'bottomleft',
