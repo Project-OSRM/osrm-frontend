@@ -22,6 +22,7 @@ module.exports = {
       {color: 'black', opacity: 0.35, weight: 9},
       {color: 'white', opacity: 0.8, weight: 7}
     ],
+    routeWhileDragging: true
     summaryTemplate: '<div class="osrm-directions-summary"><h2>{name}</h2><h3>{distance}, {time}</h3></div>',
     containerClassName: 'dark pad2',
     alternativeClassName: 'osrm-directions-instructions',

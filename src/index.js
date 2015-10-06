@@ -111,11 +111,11 @@ var plan = new ReversablePlan([], {
     });
     return marker;
   },
-  routeDragInterval: 100,
+  routeDragInterval: options.lrm.routeDragInterval,
   addWaypoints: true,
   waypointMode: 'snap',
   position: 'topright',
-  useZoomParameter: true,
+  useZoomParameter: options.lrm.useZoomParameter,
   reverseWaypoints: true,
   dragStyles: options.lrm.dragStyles,
   geocodersClassName: options.lrm.geocodersClassName,
@@ -143,7 +143,7 @@ plan.on('waypointgeocoded', function(e) {
 plan.createMarker = markerFactory(plan, options.popup);
 var control = L.Routing.control({
   plan: plan,
-  routeWhileDragging: true,
+  routeWhileDragging: options.lrm.routeWhileDragging,
   lineOptions: options.lrm.lineOptions,
   altLineOptions: options.lrm.altLineOptions,
   summaryTemplate: options.lrm.summaryTemplate,
@@ -151,11 +151,11 @@ var control = L.Routing.control({
   alternativeClassName: options.lrm.alternativeClassName,
   stepClassName: options.lrm.stepClassName,
   language: viewOptions.language,
-  showAlternatives: true,
+  showAlternatives: options.lrm.showAlternatives,
   units: viewOptions.units,
   serviceUrl: mapView.services[0].path,
-  useZoomParameter: true,
-  routeDragInterval: 100
+  useZoomParameter: options.lrm.useZoomParameter,
+  routeDragInterval: options.lrm.routeDragInterval
 }).addTo(map);
 var toolsControl = tools.control(control, L.extend({
   position: 'bottomleft',
