@@ -1,5 +1,6 @@
 'use strict';
 
+var L = require('leaflet');
 var Geocoder = require('leaflet-control-geocoder');
 var LRM = require('leaflet-routing-machine');
 var locate = require('leaflet.locatecontrol');
@@ -13,6 +14,7 @@ var markerFactory = require('./marker');
 var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
 var ls = require('local-storage');
+var mapboxRouter = require('lrm-mapbox');
 
 var baselayer = ls.get('layer') ? mapView.layer[0][ls.get('layer')] : mapView.layer[0]['Mapbox Streets'];
 if (ls.get('getOverlay')==true) {
@@ -142,6 +144,7 @@ plan.on('waypointgeocoded', function(e) {
 // add marker labels
 plan.createMarker = markerFactory(plan, options.popup);
 var control = L.Routing.control({
+  router: new L.Routing.Mapbox('pk.eyJ1Ijoic2FuamF5YiIsImEiOiJjaWZzMjMyMGgxNnJrc3BrcjZhM2ZiZHR4In0.0pFYU5tHm1tuFYhTAva1SA'),
   plan: plan,
   routeWhileDragging: options.lrm.routeWhileDragging,
   lineOptions: options.lrm.lineOptions,
