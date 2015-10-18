@@ -473,6 +473,8 @@
   width: 45%;
   max-width: 350px;
   min-width: 200px;
+  overflow: scroll;
+  height: 100%;
 }
 
 .leaflet-routing-geocoders.osrm-directions-inputs .leaflet-routing-geocoder:first-child input {
