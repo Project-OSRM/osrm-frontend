@@ -72,6 +72,7 @@ var ReversablePlan = L.Routing.Plan.extend({
     return container;
   }
 });
+ 
 
 /* Setup markers */
 
@@ -121,6 +122,19 @@ var plan = new ReversablePlan([], {
   reverseWaypoints: true,
   dragStyles: options.lrm.dragStyles,
   geocodersClassName: options.lrm.geocodersClassName,
+
+  // adds the "zoom to" button next to place name in geocoder
+  createGeocoderElement: function(waypoint, length, options) {
+    var elem = L.Routing.geocoderElement.apply(this, arguments);
+    var container = elem._element.container;
+    var zoomToBtn = L.DomUtil.create('button', 'geocoder-zoom-to', container);
+    zoomToBtn.setAttribute('type', 'button');
+    L.DomEvent.addListener(zoomToBtn, 'click', function() {
+      var point = elem._waypoint.latLng;
+      map.setView(point, 22);
+    });
+    return elem;
+  },
   geocoderPlaceholder: function(i, n) {
     var startend = ['Start - press enter to drop marker', 'End - press enter to drop marker'];
     var via = ['Via point - press enter to drop marker'];
