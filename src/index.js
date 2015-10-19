@@ -126,12 +126,15 @@ var plan = new ReversablePlan([], {
   // adds the "zoom to" button next to place name in geocoder
   createGeocoderElement: function(waypoint, length, options) {
     var elem = L.Routing.geocoderElement.apply(this, arguments);
-    var container = elem._element.container;
-    var zoomToBtn = L.DomUtil.create('span', 'osrm-zoom-to', container);
-    L.DomEvent.addListener(zoomToBtn, 'click', function() {
-      var point = elem._waypoint.latLng;
-      map.setView(point, 22);
-    });
+    var latLng = elem._waypoint.latLng;
+    if (latLng) {
+      var container = elem._element.container;
+      var zoomToBtn = L.DomUtil.create('span', 'osrm-zoom-to', container);
+      L.DomEvent.addListener(zoomToBtn, 'click', function() {
+        var point = latLng;
+        map.setView(point, 22);
+      });
+    }
     return elem;
   },
   geocoderPlaceholder: function(i, n) {
