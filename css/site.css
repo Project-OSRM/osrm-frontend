@@ -210,7 +210,7 @@
 }
 
 .leaflet-routing-add-waypoint {
-  display: none;
+  display: block;
 }
 
 .leaflet-routing-add-waypoint:after {
