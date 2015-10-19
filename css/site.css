@@ -789,6 +789,43 @@
   content: "";
 }
 
+.leaflet-routing-remove-waypoint {
+  background-color: transparent;
+  display: inline-block;
+  vertical-align: middle;
+  cursor: pointer;
+  position: relative;
+  padding-left: 10px;
+}
+
+.osrm-zoom-to {
+  background-color: transparent;
+  display: inline-block;
+  vertical-align: middle;
+  cursor: pointer;
+  position: relative;
+  padding-left: 10px;
+  margin-top: 10px;  
+}
+
+.osrm-zoom-to:after {
+  position: absolute;
+  display: block;
+  width: 10px;
+  height: 1px;
+  z-index: 1;
+  bottom: 0;
+  font-size: 18px;
+  font-weight: bold;
+  content: '+';
+  text-align: center;
+  cursor: pointer;
+  color: rgba(37,72,127, 0.6);
+  padding-bottom: 16px;
+  margin-top: -10px;
+  margin-left: -23px;
+  line-height: 1;
+}
 
 /* Small Screen Layout
 ------------------------------------------------------- */
@@ -842,25 +879,6 @@
 .leaflet-control-zoom {
   display: hidden;
  }
-}
-
-.osrm-zoom-to:after {
-  position: absolute;
-  display: inline-block;
-  width: 10px;
-  height: 15px;
-  z-index: 1;
-  bottom: 0;
-  font-size: 18px;
-  font-weight: bold;
-  content: '+';
-  text-align: center;
-  cursor: pointer;
-  color: rgba(37,72,127, 0.6);
-  padding-bottom: 16px;
-  margin-top: -10px;
-  margin-left: -15px;
-  line-height: 1;
 }
 
 /* Mobile Layout
