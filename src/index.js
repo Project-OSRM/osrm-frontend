@@ -127,8 +127,7 @@ var plan = new ReversablePlan([], {
   createGeocoderElement: function(waypoint, length, options) {
     var elem = L.Routing.geocoderElement.apply(this, arguments);
     var container = elem._element.container;
-    var zoomToBtn = L.DomUtil.create('button', 'geocoder-zoom-to', container);
-    zoomToBtn.setAttribute('type', 'button');
+    var zoomToBtn = L.DomUtil.create('span', 'osrm-zoom-to', container);
     L.DomEvent.addListener(zoomToBtn, 'click', function() {
       var point = elem._waypoint.latLng;
       map.setView(point, 22);

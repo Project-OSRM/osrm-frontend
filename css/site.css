@@ -844,6 +844,25 @@
  }
 }
 
+.osrm-zoom-to:after {
+  position: absolute;
+  display: inline-block;
+  width: 10px;
+  height: 15px;
+  z-index: 1;
+  bottom: 0;
+  font-size: 18px;
+  font-weight: bold;
+  content: '+';
+  text-align: center;
+  cursor: pointer;
+  color: rgba(37,72,127, 0.6);
+  padding-bottom: 16px;
+  margin-top: -10px;
+  margin-left: -15px;
+  line-height: 1;
+}
+
 /* Mobile Layout
 ------------------------------------------------------- */
 @media only screen and (max-width:400px) {
@@ -925,8 +944,8 @@
 .leaflet-routing-alt table tr:hover {
   border-left-width: 1px;
 }
-
 }
+
 
 
 
