@@ -1,4 +1,5 @@
 'use strict';
+var L = require('leaflet');
 
 var geocoder = function(i, num) {
   var container = L.DomUtil.create('div',
