@@ -473,7 +473,7 @@
   width: 45%;
   max-width: 350px;
   min-width: 200px;
-  overflow: scroll;
+  overflow: auto;
   height: 100%;
 }
 
