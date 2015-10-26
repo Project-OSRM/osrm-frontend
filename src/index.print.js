@@ -1,5 +1,6 @@
 'use strict';
 
+var L = require('leaflet');
 var LRM = require('leaflet-routing-machine');
 var locate = require('leaflet.locatecontrol');
 var links = require('./links');

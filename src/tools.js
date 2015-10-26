@@ -1,6 +1,7 @@
 'use strict';
 
 var links = require('./links'),
+  L = require('leaflet'),
   localization = require('./localization');
 
 var Control = L.Control.extend({

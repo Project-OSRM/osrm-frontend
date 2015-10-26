@@ -1,5 +1,7 @@
 'use strict';
 
+var L = require('leaflet');
+
 var MarkerFactory = L.Class.extend({
   include: L.Mixin.Events,
   options: {

@@ -1,6 +1,7 @@
 'use strict';
 
 var url = require('url'),
+  L = require('leaflet'),
   jsonp = require('jsonp');
 
 function _formatCoord(latLng) {
