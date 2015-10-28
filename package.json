@@ -38,6 +38,6 @@
     "leaflet-routing-machine": "^2.5.0",
     "leaflet.locatecontrol": "^0.44.0",
     "local-storage": "^1.4.2",
-    "lrm-mapbox": "^1.0.2"
+    "lrm-mapbox": "^1.0.3"
   }
 }

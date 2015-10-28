@@ -185,6 +185,15 @@ if (viewOptions.waypoints.length < 1) {}
 if (viewOptions.waypoints.length > 1) {
   control.setWaypoints(viewOptions.waypoints);
 }
+
+//if there is a routing error, zoom to extent of waypoints
+control.on('routingerror', function(err) {
+  var waypoints = err.target._plan._waypoints;
+  var firstWaypoint = waypoints[0].latLng;
+  var lastWaypoint = waypoints[waypoints.length - 1].latLng;
+  map.fitBounds([firstWaypoint, lastWaypoint]);
+});
+
 // add onClick event
 var mapClick = map.on('click', mapChange);
 plan.on('waypointschanged', updateHash);
