@@ -1,5 +1,6 @@
 'use strict';
 
+var L = require('leaflet');
 var Geocoder = require('leaflet-control-geocoder');
 var LRM = require('leaflet-routing-machine');
 var locate = require('leaflet.locatecontrol');
@@ -13,6 +14,7 @@ var markerFactory = require('./marker');
 var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
 var ls = require('local-storage');
+var mapboxRouter = require('lrm-mapbox');
 
 var baselayer = ls.get('layer') ? mapView.layer[0][ls.get('layer')] : mapView.layer[0]['Mapbox Streets'];
 if (ls.get('getOverlay')==true) {
@@ -70,6 +72,7 @@ var ReversablePlan = L.Routing.Plan.extend({
     return container;
   }
 });
+ 
 
 /* Setup markers */
 
@@ -119,6 +122,21 @@ var plan = new ReversablePlan([], {
   reverseWaypoints: true,
   dragStyles: options.lrm.dragStyles,
   geocodersClassName: options.lrm.geocodersClassName,
+
+  // adds the "zoom to" button next to place name in geocoder
+  createGeocoderElement: function(waypoint, length, options) {
+    var elem = L.Routing.geocoderElement.apply(this, arguments);
+    var latLng = elem._waypoint.latLng;
+    if (latLng) {
+      var container = elem._element.container;
+      var zoomToBtn = L.DomUtil.create('span', 'osrm-zoom-to', container);
+      L.DomEvent.addListener(zoomToBtn, 'click', function() {
+        var point = elem._waypoint.latLng;
+        map.setView(point, 22);
+      });
+    }
+    return elem;
+  },
   geocoderPlaceholder: function(i, n) {
     var startend = ['Start - press enter to drop marker', 'End - press enter to drop marker'];
     var via = ['Via point - press enter to drop marker'];
@@ -142,6 +160,7 @@ plan.on('waypointgeocoded', function(e) {
 // add marker labels
 plan.createMarker = markerFactory(plan, options.popup);
 var control = L.Routing.control({
+  router: new L.Routing.Mapbox('pk.eyJ1Ijoic2FuamF5YiIsImEiOiJjaWZzMjMyMGgxNnJrc3BrcjZhM2ZiZHR4In0.0pFYU5tHm1tuFYhTAva1SA'),
   plan: plan,
   routeWhileDragging: options.lrm.routeWhileDragging,
   lineOptions: options.lrm.lineOptions,
@@ -166,6 +185,15 @@ if (viewOptions.waypoints.length < 1) {}
 if (viewOptions.waypoints.length > 1) {
   control.setWaypoints(viewOptions.waypoints);
 }
+
+//if there is a routing error, zoom to extent of waypoints
+control.on('routingerror', function(err) {
+  var waypoints = err.target._plan._waypoints;
+  var firstWaypoint = waypoints[0].latLng;
+  var lastWaypoint = waypoints[waypoints.length - 1].latLng;
+  map.fitBounds([firstWaypoint, lastWaypoint]);
+});
+
 // add onClick event
 var mapClick = map.on('click', mapChange);
 plan.on('waypointschanged', updateHash);
