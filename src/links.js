@@ -70,15 +70,13 @@ function parseLink(link) {
     options = {},
     k;
     if (parsedValues.zoom = 'undefined') {
-      console.log();
+      //console.log(q);
       //console.log(parsedValues.center);
       //for (e in parsedValues)
       //_map.fitBounds([38.916692,-77.012611],[38.920154,-77.005062])
     }
   try {
     parsedValues.zoom = q.zoom && _parseInteger(q.zoom);
-    //console.log(link.slice(1));
-    //console.log(parsed.query.z);
     parsedValues.center = q.center && _parseCoord(q.center);
     parsedValues.waypoints = q.loc && q.loc.map(_parseCoord).map(
       function(coord) {
@@ -92,15 +90,15 @@ function parseLink(link) {
     parsedValues.service = q.srv;
   } catch (e) {
     console.log("Exception " + e.name + ": " + e.message);
-    console.log(q.loc);
+    //console.log(q.loc);
   }
   for (k in parsedValues) {
     if (parsedValues[k] !== undefined && parsedValues[k] !== "") {
       options[k] = parsedValues[k];
     }
     if (parsedValues[k] == undefined) {
-      //console.log(parsedValues);
-      //console.log(options);
+      parsedValues.zoom = 10;
+      //console.log('there is no zoom');
     }
   }
   return options;

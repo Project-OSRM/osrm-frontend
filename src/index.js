@@ -22,7 +22,6 @@ if (ls.get('getOverlay')==true) {
     layers: [baselayer, overlay['Small Components']],
     maxZoom: 18
   }).setView(viewOptions.center, viewOptions.zoom);
-
 } else {
   var map = L.map('map', {
     zoomControl: true,
@@ -30,6 +29,24 @@ if (ls.get('getOverlay')==true) {
     layers: baselayer,
     maxZoom: 18
   }).setView(viewOptions.center, viewOptions.zoom);
+}
+
+// Grab query URLs
+var query = window.location.search.substring(1);
+var vars = query.split("&");
+var location1;
+var location2;
+for (var i=0;i<vars.length;i++){
+  var pair = vars[i].split("=");
+
+  var count;
+  if (pair[0] == "loc") {
+    if(i>0) {
+      location2 = pair[1];
+    } else {
+      location1 = pair[1];
+    }
+  }
 }
 
 // Pass basemap layers
@@ -164,10 +181,12 @@ var toolsControl = tools.control(control, L.extend({
   language: mapView.language
 }, options.tools)).addTo(map);
 if (viewOptions.waypoints.length < 1) {}
+
 // set waypoints from hash values
 if (viewOptions.waypoints.length > 1) {
   control.setWaypoints(viewOptions.waypoints);
 }
+
 // add onClick event
 var mapClick = map.on('click', mapChange);
 plan.on('waypointschanged', updateHash);
@@ -176,6 +195,9 @@ map.on('zoomend', mapZoom);
 map.on('moveend', mapMove);
 
 function mapChange(e) {
+  if (location2) {
+    //console.log(e.latlng);
+  }
   var length = control.getWaypoints().filter(function(pnt) {
     return pnt.latLng;
   });
@@ -189,8 +211,11 @@ function mapChange(e) {
 }
 
 function mapZoom(e) {
-  var linkOptions = toolsControl._getLinkOptions();
+  //console.log(toolsControl._getLinkOptions().center);
   var updateZoom = links.format(window.location.href, linkOptions);
+  //console.log(linkOptions.waypoints[0].latLng);
+  //console.log(linkOptions.waypoints[1].latLng);
+  //console.log(linkOptions.center);
   history.replaceState({}, 'Project OSRM Demo', updateZoom);
 }
 
@@ -199,6 +224,7 @@ function mapMove(e) {
   var updateCenter = links.format(window.location.href, linkOptions);
   history.replaceState({}, 'Project OSRM Demo', updateCenter);
 }
+
 
 // Update browser url
 function updateHash(e) {
@@ -226,6 +252,17 @@ function updateSearch(e) {
   var search = links.format(window.location.href, linkOptions).split('?');
   window.location.search = search[1];
 }
+
+function mapQuery(e,f) {
+  var length = control.getWaypoints().filter(function(pnt) {
+    return pnt.latLng;
+  }).length;
+  if (e,f) {
+    var linkOptions = tools
+    viewOptions.waypoints == linkOptions;
+  }
+}
+
 
 // User selected routes
 control.on('alternateChosen', function(e) {
