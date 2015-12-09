@@ -36,15 +36,21 @@ var query = window.location.search.substring(1);
 var vars = query.split("&");
 var location1;
 var location2;
+var arr1;
+var arr2;
 for (var i=0;i<vars.length;i++){
   var pair = vars[i].split("=");
-
-  var count;
   if (pair[0] == "loc") {
     if(i>0) {
       location2 = pair[1];
+      arr2 = location2.split(',');
+      console.log(arr2[0],arr2[1]);
+      map.fitBounds([ [arr1[0],arr1[1]],[arr2[0],arr2[1]] ]);
     } else {
+      console.log('the first location');
       location1 = pair[1];
+      arr1 = location1.split(',');
+      console.log(arr1[0],arr1[1]);
     }
   }
 }
