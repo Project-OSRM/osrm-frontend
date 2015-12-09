@@ -85,8 +85,6 @@ map.on('overlayremove', function(e) {
   ls.set('getOverlay', false);
 });
 
-//map.fitBounds([38.916692,-77.012611],[38.920154,-77.005062])
-
 /* OSRM setup */
 var ReversablePlan = L.Routing.Plan.extend({
   createGeocoders: function() {
@@ -217,11 +215,8 @@ function mapChange(e) {
 }
 
 function mapZoom(e) {
-  //console.log(toolsControl._getLinkOptions().center);
+  var linkOptions = toolsControl._getLinkOptions();
   var updateZoom = links.format(window.location.href, linkOptions);
-  //console.log(linkOptions.waypoints[0].latLng);
-  //console.log(linkOptions.waypoints[1].latLng);
-  //console.log(linkOptions.center);
   history.replaceState({}, 'Project OSRM Demo', updateZoom);
 }
 
