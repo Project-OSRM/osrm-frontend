@@ -180,6 +180,13 @@ if (qs.parse(query).center) {
   var querycoords2 = queryloc2.split(',');
   map.fitBounds([ [querycoords1[0],querycoords1[1]],[querycoords2[0],querycoords2[1]] ]);
   //control.setWaypoints(viewOptions.waypoints);
+  //console.log(querycoords1[1]);
+  L.Routing.control({
+    waypoints: [
+      L.latLng(querycoords1[0],querycoords1[1]),
+      L.latLng(querycoords2[0],querycoords2[1])
+    ]
+  }).addTo(map);
 }
 
 // add onClick event
