@@ -13,6 +13,9 @@ var markerFactory = require('./marker');
 var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
 var ls = require('local-storage');
+//var extract = require('url-querystring');
+var qs = require('querystring');
+
 
 var baselayer = ls.get('layer') ? mapView.layer[0][ls.get('layer')] : mapView.layer[0]['Mapbox Streets'];
 if (ls.get('getOverlay')==true) {
@@ -29,30 +32,6 @@ if (ls.get('getOverlay')==true) {
     layers: baselayer,
     maxZoom: 18
   }).setView(viewOptions.center, viewOptions.zoom);
-}
-
-// Grab query URLs
-var query = window.location.search.substring(1);
-var vars = query.split("&");
-var location1;
-var location2;
-var arr1;
-var arr2;
-for (var i=0;i<vars.length;i++){
-  var pair = vars[i].split("=");
-  if (pair[0] == "loc") {
-    if(i>0) {
-      location2 = pair[1];
-      arr2 = location2.split(',');
-      console.log(arr2[0],arr2[1]);
-      map.fitBounds([ [arr1[0],arr1[1]],[arr2[0],arr2[1]] ]);
-    } else {
-      console.log('the first location');
-      location1 = pair[1];
-      arr1 = location1.split(',');
-      console.log(arr1[0],arr1[1]);
-    }
-  }
 }
 
 // Pass basemap layers
@@ -92,7 +71,6 @@ var ReversablePlan = L.Routing.Plan.extend({
     return container;
   }
 });
-
 
 /* Setup markers */
 function makeIcon(i, n) {
@@ -191,6 +169,19 @@ if (viewOptions.waypoints.length > 1) {
   control.setWaypoints(viewOptions.waypoints);
 }
 
+// Grab query URLs
+var query = window.location.search.substring(1);
+if (qs.parse(query).center) {
+  //console.log('you got a center point!');
+} else {
+  var queryloc1 = qs.parse(query).loc[0];
+  var queryloc2 = qs.parse(query).loc[1];
+  var querycoords1 = queryloc1.split(',');
+  var querycoords2 = queryloc2.split(',');
+  map.fitBounds([ [querycoords1[0],querycoords1[1]],[querycoords2[0],querycoords2[1]] ]);
+  //control.setWaypoints(viewOptions.waypoints);
+}
+
 // add onClick event
 var mapClick = map.on('click', mapChange);
 plan.on('waypointschanged', updateHash);
@@ -199,9 +190,6 @@ map.on('zoomend', mapZoom);
 map.on('moveend', mapMove);
 
 function mapChange(e) {
-  if (location2) {
-    //console.log(e.latlng);
-  }
   var length = control.getWaypoints().filter(function(pnt) {
     return pnt.latLng;
   });
