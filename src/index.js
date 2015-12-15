@@ -15,7 +15,6 @@ var viewOptions = L.extend(mapView.defaultView, parsedOptions);
 var ls = require('local-storage');
 var qs = require('querystring');
 
-
 var baselayer = ls.get('layer') ? mapView.layer[0][ls.get('layer')] : mapView.layer[0]['Mapbox Streets'];
 if (ls.get('getOverlay')==true) {
   var map = L.map('map', {
@@ -155,14 +154,29 @@ var control = L.Routing.control({
   useZoomParameter: options.lrm.useZoomParameter,
   routeDragInterval: options.lrm.routeDragInterval
 }).addTo(map);
+
 var toolsControl = tools.control(control, L.extend({
   position: 'bottomleft',
   language: mapView.language
 }, options.tools)).addTo(map);
+
 if (viewOptions.waypoints.length < 1) {}
+
+// set waypoints from hash values
+if (viewOptions.waypoints.length > 1) {
+  control.setWaypoints(viewOptions.waypoints);
+}
 
 // add onClick event
 var mapClick = map.on('click', mapChange);
+
+// add onClick event
+var mapClick = map.on('click', mapChange);
+plan.on('waypointschanged', updateHash);
+
+// add onZoom event
+map.on('zoomend', mapZoom);
+map.on('moveend', mapMove);
 
 function mapChange(e) {
   var length = control.getWaypoints().filter(function(pnt) {
@@ -170,22 +184,85 @@ function mapChange(e) {
   });
   length = length.length;
   if (!length) {
-    control.spliceWaypoints(0, 0, e.latlng);
+    control.spliceWaypoints(0, 1, e.latlng);
   } else {
     if (length === 1) length = length + 1;
-    control.spliceWaypoints(2, 1, e.latlng);
+    control.spliceWaypoints(length - 1, 1, e.latlng);
   }
 }
 
-// Grab query URLs
-var query = window.location.search.substring(1);
-if (qs.parse(query).center) {
-} else {
-  var queryloc1 = qs.parse(query).loc[0];
-  var queryloc2 = qs.parse(query).loc[1];
-  var querycoords1 = queryloc1.split(',');
-  var querycoords2 = queryloc2.split(',');
-  map.fitBounds([ [querycoords1[0],querycoords1[1]],[querycoords2[0],querycoords2[1]] ]);
-  control.spliceWaypoints(0,1, [querycoords1[0],querycoords1[1]] );
-  control.spliceWaypoints(-1,1, [querycoords2[0],querycoords2[1]] )
+function mapZoom(e) {
+  var linkOptions = toolsControl._getLinkOptions();
+  var updateZoom = links.format(window.location.href, linkOptions);
+  history.replaceState({}, 'Project OSRM Demo', updateZoom);
 }
+
+function mapMove(e) {
+  var linkOptions = toolsControl._getLinkOptions();
+  var updateCenter = links.format(window.location.href, linkOptions);
+  history.replaceState({}, 'Project OSRM Demo', updateCenter);
+}
+
+// Update browser url
+function updateHash(e) {
+  var length = control.getWaypoints().filter(function(pnt) {
+    return pnt.latLng;
+  }).length;
+  var linkOptions = toolsControl._getLinkOptions();
+  linkOptions.waypoints = plan._waypoints;
+  var hash = links.format(window.location.href, linkOptions).split('?');
+  var baseURL = window.location.hash = hash[0];
+  var newBaseURL = baseURL.concat('?');
+  var newParms = window.location.hash = hash[1];
+  var oldURL = window.location;
+  var newURL = newBaseURL.concat(newParms);
+  history.replaceState({}, 'Directions', newURL);
+}
+
+// Update browser url
+function updateSearch(e) {
+  var length = control.getWaypoints().filter(function(pnt) {
+    return pnt.latLng;
+  }).length;
+  var linkOptions = toolsControl._getLinkOptions();
+  linkOptions.waypoints = plan._waypoints;
+  var search = links.format(window.location.href,linkOptions).split('?');
+  window.location.search = search[1];
+}
+
+// Grab query URLs
+var query = qs.parse(window.location.search.substring(1));
+if (query.center) {
+} else {
+  map.fitBounds([ [query.loc[0].split(',')[0],query.loc[0].split(',')[1]],[query.loc[1].split(',')[0],query.loc[1].split(',')[1]] ]);
+  control.spliceWaypoints(0,1, [query.loc[0].split(',')[0],query.loc[0].split(',')[1]]);
+  control.spliceWaypoints(-1,1, [query.loc[1].split(',')[0],query.loc[1].split(',')[1]]);
+}
+
+// User selected routes
+control.on('alternateChosen', function(e) {
+  var directions = document.querySelectorAll('.leaflet-routing-alt');
+  if (directions[0].style.display != 'none') {
+    directions[0].style.display = 'none';
+    directions[1].style.display = 'block';
+  } else {
+    directions[0].style.display = 'block';
+    directions[1].style.display = 'none';
+  }
+});
+
+L.control.locate({
+  follow: false,
+  setView: true,
+  remainActive: false,
+  keepCurrentZoomLevel: true,
+  stopFollowingOnDrag: false,
+  onLocationError: function(err) {
+    alert(err.message)
+  },
+  onLocationOutsideMapBounds: function(context) {
+    alert(context.options.strings.outsideMapBoundsMsg);
+  },
+  showPopup: false,
+  locateOptions: {}
+}).addTo(map);
