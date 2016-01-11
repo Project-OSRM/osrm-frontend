@@ -30,7 +30,7 @@ module.exports = {
   },
   services: [{
     label: 'Car (fastest)',
-    path: 'https://api-osrm-routed-production.tilestream.net/viaroute'
+    path: 'https://router.project-osrm.org/viaroute'
   }],
   layer: [{
     'Mapbox Streets': streets,
