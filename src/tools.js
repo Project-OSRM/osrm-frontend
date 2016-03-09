@@ -11,8 +11,7 @@ var Control = L.Control.extend({
     toolContainerClass: "",
     editorButtonClass: "",
     josmButtonClass: "",
-    localizationButtonClass: "",
-    gpxLinkClass: ""
+    localizationButtonClass: ""
   },
 
   initialize: function(lrm, options) {
