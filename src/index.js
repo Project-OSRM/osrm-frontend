@@ -9,7 +9,6 @@ var mapView = require('./leaflet_options');
 var tools = require('./tools');
 var mapLayer = mapView.layer;
 var overlay = mapView.overlay;
-var markerFactory = require('./marker');
 var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
 var ls = require('local-storage');
@@ -137,7 +136,6 @@ plan.on('waypointgeocoded', function(e) {
 });
 
 // add marker labels
-plan.createMarker = markerFactory(plan, options.popup);
 var control = L.Routing.control({
   plan: plan,
   routeWhileDragging: options.lrm.routeWhileDragging,
