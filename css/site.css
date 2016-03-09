@@ -52,7 +52,7 @@
 /* Scale position */
 .leaflet-control-scale {
   position: absolute;
-  left: 140px;
+  left: 115px;
   bottom: 1px;
 }
 
@@ -245,7 +245,7 @@
   text-align: center;
   cursor: pointer;
   color:  rgba(37,72,127, 0.6);
-  padding-bottom: 16px;    
+  padding-bottom: 16px;
 	margin-top: -10px;
    margin-left: 0px;
   line-height: 1;
@@ -395,7 +395,7 @@
 {
   position: absolute;
   top: 1px;
-  left: 90px;
+  left: 65px;
   text-align: center;
 }
 .leaflet-osrm-tools-gpx a {
@@ -526,13 +526,13 @@
 .osrm-sharp-left-icon       { background-position: -100px 0; }
 .osrm-turn-left-icon        { background-position: -120px 0; }
 .osrm-bear-left-icon        { background-position: -140px 0; }
-.osrm-depart-icon           { 
-	background-position: -160px -1; 
+.osrm-depart-icon           {
+	background-position: -160px -1;
 	background-color: #87DE9F;
 }
 .osrm-enter-roundabout-icon { background-position: -180px 0; }
-.osrm-arrive-icon           { 
-	background-position: -200px 0; 
+.osrm-arrive-icon           {
+	background-position: -200px 0;
 	background-color: #DB5C0A;
 }
 .osrm-close-icon            { background-position: -220px 0; }
@@ -552,7 +552,7 @@
 
 .leaflet-osrm-tools-container
 {
-   width: 125px;
+   width: 105px;
    height: 26px;
 }
 
