@@ -12,7 +12,6 @@ var Control = L.Control.extend({
     editorButtonClass: "",
     josmButtonClass: "",
     localizationButtonClass: "",
-    printButtonClass: "",
     gpxLinkClass: ""
   },
 
@@ -31,8 +30,6 @@ var Control = L.Control.extend({
       josmContainer,
       josmButton,
       popupCloseButton,
-      printContainer,
-      printButton,
       gpxContainer;
     this._container = L.DomUtil.create('div', 'leaflet-osrm-tools-container leaflet-bar ' + this.options.toolsContainerClass);
     L.DomEvent.disableClickPropagation(this._container);
@@ -44,10 +41,6 @@ var Control = L.Control.extend({
     josmButton = L.DomUtil.create('span', this.options.josmButtonClass, josmContainer);
     josmButton.title = localization[this.options.language]['Open in JOSM'];
     L.DomEvent.on(josmButton, 'click', this._openJOSM, this);
-    printContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-print', this._container);
-    printButton = L.DomUtil.create('span', this.options.printButtonClass, printContainer);
-    printButton.title = localization[this.options.language]['Print'];
-    L.DomEvent.on(printButton, 'click', this._printPage, this);
     gpxContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-gpx', this._container);
     this._gpxLink = L.DomUtil.create('a', this.options.gpxLinkClass, gpxContainer);
     this._gpxLink.innerHTML = "GPX";
@@ -89,21 +82,6 @@ var Control = L.Control.extend({
       units: this.options.units,
       alternative: this._selectedAlternative
     };
-  },
-
-  _printPage: function() {
-    var options = this._getLinkOptions(),
-      validWPs = options.waypoints.filter(function(wp) {
-        return wp.latLng !== undefined;
-      }),
-      link = window.location.href.replace("/index.html?", "/printing.html?").replace("/?", "/printing.html?")
-    if (link.slice(-1) === '/') {
-      link += "printing.html";
-    }
-    if (validWPs.length < 2) {
-      return;
-    }
-    window.location.href = links.format(link, options);
   },
 
   _updateDownloadLink: function() {

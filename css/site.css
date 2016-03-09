@@ -311,7 +311,6 @@
 .osrm-editor-icon  { background-position: -24px 0; }
 .osrm-josm-icon  { background-position: -46px 0; }
 .osrm-flag-icon  { background-position: -71px 0; }
-.osrm-printer-icon  { background-position: -94px 0; }
 
 .osrm-close-light-icon  { background-position: -101px 0; }
 
@@ -391,16 +390,7 @@
    background-color: rgba(255, 255, 255, 0.2);
 }
 
-.leaflet-osrm-tools-print
-{
-  position: absolute;
-  top: 4px;
-  left: 64px;
-}
-.leaflet-osrm-tools-print:hover
-{
-   background-color: rgba(255, 255, 255, 0.2);
-}
+
 
 .leaflet-osrm-tools-gpx
 {
