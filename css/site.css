@@ -134,7 +134,6 @@
 /* Toolbar */
 .leaflet-osrm-tools-container
 {
-   cursor: pointer;
    width: 161px;
    height: 26px;
 }
@@ -330,6 +329,7 @@
   position: absolute;
   top: 3px;
   left: 3px;
+  cursor: pointer;
 }
 .leaflet-osrm-tools-editor:hover
 {
@@ -340,6 +340,7 @@
   position: absolute;
   top: 3px;
   left: 34px;
+  cursor: pointer;
 }
 .leaflet-osrm-tools-josm:hover
 {
@@ -551,7 +552,6 @@
 
 .leaflet-osrm-tools-container
 {
-   cursor: pointer;
    width: 125px;
    height: 26px;
 }
