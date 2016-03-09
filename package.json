@@ -6,11 +6,9 @@
   "scripts": {
     "test": "eslint src/*js i18n/*.js",
     "build": "browserify -d src/index.js -s osrm > bundle.raw.js && uglifyjs bundle.raw.js -c -m --source-map=bundle.js.map -o bundle.js",
-    "build-print": "browserify -d src/index.print.js -s osrm > bundle.print.raw.js && uglifyjs bundle.print.raw.js -c -m --source-map=bundle.print.js.map -o bundle.print.js",
     "start-index": "budo src/index.js --serve=bundle.js --live -d | bistre",
-    "start-print": "budo src/index.print.js --serve=bundle.print.js --live -d | bistre",
     "start": "npm run build && npm run start-index",
-    "prepub": "npm run build && npm run build-print"
+    "prepub": "npm run build"
   },
   "repository": {
     "type": "git",
