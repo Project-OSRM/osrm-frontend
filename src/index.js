@@ -166,15 +166,12 @@ if (viewOptions.waypoints.length > 1) {
 }
 
 // add onClick event
-var mapClick = map.on('click', mapChange);
-
-// add onClick event
-var mapClick = map.on('click', mapChange);
+map.on('click', mapChange);
 plan.on('waypointschanged', updateHash);
 
 // add onZoom event
-map.on('zoomend', mapZoom);
-map.on('moveend', mapMove);
+map.on('zoomend', updateHash);
+map.on('moveend', updateHash);
 
 function mapChange(e) {
   var length = control.getWaypoints().filter(function(pnt) {
@@ -189,18 +186,6 @@ function mapChange(e) {
   }
 }
 
-function mapZoom(e) {
-  var linkOptions = toolsControl._getLinkOptions();
-  var updateZoom = links.format(window.location.href, linkOptions);
-  history.replaceState({}, 'Project OSRM Demo', updateZoom);
-}
-
-function mapMove(e) {
-  var linkOptions = toolsControl._getLinkOptions();
-  var updateCenter = links.format(window.location.href, linkOptions);
-  history.replaceState({}, 'Project OSRM Demo', updateCenter);
-}
-
 // Update browser url
 function updateHash(e) {
   var length = control.getWaypoints().filter(function(pnt) {
@@ -209,23 +194,11 @@ function updateHash(e) {
   var linkOptions = toolsControl._getLinkOptions();
   linkOptions.waypoints = plan._waypoints;
   var hash = links.format(window.location.href, linkOptions).split('?');
-  var baseURL = window.location.hash = hash[0];
-  var newBaseURL = baseURL.concat('?');
-  var newParms = window.location.hash = hash[1];
-  var oldURL = window.location;
-  var newURL = newBaseURL.concat(newParms);
-  history.replaceState({}, 'Directions', newURL);
-}
-
-// Update browser url
-function updateSearch(e) {
-  var length = control.getWaypoints().filter(function(pnt) {
-    return pnt.latLng;
-  }).length;
-  var linkOptions = toolsControl._getLinkOptions();
-  linkOptions.waypoints = plan._waypoints;
-  var search = links.format(window.location.href,linkOptions).split('?');
-  window.location.search = search[1];
+  var baseURL = hash[0];
+  var newParms = hash[1];
+  var newURL = baseURL.concat('?').concat(newParms);
+  window.location.hash = newParms;
+  history.replaceState({}, 'Project OSRM Demo', newURL);
 }
 
 // Grab query URLs
