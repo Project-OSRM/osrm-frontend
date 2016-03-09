@@ -30,7 +30,7 @@ var Control = L.Control.extend({
       josmButton,
       popupCloseButton,
       gpxContainer;
-    this._container = L.DomUtil.create('div', 'leaflet-osrm-tools-container leaflet-bar ' + this.options.toolsContainerClass);
+    this._container = L.DomUtil.create('div', 'leaflet-osrm-tools-container ' + this.options.toolsContainerClass);
     L.DomEvent.disableClickPropagation(this._container);
     editorContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-editor', this._container);
     editorButton = L.DomUtil.create('span', this.options.editorButtonClass, editorContainer);

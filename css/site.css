@@ -134,8 +134,11 @@
 /* Toolbar */
 .leaflet-osrm-tools-container
 {
-   width: 161px;
-   height: 26px;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+  background-color: rgba(37,72,127, 0.8);
+  border-radius: 4px;
+  width: 161px;
+  height: 26px;
 }
 
 
