@@ -11,8 +11,7 @@ var Control = L.Control.extend({
     toolContainerClass: "",
     editorButtonClass: "",
     josmButtonClass: "",
-    localizationButtonClass: "",
-    gpxLinkClass: ""
+    localizationButtonClass: ""
   },
 
   initialize: function(lrm, options) {
@@ -29,8 +28,7 @@ var Control = L.Control.extend({
       editorButton,
       josmContainer,
       josmButton,
-      popupCloseButton,
-      gpxContainer;
+      popupCloseButton;
     this._container = L.DomUtil.create('div', 'leaflet-osrm-tools-container leaflet-bar ' + this.options.toolsContainerClass);
     L.DomEvent.disableClickPropagation(this._container);
     editorContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-editor', this._container);
@@ -41,10 +39,6 @@ var Control = L.Control.extend({
     josmButton = L.DomUtil.create('span', this.options.josmButtonClass, josmContainer);
     josmButton.title = localization[this.options.language]['Open in JOSM'];
     L.DomEvent.on(josmButton, 'click', this._openJOSM, this);
-    gpxContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-gpx', this._container);
-    this._gpxLink = L.DomUtil.create('a', this.options.gpxLinkClass, gpxContainer);
-    this._gpxLink.innerHTML = "GPX";
-    this._gpxLink.alt = localization[this.options.language]['Download as GPX'];
     this._popupWindow = L.DomUtil.create('div',
       'leaflet-osrm-tools-popup leaflet-osrm-tools-popup-hide ' + this.options.popupWindowClass,
       this._container);
@@ -71,30 +65,6 @@ var Control = L.Control.extend({
       '&bottom=' + bounds.getSouth() +
       '&top=' + bounds.getNorth();
     window.open(url);
-  },
-
-  _getLinkOptions: function() {
-    return {
-      zoom: this._map.getZoom(),
-      center: this._map.getCenter(),
-      waypoints: this._lrm.getWaypoints(),
-      language: this.options.language,
-      units: this.options.units,
-      alternative: this._selectedAlternative
-    };
-  },
-
-  _updateDownloadLink: function() {
-    var plan = this._lrm.getPlan(),
-      router = this._lrm.getRouter(),
-      url;
-    if (!plan.isReady()) {
-      return;
-    }
-    url = router.buildRouteUrl(plan.getWaypoints(), {
-      fileformat: 'gpx'
-    });
-    this._gpxLink.href = url;
   },
 
   _updatePopupPosition: function() {
