@@ -5,7 +5,7 @@ var locate = require('leaflet.locatecontrol');
 var links = require('./links');
 var mapView = require('./leaflet_options');
 var options = require('./lrm_options');
-var markerFactory = require('./marker');
+// var markerFactory = require('./marker');
 var parsedOptions = links.parse(window.location.href);
 var viewOptions = L.extend(mapView.defaultView, parsedOptions);
 
