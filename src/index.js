@@ -232,8 +232,7 @@ function updateSearch(e) {
 
 // Grab query URLs
 var query = qs.parse(window.location.search.substring(1));
-if (query.center) {
-} else {
+if (query.center && query.loc && query.loc.length >= 2 && query.loc[0] != "" && query.loc[1] != "") {
   map.fitBounds([ [query.loc[0].split(',')[0],query.loc[0].split(',')[1]],[query.loc[1].split(',')[0],query.loc[1].split(',')[1]] ]);
   map.zoomOut();
   control.spliceWaypoints(0,1, [query.loc[0].split(',')[0],query.loc[0].split(',')[1]]);
