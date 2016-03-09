@@ -134,11 +134,9 @@
 /* Toolbar */
 .leaflet-osrm-tools-container
 {
-   cursor: pointer;
    width: 161px;
    height: 26px;
 }
-
 
 /* Waypoint marker labels */
 .leaflet-osrm-waypoint-label
@@ -313,7 +311,6 @@
 
 .osrm-close-light-icon  { background-position: -101px 0; }
 
-
 .leaflet-osrm-tools-editor
 {
   position: absolute;
@@ -323,6 +320,7 @@
 .leaflet-osrm-tools-editor:hover
 {
    background-color: rgba(255, 255, 255, 0.2);
+   cursor: pointer;
 }
 .leaflet-osrm-tools-josm
 {
@@ -332,6 +330,7 @@
 }
 .leaflet-osrm-tools-josm:hover
 {
+   cursor: pointer;
    background-color: rgba(255, 255, 255, 0.2);
 }
 
@@ -519,7 +518,6 @@
 
 .leaflet-osrm-tools-container
 {
-   cursor: pointer;
    width: 125px;
    height: 26px;
 }

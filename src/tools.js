@@ -67,6 +67,17 @@ var Control = L.Control.extend({
     window.open(url);
   },
 
+  _getLinkOptions: function() {
+    return {
+      zoom: this._map.getZoom(),
+      center: this._map.getCenter(),
+      waypoints: this._lrm.getWaypoints(),
+      language: this.options.language,
+      units: this.options.units,
+      alternative: this._selectedAlternative
+    };
+  },
+
   _updatePopupPosition: function() {
     var rect = this._container.getBoundingClientRect();
     this._popupWindow.style.position = 'absolute';
