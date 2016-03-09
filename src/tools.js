@@ -11,8 +11,7 @@ var Control = L.Control.extend({
     toolContainerClass: "",
     editorButtonClass: "",
     josmButtonClass: "",
-    localizationButtonClass: "",
-    gpxLinkClass: ""
+    localizationButtonClass: ""
   },
 
   initialize: function(lrm, options) {
@@ -31,7 +30,7 @@ var Control = L.Control.extend({
       josmButton,
       popupCloseButton,
       gpxContainer;
-    this._container = L.DomUtil.create('div', 'leaflet-osrm-tools-container leaflet-bar ' + this.options.toolsContainerClass);
+    this._container = L.DomUtil.create('div', 'leaflet-osrm-tools-container ' + this.options.toolsContainerClass);
     L.DomEvent.disableClickPropagation(this._container);
     editorContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-editor', this._container);
     editorButton = L.DomUtil.create('span', this.options.editorButtonClass, editorContainer);
@@ -43,8 +42,6 @@ var Control = L.Control.extend({
     L.DomEvent.on(josmButton, 'click', this._openJOSM, this);
     gpxContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-gpx', this._container);
     this._gpxLink = L.DomUtil.create('a', this.options.gpxLinkClass, gpxContainer);
-    this._gpxLink.innerHTML = "GPX";
-    this._gpxLink.alt = localization[this.options.language]['Download as GPX'];
     this._popupWindow = L.DomUtil.create('div',
       'leaflet-osrm-tools-popup leaflet-osrm-tools-popup-hide ' + this.options.popupWindowClass,
       this._container);

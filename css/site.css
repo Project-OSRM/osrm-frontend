@@ -134,8 +134,11 @@
 /* Toolbar */
 .leaflet-osrm-tools-container
 {
-   width: 161px;
-   height: 26px;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+  background-color: rgba(37,72,127, 0.8);
+  border-radius: 4px;
+  width: 161px;
+  height: 26px;
 }
 
 
@@ -391,26 +394,6 @@
    background-color: rgba(255, 255, 255, 0.2);
 }
 
-.leaflet-osrm-tools-gpx
-{
-  position: absolute;
-  top: 1px;
-  left: 65px;
-  text-align: center;
-}
-.leaflet-osrm-tools-gpx a {
-  color: #fff;
-  background-color: rgba(0, 0, 0, 0);
-  width: 30px;
-  height: 20px;
-}
-.leaflet-osrm-tools-gpx a:hover
-{
-  color: #fff;
-  background-color: rgba(255, 255, 255, 0.2);
-  width: 30px;
-  height: 20px;
-}
 
 .leaflet-osrm-tools-popup
 {
