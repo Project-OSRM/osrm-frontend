@@ -1,10 +1,7 @@
 'use strict';
 
-var links = require('./links'),
-  localization = require('./localization');
-
 var Control = L.Control.extend({
-  include: L.Mixin.Events,
+  includes: L.Mixin.Events,
   options: {
     popupWindowClass: "",
     popupCloseButtonClass: "",
@@ -14,13 +11,11 @@ var Control = L.Control.extend({
     localizationButtonClass: ""
   },
 
-  initialize: function(lrm, options) {
+  initialize: function(localization, languages, options) {
+    console.log(options);
     L.setOptions(this, options);
-    this._lrm = lrm;
-    lrm.on('routesfound', this._updateDownloadLink, this);
-    lrm.on('routeselected', function(e) {
-      this._selectedAlternative = e.route;
-    }, this);
+    this._local = localization;
+    this._languages = languages;
   },
 
   onAdd: function(map) {
@@ -28,20 +23,25 @@ var Control = L.Control.extend({
       editorButton,
       josmContainer,
       josmButton,
+      localizationContainer,
+      localizationButton,
       popupCloseButton,
       gpxContainer;
     this._container = L.DomUtil.create('div', 'leaflet-osrm-tools-container ' + this.options.toolsContainerClass);
+    this._localizationList = this._createLocalizationList();
     L.DomEvent.disableClickPropagation(this._container);
     editorContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-editor', this._container);
     editorButton = L.DomUtil.create('span', this.options.editorButtonClass, editorContainer);
-    editorButton.title = localization[this.options.language]['Open in editor'];
+    editorButton.title = this._local['Open in editor'];
     L.DomEvent.on(editorButton, 'click', this._openEditor, this);
     josmContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-josm', this._container);
     josmButton = L.DomUtil.create('span', this.options.josmButtonClass, josmContainer);
-    josmButton.title = localization[this.options.language]['Open in JOSM'];
+    josmButton.title = this._local['Open in JOSM'];
     L.DomEvent.on(josmButton, 'click', this._openJOSM, this);
-    gpxContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-gpx', this._container);
-    this._gpxLink = L.DomUtil.create('a', this.options.gpxLinkClass, gpxContainer);
+    localizationContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-localization', this._container);
+    localizationButton = L.DomUtil.create('span', this.options.localizationButtonClass, localizationContainer);
+    localizationButton.title = this._local['Select language and units'];
+    L.DomEvent.on(localizationButton, 'click', this._openLocalizationList, this);
     this._popupWindow = L.DomUtil.create('div',
       'leaflet-osrm-tools-popup leaflet-osrm-tools-popup-hide ' + this.options.popupWindowClass,
       this._container);
@@ -70,35 +70,26 @@ var Control = L.Control.extend({
     window.open(url);
   },
 
-  _getLinkOptions: function() {
-    return {
-      zoom: this._map.getZoom(),
-      center: this._map.getCenter(),
-      waypoints: this._lrm.getWaypoints(),
-      language: this.options.language,
-      units: this.options.units,
-      alternative: this._selectedAlternative
-    };
-  },
-
-  _updateDownloadLink: function() {
-    var plan = this._lrm.getPlan(),
-      router = this._lrm.getRouter(),
-      url;
-    if (!plan.isReady()) {
-      return;
-    }
-    url = router.buildRouteUrl(plan.getWaypoints(), {
-      fileformat: 'gpx'
-    });
-    this._gpxLink.href = url;
-  },
-
   _updatePopupPosition: function() {
     var rect = this._container.getBoundingClientRect();
     this._popupWindow.style.position = 'absolute';
     this._popupWindow.style.left = '0px';
     this._popupWindow.style.bottom = rect.height + 'px';
+  },
+
+  _createLocalizationList: function() {
+    var list = L.DomUtil.create('ul');
+    for (var key in this._languages)
+    {
+        var li = L.DomUtil.create('li', '', list);
+        li.innerHTML = this._languages[key];
+        L.DomEvent.on(li, 'click', function() { this.fire("languagechanged", {language: key}); }, this);
+    }
+    return list;
+  },
+
+  _openLocalizationList: function() {
+    this._openPopup(this._localizationList);
   },
 
   _openPopup: function(content) {
@@ -118,7 +109,7 @@ var Control = L.Control.extend({
 });
 
 module.exports = {
-  control: function(lrm, options) {
-    return new Control(lrm, options);
+  control: function(localization, languages, options) {
+    return new Control(localization, languages, options);
   }
 };

@@ -18,7 +18,7 @@ var streets = L.tileLayer('https://api.tiles.mapbox.com/v4/mapbox.streets/{z}/{x
   small_components = L.tileLayer('http://tools.geofabrik.de/osmi/tiles/routing_i/{z}/{x}/{y}.png', {})
 
 module.exports = {
-  defaultView: {
+  defaultState: {
     centerLat: 38.8995,
     centerLng: -77.0269,
     center: L.latLng(38.8995, -77.0269),

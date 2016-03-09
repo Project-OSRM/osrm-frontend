@@ -37,8 +37,6 @@ module.exports = {
   popup: {
     removeButtonClass: 'osrm-directions-icon osrm-close-light-icon',
     uturnButtonClass: 'osrm-directions-icon osrm-u-turn-icon',
-    markerOptions: {
-    }
   },
   tools: {
     popupWindowClass: 'fill-osrm dark',
@@ -48,6 +46,6 @@ module.exports = {
     localizationButtonClass: 'osrm-directions-icon osrm-flag-icon',
     printButtonClass: 'osrm-directions-icon osrm-printer-icon',
     toolsContainerClass: 'fill-osrm dark',
-    language: mapView.defaultView.language
+    position: 'bottomleft'
   }
 };
