@@ -41,6 +41,8 @@ var Control = L.Control.extend({
     josmButton = L.DomUtil.create('span', this.options.josmButtonClass, josmContainer);
     josmButton.title = localization[this.options.language]['Open in JOSM'];
     L.DomEvent.on(josmButton, 'click', this._openJOSM, this);
+    gpxContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-gpx', this._container);
+    this._gpxLink = L.DomUtil.create('a', this.options.gpxLinkClass, gpxContainer);
     this._popupWindow = L.DomUtil.create('div',
       'leaflet-osrm-tools-popup leaflet-osrm-tools-popup-hide ' + this.options.popupWindowClass,
       this._container);
