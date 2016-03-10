@@ -296,25 +296,23 @@
 
 .osrm-directions-icon {
     background-image: url('../images/osrm.toolbar.icons.svg');
-    -webkit-background-size: 120px 20px;
-    background-size: 120px 20px;
+    -webkit-background-size: 98px 24px;
+    background-size: 98px 24px;
     margin: 0;
     content: '';
     display: inline-block;
     vertical-align: top;
-    width: 26px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
 }
 
 .osrm-add-icon  { background-position: -280px 0; }
 .osrm-via-icon  { background-position: -300px 0; }
 
-.osrm-link-icon  { background-position: 0px 0; }
-.osrm-editor-icon  { background-position: -24px 0; }
-.osrm-josm-icon  { background-position: -46px 0; }
-.osrm-flag-icon  { background-position: -71px 0; }
-
-.osrm-close-light-icon  { background-position: -101px 0; }
+.osrm-editor-icon  { background-position: -48px 0; }
+.osrm-josm-icon  { background-position: -72px 0; }
+.osrm-flag-icon-en  { background-position: 0px 0; }
+.osrm-flag-icon-de  { background-position: -24px 0; }
 
 .leaflet-osrm-tools-hide
 {
