@@ -14,6 +14,7 @@ var localization = require('./localization');
 var parsedOptions = links.parse(window.location.href);
 
 var mergedOptions = L.extend(leafletOptions.defaultState, parsedOptions);
+var local = localization.get(mergedOptions.language);
 
 var mapLayer = leafletOptions.layer;
 var overlay = leafletOptions.overlay;
@@ -111,8 +112,8 @@ var plan = new ReversablePlan([], {
   dragStyles: options.lrm.dragStyles,
   geocodersClassName: options.lrm.geocodersClassName,
   geocoderPlaceholder: function(i, n) {
-    var startend = ['Start - press enter to drop marker', 'End - press enter to drop marker'];
-    var via = ['Via point - press enter to drop marker'];
+    var startend = [local['Start - press enter to drop marker'], local['End - press enter to drop marker']];
+    var via = [local['Via point - press enter to drop marker']];
     if (i === 0) {
       return startend[0];
     }
@@ -121,12 +122,6 @@ var plan = new ReversablePlan([], {
     } else {
       return via;
     }
-  }
-});
-
-plan.on('waypointgeocoded', function(e) {
-  if (plan._waypoints.filter(function(wp) { return !!wp.latLng; }).length < 2) {
-    map.panTo(e.waypoint.latLng);
   }
 });
 
@@ -149,6 +144,12 @@ var lrmControl = L.Routing.control({
 }).addTo(map);
 var toolsControl = tools.control(localization.get(mergedOptions.language), localization.getLanguages(), options.tools).addTo(map);
 var state = state(map, lrmControl, toolsControl, mergedOptions);
+
+plan.on('waypointgeocoded', function(e) {
+  if (plan._waypoints.filter(function(wp) { return !!wp.latLng; }).length < 2) {
+    map.panTo(e.waypoint.latLng);
+  }
+});
 
 // add onClick event
 map.on('click', addWaypoint);

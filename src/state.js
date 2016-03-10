@@ -4,10 +4,11 @@ var State = L.Class.extend({
   options: { },
 
   initialize: function(map, lrm_control, tools, default_options) {
-    L.setOptions(this, default_options);
     this._lrm = lrm_control;
     this._map = map;
     this._tools = tools;
+
+    this.set(default_options);
 
     this._lrm.on('routeselected', function(e) {
       this.options.alternative = e.route;
@@ -26,6 +27,8 @@ var State = L.Class.extend({
 
   set: function(options) {
     L.setOptions(this, options);
+    this._lrm.setWaypoints(this.options.waypoints);
+    this._map.setView(this.options.center, this.options.zoom);
   },
 
   reload: function() {

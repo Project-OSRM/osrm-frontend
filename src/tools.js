@@ -10,7 +10,6 @@ var Control = L.Control.extend({
   },
 
   initialize: function(localization, languages, options) {
-    console.log(options);
     L.setOptions(this, options);
     this._local = localization;
     this._languages = languages;

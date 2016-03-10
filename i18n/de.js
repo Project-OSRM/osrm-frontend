@@ -1,11 +1,10 @@
 module.exports = {
   name: "Deutsch",
   key: "de",
-  'Link': 'Link',
   'Open in editor': 'Im Editor öffnen',
   'Open in JOSM': 'In JOSM öffnen',
-  'Download as GPX': 'Als GPX herunterladen',
-  'Short': 'Verkürzt',
   'Select language': 'Sprache auswählen',
-  'Print': 'Drucken'
+  'Start - press enter to drop marker': 'Start - drücken um einen Marker zu plazieren',
+  'End - press enter to drop marker': 'Ende - drücken um einen Marker zu plazieren',
+  'Via point - press enter to drop marker': 'Zwischenstop - drücken um einen Marker zu plazieren'
 };
