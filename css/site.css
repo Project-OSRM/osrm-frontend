@@ -680,10 +680,10 @@
 
 .leaflet-routing-icon-turn-left        { background-position: -150px 1px; }
 .leaflet-routing-icon-bear-left        { background-position: -175px 4px; }
-.leaflet-routing-icon-depart           { background-position: -200px 4px; }
+.leaflet-routing-icon-depart           { background-position: -202px 4px; }
 
 .leaflet-routing-icon-enter-roundabout { background-position: -224px 1px; }
-.leaflet-routing-icon-arrive           { background-position: -249px 0; }
+.leaflet-routing-icon-arrive           { background-position: -253px 0; }
 .leaflet-routing-icon-via              { background-position: -278px 2px; }
 
 .leaflet-routing-icon-fork             { background-position: -305px 1px; }
