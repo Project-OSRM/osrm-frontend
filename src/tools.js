@@ -75,7 +75,7 @@ var Control = L.Control.extend({
   _createLocalizationList: function(container) {
     var localizationButton = L.DomUtil.create('span', this.options.localizationButtonClass + "-" + this._local.key, container);
     localizationButton.title = this._local['Select language'];
-    L.DomEvent.on(localizationButton, 'click', function() { this.fire("languagechanged", {language: key}); }, this);
+    L.DomEvent.on(localizationButton, 'click', function() { this.fire("languagechanged", {language: this._local.key}); }, this);
     for (var key in this._languages)
     {
         if (key == this._local.key)
@@ -84,7 +84,8 @@ var Control = L.Control.extend({
         }
         var button = L.DomUtil.create('span', this.options.localizationButtonClass + "-" + key + " leaflet-osrm-tools-hide", container);
         button.title = this._languages[key];
-        L.DomEvent.on(button, 'click', function() { this.fire("languagechanged", {language: key}); }, this);
+        var ev = {language: String(key)};
+        L.DomEvent.on(button, 'click', function() { this.fire("languagechanged", ev); }, this);
     }
   },
 
