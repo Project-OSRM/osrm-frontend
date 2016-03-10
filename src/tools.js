@@ -3,8 +3,6 @@
 var Control = L.Control.extend({
   includes: L.Mixin.Events,
   options: {
-    popupWindowClass: "",
-    popupCloseButtonClass: "",
     toolContainerClass: "",
     editorButtonClass: "",
     josmButtonClass: "",
@@ -23,7 +21,6 @@ var Control = L.Control.extend({
       editorButton,
       josmContainer,
       josmButton,
-      localizationContainer,
       localizationButton,
       popupCloseButton,
       gpxContainer;
@@ -38,16 +35,10 @@ var Control = L.Control.extend({
     josmButton = L.DomUtil.create('span', this.options.josmButtonClass, josmContainer);
     josmButton.title = this._local['Open in JOSM'];
     L.DomEvent.on(josmButton, 'click', this._openJOSM, this);
-    localizationContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-localization', this._container);
-    localizationButton = L.DomUtil.create('span', this.options.localizationButtonClass, localizationContainer);
-    localizationButton.title = this._local['Select language and units'];
-    L.DomEvent.on(localizationButton, 'click', this._openLocalizationList, this);
-    this._popupWindow = L.DomUtil.create('div',
-      'leaflet-osrm-tools-popup leaflet-osrm-tools-popup-hide ' + this.options.popupWindowClass,
-      this._container);
-    this._popupContainer = L.DomUtil.create('div', '', this._popupWindow);
-    popupCloseButton = L.DomUtil.create('span', 'leaflet-osrm-tools-popup-close ' + this.options.popupCloseButtonClass, this._popupWindow);
-    L.DomEvent.on(popupCloseButton, 'click', this._closePopup, this);
+    this._localizationContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-localization', this._container);
+    this._createLocalizationList(this._localizationContainer);
+    L.DomEvent.on(this._localizationContainer, 'mouseenter', this._openLocalizationList, this);
+    L.DomEvent.on(this._localizationContainer, 'mouseleave', this._closeLocalizationList, this);
     return this._container;
   },
 
@@ -70,42 +61,52 @@ var Control = L.Control.extend({
     window.open(url);
   },
 
-  _updatePopupPosition: function() {
-    var rect = this._container.getBoundingClientRect();
+  _updatePopupPosition: function(button) {
+    var rect = this._container.getBoundingClientRect(),
+        left = 0;
+    if (button)
+    {
+        left = button.getBoundingClientRect().left - rect.left;
+    }
     this._popupWindow.style.position = 'absolute';
-    this._popupWindow.style.left = '0px';
+    this._popupWindow.style.left = left + 'px';
     this._popupWindow.style.bottom = rect.height + 'px';
   },
 
-  _createLocalizationList: function() {
-    var list = L.DomUtil.create('ul');
+  _createLocalizationList: function(container) {
+    var localizationButton = L.DomUtil.create('span', this.options.localizationButtonClass + "-" + this._local.key, container);
+    localizationButton.title = this._local['Select language'];
+    L.DomEvent.on(localizationButton, 'click', function() { this.fire("languagechanged", {language: key}); }, this);
     for (var key in this._languages)
     {
-        var li = L.DomUtil.create('li', '', list);
-        li.innerHTML = this._languages[key];
-        L.DomEvent.on(li, 'click', function() { this.fire("languagechanged", {language: key}); }, this);
+        if (key == this._local.key)
+        {
+            continue;
+        }
+        var button = L.DomUtil.create('span', this.options.localizationButtonClass + "-" + key + " leaflet-osrm-tools-hide", container);
+        button.title = this._languages[key];
+        L.DomEvent.on(button, 'click', function() { this.fire("languagechanged", {language: key}); }, this);
     }
-    return list;
   },
 
   _openLocalizationList: function() {
-    this._openPopup(this._localizationList);
-  },
-
-  _openPopup: function(content) {
-    var children = this._popupContainer.children,
-      i;
-    this._updatePopupPosition();
-    for (i = 0; i < children.length; i++) {
-      this._popupContainer.removeChild(children[i]);
+    var child;
+    for (var i = 1; i < this._localizationContainer.childNodes.length; ++i)
+    {
+      child = this._localizationContainer.childNodes[i];
+      L.DomUtil.removeClass(child, 'leaflet-osrm-tools-hide');
     }
-    this._popupContainer.appendChild(content);
-    L.DomUtil.removeClass(this._popupWindow, 'leaflet-osrm-tools-popup-hide');
   },
 
-  _closePopup: function() {
-    L.DomUtil.addClass(this._popupWindow, 'leaflet-osrm-tools-popup-hide');
-  }
+  _closeLocalizationList: function() {
+    var child;
+    for (var i = 1; i < this._localizationContainer.childNodes.length; ++i)
+    {
+        child = this._localizationContainer.childNodes[i];
+        L.DomUtil.addClass(child, 'leaflet-osrm-tools-hide');
+    }
+  },
+
 });
 
 module.exports = {

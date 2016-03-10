@@ -4,12 +4,12 @@
 .osrm-directions-routes,
 .osrm-directions-instructions {
   font:15px/20px 'Open Sans', sans-serif;
-	margin-bottom: 30px;
+  margin-bottom: 30px;
 }
 
 .osrm-directions-summary {
-	padding-left: 20px;
-	padding-top: 10px;
+  padding-left: 20px;
+  padding-top: 10px;
 }
 
 .osrm-directions-inputs,
@@ -249,8 +249,8 @@
   cursor: pointer;
   color:  rgba(37,72,127, 0.6);
   padding-bottom: 16px;
-	margin-top: -10px;
-   margin-left: 0px;
+  margin-top: -10px;
+  margin-left: 0px;
   line-height: 1;
 }
 
@@ -316,123 +316,7 @@
 
 .osrm-close-light-icon  { background-position: -101px 0; }
 
-.leaflet-osrm-tools-link
-{
-  position: absolute;
-  top: 3px;
-  left: 3px;
-}
-.leaflet-osrm-tools-link:hover
-{
-   background-color: rgba(255, 255, 255, 0.2);
-}
-
-.leaflet-osrm-tools-editor
-{
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  cursor: pointer;
-}
-.leaflet-osrm-tools-editor:hover
-{
-   background-color: rgba(255, 255, 255, 0.2);
-}
-.leaflet-osrm-tools-josm
-{
-  position: absolute;
-  top: 3px;
-  left: 34px;
-  cursor: pointer;
-}
-.leaflet-osrm-tools-josm:hover
-{
-   background-color: rgba(255, 255, 255, 0.2);
-}
-
-.leaflet-osrm-tools-localization-popup
-{
-  width: 90%;
-}
-
-.leaflet-osrm-tools-language-list
-{
-  float: left;
-  width: 50%;
-}
-.leaflet-osrm-tools-units-list
-{
-  float: right;
-  width: 50%;
-}
-
-.leaflet-osrm-tools-localization-popup a
-{
-    width: 100%;
-    height: auto;
-    color: #fff;
-    background-color: inherit;
-}
-
-.leaflet-osrm-tools-localization-popup a:hover
-{
-    width: 100%;
-    height: auto;
-    color: #fff;
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-.leaflet-osrm-tools-localization
-{
-  position: absolute;
-  top: 3px;
-  left: 53px;
-}
-
-.leaflet-osrm-tools-localization:hover
-{
-   background-color: rgba(255, 255, 255, 0.2);
-}
-
-
-.leaflet-osrm-tools-popup
-{
-   border: 1px solid rgba(0,0,0,0.1);
-   position: absolute;
-   min-width: 440px;
-   min-height: 60px;
-   padding: 10px;
-}
-
-.leaflet-osrm-tools-popup-close
-{
-  position: absolute;
-  top: 20px;
-  right: 10px;
-}
-
-.leaflet-osrm-tools-popup-close:hover {
-    opacity: .3;
-}
-
-.leaflet-osrm-tools-popup input
-{
-  min-width: 300px;
-  min-height: 40px;
-  border: 0px solid;
-  margin-top: 0px;
-  margin-left: 85px;
-  padding: 5px;
-}
-
-.leaflet-osrm-tools-popup label
-{
-  position: absolute;
-  margin-top: 0px;
-  margin-left: 0px;
-}
-
-.leaflet-osrm-tools-popup-hide
+.leaflet-osrm-tools-hide
 {
   display: none;
 }
@@ -535,8 +419,21 @@
 
 .leaflet-osrm-tools-container
 {
-   width: 105px;
-   height: 26px;
+   width: auto;
+   text-align: justify;
+   padding: 2px 4px;
+}
+
+.leaflet-osrm-tools-container div
+{
+  vertical-align: middle;
+  display: inline-block;
+  cursor: pointer;
+  padding: 2px 0px;
+}
+.leaflet-osrm-tools-container span:hover
+{
+   background-color: rgba(255, 255, 255, 0.2);
 }
 
 /* Instructions */
