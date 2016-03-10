@@ -589,7 +589,7 @@
   color: rgba(37,72,127, 0.8);
 }
 
-.leaflet-routing-alt.osrm-directions-instructions.leaflet-routing-alt-minimized 
+.leaflet-routing-alt.osrm-directions-instructions.leaflet-routing-alt-minimized
 {
   display: none;
 }
@@ -601,7 +601,7 @@
 }
 
 .leaflet-routing-alt table td,
-.leaflet-routing-alt table { 
+.leaflet-routing-alt table {
   color: rgba(37,72,127, 0.8);
   margin-top: 20px;
   padding: 5px;
@@ -612,7 +612,7 @@
 }
 
 .leaflet-routing-alt-minimized table td,
-.leaflet-routing-alt-minimized table { 
+.leaflet-routing-alt-minimized table {
   color: rgba(37,72,127, 0.8);
   margin-top: 20px;
   padding: 5px;
@@ -655,8 +655,8 @@
 
 .leaflet-routing-icon {
     background-image: url('../images/osrm.directions.icons.color.svg');
-    -webkit-background-size: 300px 20px;
-    background-size: 300px 20px;
+    -webkit-background-size: 455px 20px;
+    background-size: 455px 20px;
     background-repeat: no-repeat;
     margin: 0;
     content: '';
@@ -680,11 +680,19 @@
 
 .leaflet-routing-icon-turn-left        { background-position: -150px 1px; }
 .leaflet-routing-icon-bear-left        { background-position: -175px 4px; }
-.leaflet-routing-icon-depart           { background-position: -199px 4px; }
+.leaflet-routing-icon-depart           { background-position: -200px 4px; }
 
 .leaflet-routing-icon-enter-roundabout { background-position: -224px 1px; }
 .leaflet-routing-icon-arrive           { background-position: -249px 0; }
 .leaflet-routing-icon-via              { background-position: -275px 2px; }
+
+.leaflet-routing-icon-fork             { background-position: -305px 1px; }
+.leaflet-routing-icon-ramp-right       { background-position: -331px 2px; }
+.leaflet-routing-icon-ramp-left        { background-position: -352px 2px; }
+.leaflet-routing-icon-merge-left       { background-position: -376px 1px; }
+.leaflet-routing-icon-merge-right      { background-position: -403px 0; }
+.leaflet-routing-icon-end              { background-position: -429px 2px; }
+
 
 /*  FORM Labels */
 .osrm-form-label {
