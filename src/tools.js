@@ -1,26 +1,19 @@
 'use strict';
 
-var links = require('./links'),
-  localization = require('./localization');
-
 var Control = L.Control.extend({
-  include: L.Mixin.Events,
+  includes: L.Mixin.Events,
   options: {
-    popupWindowClass: "",
-    popupCloseButtonClass: "",
     toolContainerClass: "",
     editorButtonClass: "",
     josmButtonClass: "",
     localizationButtonClass: ""
   },
 
-  initialize: function(lrm, options) {
+  initialize: function(localization, languages, options) {
+    console.log(options);
     L.setOptions(this, options);
-    this._lrm = lrm;
-    lrm.on('routesfound', this._updateDownloadLink, this);
-    lrm.on('routeselected', function(e) {
-      this._selectedAlternative = e.route;
-    }, this);
+    this._local = localization;
+    this._languages = languages;
   },
 
   onAdd: function(map) {
@@ -28,26 +21,24 @@ var Control = L.Control.extend({
       editorButton,
       josmContainer,
       josmButton,
+      localizationButton,
       popupCloseButton,
       gpxContainer;
     this._container = L.DomUtil.create('div', 'leaflet-osrm-tools-container ' + this.options.toolsContainerClass);
+    this._localizationList = this._createLocalizationList();
     L.DomEvent.disableClickPropagation(this._container);
     editorContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-editor', this._container);
     editorButton = L.DomUtil.create('span', this.options.editorButtonClass, editorContainer);
-    editorButton.title = localization[this.options.language]['Open in editor'];
+    editorButton.title = this._local['Open in editor'];
     L.DomEvent.on(editorButton, 'click', this._openEditor, this);
     josmContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-josm', this._container);
     josmButton = L.DomUtil.create('span', this.options.josmButtonClass, josmContainer);
-    josmButton.title = localization[this.options.language]['Open in JOSM'];
+    josmButton.title = this._local['Open in JOSM'];
     L.DomEvent.on(josmButton, 'click', this._openJOSM, this);
-    gpxContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-gpx', this._container);
-    this._gpxLink = L.DomUtil.create('a', this.options.gpxLinkClass, gpxContainer);
-    this._popupWindow = L.DomUtil.create('div',
-      'leaflet-osrm-tools-popup leaflet-osrm-tools-popup-hide ' + this.options.popupWindowClass,
-      this._container);
-    this._popupContainer = L.DomUtil.create('div', '', this._popupWindow);
-    popupCloseButton = L.DomUtil.create('span', 'leaflet-osrm-tools-popup-close ' + this.options.popupCloseButtonClass, this._popupWindow);
-    L.DomEvent.on(popupCloseButton, 'click', this._closePopup, this);
+    this._localizationContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-localization', this._container);
+    this._createLocalizationList(this._localizationContainer);
+    L.DomEvent.on(this._localizationContainer, 'mouseenter', this._openLocalizationList, this);
+    L.DomEvent.on(this._localizationContainer, 'mouseleave', this._closeLocalizationList, this);
     return this._container;
   },
 
@@ -70,55 +61,56 @@ var Control = L.Control.extend({
     window.open(url);
   },
 
-  _getLinkOptions: function() {
-    return {
-      zoom: this._map.getZoom(),
-      center: this._map.getCenter(),
-      waypoints: this._lrm.getWaypoints(),
-      language: this.options.language,
-      units: this.options.units,
-      alternative: this._selectedAlternative
-    };
-  },
-
-  _updateDownloadLink: function() {
-    var plan = this._lrm.getPlan(),
-      router = this._lrm.getRouter(),
-      url;
-    if (!plan.isReady()) {
-      return;
+  _updatePopupPosition: function(button) {
+    var rect = this._container.getBoundingClientRect(),
+        left = 0;
+    if (button)
+    {
+        left = button.getBoundingClientRect().left - rect.left;
     }
-    url = router.buildRouteUrl(plan.getWaypoints(), {
-      fileformat: 'gpx'
-    });
-    this._gpxLink.href = url;
-  },
-
-  _updatePopupPosition: function() {
-    var rect = this._container.getBoundingClientRect();
     this._popupWindow.style.position = 'absolute';
-    this._popupWindow.style.left = '0px';
+    this._popupWindow.style.left = left + 'px';
     this._popupWindow.style.bottom = rect.height + 'px';
   },
 
-  _openPopup: function(content) {
-    var children = this._popupContainer.children,
-      i;
-    this._updatePopupPosition();
-    for (i = 0; i < children.length; i++) {
-      this._popupContainer.removeChild(children[i]);
+  _createLocalizationList: function(container) {
+    var localizationButton = L.DomUtil.create('span', this.options.localizationButtonClass + "-" + this._local.key, container);
+    localizationButton.title = this._local['Select language'];
+    L.DomEvent.on(localizationButton, 'click', function() { this.fire("languagechanged", {language: key}); }, this);
+    for (var key in this._languages)
+    {
+        if (key == this._local.key)
+        {
+            continue;
+        }
+        var button = L.DomUtil.create('span', this.options.localizationButtonClass + "-" + key + " leaflet-osrm-tools-hide", container);
+        button.title = this._languages[key];
+        L.DomEvent.on(button, 'click', function() { this.fire("languagechanged", {language: key}); }, this);
     }
-    this._popupContainer.appendChild(content);
-    L.DomUtil.removeClass(this._popupWindow, 'leaflet-osrm-tools-popup-hide');
   },
 
-  _closePopup: function() {
-    L.DomUtil.addClass(this._popupWindow, 'leaflet-osrm-tools-popup-hide');
-  }
+  _openLocalizationList: function() {
+    var child;
+    for (var i = 1; i < this._localizationContainer.childNodes.length; ++i)
+    {
+      child = this._localizationContainer.childNodes[i];
+      L.DomUtil.removeClass(child, 'leaflet-osrm-tools-hide');
+    }
+  },
+
+  _closeLocalizationList: function() {
+    var child;
+    for (var i = 1; i < this._localizationContainer.childNodes.length; ++i)
+    {
+        child = this._localizationContainer.childNodes[i];
+        L.DomUtil.addClass(child, 'leaflet-osrm-tools-hide');
+    }
+  },
+
 });
 
 module.exports = {
-  control: function(lrm, options) {
-    return new Control(lrm, options);
+  control: function(localization, languages, options) {
+    return new Control(localization, languages, options);
   }
 };

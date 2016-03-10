@@ -5,31 +5,26 @@ var LRM = require('leaflet-routing-machine');
 var locate = require('leaflet.locatecontrol');
 var options = require('./lrm_options');
 var links = require('./links');
-var mapView = require('./leaflet_options');
-var tools = require('./tools');
-var mapLayer = mapView.layer;
-var overlay = mapView.overlay;
-var parsedOptions = links.parse(window.location.href);
-var viewOptions = L.extend(mapView.defaultView, parsedOptions);
+var leafletOptions = require('./leaflet_options');
 var ls = require('local-storage');
-var qs = require('querystring');
+var tools = require('./tools');
+var state = require('./state');
+var localization = require('./localization');
 
-var baselayer = ls.get('layer') ? mapView.layer[0][ls.get('layer')] : mapView.layer[0]['Mapbox Streets'];
-if (ls.get('getOverlay')==true) {
-  var map = L.map('map', {
-    zoomControl: true,
-    dragging: true,
-    layers: [baselayer, overlay['Small Components']],
-    maxZoom: 18
-  }).setView(viewOptions.center, viewOptions.zoom);
-} else {
-  var map = L.map('map', {
-    zoomControl: true,
-    dragging: true,
-    layers: baselayer,
-    maxZoom: 18
-  }).setView(viewOptions.center, viewOptions.zoom);
-}
+var parsedOptions = links.parse(window.location.href);
+
+var mergedOptions = L.extend(leafletOptions.defaultState, parsedOptions);
+
+var mapLayer = leafletOptions.layer;
+var overlay = leafletOptions.overlay;
+var baselayer = ls.get('layer') ? mapLayer[0][ls.get('layer')] : mapLayer[0]['Mapbox Streets'];
+var layers = ls.get('getOverlay') && [baselayer, overlay['Small Components']] || baselayer;
+var map = L.map('map', {
+  zoomControl: true,
+  dragging: true,
+  layers: layers,
+  maxZoom: 18
+}).setView(mergedOptions.center, mergedOptions.zoom);
 
 // Pass basemap layers
 mapLayer = mapLayer.reduce(function(title, layer) {
@@ -136,7 +131,7 @@ plan.on('waypointgeocoded', function(e) {
 });
 
 // add marker labels
-var control = L.Routing.control({
+var lrmControl = L.Routing.control({
   plan: plan,
   routeWhileDragging: options.lrm.routeWhileDragging,
   lineOptions: options.lrm.lineOptions,
@@ -145,73 +140,33 @@ var control = L.Routing.control({
   containerClassName: options.lrm.containerClassName,
   alternativeClassName: options.lrm.alternativeClassName,
   stepClassName: options.lrm.stepClassName,
-  language: viewOptions.language,
+  language: mergedOptions.language,
   showAlternatives: options.lrm.showAlternatives,
-  units: viewOptions.units,
-  serviceUrl: mapView.services[0].path,
+  units: mergedOptions.units,
+  serviceUrl: leafletOptions.services[0].path,
   useZoomParameter: options.lrm.useZoomParameter,
   routeDragInterval: options.lrm.routeDragInterval
 }).addTo(map);
-
-var toolsControl = tools.control(control, L.extend({
-  position: 'bottomleft',
-  language: mapView.language
-}, options.tools)).addTo(map);
-
-if (viewOptions.waypoints.length < 1) {}
-
-// set waypoints from hash values
-if (viewOptions.waypoints.length > 1) {
-  control.setWaypoints(viewOptions.waypoints);
-}
+var toolsControl = tools.control(localization.get(mergedOptions.language), localization.getLanguages(), options.tools).addTo(map);
+var state = state(map, lrmControl, toolsControl, mergedOptions);
 
 // add onClick event
-map.on('click', mapChange);
-plan.on('waypointschanged', updateHash);
-
-// add onZoom event
-map.on('zoomend', updateHash);
-map.on('moveend', updateHash);
-
-function mapChange(e) {
-  var length = control.getWaypoints().filter(function(pnt) {
+map.on('click', addWaypoint);
+function addWaypoint(e) {
+  var length = lrmControl.getWaypoints().filter(function(pnt) {
     return pnt.latLng;
   });
   length = length.length;
   if (!length) {
-    control.spliceWaypoints(0, 1, e.latlng);
+    lrmControl.spliceWaypoints(0, 1, e.latlng);
   } else {
     if (length === 1) length = length + 1;
-    control.spliceWaypoints(length - 1, 1, e.latlng);
+    lrmControl.spliceWaypoints(length - 1, 1, e.latlng);
   }
 }
 
-// Update browser url
-function updateHash(e) {
-  var length = control.getWaypoints().filter(function(pnt) {
-    return pnt.latLng;
-  }).length;
-  var linkOptions = toolsControl._getLinkOptions();
-  linkOptions.waypoints = plan._waypoints;
-  var hash = links.format(window.location.href, linkOptions).split('?');
-  var baseURL = hash[0];
-  var newParms = hash[1];
-  var newURL = baseURL.concat('?').concat(newParms);
-  window.location.hash = newParms;
-  history.replaceState({}, 'Project OSRM Demo', newURL);
-}
-
-// Grab query URLs
-var query = qs.parse(window.location.search.substring(1));
-if (query.center && query.loc && query.loc.length >= 2 && query.loc[0] != "" && query.loc[1] != "") {
-  map.fitBounds([ [query.loc[0].split(',')[0],query.loc[0].split(',')[1]],[query.loc[1].split(',')[0],query.loc[1].split(',')[1]] ]);
-  map.zoomOut();
-  control.spliceWaypoints(0,1, [query.loc[0].split(',')[0],query.loc[0].split(',')[1]]);
-  control.spliceWaypoints(-1,1, [query.loc[1].split(',')[0],query.loc[1].split(',')[1]]);
-}
-
 // User selected routes
-control.on('alternateChosen', function(e) {
+lrmControl.on('alternateChosen', function(e) {
   var directions = document.querySelectorAll('.leaflet-routing-alt');
   if (directions[0].style.display != 'none') {
     directions[0].style.display = 'none';
