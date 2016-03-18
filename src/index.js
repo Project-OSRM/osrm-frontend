@@ -11,7 +11,7 @@ var tools = require('./tools');
 var state = require('./state');
 var localization = require('./localization');
 
-var parsedOptions = links.parse(window.location.href);
+var parsedOptions = links.parse(window.location.search.slice(1));
 
 var mergedOptions = L.extend(leafletOptions.defaultState, parsedOptions);
 var local = localization.get(mergedOptions.language);

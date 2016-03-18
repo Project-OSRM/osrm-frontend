@@ -34,6 +34,7 @@
     "leaflet-control-geocoder": "^1.2.1",
     "leaflet-routing-machine": "^2.6.2",
     "leaflet.locatecontrol": "^0.44.0",
-    "local-storage": "^1.4.2"
+    "local-storage": "^1.4.2",
+    "qs": "^6.1.0"
   }
 }

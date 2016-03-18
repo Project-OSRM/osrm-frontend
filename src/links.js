@@ -1,6 +1,6 @@
 'use strict';
 
-var url = require('url'),
+var qs = require('qs'),
   jsonp = require('jsonp');
 
 function _formatCoord(latLng) {
@@ -36,8 +36,8 @@ function _parseInteger(intStr) {
 }
 
 function formatLink(baseURL, options) {
-  var parsed = url.parse(baseURL),
-    formated = url.format({
+  var parsed = qs.parse(baseURL),
+    formated = qs.format({
       protocol: parsed.protocol,
       host: parsed.host,
       pathname: parsed.pathname,
@@ -63,9 +63,7 @@ function formatLink(baseURL, options) {
 }
 
 function parseLink(link) {
-  link = '?' + link.slice(1);
-  var parsed = url.parse(link, true),
-    q = parsed.query,
+  var q = qs.parse(link),
     parsedValues = {},
     options = {},
     k;
