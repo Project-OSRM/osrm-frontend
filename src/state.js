@@ -38,9 +38,8 @@ var State = L.Class.extend({
 
   // Update browser url
   update: function() {
-    var hash = links.format(window.location.href, this.options).split('?');
-    var baseURL = hash[0];
-    var newParms = hash[1];
+    var baseURL = window.location.href.split('?')[0];
+    var newParms = links.format(this.options);
     var newURL = baseURL.concat('?').concat(newParms);
     window.location.hash = newParms;
     history.replaceState({}, 'Project OSRM Demo', newURL);

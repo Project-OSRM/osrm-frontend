@@ -35,13 +35,8 @@ function _parseInteger(intStr) {
   return integer;
 }
 
-function formatLink(baseURL, options) {
-  var parsed = qs.parse(baseURL),
-    formated = qs.format({
-      protocol: parsed.protocol,
-      host: parsed.host,
-      pathname: parsed.pathname,
-      query: {
+function formatLink(options) {
+    return qs.stringify({
         z: options.zoom,
         center: options.center ? _formatCoord(options.center) : undefined,
         loc: options.waypoints ? options.waypoints.filter(function(wp) {
@@ -52,14 +47,10 @@ function formatLink(baseURL, options) {
           })
           .map(_formatCoord) : undefined,
         hl: options.language,
-        ly: options.layer,
         alt: options.alternative,
         df: options.units,
         srv: options.service
-      }
     });
-  // no layer, no service
-  return formated;
 }
 
 function parseLink(link) {
