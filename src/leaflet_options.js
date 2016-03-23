@@ -23,7 +23,7 @@ module.exports = {
     zoom: 13,
     waypoints: [],
     language: 'en',
-    alternative: true,
+    alternative: 0,
     layer: streets
   },
   services: [{

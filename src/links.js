@@ -50,7 +50,7 @@ function formatLink(options) {
         alt: options.alternative,
         df: options.units,
         srv: options.service
-    });
+    }, {indices: false});
 }
 
 function parseLink(link) {

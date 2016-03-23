@@ -10,25 +10,28 @@ var State = L.Class.extend({
 
     this.set(default_options);
 
+    console.log(this.options);
+
     this._lrm.on('routeselected', function(e) {
-      this.options.alternative = e.route;
+      this.options.alternative = e.route.routesIndex;
     }, this);
 
-    this._lrm.getPlan().on('waypointschanged', function() { this.options.waypoints = this._lrm.getWaypoints(); this.update(); }, this);
-    this._map.on('zoomend', function() { this.options.zoom = this._map.getZoom();  this.update(); }, this);
-    this._map.on('moveend', function() { this.options.center = this._map.getCenter(); this.update(); }, this);
-    this._tools.on('languagechanged', function(e) { this.options.language = e.language; this.reload(); }, this);
-    this._tools.on('unitschanged', function(e) { this.options.units = e.unit; this.update(); }, this);
+    this._lrm.getPlan().on('waypointschanged', function() { this.options.waypoints = this._lrm.getWaypoints(); this.update(); }.bind(this));
+    this._map.on('zoomend', function() { this.options.zoom = this._map.getZoom();  this.update(); }.bind(this));
+    this._map.on('moveend', function() { this.options.center = this._map.getCenter(); this.update(); }.bind(this));
+    this._tools.on('languagechanged', function(e) { this.options.language = e.language; this.reload(); }.bind(this));
+    this._tools.on('unitschanged', function(e) { this.options.units = e.unit; this.update(); }.bind(this));
   },
 
   get: function() {
-    return options;
+    return this.options;
   },
 
   set: function(options) {
     L.setOptions(this, options);
     this._lrm.setWaypoints(this.options.waypoints);
     this._map.setView(this.options.center, this.options.zoom);
+    console.log(this.options);
   },
 
   reload: function() {
@@ -38,6 +41,8 @@ var State = L.Class.extend({
 
   // Update browser url
   update: function() {
+    console.log(this);
+    console.trace();
     var baseURL = window.location.href.split('?')[0];
     var newParms = links.format(this.options);
     var newURL = baseURL.concat('?').concat(newParms);
