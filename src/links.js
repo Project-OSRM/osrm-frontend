@@ -25,7 +25,7 @@ function _parseCoord(coordStr) {
 }
 
 function _parseInteger(intStr) {
-  var integer = parseInt(intStr);
+  var integer = parseInt(intStr, 10);
   if (isNaN(integer)) {
     throw {
       name: 'InvalidInt',
@@ -59,7 +59,7 @@ function parseLink(link) {
     options = {},
     k;
   try {
-    parsedValues.zoom = q.zoom && _parseInteger(q.zoom) || 10;
+    parsedValues.zoom = _parseInteger(q.z);
     parsedValues.center = q.center && _parseCoord(q.center);
     parsedValues.waypoints = q.loc && q.loc.filter(function(loc) { return loc != ""; }).map(_parseCoord).map(
       function(coord) {
