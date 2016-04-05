@@ -25,7 +25,7 @@ function _parseCoord(coordStr) {
 }
 
 function _parseInteger(intStr) {
-  var integer = parseInt(intStr);
+  var integer = parseInt(intStr, 10);
   if (isNaN(integer)) {
     throw {
       name: 'InvalidInt',
