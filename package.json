@@ -32,7 +32,7 @@
   "dependencies": {
     "jsonp": "^0.2.0",
     "leaflet-control-geocoder": "^1.2.1",
-    "leaflet-routing-machine": "^2.6.2",
+    "leaflet-routing-machine": "^3.0.1",
     "leaflet.locatecontrol": "^0.44.0",
     "local-storage": "^1.4.2",
     "qs": "^6.1.0"
