@@ -31,7 +31,7 @@ module.exports = {
     createGeocoder: createGeocoder,
     itineraryBuilder: 'osrm-directions-steps',
     showAlternatives: true,
-    useZoomParameter: true,
+    useZoomParameter: false,
     routeDragInterval: 100
   },
   popup: {
