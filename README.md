@@ -21,7 +21,7 @@ The most common modifcation is to add your own OSRM endpoint. For this open `src
 ```
   services: [{
     label: 'Car (fastest)',
-    path: 'http://api-osrm-routed-patrick-develop.tilestream.net/viaroute'
+    path: 'http://api-osrm-routed-patrick-develop.tilestream.net/route/v1'
   }],
 
 ```
