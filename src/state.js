@@ -1,3 +1,6 @@
+'use strict';
+
+var L = require('leaflet');
 var links = require('./links');
 
 var State = L.Class.extend({

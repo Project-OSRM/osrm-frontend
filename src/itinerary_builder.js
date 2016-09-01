@@ -6,6 +6,8 @@
  * However using a table does not work with our theme.
  */
 
+var L = require('leaflet');
+
 var ItineraryBuilder = L.Class.extend({
   options: {
     containerClassName: ''
