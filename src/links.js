@@ -1,7 +1,8 @@
 'use strict';
 
-var qs = require('qs'),
-  jsonp = require('jsonp');
+var L = require('leaflet');
+var qs = require('qs');
+var jsonp = require('jsonp');
 
 function _formatCoord(latLng) {
   var precision = 6;

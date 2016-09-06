@@ -1,5 +1,7 @@
 'use strict';
 
+var L = require('leaflet');
+
 var Control = L.Control.extend({
   includes: L.Mixin.Events,
   options: {
