@@ -3,6 +3,7 @@
 var L = require('leaflet');
 var Geocoder = require('leaflet-control-geocoder');
 var LRM = require('leaflet-routing-machine');
+var osrmTextInstructions = require('osrm-text-instructions')();
 var locate = require('leaflet.locatecontrol');
 var options = require('./lrm_options');
 var links = require('./links');
@@ -127,7 +128,7 @@ var plan = new ReversablePlan([], {
 });
 
 // add marker labels
-var lrmControl = L.Routing.control({
+var controlOptions = {
   plan: plan,
   routeWhileDragging: options.lrm.routeWhileDragging,
   lineOptions: options.lrm.lineOptions,
@@ -142,7 +143,36 @@ var lrmControl = L.Routing.control({
   serviceUrl: leafletOptions.services[0].path,
   useZoomParameter: options.lrm.useZoomParameter,
   routeDragInterval: options.lrm.routeDragInterval
-}).addTo(map);
+};
+var router = (new L.Routing.OSRMv1(controlOptions));
+router._convertRouteOriginal = router._convertRoute;
+function stepToText(step) {
+  try {
+    return osrmTextInstructions.compile(step);
+  } catch(err) {
+    console.log('Error when compiling text instruction', err, step);
+    return undefined;
+  }
+}
+router._convertRoute = function(responseRoute) {
+  // monkey-patch L.Routing.OSRMv1 until it's easier to overwrite with a hook
+  var resp = this._convertRouteOriginal(responseRoute);
+
+  if (resp.instructions && resp.instructions.length) {
+    var i = 0;
+    responseRoute.legs.forEach(function(leg) {
+      leg.steps.forEach(function(step) {
+        resp.instructions[i].text = stepToText(step);
+        i++;
+      });
+    });
+  };
+
+  return resp;
+};
+var lrmControl = L.Routing.control(Object.assign(controlOptions, {
+  router: router
+})).addTo(map);
 var toolsControl = tools.control(localization.get(mergedOptions.language), localization.getLanguages(), options.tools).addTo(map);
 var state = state(map, lrmControl, toolsControl, mergedOptions);
 
