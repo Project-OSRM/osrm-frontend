@@ -13,8 +13,6 @@ var State = L.Class.extend({
 
     this.set(default_options);
 
-    console.log(this.options);
-
     this._lrm.on('routeselected', function(e) {
       this.options.alternative = e.route.routesIndex;
     }, this);
@@ -34,7 +32,6 @@ var State = L.Class.extend({
     L.setOptions(this, options);
     this._lrm.setWaypoints(this.options.waypoints);
     this._map.setView(this.options.center, this.options.zoom);
-    console.log(this.options);
   },
 
   reload: function() {
@@ -44,8 +41,6 @@ var State = L.Class.extend({
 
   // Update browser url
   update: function() {
-    console.log(this);
-    console.trace();
     var baseURL = window.location.href.split('?')[0];
     var newParms = links.format(this.options);
     var newURL = baseURL.concat('?').concat(newParms);
