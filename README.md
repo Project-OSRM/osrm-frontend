@@ -35,7 +35,7 @@ Replace the path with whatever your endpoint looks like.
 
 # Debug Interface
 
-There is a debug interface for osrm-backend, accessible at http://127.0.0.1:8000/debug .
+There is a debug interface for osrm-backend, accessible at http://127.0.0.1:9966/debug .
 It shows the edges of the graph, with the speed, and in pink the  "small components",
 areas of the road network that are isolated from the rest for some reason
 (invalid turn restrictions, barriers, disconnected, incorrect oneways, etc)
