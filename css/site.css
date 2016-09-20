@@ -155,7 +155,7 @@
 .leaflet-routing-container {
   position: fixed;
   width: 33.3333%;
-  max-width: 300px;
+  max-width: 340px;
   min-width: 200px;
   padding-right: 0px;
 }
@@ -273,7 +273,7 @@
   right: 0px;
   top: 60px;
   width: 45%;
-  max-width: 300px;
+  max-width: 340px;
   min-width: 200px;
   height: 95%;
   overflow: scroll;
@@ -548,6 +548,10 @@
 	background-color: white;
 }
 
+td.distance {
+  min-width: 60px;
+}
+
 .leaflet-routing-icon {
     background-image: url('../images/osrm.directions.icons.color.svg');
     -webkit-background-size: 455px 20px;
@@ -559,6 +563,10 @@
     vertical-align: top;
     width: 20px;
     height: 20px;
+}
+
+.leaflet-routing-icon.lanes.invalid {
+    filter: invert(50%);
 }
 
 .leaflet-routing-alt-minimized .leaflet-routing-icon {

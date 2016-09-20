@@ -3,7 +3,7 @@
 var L = require('leaflet');
 var Geocoder = require('leaflet-control-geocoder');
 var LRM = require('leaflet-routing-machine');
-var osrmTextInstructions = require('osrm-text-instructions')();
+var itineraryBuilder = require('./itinerary_builder');
 var locate = require('leaflet.locatecontrol');
 var options = require('./lrm_options');
 var links = require('./links');
@@ -127,6 +127,8 @@ var plan = new ReversablePlan([], {
   }
 });
 
+L.extend(L.Routing, itineraryBuilder);
+
 // add marker labels
 var controlOptions = {
   plan: plan,
@@ -146,14 +148,6 @@ var controlOptions = {
 };
 var router = (new L.Routing.OSRMv1(controlOptions));
 router._convertRouteOriginal = router._convertRoute;
-function stepToText(step) {
-  try {
-    return osrmTextInstructions.compile(step);
-  } catch(err) {
-    console.log('Error when compiling text instruction', err, step);
-    return undefined;
-  }
-}
 router._convertRoute = function(responseRoute) {
   // monkey-patch L.Routing.OSRMv1 until it's easier to overwrite with a hook
   var resp = this._convertRouteOriginal(responseRoute);
@@ -162,7 +156,9 @@ router._convertRoute = function(responseRoute) {
     var i = 0;
     responseRoute.legs.forEach(function(leg) {
       leg.steps.forEach(function(step) {
-        resp.instructions[i].text = stepToText(step);
+        // abusing the text property to save the origina osrm step
+        // for later use in the itnerary builder
+        resp.instructions[i].text = step;
         i++;
       });
     });
