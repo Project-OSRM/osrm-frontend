@@ -29,7 +29,6 @@ module.exports = {
     stepClassName: 'osrm-directions-step',
     geocodersClassName: 'osrm-directions-inputs',
     createGeocoder: createGeocoder,
-    itineraryBuilder: 'osrm-directions-steps',
     showAlternatives: true,
     useZoomParameter: false,
     routeDragInterval: 200
