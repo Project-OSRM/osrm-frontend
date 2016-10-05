@@ -12,6 +12,7 @@ var ls = require('local-storage');
 var tools = require('./tools');
 var state = require('./state');
 var localization = require('./localization');
+require('./polyfill');
 
 var parsedOptions = links.parse(window.location.search.slice(1));
 
