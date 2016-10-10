@@ -21,13 +21,13 @@
 .mapboxgl-ctrl-top-left,
 .mapboxgl-ctrl-top-right,
 .mapboxgl-ctrl-bottom-left,
-.mapboxgl-ctrl-bottom-right  { position:absolute; }
+.mapboxgl-ctrl-bottom-right  { position:absolute; pointer-events:none; z-index:2; }
 .mapboxgl-ctrl-top-left      { top:0; left:0; }
 .mapboxgl-ctrl-top-right     { top:0; right:0; }
 .mapboxgl-ctrl-bottom-left   { bottom:0; left:0; }
 .mapboxgl-ctrl-bottom-right  { right:0; bottom:0; }
 
-.mapboxgl-ctrl { clear:both; }
+.mapboxgl-ctrl { clear:both; pointer-events:auto }
 .mapboxgl-ctrl-top-left .mapboxgl-ctrl { margin:10px 0 0 10px; float:left; }
 .mapboxgl-ctrl-top-right .mapboxgl-ctrl{ margin:10px 10px 0 0; float:right; }
 .mapboxgl-ctrl-bottom-left .mapboxgl-ctrl { margin:0 0 10px 10px; float:left; }
@@ -78,6 +78,11 @@
     padding: 5px;
     background-image: url("data:image/svg+xml;charset=utf8,%3Csvg%20viewBox%3D%270%200%2020%2020%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%3E%0A%20%20%3Cpath%20style%3D%27fill%3A%23333333%3B%27%20d%3D%27M%2010%206%20C%209.446%206%209%206.4459904%209%207%20L%209%209%20L%207%209%20C%206.446%209%206%209.446%206%2010%20C%206%2010.554%206.446%2011%207%2011%20L%209%2011%20L%209%2013%20C%209%2013.55401%209.446%2014%2010%2014%20C%2010.554%2014%2011%2013.55401%2011%2013%20L%2011%2011%20L%2013%2011%20C%2013.554%2011%2014%2010.554%2014%2010%20C%2014%209.446%2013.554%209%2013%209%20L%2011%209%20L%2011%207%20C%2011%206.4459904%2010.554%206%2010%206%20z%27%20%2F%3E%0A%3C%2Fsvg%3E%0A");
 }
+.mapboxgl-ctrl-icon.mapboxgl-ctrl-geolocate  {
+    padding: 5px;
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxuczpzdmc9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCIgdmVyc2lvbj0iMS4xIj48cGF0aCBkPSJNMTAgNEM5IDQgOSA1IDkgNUw5IDUuMUE1IDUgMCAwIDAgNS4xIDlMNSA5QzUgOSA0IDkgNCAxMCA0IDExIDUgMTEgNSAxMUw1LjEgMTFBNSA1IDAgMCAwIDkgMTQuOUw5IDE1QzkgMTUgOSAxNiAxMCAxNiAxMSAxNiAxMSAxNSAxMSAxNUwxMSAxNC45QTUgNSAwIDAgMCAxNC45IDExTDE1IDExQzE1IDExIDE2IDExIDE2IDEwIDE2IDkgMTUgOSAxNSA5TDE0LjkgOUE1IDUgMCAwIDAgMTEgNS4xTDExIDVDMTEgNSAxMSA0IDEwIDR6TTEwIDYuNUEzLjUgMy41IDAgMCAxIDEzLjUgMTAgMy41IDMuNSAwIDAgMSAxMCAxMy41IDMuNSAzLjUgMCAwIDEgNi41IDEwIDMuNSAzLjUgMCAwIDEgMTAgNi41ek0xMCA4LjNBMS44IDEuOCAwIDAgMCA4LjMgMTAgMS44IDEuOCAwIDAgMCAxMCAxMS44IDEuOCAxLjggMCAwIDAgMTEuOCAxMCAxLjggMS44IDAgMCAwIDEwIDguM3oiIGZpbGw9IiMzMzMiLz48L3N2Zz4=");
+}
+
 .mapboxgl-ctrl-icon.mapboxgl-ctrl-compass > div.arrow {
     width: 20px;
     height: 20px;
@@ -106,6 +111,8 @@
 
 .mapboxgl-popup {
     position: absolute;
+    top: 0;
+    left: 0;
     display: -webkit-flex;
     display: flex;
     will-change: transform;
@@ -220,6 +227,13 @@
 }
 .mapboxgl-popup-anchor-bottom-right .mapboxgl-popup-content {
     border-bottom-right-radius: 0;
+}
+
+.mapboxgl-marker {
+    position: absolute;
+    top: 0;
+    left: 0;
+    will-change: transform;
 }
 
 .mapboxgl-crosshair,
