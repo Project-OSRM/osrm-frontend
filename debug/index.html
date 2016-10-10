@@ -117,6 +117,7 @@ var simple = {
     "zoom": 12.177865411775025,
     "bearing": 0,
     "pitch": 0,
+    "sprite": "arrows",
     "sources": {
         "composite": {
             "url": "mapbox://mapbox.mapbox-terrain-v2,mapbox.mapbox-streets-v7",
@@ -5113,6 +5114,71 @@ var simple = {
             },
             "source-layer": "speeds",
             "interactive": true
+        },
+        {
+         "id": "osrm-0", "type": "symbol", "source": "osrm", "source-layer": "turns",
+         "layout": { "icon-image": "0", "icon-offset": [10,0], "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
+                     "text-field": "{cost}", "text-offset": [2,0], "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
+                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ] },
+         "paint": {
+             "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2,
+              "text-color": "hsl(0, 0%, 100%)", "text-halo-width": { "base": 1, "stops": [ [ 10, 10 ], [ 18, 13 ] ] }, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0
+          },
+         "filter": ["all",[">=","turn_angle",-22.5],["<","turn_angle",22.5]]
+        },
+        {
+         "id": "osrm-45", "type": "symbol", "source": "osrm", "source-layer": "turns",
+         "layout": { "icon-image": "45", "icon-offset": [20,20], "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
+                     "text-field": "{cost}", "text-offset": [2,2], "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
+                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ]},
+         "paint": { "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2,
+            "text-color": "hsl(0, 0%, 100%)", "text-halo-width": { "base": 1, "stops": [ [ 10, 10 ], [ 18, 13 ] ] }, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0},
+         "filter": ["all",[">=","turn_angle",22.5],["<","turn_angle",67.5]]
+        },
+        {
+         "id": "osrm-90", "type": "symbol", "source": "osrm", "source-layer": "turns",
+         "layout": { "icon-image": "90", "icon-offset": [20,20], "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
+                     "text-field": "{cost}", "text-offset": [2,2], "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
+                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ]},
+         "paint": { "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2,
+            "text-color": "hsl(0, 0%, 100%)", "text-halo-width": { "base": 1, "stops": [ [ 10, 10 ], [ 18, 13 ] ] }, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0},
+         "filter": ["all",[">=","turn_angle",67.5],["<","turn_angle",115.5]]
+        },
+        {
+         "id": "osrm-135", "type": "symbol", "source": "osrm", "source-layer": "turns",
+         "layout": { "icon-image": "135", "icon-offset": [20,20], "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
+                     "text-field": "{cost}", "text-offset": [2,2], "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
+                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ]},
+         "paint": { "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2,
+            "text-color": "hsl(0, 0%, 100%)", "text-halo-width": { "base": 1, "stops": [ [ 10, 10 ], [ 18, 13 ] ] }, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0},
+         "filter": ["all",[">=","turn_angle",115.5],["<","turn_angle",180]]
+        },
+        {
+         "id": "osrm-n135", "type": "symbol", "source": "osrm", "source-layer": "turns",
+         "layout": { "icon-image": "n135", "icon-offset": [20,40], "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
+                     "text-field": "{cost}", "text-offset": [2,4], "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
+                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ]},
+         "paint": { "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2,
+            "text-color": "hsl(0, 0%, 100%)", "text-halo-width": { "base": 1, "stops": [ [ 10, 10 ], [ 18, 13 ] ] }, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0},
+         "filter": ["all",["<=","turn_angle",-115.5],[">","turn_angle",-180]]
+        },
+        {
+         "id": "osrm-n90", "type": "symbol", "source": "osrm", "source-layer": "turns",
+         "layout": { "icon-image": "n90", "icon-offset": [20,40], "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
+                     "text-field": "{cost}", "text-offset": [2,4], "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
+                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ]},
+         "paint": { "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2,
+            "text-color": "hsl(0, 0%, 100%)", "text-halo-width": { "base": 1, "stops": [ [ 10, 10 ], [ 18, 13 ] ] }, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0},
+         "filter": ["all",["<=","turn_angle",-67.5],[">","turn_angle",-115.5]]
+        },
+        {
+         "id": "osrm-n45", "type": "symbol", "source": "osrm", "source-layer": "turns",
+         "layout": { "icon-image": "n45", "icon-offset": [20,40], "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
+                     "text-field": "{cost}", "text-offset": [2,4], "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
+                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ]},
+         "paint": { "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2 ,
+            "text-color": "hsl(0, 0%, 100%)", "text-halo-width": { "base": 1, "stops": [ [ 10, 10 ], [ 18, 13 ] ] }, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0},
+         "filter": ["all",["<=","turn_angle",-22.5],[">","turn_angle",-67.5]]
         }
     ],
     "created": "2016-03-14T20:42:54.687Z",
