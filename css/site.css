@@ -573,28 +573,28 @@ td.distance {
     background-image: url('../images/osrm.directions.icons.color.svg');
 }
 
-.leaflet-routing-icon-continue         { background-position: 2px 4px; }
-.leaflet-routing-icon-sharp-right      { background-position: -24px 2px; }
-.leaflet-routing-icon-turn-right       { background-position: -50px 2px; }
-.leaflet-routing-icon-bear-right       { background-position: -74px 4px; }
-.leaflet-routing-icon-u-turn           { background-position: -101px 2px; }
+.leaflet-routing-icon-continue         { background-position: 2px 0px; }
+.leaflet-routing-icon-sharp-right      { background-position: -24px 0px; }
+.leaflet-routing-icon-turn-right       { background-position: -50px 0px; }
+.leaflet-routing-icon-bear-right       { background-position: -74px 0px; }
+.leaflet-routing-icon-u-turn           { background-position: -101px 0px; }
 
-.leaflet-routing-icon-sharp-left       { background-position: -123px 3px; }
+.leaflet-routing-icon-sharp-left       { background-position: -127px 0px; }
 
-.leaflet-routing-icon-turn-left        { background-position: -150px 1px; }
-.leaflet-routing-icon-bear-left        { background-position: -175px 4px; }
-.leaflet-routing-icon-depart           { background-position: -202px 4px; }
+.leaflet-routing-icon-turn-left        { background-position: -150px 0px; }
+.leaflet-routing-icon-bear-left        { background-position: -175px 0px; }
+.leaflet-routing-icon-depart           { background-position: -202px 0px; }
 
-.leaflet-routing-icon-enter-roundabout { background-position: -224px 1px; }
-.leaflet-routing-icon-arrive           { background-position: -253px 0; }
-.leaflet-routing-icon-via              { background-position: -278px 2px; }
+.leaflet-routing-icon-enter-roundabout { background-position: -227px 0px; }
+.leaflet-routing-icon-arrive           { background-position: -253px 0px; }
+.leaflet-routing-icon-via              { background-position: -278px 0px; }
 
-.leaflet-routing-icon-fork             { background-position: -305px 1px; }
-.leaflet-routing-icon-ramp-right       { background-position: -331px 2px; }
-.leaflet-routing-icon-ramp-left        { background-position: -352px 2px; }
-.leaflet-routing-icon-merge-left       { background-position: -376px 1px; }
-.leaflet-routing-icon-merge-right      { background-position: -403px 0; }
-.leaflet-routing-icon-end              { background-position: -429px 2px; }
+.leaflet-routing-icon-fork             { background-position: -305px 0px; }
+.leaflet-routing-icon-ramp-right       { background-position: -331px 0px; }
+.leaflet-routing-icon-ramp-left        { background-position: -352px 0px; }
+.leaflet-routing-icon-merge-left       { background-position: -376px 0px; }
+.leaflet-routing-icon-merge-right      { background-position: -403px 0px; }
+.leaflet-routing-icon-end              { background-position: -429px 0px; }
 
 
 /*  FORM Labels */
