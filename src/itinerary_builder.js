@@ -37,6 +37,9 @@
       case 'sharp-left':
         icon = 'bear-left';
         break;
+      case 'uturn':
+        icon = 'u-turn';
+        break;
       case 'straight':
       case 'none':
       default:
