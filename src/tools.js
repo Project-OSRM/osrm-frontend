@@ -8,6 +8,7 @@ var Control = L.Control.extend({
     toolContainerClass: "",
     editorButtonClass: "",
     josmButtonClass: "",
+    debugButtonClass: "",
     localizationButtonClass: ""
   },
 
@@ -22,6 +23,8 @@ var Control = L.Control.extend({
       editorButton,
       josmContainer,
       josmButton,
+      debugContainer,
+      debugButton,
       localizationButton,
       popupCloseButton,
       gpxContainer;
@@ -36,6 +39,10 @@ var Control = L.Control.extend({
     josmButton = L.DomUtil.create('span', this.options.josmButtonClass, josmContainer);
     josmButton.title = this._local['Open in JOSM'];
     L.DomEvent.on(josmButton, 'click', this._openJOSM, this);
+    debugContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-debug', this._container);
+    debugButton = L.DomUtil.create('span', this.options.debugButtonClass, debugContainer);
+    debugButton.title = this._local['Open in Debug Map'];
+    L.DomEvent.on(debugButton, 'click', this._openDebug, this);
     this._localizationContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-localization', this._container);
     this._createLocalizationList(this._localizationContainer);
     L.DomEvent.on(this._localizationContainer, 'mouseenter', this._openLocalizationList, this);
@@ -60,6 +67,13 @@ var Control = L.Control.extend({
       '&bottom=' + bounds.getSouth() +
       '&top=' + bounds.getNorth();
     window.open(url);
+  },
+
+  _openDebug: function() {
+    var position = this._map.getCenter(),
+      zoom = this._map.getZoom(),
+      prec = 6;
+    window.open("http://map.project-osrm.org/debug/#" + zoom + "/" + position.lat.toFixed(prec) + "/" + position.lng.toFixed(prec));
   },
 
   _updatePopupPosition: function(button) {

@@ -1,6 +1,7 @@
 module.exports = {
   name: 'English',
   key: 'en',
+  'Open in Debug Map': 'Open in Debug Map',
   'Open in editor': 'Open in editor',
   'Open in JOSM': 'Open in JOSM',
   'Select language': 'Select language',
