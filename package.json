@@ -33,7 +33,7 @@
     "jsonp": "^0.2.0",
     "leaflet": "^0.7.7",
     "leaflet-control-geocoder": "^1.2.1",
-    "leaflet-routing-machine": "^3.1.0",
+    "leaflet-routing-machine": "~3.1.0",
     "leaflet.locatecontrol": "^0.44.0",
     "local-storage": "^1.4.2",
     "osrm-text-instructions": "^0.0.1",
