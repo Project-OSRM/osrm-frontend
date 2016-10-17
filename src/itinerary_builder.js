@@ -21,8 +21,12 @@
       var classes = [ 'leaflet-routing-icon', 'lanes'];
       if (!l.valid) classes.push(['invalid']);
 
+      var indication = l.indications.find(function(e) {
+        return e === step.maneuver.modifier;
+      }) || l.indications[0];
+
       var icon;
-      switch (l.indications[0]) {
+      switch (indication) {
       case 'right':
       case 'sharp right':
         icon = 'turn-right';
@@ -31,10 +35,10 @@
         icon = 'bear-right';
         break;
       case 'left':
-      case 'slight-left':
+      case 'slight left':
         icon = 'turn-left';
         break
-      case 'sharp-left':
+      case 'sharp left':
         icon = 'bear-left';
         break;
       case 'uturn':
