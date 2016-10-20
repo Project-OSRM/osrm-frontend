@@ -296,8 +296,8 @@
 
 .osrm-directions-icon {
     background-image: url('../images/osrm.toolbar.icons.svg');
-    -webkit-background-size: 122px 24px;
-    background-size: 122px 24px;
+    -webkit-background-size: 146px 24px;
+    background-size: 146px 24px;
     margin: 0;
     content: '';
     display: inline-block;
@@ -312,6 +312,7 @@
 .osrm-editor-icon  { background-position: -48px 0; }
 .osrm-josm-icon  { background-position: -72px 0; }
 .osrm-debug-icon  { background-position: -96px 0; }
+.osrm-mapillary-icon  { background-position: -120px 0; }
 .osrm-flag-icon-en  { background-position: 0px 0; }
 .osrm-flag-icon-de  { background-position: -24px 0; }
 
