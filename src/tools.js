@@ -46,8 +46,8 @@ var Control = L.Control.extend({
     debugButton = L.DomUtil.create('span', this.options.debugButtonClass, debugContainer);
     debugButton.title = this._local['Open in Debug Map'];
     L.DomEvent.on(debugButton, 'click', this._openDebug, this);
-    mapillaryContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-debug', this._container);
-    mapillaryButton = L.DomUtil.create('span', this.options.debugButtonClass, debugContainer);
+    mapillaryContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-mapillary', this._container);
+    mapillaryButton = L.DomUtil.create('span', this.options.mapillaryButtonClass, mapillaryContainer);
     mapillaryButton.title = this._local['Open in Mapillary'];
     L.DomEvent.on(mapillaryButton, 'click', this._openMapillary, this);
     this._localizationContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-localization', this._container);
