@@ -9,6 +9,7 @@ var Control = L.Control.extend({
     editorButtonClass: "",
     josmButtonClass: "",
     debugButtonClass: "",
+    mapillaryButtonClass: "",
     localizationButtonClass: ""
   },
 
@@ -25,6 +26,8 @@ var Control = L.Control.extend({
       josmButton,
       debugContainer,
       debugButton,
+      mapillaryContainer,
+      mapillaryButton,
       localizationButton,
       popupCloseButton,
       gpxContainer;
@@ -43,6 +46,10 @@ var Control = L.Control.extend({
     debugButton = L.DomUtil.create('span', this.options.debugButtonClass, debugContainer);
     debugButton.title = this._local['Open in Debug Map'];
     L.DomEvent.on(debugButton, 'click', this._openDebug, this);
+    mapillaryContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-debug', this._container);
+    mapillaryButton = L.DomUtil.create('span', this.options.debugButtonClass, debugContainer);
+    mapillaryButton.title = this._local['Open in Mapillary'];
+    L.DomEvent.on(mapillaryButton, 'click', this._openMapillary, this);
     this._localizationContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-localization', this._container);
     this._createLocalizationList(this._localizationContainer);
     L.DomEvent.on(this._localizationContainer, 'mouseenter', this._openLocalizationList, this);
@@ -74,6 +81,13 @@ var Control = L.Control.extend({
       zoom = this._map.getZoom(),
       prec = 6;
     window.open("http://map.project-osrm.org/debug/#" + zoom + "/" + position.lat.toFixed(prec) + "/" + position.lng.toFixed(prec));
+  },
+
+  _openMapillary: function() {
+    var position = this._map.getCenter(),
+      zoom = this._map.getZoom(),
+      prec = 6;
+    window.open("https://www.mapillary.com/app/?lat=" + position.lat.toFixed(prec) + "&lng=" + position.lng.toFixed(prec) + "&z=" + zoom);
   },
 
   _updatePopupPosition: function(button) {

@@ -2,6 +2,7 @@ module.exports = {
   name: "Deutsch",
   key: "de",
   'Open in Debug Map': 'In Debug Map öffnen',
+  'Open in Mapillary': 'In Mapillary öffnen',
   'Open in editor': 'Im Editor öffnen',
   'Open in JOSM': 'In JOSM öffnen',
   'Select language': 'Sprache auswählen',
