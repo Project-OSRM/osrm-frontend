@@ -1,7 +1,7 @@
-(function() {
-  'use strict';
+'use strict';
 
-  var osrmTextInstructions = require('osrm-text-instructions')();
+module.exports = function (language) {
+  var osrmTextInstructions = require('osrm-text-instructions')('v5', language);
 
   function stepToText(step) {
     try {
@@ -117,5 +117,5 @@
     }
   });
 
-  module.exports = L.Routing;
-})();
+  return L.Routing;
+}
