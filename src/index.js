@@ -3,7 +3,6 @@
 var L = require('leaflet');
 var Geocoder = require('leaflet-control-geocoder');
 var LRM = require('leaflet-routing-machine');
-var itineraryBuilder = require('./itinerary_builder');
 var locate = require('leaflet.locatecontrol');
 var options = require('./lrm_options');
 var links = require('./links');
@@ -15,9 +14,11 @@ var localization = require('./localization');
 require('./polyfill');
 
 var parsedOptions = links.parse(window.location.search.slice(1));
-
 var mergedOptions = L.extend(leafletOptions.defaultState, parsedOptions);
 var local = localization.get(mergedOptions.language);
+
+// load only after language was chosen
+var itineraryBuilder = require('./itinerary_builder')(mergedOptions.language);
 
 var mapLayer = leafletOptions.layer;
 var overlay = leafletOptions.overlay;
