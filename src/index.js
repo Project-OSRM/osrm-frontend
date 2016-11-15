@@ -154,13 +154,20 @@ router._convertRoute = function(responseRoute) {
   // monkey-patch L.Routing.OSRMv1 until it's easier to overwrite with a hook
   var resp = this._convertRouteOriginal(responseRoute);
 
+  // creating priority table
+  var osrmTextInstructions = require('osrm-text-instructions')('v5', mergedOptions.language);
+  priorityTable = osrmTextInstructions.precompilePriorityTable(responseRoute);
+
   if (resp.instructions && resp.instructions.length) {
     var i = 0;
     responseRoute.legs.forEach(function(leg) {
       leg.steps.forEach(function(step) {
-        // abusing the text property to save the origina osrm step
+        // abusing the text property to save the original osrm step
         // for later use in the itnerary builder
-        resp.instructions[i].text = step;
+        resp.instructions[i].text = {
+          step: step,
+          priorityTable: priorityTable
+        };
         i++;
       });
     });

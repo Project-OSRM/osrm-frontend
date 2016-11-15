@@ -3,9 +3,9 @@
 module.exports = function (language) {
   var osrmTextInstructions = require('osrm-text-instructions')('v5', language);
 
-  function stepToText(step) {
+  function stepToText(step, priorityTable) {
     try {
-      return osrmTextInstructions.compile(step);
+      return osrmTextInstructions.compile(step, priorityTable);
     } catch(err) {
       console.log('Error when compiling text instruction', err, step);
       return undefined;
@@ -84,6 +84,8 @@ module.exports = function (language) {
     },
 
     createStep: function(text, distance, icon, steps) {
+      var step = text.step;
+      var priorityTable = text.priorityTable;
       var row = L.DomUtil.create('tr', '', steps),
         span,
         td;
@@ -95,10 +97,10 @@ module.exports = function (language) {
 
       // text instruction
       td = L.DomUtil.create('td', '', row);
-      td.appendChild(document.createTextNode(stepToText(text)));
+      td.appendChild(document.createTextNode(stepToText(step, priorityTable)));
 
       // lanes
-      var l = stepToLanes(text);
+      var l = stepToLanes(step);
       if (l) {
         td.appendChild(document.createElement('br'));
         l.forEach(function(laneIcon) {
