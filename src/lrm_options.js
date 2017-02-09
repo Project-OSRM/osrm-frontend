@@ -31,7 +31,8 @@ module.exports = {
     createGeocoder: createGeocoder,
     showAlternatives: true,
     useZoomParameter: false,
-    routeDragInterval: 200
+    routeDragInterval: 200,
+    collapsible: true
   },
   popup: {
     removeButtonClass: 'osrm-directions-icon osrm-close-light-icon',
