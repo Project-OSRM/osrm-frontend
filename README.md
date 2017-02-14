@@ -21,7 +21,7 @@ This will start an auto-reloading webserver at http://localhost:9966
 
 ## Local OSRM instance
 
-The most common modifcation is to add your own OSRM endpoint. For this open `src/leaflet_options.js`:
+The most common modification is to add your own OSRM endpoint. For this open `src/leaflet_options.js`:
 
 ```
   services: [{

@@ -146,7 +146,8 @@ var controlOptions = {
   units: mergedOptions.units,
   serviceUrl: leafletOptions.services[0].path,
   useZoomParameter: options.lrm.useZoomParameter,
-  routeDragInterval: options.lrm.routeDragInterval
+  routeDragInterval: options.lrm.routeDragInterval,
+  collapsible: options.lrm.collapsible
 };
 var router = (new L.Routing.OSRMv1(controlOptions));
 router._convertRouteOriginal = router._convertRoute;
