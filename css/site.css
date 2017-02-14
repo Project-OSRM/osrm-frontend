@@ -866,6 +866,7 @@ td.distance {
     justify-content:center;
     align-items: center;
     color: white;
+    z-index: 50;
 }
 
 .leaflet-routing-collapse-btn:after {
@@ -877,6 +878,6 @@ td.distance {
 }
 
 .leaflet-routing-container-hide.dark, .leaflet-routing-container-hide .leaflet-routing-alternatives-container {
-    margin-right: -340px !important;
+    margin-right: -400px !important;
     transition: 0.5s;
 }
