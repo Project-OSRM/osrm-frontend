@@ -2,7 +2,6 @@
 
 module.exports = function (language) {
   // fallback to english for unsupported languages
-  console.log(language, ['es'].indexOf(language));
   if (['es'].indexOf(language) !== -1) {
     language = 'en';
   }
