@@ -424,6 +424,7 @@
    width: auto;
    text-align: justify;
    padding: 2px 4px;
+   z-index: 8;
 }
 
 .leaflet-osrm-tools-container div

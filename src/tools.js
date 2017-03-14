@@ -103,20 +103,20 @@ var Control = L.Control.extend({
   },
 
   _createLocalizationList: function(container) {
+    var _this = this;
     var localizationButton = L.DomUtil.create('span', this.options.localizationButtonClass + "-" + this._local.key, container);
     localizationButton.title = this._local['Select language'];
     L.DomEvent.on(localizationButton, 'click', function() { this.fire("languagechanged", {language: this._local.key}); }, this);
-    for (var key in this._languages)
-    {
-        if (key == this._local.key)
+    Object.keys(this._languages).forEach(function(key) {
+        if (key == _this._local.key)
         {
-            continue;
+            return;
         }
-        var button = L.DomUtil.create('span', this.options.localizationButtonClass + "-" + key + " leaflet-osrm-tools-hide", container);
-        button.title = this._languages[key];
+        var button = L.DomUtil.create('span', _this.options.localizationButtonClass + "-" + key + " leaflet-osrm-tools-hide", container);
+        button.title = _this._languages[key];
         var ev = {language: String(key)};
-        L.DomEvent.on(button, 'click', function() { this.fire("languagechanged", ev); }, this);
-    }
+        L.DomEvent.on(button, 'click', function() { _this.fire("languagechanged", ev); }, _this);
+    });
   },
 
   _openLocalizationList: function() {
