@@ -141,7 +141,7 @@ var controlOptions = {
   containerClassName: options.lrm.containerClassName,
   alternativeClassName: options.lrm.alternativeClassName,
   stepClassName: options.lrm.stepClassName,
-  language: mergedOptions.language,
+  language: 'en', // we are injecting own translations via osrm-text-instructions
   showAlternatives: options.lrm.showAlternatives,
   units: mergedOptions.units,
   serviceUrl: leafletOptions.services[0].path,
@@ -159,7 +159,7 @@ router._convertRoute = function(responseRoute) {
     var i = 0;
     responseRoute.legs.forEach(function(leg) {
       leg.steps.forEach(function(step) {
-        // abusing the text property to save the origina osrm step
+        // abusing the text property to save the original osrm step
         // for later use in the itnerary builder
         resp.instructions[i].text = step;
         i++;

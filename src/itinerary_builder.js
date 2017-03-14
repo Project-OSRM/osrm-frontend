@@ -1,6 +1,11 @@
 'use strict';
 
 module.exports = function (language) {
+  // fallback to english for unsupported languages
+  if (['es'].indexOf(language) !== -1) {
+    language = 'en';
+  }
+
   var osrmTextInstructions = require('osrm-text-instructions')('v5', language);
 
   function stepToText(step) {

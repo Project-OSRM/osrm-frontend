@@ -5,7 +5,8 @@ var language_mapping = {
   de: require('../i18n/de'),
   es: require('../i18n/es'),
   fr: require('../i18n/fr'),
-  sv: require('../i18n/sv')
+  sv: require('../i18n/sv'),
+  'zh-Hans': require('../i18n/zh-Hans')
 };
 
 module.exports = {
