@@ -80,7 +80,7 @@ var Control = L.Control.extend({
     var position = this._map.getCenter(),
       zoom = this._map.getZoom(),
       prec = 6;
-    window.open("http://map.project-osrm.org/debug/#" + zoom + "/" + position.lat.toFixed(prec) + "/" + position.lng.toFixed(prec));
+    window.open("http://127.0.0.1:9966/debug/#" + zoom + "/" + position.lat.toFixed(prec) + "/" + position.lng.toFixed(prec));
   },
 
   _openMapillary: function() {
@@ -105,9 +105,11 @@ var Control = L.Control.extend({
   _createLocalizationList: function(container) {
     var _this = this;
     var localizationButton = L.DomUtil.create('span', this.options.localizationButtonClass + "-" + this._local.key, container);
-    localizationButton.title = this._local['Select language'];
+      localizationButton.title = this._local['Select language'];
+      console.log(this.options.localizationButtonClass + "-" + this._local.key);
     L.DomEvent.on(localizationButton, 'click', function() { this.fire("languagechanged", {language: this._local.key}); }, this);
-    Object.keys(this._languages).forEach(function(key) {
+      Object.keys(this._languages).forEach(function(key) {
+          console.log('key', key);
         if (key == _this._local.key)
         {
             return;

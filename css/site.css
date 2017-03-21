@@ -298,8 +298,8 @@
 
 .osrm-directions-icon {
     background-image: url('../images/osrm.toolbar.icons.svg');
-    -webkit-background-size: 146px 24px;
-    background-size: 146px 24px;
+    -webkit-background-size: 238px 24px;
+    background-size: 238px 24px;
     margin: 0;
     content: '';
     display: inline-block;
@@ -311,12 +311,17 @@
 .osrm-add-icon  { background-position: -280px 0; }
 .osrm-via-icon  { background-position: -300px 0; }
 
-.osrm-editor-icon  { background-position: -48px 0; }
-.osrm-josm-icon  { background-position: -72px 0; }
-.osrm-debug-icon  { background-position: -96px 0; }
-.osrm-mapillary-icon  { background-position: -120px 0; }
-.osrm-flag-icon-en  { background-position: 0px 0; }
-.osrm-flag-icon-de  { background-position: -24px 0; }
+.osrm-editor-icon  { background-position: 0px 0; }
+.osrm-josm-icon  { background-position: -24px 0; }
+.osrm-debug-icon  { background-position: -48px 0; }
+.osrm-mapillary-icon  { background-position: -72px 0; }
+.osrm-flag-icon-en  { background-position: -96px 0; }
+.osrm-flag-icon-de  { background-position: -120px 0; }
+.osrm-flag-icon-es  { background-position: -144px 0; }
+.osrm-flag-icon-fr  { background-position: -168px 0; }
+.osrm-flag-icon-sv  { background-position: -192px 0; }
+.osrm-flag-icon-zh-Hans { background-position: -216px 0; }
+
 
 .leaflet-osrm-tools-hide
 {
@@ -816,7 +821,7 @@ td.distance {
   max-width: 58%;
   min-width: 40%;
 }
-  
+
 .leaflet-routing-alt table td, .leaflet-routing-alt table {
     margin-top: 10px;
     padding-bottom: 0px;
@@ -826,7 +831,7 @@ td.distance {
     line-height: 16px;
 }
 
-.leaflet-routing-alt .osrm-directions-instructions, 
+.leaflet-routing-alt .osrm-directions-instructions,
 .leaflet-routing-alternatives-container {
     position: fixed;
     right: 0px;
