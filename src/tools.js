@@ -80,7 +80,7 @@ var Control = L.Control.extend({
     var position = this._map.getCenter(),
       zoom = this._map.getZoom(),
       prec = 6;
-    window.open("http://map.project-osrm.org/debug/#" + zoom + "/" + position.lat.toFixed(prec) + "/" + position.lng.toFixed(prec));
+    window.open("http://127.0.0.1:9966/debug/#" + zoom + "/" + position.lat.toFixed(prec) + "/" + position.lng.toFixed(prec));
   },
 
   _openMapillary: function() {
