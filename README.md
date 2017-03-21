@@ -1,45 +1,40 @@
+# osrm-frontend
+
 This is the frontend served at https://map.project-osrm.org.
+This frontend builds heavily on top of [Leaflet Routing Machine](https://github.com/perliedman/leaflet-routing-machine).
+If you need a simple OSRM integration in your webpage, you should start from there.
 
-This frontend is builds heavily ontop of [Leaflet Routing Machine](https://github.com/perliedman/leaflet-routing-machine). If you need a simple OSRM integration in your webpage, you should start from there.
+## Development
 
-# Development
-## Local development
-
-Install dependencies via:
+Install dependencies via
 
 ```bash
 npm install
 ```
 
-Then compile the assets and start a server with:
+Then compile the assets and start a server with
 
 ```bash
 npm start
 ```
 
-This will start an auto-reloading webserver at http://localhost:9966
 
-## Local OSRM instance
+## Changing Backends
 
-The most common modification is to add your own OSRM endpoint. For this open `src/leaflet_options.js`:
-
-```
-  services: [{
-    label: 'Car (fastest)',
-    path: 'http://myserver.example.com/route/v1'
-  }],
+In `src/leaflet_options.js` adjust:
 
 ```
+services: [{
+  label: 'Car (fastest)',
+  path: 'http://localhost:5000/route/v1'
+}],
+```
 
-Replace the path with whatever your endpoint looks like.
+For debug tiles showing speeds and small components available at `/debug` adjust in `debug/index.html`
 
-# Debug Interface
-
-There is a debug interface for osrm-backend, accessible at http://127.0.0.1:9966/debug .
-It shows the edges of the graph, with the speed, and in pink the  "small components",
-areas of the road network that are isolated from the rest for some reason
-(invalid turn restrictions, barriers, disconnected, incorrect oneways, etc)
-and are discarded in the routing machine.
-
-Warning : If you want to debug your own osrm-backend, you have to edit debug/index.html
-and change http://router.project-osrm.org/tile/v1/car/tile to your own endpoint.
+```
+"osrm": {
+  "type": "vector",
+  "tiles" : ["http://localhost:5000/tile/v1/car/tile({x},{y},{z}).mvt"]
+}
+```
