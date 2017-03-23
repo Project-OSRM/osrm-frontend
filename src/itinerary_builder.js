@@ -6,7 +6,24 @@ module.exports = function (language) {
     language = 'en';
   }
 
-  var osrmTextInstructions = require('osrm-text-instructions')('v5', language);
+  var osrmTextInstructionsOptions = {
+    hooks: {
+        tokenizedInstruction: function (instruction) {
+          // enclose {way_name}, {rotary_name} and {destination} vars with <b>..</b>
+          // also support optional grammar or other var option after colon like {way_name:accusative}
+          return instruction.replace(/\{(\w+):?\w*\}/g, function (token, tag) {
+            switch (tag) {
+              case 'way_name':
+              case 'rotary_name':
+              case 'destination':
+                return '<b>' + token + '</b>';
+            }
+            return token;
+        });
+      }
+    }
+  };
+  var osrmTextInstructions = require('osrm-text-instructions')('v5', language, osrmTextInstructionsOptions);
 
   function stepToText(step) {
     try {
@@ -23,7 +40,7 @@ module.exports = function (language) {
     if (!lanes) return [];
 
     return lanes.map(function(l) {
-      var classes = [ 'leaflet-routing-icon', 'lanes'];
+      var classes = ['leaflet-routing-icon', 'lanes'];
       if (!l.valid) classes.push(['invalid']);
 
       var indication = l.indications.find(function(e) {
@@ -95,12 +112,14 @@ module.exports = function (language) {
 
       // icon
       td = L.DomUtil.create('td', '', row);
-      span = L.DomUtil.create('span', 'leaflet-routing-icon leaflet-routing-icon-'+icon, td);
+      span = L.DomUtil.create('span', 'leaflet-routing-icon leaflet-routing-icon-' + icon, td);
       td.appendChild(span);
 
       // text instruction
       td = L.DomUtil.create('td', '', row);
-      td.appendChild(document.createTextNode(stepToText(text)));
+      // keep HTML tags instead:
+      // td.appendChild(document.createTextNode(stepToText(text)));
+      td.innerHTML = stepToText(text);
 
       // lanes
       var l = stepToLanes(text);
