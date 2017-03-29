@@ -51,8 +51,6 @@ var Control = L.Control.extend({
     L.DomEvent.on(mapillaryButton, 'click', this._openMapillary, this);
     this._localizationContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-localization', this._container);
     this._createLocalizationList(this._localizationContainer);
-    L.DomEvent.on(this._localizationContainer, 'mouseenter', this._openLocalizationList, this);
-    L.DomEvent.on(this._localizationContainer, 'mouseleave', this._closeLocalizationList, this);
     return this._container;
   },
 
@@ -121,26 +119,7 @@ var Control = L.Control.extend({
             option.setAttribute('selected', '');
         }
     });
-  },
-
-  _openLocalizationList: function() {
-    var child;
-    for (var i = 1; i < this._localizationContainer.childNodes.length; ++i)
-    {
-      child = this._localizationContainer.childNodes[i];
-      L.DomUtil.removeClass(child, 'leaflet-osrm-tools-hide');
-    }
-  },
-
-  _closeLocalizationList: function() {
-    var child;
-    for (var i = 1; i < this._localizationContainer.childNodes.length; ++i)
-    {
-        child = this._localizationContainer.childNodes[i];
-        L.DomUtil.addClass(child, 'leaflet-osrm-tools-hide');
-    }
-  },
-
+  }
 });
 
 module.exports = {
