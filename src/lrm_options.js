@@ -45,7 +45,7 @@ module.exports = {
     josmButtonClass: 'osrm-directions-icon osrm-josm-icon',
     debugButtonClass: 'osrm-directions-icon osrm-debug-icon',
     mapillaryButtonClass: 'osrm-directions-icon osrm-mapillary-icon',
-    localizationButtonClass: 'osrm-directions-icon osrm-flag-icon',
+    localizationChooserClass: 'osrm-localization-chooser',
     printButtonClass: 'osrm-directions-icon osrm-printer-icon',
     toolsContainerClass: 'fill-osrm dark',
     position: 'bottomleft'
