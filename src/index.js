@@ -188,11 +188,12 @@ function addWaypoint(e) {
     return pnt.latLng;
   });
   length = length.length;
+  var waypoint = e.latlng;
   if (!length) {
-    lrmControl.spliceWaypoints(0, 1, e.latlng);
+    lrmControl.spliceWaypoints(0, 1, waypoint);
   } else {
     if (length === 1) length = length + 1;
-    lrmControl.spliceWaypoints(length - 1, 1, e.latlng);
+    lrmControl.spliceWaypoints(length - 1, 1, waypoint);
   }
 }
 
