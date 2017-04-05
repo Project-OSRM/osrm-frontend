@@ -1,11 +1,6 @@
 'use strict';
 
 module.exports = function (language) {
-  // fallback to english for unsupported languages
-  if (['es'].indexOf(language) !== -1) {
-    language = 'en';
-  }
-
   var osrmTextInstructionsOptions = {
     hooks: {
         tokenizedInstruction: function (instruction) {
