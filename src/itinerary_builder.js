@@ -52,10 +52,10 @@ module.exports = function (language) {
         icon = 'bear-right';
         break;
       case 'left':
-      case 'slight left':
+      case 'sharp left':
         icon = 'turn-left';
         break
-      case 'sharp left':
+      case 'slight left':
         icon = 'bear-left';
         break;
       case 'uturn':
