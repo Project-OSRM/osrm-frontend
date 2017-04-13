@@ -38,9 +38,8 @@ module.exports = function (language) {
       var classes = ['leaflet-routing-icon', 'lanes'];
       if (!l.valid) classes.push(['invalid']);
 
-      var indication = l.indications.find(function(e) {
-        return e === step.maneuver.modifier;
-      }) || l.indications[0];
+      // find maneuver modifier in indications or use first default
+      var indication = (l.indications.indexOf(step.maneuver.modifier) == -1) ? l.indications[0] : step.maneuver.modifier;
 
       var icon;
       switch (indication) {
