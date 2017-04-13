@@ -38,8 +38,9 @@ module.exports = function (language) {
       var classes = ['leaflet-routing-icon', 'lanes'];
       if (!l.valid) classes.push(['invalid']);
 
-      // find maneuver modifier in indications or use first default
-      var indication = (l.indications.indexOf(step.maneuver.modifier) == -1) ? l.indications[0] : step.maneuver.modifier;
+      // check maneuver direction matches this lane one(s)
+      var maneuverIndication = l.indications.indexOf(step.maneuver.modifier);
+      var indication = (maneuverIndication === -1) ? l.indications[0] : step.maneuver.modifier;
 
       var icon;
       switch (indication) {
@@ -60,15 +61,21 @@ module.exports = function (language) {
       case 'uturn':
         icon = 'u-turn';
         break;
-      case 'straight':
-      case 'none':
+      //case 'straight':
+      //case 'none':
       default:
         icon = 'continue';
         break;
       }
       classes.push('leaflet-routing-icon-' + icon);
 
-      return L.DomUtil.create('span', classes.join(' '));
+      var span = L.DomUtil.create('span', classes.join(' '));
+      
+      // gray out lane icon if it's not for this maneuver
+      if (maneuverIndication === -1)
+        L.DomUtil.setOpacity(span, 0.5);
+      
+      return span;
     });
   }
 
