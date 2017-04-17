@@ -45,17 +45,21 @@ module.exports = function (language) {
       var icon;
       switch (indication) {
       case 'right':
-      case 'sharp right':
         icon = 'turn-right';
+        break;
+      case 'sharp right':
+        icon = 'sharp-right';
         break;
       case 'slight right':
         icon = 'bear-right';
         break;
       case 'left':
-      case 'slight left':
         icon = 'turn-left';
-        break
+        break;
       case 'sharp left':
+        icon = 'sharp-left';
+        break;
+      case 'slight left':
         icon = 'bear-left';
         break;
       case 'uturn':
