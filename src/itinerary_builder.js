@@ -1,19 +1,21 @@
 'use strict';
 
+var L = require('leaflet');
+
 module.exports = function (language) {
   var osrmTextInstructionsOptions = {
     hooks: {
-        tokenizedInstruction: function (instruction) {
-          // enclose {way_name}, {rotary_name} and {destination} vars with <b>..</b>
-          // also support optional grammar or other var option after colon like {way_name:accusative}
-          return instruction.replace(/\{(\w+):?\w*\}/g, function (token, tag) {
-            switch (tag) {
-              case 'way_name':
-              case 'rotary_name':
-              case 'destination':
-                return '<b>' + token + '</b>';
-            }
-            return token;
+      tokenizedInstruction: function (instruction) {
+        // enclose {way_name}, {rotary_name} and {destination} vars with <b>..</b>
+        // also support optional grammar or other var option after colon like {way_name:accusative}
+        return instruction.replace(/\{(\w+):?\w*\}/g, function (token, tag) {
+          switch (tag) {
+          case 'way_name':
+          case 'rotary_name':
+          case 'destination':
+            return '<b>' + token + '</b>';
+          }
+          return token;
         });
       }
     }
@@ -34,13 +36,27 @@ module.exports = function (language) {
 
     if (!lanes) return [];
 
-    return lanes.map(function(l) {
+    var maneuver = step.maneuver.modifier || '';
+
+    return lanes.map(function(lane, index) {
       var classes = ['leaflet-routing-icon', 'lanes'];
-      if (!l.valid) classes.push(['invalid']);
+      if (!lane.valid) classes.push(['invalid']);
 
       // check maneuver direction matches this lane one(s)
-      var maneuverIndication = l.indications.indexOf(step.maneuver.modifier);
-      var indication = (maneuverIndication === -1) ? l.indications[0] : step.maneuver.modifier;
+      var maneuverIndication = lane.indications.indexOf(maneuver);
+      if (maneuverIndication === -1) {
+        // check non-indicated lane to allow straight, right turn from last lane and left turn for first lane
+        if ((lane.indications[0] === 'none' || lane.indications[0] === '') && (
+          maneuver === 'straight' ||
+          (index === 0 && maneuver.slice(-4) === 'left') ||
+          (index === (lanes.length - 1) && maneuver.slice(-5) === 'right'))) {
+          maneuverIndication = 0;
+        } else if (maneuver.slice(0, 7) === 'slight ' ) {
+          // try to exclude 'slight' modifier
+          maneuverIndication = lane.indications.indexOf(maneuver.slice(7));
+        }
+      }
+      var indication = (maneuverIndication === -1) ? lane.indications[0] : maneuver;
 
       var icon;
       switch (indication) {
@@ -83,7 +99,6 @@ module.exports = function (language) {
     });
   }
 
-  var L = require('leaflet');
   L.Routing = L.Routing || {};
 
   L.Routing.ItineraryBuilder = L.Class.extend({
@@ -137,7 +152,7 @@ module.exports = function (language) {
 
       // distance steps
       // filter distance after arrival
-      if (distance !== '0 m') {
+      if (distance.slice(0, 2) !== '0 ') {
         td = L.DomUtil.create('td', 'distance', row);
         td.appendChild(document.createTextNode(distance));
       }
