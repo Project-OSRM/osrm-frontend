@@ -4,9 +4,10 @@
   "description": "frontend interface for project osrm",
   "main": "src/index.js",
   "scripts": {
-    "test": "eslint src/*js i18n/*.js",
+    "test": "eslint src/*.js i18n/*.js",
     "replace": "node ./scripts/replace.js",
-    "build": "npm run replace && browserify -d src/index.js -s osrm > bundle.raw.js && uglifyjs bundle.raw.js -c -m --source-map=bundle.js.map -o bundle.js && cp node_modules/leaflet/dist/leaflet.css css/leaflet.css",
+    "compile": "browserify -d src/index.js -s osrm > bundle.raw.js && uglifyjs bundle.raw.js -c -m --source-map=bundle.js.map -o bundle.js",
+    "build": "npm run replace && npm run compile && cp node_modules/leaflet/dist/leaflet.css css/leaflet.css",
     "start-index": "budo src/index.js --serve=bundle.js --live -d | bistre",
     "start": "npm run build && npm run start-index",
     "prepub": "npm run build"
