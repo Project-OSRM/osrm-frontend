@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "test": "eslint src/*js i18n/*.js",
-    "replace": "if [ ! -z ${BACKEND+x} ]; then sed -i -e \"s|https://router.project-osrm.org|${BACKEND}|g\" src/leaflet_options.js && sed -i -e \"s|http://router.project-osrm.org|${BACKEND}|g\" debug/index.html ; fi",
+    "replace": "node ./scripts/replace.js",
     "build": "npm run replace && browserify -d src/index.js -s osrm > bundle.raw.js && uglifyjs bundle.raw.js -c -m --source-map=bundle.js.map -o bundle.js && cp node_modules/leaflet/dist/leaflet.css css/leaflet.css",
     "start-index": "budo src/index.js --serve=bundle.js --live -d | bistre",
     "start": "npm run build && npm run start-index",
