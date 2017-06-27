@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+'use strict';
+
 const fs = require('fs')
 const path = require('path')
 
@@ -24,7 +26,9 @@ for (const filepath of [leafletOptions, debug]) {
   if (ZOOM) options = options.replace('zoom: 13', `zoom: ${ZOOM}`)
   if (LANGUAGE) options = options.replace(`language: 'en'`, `language: '${LANGUAGE}'`)
   if (CENTER) {
-    const [lat, lng] = CENTER.split(/[, ]+/)
+    const latLng = CENTER.split(/[, ]+/)
+    const lat = latLng[0];
+    const lng = latLng[1];
     const lnglat = [lng, lat].join(',')
     const latlng = [lat, lng].join(',')
 
