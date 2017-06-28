@@ -61,7 +61,7 @@ function parseLink(link) {
     options = {},
     k;
   try {
-    parsedValues.zoom = _parseInteger(q.z);
+    parsedValues.zoom = q.z && _parseInteger(q.z);
     parsedValues.center = q.center && _parseCoord(q.center);
     parsedValues.waypoints = q.loc && q.loc.filter(function(loc) { return loc != ""; }).map(_parseCoord).map(
       function(coord) {
