@@ -55,6 +55,7 @@ function formatLink(options) {
 }
 
 function parseLink(link) {
+  if (!link) return {}
   var q = qs.parse(link),
     parsedValues = {},
     options = {},
