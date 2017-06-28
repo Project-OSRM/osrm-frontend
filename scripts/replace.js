@@ -14,11 +14,11 @@ for (const filepath of [leafletOptions, debug]) {
   let options = fs.readFileSync(filepath, 'utf8')
 
   // Define Environment variables
-  const ZOOM = process.env.ZOOM
-  const LABEL = process.env.LABEL
-  const CENTER = process.env.CENTER
-  const BACKEND = process.env.BACKEND
-  const LANGUAGE = process.env.LANGUAGE
+  const ZOOM = process.env.ZOOM || 13
+  const LABEL = process.env.LABEL || 'Car (fastest)'
+  const CENTER = process.env.CENTER || '38.8995, -77.0269'
+  const BACKEND = process.env.BACKEND || 'https://router.project-osrm.org'
+  const LANGUAGE = process.env.LANGUAGE || 'en'
 
   // Edit Leaflet Options
   if (BACKEND) options = options.replace(/http[s]?:\/\/router\.project-osrm\.org/, BACKEND)
