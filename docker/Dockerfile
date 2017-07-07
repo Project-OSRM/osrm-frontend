@@ -1,4 +1,4 @@
-FROM mhart/alpine-node
+FROM alpine:3.5
 
 # Enables customized options using environment variables
 ENV BACKEND='http://localhost:5000'
@@ -8,17 +8,15 @@ ENV LANGUAGE='en'
 ENV LABEL='Car (fastest)'
 
 # Create app directory
-RUN mkdir -p /src
+RUN mkdir /src
+COPY . /src
 WORKDIR /src
 
 # Install app dependencies
-COPY package.json /src
-COPY yarn.lock /src
-RUN yarn
-
-# Bundle app source
-COPY . /src
+RUN apk add --no-cache sed nodejs && \
+    cd /src && \
+    npm install
 
 # Run App
 EXPOSE 9966
-CMD ["yarn", "start"]
+CMD ["npm", "start"]
