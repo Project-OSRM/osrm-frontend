@@ -55,12 +55,13 @@ function formatLink(options) {
 }
 
 function parseLink(link) {
+  if (!link) return {};
   var q = qs.parse(link),
     parsedValues = {},
     options = {},
     k;
   try {
-    parsedValues.zoom = _parseInteger(q.z);
+    if (q.z !== undefined && q.z !== null) parsedValues.zoom = _parseInteger(q.z);
     parsedValues.center = q.center && _parseCoord(q.center);
     parsedValues.waypoints = q.loc && q.loc.filter(function(loc) { return loc != ""; }).map(_parseCoord).map(
       function(coord) {
