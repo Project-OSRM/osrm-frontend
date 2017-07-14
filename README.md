@@ -25,6 +25,13 @@ In case Docker complains about not being able to connect to the Docker daemon ma
 sudo usermod -aG docker $USER
 ```
 
+To build the docker image locally:
+
+```bash
+docker build . -f docker/Dockerfile -t osrm-frontend
+docker run -p 9966:9966 osrm-frontend
+```
+
 ## Development
 
 Install dependencies via
