@@ -1,11 +1,11 @@
 FROM alpine:3.5
 
 # Enables customized options using environment variables
-ENV BACKEND='http://router.project-osrm.org'
-ENV CENTER='38.8995,-77.0269'
-ENV ZOOM='13'
-ENV LANGUAGE='en'
-ENV LABEL='Car (fastest)'
+ENV OSRM_BACKEND='http://router.project-osrm.org'
+ENV OSRM_CENTER='38.8995,-77.0269'
+ENV OSRM_ZOOM='13'
+ENV OSRM_LANGUAGE='en'
+ENV OSRM_LABEL='Car (fastest)'
 
 # Copy package.json
 RUN mkdir -p /src
