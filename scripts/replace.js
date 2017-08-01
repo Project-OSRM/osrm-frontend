@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 
-'use strict';
-
 const fs = require('fs')
 const path = require('path')
 
@@ -14,11 +12,11 @@ for (const filepath of [leafletOptions, debug]) {
   let options = fs.readFileSync(filepath, 'utf8')
 
   // Define Environment variables
-  const ZOOM = process.env.ZOOM || 13
-  const LABEL = process.env.LABEL || 'Car (fastest)'
-  const CENTER = process.env.CENTER || '38.8995, -77.0269'
-  const BACKEND = process.env.BACKEND || 'https://router.project-osrm.org'
-  const LANGUAGE = process.env.LANGUAGE || 'en'
+  const ZOOM = process.env.OSRM_ZOOM || 13
+  const LABEL = process.env.OSRM_LABEL || 'Car (fastest)'
+  const CENTER = process.env.OSRM_CENTER || '38.8995, -77.0269'
+  const BACKEND = process.env.OSRM_BACKEND || 'https://router.project-osrm.org'
+  const LANGUAGE = process.env.OSRM_LANGUAGE || 'en'
 
   // Edit Leaflet Options
   if (BACKEND) options = options.replace(/http[s]?:\/\/router\.project-osrm\.org/, BACKEND)
