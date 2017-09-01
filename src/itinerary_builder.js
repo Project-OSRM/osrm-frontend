@@ -6,13 +6,14 @@ module.exports = function (language) {
   var osrmTextInstructionsOptions = {
     hooks: {
       tokenizedInstruction: function (instruction) {
-        // enclose {way_name}, {rotary_name} and {destination} vars with <b>..</b>
+        // enclose {way_name}, {rotary_name}, {destination} and {exit} vars with <b>..</b>
         // also support optional grammar or other var option after colon like {way_name:accusative}
         return instruction.replace(/\{(\w+):?\w*\}/g, function (token, tag) {
           switch (tag) {
           case 'way_name':
           case 'rotary_name':
           case 'destination':
+          case 'exit':
             return '<b>' + token + '</b>';
           }
           return token;
@@ -20,7 +21,7 @@ module.exports = function (language) {
       }
     }
   };
-  var osrmTextInstructions = require('osrm-text-instructions')('v5', language, osrmTextInstructionsOptions);
+  var osrmTextInstructions = require('osrm-text-instructions')('v5', osrmTextInstructionsOptions);
 
   function stepToText(step) {
     try {
