@@ -3,29 +3,24 @@
 var L = require('leaflet');
 
 module.exports = function (language) {
-  var osrmTextInstructionsOptions = {
-    hooks: {
-      tokenizedInstruction: function (instruction) {
+  var osrmTextInstructions = require('osrm-text-instructions')('v5');
+
+  function stepToText(step) {
+    try {
+      return osrmTextInstructions.compile(language, step, {
+        formatToken : function(token, value) {
         // enclose {way_name}, {rotary_name}, {destination} and {exit} vars with <b>..</b>
-        // also support optional grammar or other var option after colon like {way_name:accusative}
-        return instruction.replace(/\{(\w+):?\w*\}/g, function (token, tag) {
-          switch (tag) {
+        switch (token) {
+          case 'name':
           case 'way_name':
           case 'rotary_name':
           case 'destination':
           case 'exit':
-            return '<b>' + token + '</b>';
+            return '<b>' + value + '</b>';
           }
-          return token;
-        });
-      }
-    }
-  };
-  var osrmTextInstructions = require('osrm-text-instructions')('v5', osrmTextInstructionsOptions);
-
-  function stepToText(step) {
-    try {
-      return osrmTextInstructions.compile(language, step);
+          return value;
+        }
+      });
     } catch(err) {
       console.log('Error when compiling text instruction', err, step);
       return undefined;
@@ -55,6 +50,9 @@ module.exports = function (language) {
         } else if (maneuver.slice(0, 7) === 'slight ' ) {
           // try to exclude 'slight' modifier
           maneuverIndication = lane.indications.indexOf(maneuver.slice(7));
+        } else {
+          // try to add 'slight' modifier otherwise
+          maneuverIndication = lane.indications.indexOf('slight ' + maneuver);
         }
       }
       var indication = (maneuverIndication === -1) ? lane.indications[0] : maneuver;
