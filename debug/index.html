@@ -11,8 +11,12 @@
     <meta charset='utf-8' />
     <title></title>
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+    <!--script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.2/mapbox-gl.js'></script-->
+    <!--link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.42.2/mapbox-gl.css' rel='stylesheet' /-->
     <script src='dist/mapbox-gl.js'></script>
     <link href='dist/mapbox-gl.css' rel='stylesheet' />
+
     <style>
         body { margin:0; padding:0; }
         #map { position:absolute; top:0; bottom:0; width:100%; }
@@ -28,6 +32,7 @@
 </div>
 <script>
 mapboxgl.accessToken = 'pk.eyJ1IjoibXNsZWUiLCJhIjoiclpiTWV5SSJ9.P_h8r37vD8jpIH1A6i1VRg';
+
 var simple = {
     "version": 8,
     "name": "OSRM debug",
@@ -125,7 +130,8 @@ var simple = {
         },
         "osrm": {
             "type": "vector",
-            "tiles" : ["http://router.project-osrm.org/tile/v1/car/tile({x},{y},{z}).mvt"]
+            "tiles" : ["http://localhost:5000/tile/v1/car/tile({x},{y},{z}).mvt"]
+            //"tiles" : ["http://router.project-osrm.org/tile/v1/car/tile({x},{y},{z}).mvt"]
         }
     },
     "glyphs": "mapbox://fonts/mapbox/{fontstack}/{range}.pbf",
@@ -5108,7 +5114,7 @@ var simple = {
          "id": "osrm-0", "type": "symbol", "source": "osrm", "source-layer": "turns",
          "layout": { "icon-image": "0", "icon-offset": {stops: [[15,[10,0]],[18,[20,0]]]}, "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
                     "text-field": "{cost}", "text-offset": {"base": 1, stops: [[15,[0.2,0.0]],[18,[3,0]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
-                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ], "symbol-avoid-edges": false},
+                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ], "symbol-avoid-edges": false, "visibility": "none"},
          "paint": { "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2,
             "text-color": "hsl(0, 0%, 100%)", "text-halo-width": 1, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0},
          "filter": ["all",[">=","turn_angle",-22.5],["<","turn_angle",22.5]]
@@ -5117,7 +5123,7 @@ var simple = {
          "id": "osrm-45", "type": "symbol", "source": "osrm", "source-layer": "turns",
          "layout": { "icon-image": "45", "icon-offset": {stops: [[15,[15,15]],[18,[30,30]]]}, "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
                     "text-field": "{cost}", "text-offset": {"base": 1, stops: [[15,[0.2,0.2]],[18,[3,3]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
-                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ], "symbol-avoid-edges": false},
+                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ], "symbol-avoid-edges": false, "visibility": "none"},
          "paint": { "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2,
             "text-color": "hsl(0, 0%, 100%)", "text-halo-width": 1, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0},
          "filter": ["all",[">=","turn_angle",22.5],["<","turn_angle",67.5]]
@@ -5126,7 +5132,7 @@ var simple = {
          "id": "osrm-90", "type": "symbol", "source": "osrm", "source-layer": "turns",
          "layout": { "icon-image": "90", "icon-offset": {stops: [[15,[15,15]],[18,[30,30]]]}, "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
                     "text-field": "{cost}", "text-offset": {"base": 1, stops: [[15,[0.2,0.2]],[18,[3,3]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
-                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ], "symbol-avoid-edges": false},
+                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ], "symbol-avoid-edges": false, "visibility": "none"},
          "paint": { "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2,
             "text-color": "hsl(0, 0%, 100%)", "text-halo-width": 1, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0},
          "filter": ["all",[">=","turn_angle",67.5],["<","turn_angle",115.5]]
@@ -5135,7 +5141,7 @@ var simple = {
          "id": "osrm-135", "type": "symbol", "source": "osrm", "source-layer": "turns",
          "layout": { "icon-image": "135", "icon-offset": {stops: [[15,[15,15]],[18,[30,30]]]}, "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
                     "text-field": "{cost}", "text-offset": {"base": 1, stops: [[15,[0.2,0.2]],[18,[3,3]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
-                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ], "symbol-avoid-edges": false},
+                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ], "symbol-avoid-edges": false, "visibility": "none"},
          "paint": { "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2,
             "text-color": "hsl(0, 0%, 100%)", "text-halo-width": 1, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0},
          "filter": ["all",[">=","turn_angle",115.5],["<=","turn_angle",180]]
@@ -5144,7 +5150,7 @@ var simple = {
          "id": "osrm-n45", "type": "symbol", "source": "osrm", "source-layer": "turns",
          "layout": { "icon-image": "n45", "icon-offset": {stops: [[15,[15,30]],[18,[30,60]]]}, "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
                     "text-field": "{cost}", "text-offset": {"base": 1, stops: [[15,[0.15,0.4]],[18,[2.5,6]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
-                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ], "symbol-avoid-edges": false},
+                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ], "symbol-avoid-edges": false, "visibility": "none"},
          "paint": { "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2,
             "text-color": "hsl(0, 0%, 100%)", "text-halo-width": 1, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0},
          "filter": ["all",[">=","turn_angle",-67.5],["<","turn_angle",-22.5]]
@@ -5153,7 +5159,7 @@ var simple = {
          "id": "osrm-n90", "type": "symbol", "source": "osrm", "source-layer": "turns",
          "layout": { "icon-image": "n90", "icon-offset": {stops: [[15,[15,30]],[18,[30,60]]]}, "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
                     "text-field": "{cost}", "text-offset": {"base": 1, stops: [[15,[0.15,0.4]],[18,[2.5,6]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
-                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ], "symbol-avoid-edges": false},
+                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ], "symbol-avoid-edges": false, "visibility": "none"},
          "paint": { "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2,
             "text-color": "hsl(0, 0%, 100%)", "text-halo-width": 1, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0},
          "filter": ["all",["<=","turn_angle",-67.5],[">","turn_angle",-115.5]]
@@ -5162,10 +5168,31 @@ var simple = {
          "id": "osrm-n135", "type": "symbol", "source": "osrm", "source-layer": "turns",
          "layout": { "icon-image": "n135", "icon-offset": {stops: [[15,[15,30]],[18,[30,60]]]}, "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
                     "text-field": "{cost}", "text-offset": {"base": 1, stops: [[15,[0.15,0.4]],[18,[2.5,6]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
-                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ], "symbol-avoid-edges": false},
+                     "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": [ "Arial Unicode MS Bold" ], "symbol-avoid-edges": false, "visibility": "none"},
          "paint": { "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2,
             "text-color": "hsl(0, 0%, 100%)", "text-halo-width": 1, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0},
          "filter": ["all",[">=","turn_angle",-180],["<","turn_angle",-115.5]]
+        },
+        {
+         "id": "segregated-intersections",
+         "type": "line",
+         "source": "osrm",
+         "source-layer": "internal-nodes",
+         "layout": { "line-cap": "round", "visibility": "visible" },
+         "paint": { "line-width": 14, "line-color": "#f442eb",
+         "line-offset": { "base": 1.5, "stops": [ [ 12.5, 0.25 ], [ 14, 1 ], [ 18, 9 ] ] } } ,
+         "interactive": true
+        },
+        {
+         "id": "small-components",
+         "type": "line",
+         "source": "osrm",
+         "source-layer": "speeds",
+         "layout": {"line-cap": "round", "visibility": "visible" },
+         "paint": {"line-width": 14, "line-color": "#55d11b",
+         "line-offset": { "base": 1.5, "stops": [ [ 12.5, 0.25 ], [ 14, 1 ], [ 18, 9 ] ] } },
+         "filter": [ "all", [ "==", "$type", "LineString" ], [ "==", "is_small", true ] ],
+         "interactive": true
         }
     ],
     "created": "2016-03-14T20:42:54.687Z",
