@@ -10,13 +10,14 @@ module.exports = function (language) {
       return osrmTextInstructions.compile(language, step, {
         formatToken : function(token, value) {
         // enclose {way_name}, {rotary_name}, {destination} and {exit} vars with <b>..</b>
-        switch (token) {
-          case 'name':
-          case 'way_name':
-          case 'rotary_name':
-          case 'destination':
-          case 'exit':
-            return '<b>' + value + '</b>';
+        if (value) {
+          switch (token) {
+            case 'way_name':
+            case 'rotary_name':
+            case 'destination':
+            case 'exit':
+              return '<b>' + value + '</b>';
+            }
           }
           return value;
         }
