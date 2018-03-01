@@ -206,8 +206,9 @@
   background-color: rgba(37,72,127, 0.75);
   transition: background-color 0.2s ease;
   border: 0px;
-  border-radius: 5px;
-  margin-top: -3px;
+  border-radius: 0 0 5px 5px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   margin-right: 0px;
   color: white;
 }
