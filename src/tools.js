@@ -1,6 +1,9 @@
 'use strict';
 
 var L = require('leaflet');
+var JXON = require('jxon');
+JXON.config({attrPrefix: '@'});
+var FileSaver = require('file-saver');
 
 var Control = L.Control.extend({
   includes: L.Mixin.Events,
@@ -10,6 +13,7 @@ var Control = L.Control.extend({
     josmButtonClass: "",
     debugButtonClass: "",
     mapillaryButtonClass: "",
+    gpxButtonClass: "",
     localizationChooserClass: ""
   },
 
@@ -30,7 +34,8 @@ var Control = L.Control.extend({
       mapillaryButton,
       localizationButton,
       popupCloseButton,
-      gpxContainer;
+      gpxContainer,
+      gpxButton;
     this._container = L.DomUtil.create('div', 'leaflet-osrm-tools-container ' + this.options.toolsContainerClass);
     L.DomEvent.disableClickPropagation(this._container);
     editorContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-editor', this._container);
@@ -49,6 +54,12 @@ var Control = L.Control.extend({
     mapillaryButton = L.DomUtil.create('span', this.options.mapillaryButtonClass, mapillaryContainer);
     mapillaryButton.title = this._local['Open in Mapillary'];
     L.DomEvent.on(mapillaryButton, 'click', this._openMapillary, this);
+    gpxContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-gpx', this._container);
+    gpxButton = L.DomUtil.create('span', this.options.gpxButtonClass, gpxContainer);
+    this._gpxButton = gpxButton;
+    gpxButton.title = this._local['GPX'];
+    gpxButton.setAttribute('disabled', '');
+    L.DomEvent.on(gpxButton, 'click', this._downloadGPX, this);
     this._localizationContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-localization', this._container);
     this._createLocalizationList(this._localizationContainer);
     return this._container;
@@ -85,6 +96,59 @@ var Control = L.Control.extend({
       zoom = this._map.getZoom(),
       prec = 6;
     window.open("https://www.mapillary.com/app/?lat=" + position.lat.toFixed(prec) + "&lng=" + position.lng.toFixed(prec) + "&z=" + zoom);
+  },
+
+  setRouteGeoJSON: function(routeGeoJSON) {
+    this.routeGeoJSON = routeGeoJSON;
+    if (this.routeGeoJSON) {
+      this._gpxButton.removeAttribute('disabled');
+    }
+    else {
+      this._gpxButton.setAttribute('disabled', '');
+    }
+  },
+
+  _downloadGPX: function() {
+    if (this.routeGeoJSON) {
+      var properties = this.routeGeoJSON.properties;
+      var metadata = {
+        name: properties.name,
+        copyright: {
+          '@author': properties.copyright.author,
+          license: properties.copyright.license
+        },
+        link: {
+          '@href': properties.link.href,
+          text: properties.link.text
+        },
+        time: properties.time
+      };
+      var trackPoints = this.routeGeoJSON.geometry.coordinates.map(function (coordinate) {
+        return {
+          '@lat': coordinate[1],
+          '@lon': coordinate[0],
+        };
+      });
+      var gpx = {
+        'gpx': {
+          '@xmlns': 'http://www.topografix.com/GPX/1/1',
+          '@xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+          '@xsi:schemaLocation': 'http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd',
+          '@version': '1.1',
+          'metadata': metadata,
+          'trk': {
+            'trkseg': {
+              'trkpt': trackPoints
+            }
+          }
+        }
+      };
+      var gpxData = JXON.stringify(gpx);
+      var blob = new Blob(['<?xml version="1.0" encoding="utf-8"?>', "\n", gpxData], {
+        type: 'application/gpx+xml;charset=utf-8'
+      }, false);
+      FileSaver.saveAs(blob, 'route.gpx');
+    }
   },
 
   _updatePopupPosition: function(button) {

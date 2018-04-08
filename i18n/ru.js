@@ -3,6 +3,7 @@ module.exports = {
   key: 'ru',
   'Open in Debug Map': 'Открыть в отладочной карте',
   'Open in Mapillary': 'Открыть в Mapillary',
+  'GPX': 'Export GPX file',
   'Open in editor': 'Открыть в редакторе',
   'Open in JOSM': 'Открыть в редакторе JOSM',
   'Select language': 'Выбрать язык',
