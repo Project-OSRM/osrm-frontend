@@ -210,6 +210,39 @@ lrmControl.on('alternateChosen', function(e) {
   }
 });
 
+// Route export
+lrmControl.on('routeselected', function(e) {
+  var route = e.route || {};
+  var routeGeoJSON = {
+    type: 'Feature',
+    properties: {
+      name: route.name,
+      copyright: {
+        author: 'OpenStreetMap contributors',
+        license: 'http://www.openstreetmap.org/copyright'
+      },
+      link: {
+        href: window.document.location.href,
+        text: window.document.title
+      },
+      time: (new Date()).toISOString()
+    },
+    geometry: {
+      type: 'LineString',
+      coordinates: (route.coordinates || []).map(function (coordinate) {
+        return [coordinate.lng, coordinate.lat];
+      })
+    }
+  };
+  toolsControl.setRouteGeoJSON(routeGeoJSON);
+});
+plan.on('waypointschanged', function(e) {
+  if (!e.waypoints ||
+      e.waypoints.filter(function(wp) { return !wp.latLng; }).length > 0) {
+    toolsControl.setRouteGeoJSON(null);
+  }
+});
+
 L.control.locate({
   follow: false,
   setView: true,

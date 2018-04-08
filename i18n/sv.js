@@ -3,6 +3,7 @@ module.exports = {
   key: 'sv',
   'Open in Debug Map': 'Öppna i Debug Map',
   'Open in Mapillary': 'Öppna i Mapillary',
+  'GPX': 'Export GPX file',
   'Open in editor': 'Öppna i redigerare',
   'Open in JOSM': 'Öppna i JOSM',
   'Select language': 'Välj språk',

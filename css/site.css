@@ -52,7 +52,7 @@
 /* Scale position */
 .leaflet-control-scale {
   position: absolute;
-  left: 190px;
+  left: 200px;
   bottom: 1px;
 }
 
@@ -450,6 +450,13 @@
 .leaflet-osrm-tools-container span:hover
 {
    background-color: rgba(255, 255, 255, 0.2);
+}
+.leaflet-osrm-tools-container span[disabled],
+.leaflet-osrm-tools-container span[disabled]:hover
+{
+   background-color: transparent;
+   cursor: default;
+   opacity: 0.5;
 }
 
 /* Instructions */
