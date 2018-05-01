@@ -144,6 +144,10 @@ var Control = L.Control.extend({
         }
       };
       var gpxData = JXON.stringify(gpx);
+      // Work around issues with XML name space generation in IE 11
+      // (see also https://github.com/tyrasd/jxon/issues/42)
+      gpxData = gpxData.replace(/\s+xmlns:NS\d+=""/g, '');
+      gpxData = gpxData.replace(/NS\d+:/g, '');
       var blob = new Blob(['<?xml version="1.0" encoding="utf-8"?>', "\n", gpxData], {
         type: 'application/gpx+xml;charset=utf-8'
       }, false);
