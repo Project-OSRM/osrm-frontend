@@ -895,3 +895,16 @@ td.distance {
     margin-right: -400px !important;
     transition: 0.5s;
 }
+
+.service-selector {
+    bottom: 35px;
+    left: 52px;
+    position: absolute;
+}
+.service-selector select {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    color: #555;
+    padding: 6px 12px;
+}

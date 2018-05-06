@@ -132,6 +132,7 @@ var plan = new ReversablePlan([], {
 L.extend(L.Routing, itineraryBuilder);
 
 // add marker labels
+var defaultProfile = 'driving';
 var controlOptions = {
   plan: plan,
   routeWhileDragging: options.lrm.routeWhileDragging,
@@ -145,6 +146,7 @@ var controlOptions = {
   showAlternatives: options.lrm.showAlternatives,
   units: mergedOptions.units,
   serviceUrl: leafletOptions.services[0].path,
+  profile: leafletOptions.services[0].profile || defaultProfile,
   useZoomParameter: options.lrm.useZoomParameter,
   routeDragInterval: options.lrm.routeDragInterval,
   collapsible: options.lrm.collapsible
@@ -225,3 +227,33 @@ L.control.locate({
   showPopup: false,
   locateOptions: {}
 }).addTo(map);
+
+// Add service selector if there are multiple services.
+if (leafletOptions.services.length > 1) {
+    var serviceSelector = L.control({position: 'bottomleft'});
+    serviceSelector.onAdd = function() {
+        var div = L.DomUtil.create('div', 'service-selector'),
+            serviceSelector = L.DomUtil.create('select'),
+            serviceCount = leafletOptions.services.length,
+            currentService,
+            option,
+            index;
+        div.append(serviceSelector);
+        L.DomEvent.disableClickPropagation(div);
+        for (index = 0; index < serviceCount; index++) {
+            currentService = leafletOptions.services[index];
+            option = L.DomUtil.create('option');
+            option.innerHTML = currentService.label;
+            option.value = index;
+            serviceSelector.append(option);
+        }
+        serviceSelector.onchange = function(event) {
+            currentService = leafletOptions.services[event.target.selectedIndex];
+            lrmControl.getRouter().options.serviceUrl = currentService.path;
+            lrmControl.getRouter().options.profile = currentService.profile || defaultProfile;
+            lrmControl.route();
+        };
+        return div;
+    };
+    serviceSelector.addTo(map);
+}

@@ -30,6 +30,7 @@ module.exports = {
   },
   services: [{
     label: 'Car (fastest)',
+    profile: 'driving',
     path: 'https://router.project-osrm.org/route/v1'
   }],
   layer: [{
