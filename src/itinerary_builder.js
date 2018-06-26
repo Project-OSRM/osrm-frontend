@@ -14,9 +14,12 @@ module.exports = function (language) {
           switch (token) {
             case 'way_name':
             case 'rotary_name':
+            case 'waypoint_name':
             case 'destination':
             case 'exit':
-              return '<b>' + value + '</b>';
+              // Exclude prepending articles/prepositions from French names
+              return value.replace(/^((à )|(au )|(aux )|(le rond-point ))?((d’)|(de )|(des )|(du ))?((l’)|(la )|(le )|(les ))?/,
+                '$&<b>') + '</b>';
             }
           }
           return value;
