@@ -88,13 +88,7 @@ module.exports = function (language) {
       }
       classes.push('leaflet-routing-icon-' + icon);
 
-      var span = L.DomUtil.create('span', classes.join(' '));
-
-      // gray out lane icon if it's not for this maneuver
-      if (maneuverIndication === -1)
-        L.DomUtil.setOpacity(span, 0.5);
-
-      return span;
+      return L.DomUtil.create('span', classes.join(' '));
     });
   }
 
