@@ -584,7 +584,7 @@ td.distance {
 }
 
 .leaflet-routing-icon.lanes.invalid {
-    filter: invert(50%);
+    opacity: 0.5;
 }
 
 .leaflet-routing-alt-minimized .leaflet-routing-icon {
