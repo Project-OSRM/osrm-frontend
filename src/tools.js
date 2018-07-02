@@ -112,16 +112,16 @@ var Control = L.Control.extend({
     if (this.routeGeoJSON) {
       var properties = this.routeGeoJSON.properties;
       var metadata = {
-        name: properties.name,
-        copyright: {
+        'name': properties.name,
+        'copyright': {
           '@author': properties.copyright.author,
-          license: properties.copyright.license
+          'license': properties.copyright.license
         },
-        link: {
+        'link': {
           '@href': properties.link.href,
-          text: properties.link.text
+          'text': properties.link.text
         },
-        time: properties.time
+        'time': properties.time
       };
       var trackPoints = this.routeGeoJSON.geometry.coordinates.map(function (coordinate) {
         return {
@@ -134,6 +134,7 @@ var Control = L.Control.extend({
           '@xmlns': 'http://www.topografix.com/GPX/1/1',
           '@xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
           '@xsi:schemaLocation': 'http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd',
+          '@creator': 'osrm',
           '@version': '1.1',
           'metadata': metadata,
           'trk': {
@@ -146,9 +147,8 @@ var Control = L.Control.extend({
       var gpxData = JXON.stringify(gpx);
       // Work around issues with XML name space generation in IE 11
       // (see also https://github.com/tyrasd/jxon/issues/42)
-      gpxData = gpxData.replace(/\s+xmlns:NS\d+=""/g, '');
-      gpxData = gpxData.replace(/NS\d+:/g, '');
-      var blob = new Blob(['<?xml version="1.0" encoding="utf-8"?>', "\n", gpxData], {
+      gpxData = gpxData.replace(/\s+xmlns:NS\d+=""/g, '').replace(/NS\d+:/g, '');
+      var blob = new Blob(['<?xml version="1.0" encoding="utf-8"?>', '\n', gpxData], {
         type: 'application/gpx+xml;charset=utf-8'
       }, false);
       FileSaver.saveAs(blob, 'route.gpx');
