@@ -29,66 +29,52 @@ module.exports = function (language) {
 
   function stepToLanes(step) {
     var lanes = step.intersections[0].lanes;
-
     if (!lanes) return [];
-
+    // main maneuver
     var maneuver = step.maneuver.modifier || '';
-
+    // accumulative lane icon offset
+    var offset = 0;
+    // process each lane
     return lanes.map(function(lane, index) {
-      var classes = ['leaflet-routing-icon', 'lanes'];
-      if (!lane.valid) classes.push(['invalid']);
-
-      // check maneuver direction matches this lane one(s)
-      var maneuverIndication = lane.indications.indexOf(maneuver);
-      if (maneuverIndication === -1) {
-        // check non-indicated lane to allow straight, right turn from last lane and left turn for first lane
-        if ((lane.indications[0] === 'none' || lane.indications[0] === '') && (
-          maneuver === 'straight' ||
-          (index === 0 && maneuver.slice(-4) === 'left') ||
-          (index === (lanes.length - 1) && maneuver.slice(-5) === 'right'))) {
-          maneuverIndication = 0;
-        } else if (maneuver.slice(0, 7) === 'slight ' ) {
-          // try to exclude 'slight' modifier
-          maneuverIndication = lane.indications.indexOf(maneuver.slice(7));
-        } else {
-          // try to add 'slight' modifier otherwise
-          maneuverIndication = lane.indications.indexOf('slight ' + maneuver);
+      var indicationOffset = offset;
+      // draw icon for each allowed maneuver from this lane
+      var spans = lane.indications.map(function(indication, indicationIndex, indications) {
+        var validIndication = lane.valid;
+        if (lane.valid && maneuver !== indication && indications.length > 1) {
+          // gray out inappropriate indication if there are a few ones for this lane
+          if (maneuver === 'straight' && (indication === 'none' || indication === '')) {
+            validIndication = true;
+          } else if (maneuver.slice(0, 7) === 'slight ') {
+            // try to exclude 'slight' modifier
+            validIndication = (indication === maneuver.slice(7));
+          } else {
+            // try to add 'slight' modifier otherwise
+            validIndication = (indication === 'slight ' + maneuver);
+          }
         }
-      }
-      var indication = (maneuverIndication === -1) ? lane.indications[0] : maneuver;
-
-      var icon;
-      switch (indication) {
-      case 'right':
-        icon = 'turn-right';
-        break;
-      case 'sharp right':
-        icon = 'sharp-right';
-        break;
-      case 'slight right':
-        icon = 'bear-right';
-        break;
-      case 'left':
-        icon = 'turn-left';
-        break;
-      case 'sharp left':
-        icon = 'sharp-left';
-        break;
-      case 'slight left':
-        icon = 'bear-left';
-        break;
-      case 'uturn':
-        icon = 'u-turn';
-        break;
-      //case 'straight':
-      //case 'none':
-      default:
-        icon = 'continue';
-        break;
-      }
-      classes.push('leaflet-routing-icon-' + icon);
-
-      return L.DomUtil.create('span', classes.join(' '));
+        // transform lane indication into icon class
+        var icon;
+        if (indication === 'none' || indication === '')
+          icon = 'straight'
+        else if (indication === 'uturn' && step.driving_side === 'left') // use u-turn icon for left driving side
+          icon = 'uturn-right';
+        else
+          icon = indication.replace(' ', '-');
+        // calcuate offset to draw each next icons in the same lane on the same place
+        var iconOffset = 20 * indicationIndex; // icon has 20px width
+        var iconPos = offset + iconOffset;
+        if (iconPos > indicationOffset)
+          indicationOffset = iconPos;
+        // create span element with necessary icon class
+        var span = L.DomUtil.create('span', 'osrm-lane-icon ' + (validIndication ? '' : 'invalid ') + icon);
+        if (iconPos > 0)
+          span.setAttribute('style', 'position: relative; left: -' + iconPos + 'px;');
+        return span;
+      });
+      // shift global offset for next lane
+      if (indicationOffset > offset)
+        offset = indicationOffset;
+      return spans;
     });
   }
 
@@ -138,8 +124,10 @@ module.exports = function (language) {
       var l = stepToLanes(text);
       if (l) {
         td.appendChild(document.createElement('br'));
-        l.forEach(function(laneIcon) {
-          td.appendChild(laneIcon);
+        l.forEach(function(laneIcons) {
+          laneIcons.forEach(function(laneIcon) {
+            td.appendChild(laneIcon);
+          });
         });
       }
 

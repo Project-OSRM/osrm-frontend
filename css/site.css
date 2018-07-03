@@ -81,7 +81,7 @@
   top: -20px;
 }
 
-{
+/* Not used: {
   background-image: url('../images/crosshairs.svg');
   width: 36px;
   height: 36px;
@@ -90,7 +90,7 @@
   box-shadow: 0 1px 5px rgba(0,0,0,0.65);
   border-radius: 4px;
   z-index: 100;
-}
+} */
 
 /* Layers position */
 .leaflet-control-layers {
@@ -175,8 +175,6 @@
   background-repeat: no-repeat;
   padding-top: 50px;
 }
-
-
 
 .leaflet-routing-geocoders div {
   padding: 4px 0px 4px 0px;
@@ -263,7 +261,6 @@
     cursor: pointer;
     margin-top: 10px;
 }
-
 
 .leaflet-routing-remove-waypoint:hover {
   color: black;
@@ -592,10 +589,6 @@ td.distance {
     height: 20px;
 }
 
-.leaflet-routing-icon.lanes.invalid {
-    opacity: 0.5;
-}
-
 .leaflet-routing-alt-minimized .leaflet-routing-icon {
     background-image: url('../images/osrm.directions.icons.color.svg');
 }
@@ -605,17 +598,13 @@ td.distance {
 .leaflet-routing-icon-turn-right       { background-position: -50px 0px; }
 .leaflet-routing-icon-bear-right       { background-position: -74px 0px; }
 .leaflet-routing-icon-u-turn           { background-position: -101px 0px; }
-
 .leaflet-routing-icon-sharp-left       { background-position: -127px 0px; }
-
 .leaflet-routing-icon-turn-left        { background-position: -150px 0px; }
 .leaflet-routing-icon-bear-left        { background-position: -175px 0px; }
 .leaflet-routing-icon-depart           { background-position: -202px 0px; }
-
 .leaflet-routing-icon-enter-roundabout { background-position: -227px 0px; }
 .leaflet-routing-icon-arrive           { background-position: -253px 0px; }
 .leaflet-routing-icon-via              { background-position: -278px 0px; }
-
 .leaflet-routing-icon-fork             { background-position: -305px 0px; }
 .leaflet-routing-icon-ramp-right       { background-position: -331px 0px; }
 .leaflet-routing-icon-ramp-left        { background-position: -352px 0px; }
@@ -623,6 +612,33 @@ td.distance {
 .leaflet-routing-icon-merge-right      { background-position: -403px 0px; }
 .leaflet-routing-icon-end              { background-position: -429px 0px; }
 
+/* Lane indications */
+.osrm-lane-icon {
+  background-image: url('../images/osrm.lanes.icons.svg');
+  -webkit-background-size: 180px 20px;
+  background-size: 180px 20px;
+  background-repeat: no-repeat;
+  margin: 3px 0 0 0;
+  content: '';
+  display: inline-block;
+  vertical-align: top;
+  width: 20px;
+  height: 20px;
+}
+
+.osrm-lane-icon.invalid {
+  opacity: 0.5;
+}
+
+.osrm-lane-icon.straight      { background-position: 0px 0px; }
+.osrm-lane-icon.left          { background-position: -20px 0px; }
+.osrm-lane-icon.sharp-left    { background-position: -40px 0px; }
+.osrm-lane-icon.slight-left   { background-position: -60px 0px; }
+.osrm-lane-icon.uturn         { background-position: -80px 0px; }
+.osrm-lane-icon.uturn-right   { background-position: -100px 0px; }
+.osrm-lane-icon.slight-right  { background-position: -120px 0px; }
+.osrm-lane-icon.sharp-right   { background-position: -140px 0px; }
+.osrm-lane-icon.right         { background-position: -160px 0px; }
 
 /*  FORM Labels */
 .osrm-form-label {
