@@ -1,4 +1,4 @@
-FROM alpine:3.5
+FROM alpine:3.8
 
 # Enables customized options using environment variables
 ENV OSRM_BACKEND='http://localhost:5000'
@@ -12,7 +12,7 @@ RUN mkdir -p /src
 COPY package.json /src
 
 # Install app dependencies
-RUN apk add --no-cache sed nodejs su-exec && \
+RUN apk add --no-cache sed nodejs su-exec npm && \
     cd /src && \
     npm install
 
