@@ -1,6 +1,6 @@
 module.exports = {
   name: 'Português (Brasil)',
-  key: 'pt-br',
+  key: 'pt-BR',
   'Open in Debug Map': 'Abrir no Depurador de Mapa',
   'Open in Mapillary': 'Abrir em Mapillary',
   'GPX': 'Exportar arquivo GPX',
