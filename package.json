@@ -39,7 +39,7 @@
     "leaflet.locatecontrol": "~0.44.0",
     "local-storage": "^1.4.2",
     "osrm-text-instructions": "~0.11.0",
-    "pem": "^1.12.5",
+    "pem": "1.12.5",
     "qs": "^6.1.0"
   }
 }
