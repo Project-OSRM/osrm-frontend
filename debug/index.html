@@ -125,7 +125,7 @@ var simple = {
         },
         "osrm": {
             "type": "vector",
-            "tiles" : ["http://router.project-osrm.org/tile/v1/car/tile({x},{y},{z}).mvt"]
+            "tiles" : ["https://router.project-osrm.org/tile/v1/car/tile({x},{y},{z}).mvt"]
         }
     },
     "glyphs": "mapbox://fonts/mapbox/{fontstack}/{range}.pbf",
@@ -5180,7 +5180,7 @@ var map = new mapboxgl.Map({
     style: simple,
     zoom: 13,
     hash: true,
-    center: [-122.4536, 37.796]
+    center: [-77.0269,38.8995]
 });
 
 map.addControl(new mapboxgl.Navigation());
