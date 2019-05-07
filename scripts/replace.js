@@ -35,7 +35,7 @@ for (const filepath of [leafletOptions, debug]) {
     // Mapbox uses LngLat
     if (options.match('-122.4536, 37.796')) options = options.replace('-122.4536, 37.796', lnglat)
     // Leaflet uses LatLng
-    else options = options.replace('38.8995, -77.0269', latlng)
+    else options = options.replace('38.8995,-77.0269', latlng)
   }
 
   // Save Leaflet Options
