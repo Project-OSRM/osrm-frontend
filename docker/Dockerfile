@@ -6,6 +6,7 @@ ENV OSRM_CENTER='38.8995,-77.0269'
 ENV OSRM_ZOOM='13'
 ENV OSRM_LANGUAGE='en'
 ENV OSRM_LABEL='Car (fastest)'
+ENV NOMINATIM_URL='https://nominatim.openstreetmap.org'
 
 # Copy package.json
 RUN mkdir -p /src
