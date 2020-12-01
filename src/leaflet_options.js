@@ -34,6 +34,8 @@ var streets = L.tileLayer(mapboxTileURL, {
   osm_de = L.tileLayer('https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png', {
     attribution: osmAttribution,
   }),
+  hiking = L.tileLayer('https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png', {}),
+  bike = L.tileLayer('https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png', {}),
   small_components = L.tileLayer('https://tools.geofabrik.de/osmi/tiles/routing/{z}/{x}/{y}.png', {});
 
 module.exports = {
@@ -57,6 +59,8 @@ module.exports = {
     'openstreetmap.de.org': osm_de
   }],
   overlay: {
+    'Hiking': hiking,
+    'Bike': bike,
     'Small Components': small_components
   },
   baselayer: {
