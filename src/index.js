@@ -22,7 +22,7 @@ var itineraryBuilder = require('./itinerary_builder')(mergedOptions.language);
 
 var mapLayer = leafletOptions.layer;
 var overlay = leafletOptions.overlay;
-var baselayer = ls.get('layer') ? mapLayer[0][ls.get('layer')] : mapLayer[0]['Mapbox Streets'];
+var baselayer = ls.get('layer') ? mapLayer[0][ls.get('layer')] : leafletOptions.defaultState.layer;
 var layers = ls.get('getOverlay') && [baselayer, overlay['Small Components']] || baselayer;
 var map = L.map('map', {
   zoomControl: true,
