@@ -19,9 +19,11 @@ for (const filepath of [leafletOptions, debug]) {
   const CENTER = process.env.OSRM_CENTER || '38.8995, -77.0269'
   const BACKEND = process.env.OSRM_BACKEND || 'https://router.project-osrm.org'
   const LANGUAGE = process.env.OSRM_LANGUAGE || 'en'
+  const NOMINATIM = process.env.NOMINATIM_URL || 'https://nominatim.openstreetmap.org'
   const DEFAULT_LAYER = process.env.OSRM_DEFAULT_LAYER || 'streets'
 
   // Edit Leaflet Options
+  if (NOMINATIM) options = options.replace(/\/\/nominatim\.openstreetmap\.org/, NOMINATIM)
   if (BACKEND) options = options.replace(/http[s]?:\/\/router\.project-osrm\.org/, BACKEND)
   if (LABEL) options = options.replace('Car (fastest)', LABEL)
   if (ZOOM) options = options.replace('zoom: 13', `zoom: ${ZOOM}`)

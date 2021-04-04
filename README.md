@@ -19,6 +19,9 @@ docker run -p 9966:9966 osrm/osrm-frontend
 Per default routing requests are made against the backend at `http://localhost:5000`.
 You can change the backend by using `-e OSRM_BACKEND='http://localhost:5001'` in the `docker run` command.
 
+Per default address requests are made against the Nominatim demo at `https://nominatim.openstreetmap.org`.
+You can change the Nominmatim instance by using `-e NOMINATIM_URL='http://localhost:8080'` in the `docker run` command.
+
 In case Docker complains about not being able to connect to the Docker daemon make sure you are in the `docker` group.
 
 ```
