@@ -28,7 +28,7 @@ for (const filepath of [leafletOptions, debug]) {
   if (ZOOM) options = options.replace('zoom: 13', `zoom: ${ZOOM}`)
   if (LANGUAGE) options = options.replace(`language: 'en'`, `language: '${LANGUAGE}'`)
   if (DEFAULT_LAYER) options = options.replace('layer: streets', `layer: ${DEFAULT_LAYER}`)
-  if (MAPBOX_TOKEN) options = options.replace(`mapboxToken: '.*'`, `mapboxToken: '${MAPBOX_TOKEN}'`)
+  if (MAPBOX_TOKEN) options = options.replace(/mapboxToken = '.*'/, `mapboxToken = '${MAPBOX_TOKEN}'`)
   if (CENTER) {
     const latLng = CENTER.split(/[, ]+/)
     const lat = latLng[0];
