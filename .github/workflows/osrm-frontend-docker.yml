@@ -2,7 +2,7 @@ name: build and publish container image
 on:
   push:
     branches:
-      - master
+      - gh-pages
 
 jobs:
   publish:
@@ -17,6 +17,8 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: ghcr.io/${{ github.repository }}          
+          flavor: |
+            latest=true
 
 
       - name: Log in to GitHub Docker Registry
