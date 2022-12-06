@@ -41,6 +41,6 @@
     "leaflet.locatecontrol": "~0.44.0",
     "local-storage": "^1.4.2",
     "osrm-text-instructions": "~0.13.0",
-    "qs": "^6.1.0"
+    "qs": "^6.4.1"
   }
 }
