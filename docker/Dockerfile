@@ -1,4 +1,4 @@
-FROM alpine:3.5
+FROM alpine:3.7
 
 # Enables customized options using environment variables
 ENV OSRM_BACKEND='http://localhost:5000'
