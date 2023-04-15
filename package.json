@@ -28,7 +28,7 @@
   "devDependencies": {
     "bistre": "^1.0.1",
     "browserify": "^14.3.0",
-    "budo": "^9.4.0",
+    "budo": "^11.8.4",
     "uglify-js": "^2.8.0"
   },
   "dependencies": {
