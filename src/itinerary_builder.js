@@ -82,9 +82,7 @@ module.exports = function (language) {
     });
   }
 
-  L.Routing = L.Routing || {};
-
-  L.Routing.ItineraryBuilder = L.Class.extend({
+  return L.Class.extend({
     options: {
       containerClassName: ''
     },
@@ -145,6 +143,4 @@ module.exports = function (language) {
       return row;
     }
   });
-
-  return L.Routing;
-}
+};
