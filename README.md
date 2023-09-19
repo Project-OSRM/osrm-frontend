@@ -13,7 +13,7 @@ We base [our Docker images](https://hub.docker.com/r/osrm/osrm-frontend/) on Alp
 Serves the frontend at `http://localhost:9966` running queries against the routing engine backend:
 
 ```
-docker run -p 9966:9966 osrm/osrm-frontend
+docker run -p 9966:9966 ghcr.io/project-osrm/osrm-frontend:latest
 ```
 
 Per default routing requests are made against the backend at `http://localhost:5000`.
