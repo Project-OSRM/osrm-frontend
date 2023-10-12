@@ -68,6 +68,10 @@ module.exports = {
     'Bike': bike,
     'Small Components': small_components
   },
+  nominatim:{
+      
+      url:'//nominatim.openstreetmap.org/'
+  },
   baselayer: {
     one: streets,
     two: outdoors,
