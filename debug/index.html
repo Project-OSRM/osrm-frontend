@@ -125,7 +125,9 @@ var simple = {
         },
         "osrm": {
             "type": "vector",
-            "tiles" : ["https://router.project-osrm.org/tile/v1/car/tile({x},{y},{z}).mvt"]
+            "tiles" : ["https://router.project-osrm.org/tile/v1/car/tile({x},{y},{z}).mvt"],
+            "minzoom": 12,
+            "maxzoom": 19
         }
     },
     "glyphs": "mapbox://fonts/mapbox/{fontstack}/{range}.pbf",
