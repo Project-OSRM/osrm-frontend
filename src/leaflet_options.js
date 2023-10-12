@@ -54,7 +54,7 @@ module.exports = {
   },
   services: [{
     label: 'Car (fastest)',
-    path: 'https://router.project-osrm.org/route/v1'
+    path: 'https://routing.openstreetmap.de/routed-car/route/v1'
   }],
   layer: [{
     'Mapbox Streets': streets,
