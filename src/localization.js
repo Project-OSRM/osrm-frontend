@@ -11,6 +11,8 @@ var language_mapping = {
   sv: require('../i18n/sv'),
   hu: require('../i18n/hu'),
   vi: require('../i18n/vi'),
+  ar: require('../i18n/ar'),
+  hi: require('../i18n/hi'),
   'pt-BR': require('../i18n/pt-BR'),
   'zh-Hans': require('../i18n/zh-Hans')
 };
