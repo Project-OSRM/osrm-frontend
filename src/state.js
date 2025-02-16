@@ -17,7 +17,16 @@ var State = L.Class.extend({
       this.options.alternative = e.route.routesIndex;
     }, this);
 
-    this._lrm.getPlan().on('waypointschanged', function() { this.options.waypoints = this._lrm.getWaypoints(); this.update(); }.bind(this));
+    this._lrm.getPlan().on('waypointschanged', function () {
+      this.options.waypoints = this._lrm.getWaypoints();
+      var ropt = this._lrm.options.router.options, i;
+      for (i = 0; i < ropt.services.length; i++) {
+        if (ropt.serviceUrl === ropt.services[i].path)
+          this.options.service = i
+      }
+      this.update();
+    }.bind(this));
+
     this._map.on('zoomend', function() { this.options.zoom = this._map.getZoom();  this.update(); }.bind(this));
     this._map.on('moveend', function() { this.options.center = this._map.getCenter(); this.update(); }.bind(this));
     this._tools.on('languagechanged', function(e) { this.options.language = e.language; this.reload(); }.bind(this));
@@ -29,7 +38,26 @@ var State = L.Class.extend({
   },
 
   set: function(options) {
+    var self = this;
     L.setOptions(this, options);
+    L.Util.setOptions(this._lrm.options.router, {
+      serviceUrl: this._lrm.options.router.options.services[this.options.service].path
+    });
+    var profileSelector = L.DomUtil.get("profile-selector");
+    var services = self._lrm.options.router.options.services;
+    if (profileSelector) {
+      profileSelector.selectedIndex = this.options.service;
+      L.DomEvent.addListener(profileSelector, 'change', function () {
+        if (profileSelector.selectedIndex >= 0 &&
+          profileSelector.selectedIndex < services.length) {
+          self._tools.setProfile(services[profileSelector.selectedIndex]);
+        }
+      });
+    }
+    if (this.options.service >= 0 &&
+      this.options.service < services.length) {
+      self._tools.setProfile(services[this.options.service]);
+    }
     this._lrm.setWaypoints(this.options.waypoints);
     this._map.setView(this.options.center, this.options.zoom);
   },
