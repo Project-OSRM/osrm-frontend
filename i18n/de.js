@@ -7,7 +7,13 @@ module.exports = {
   'Open in editor': 'Im Editor öffnen',
   'Open in JOSM': 'In JOSM öffnen',
   'Select language': 'Sprache auswählen',
-  'Start - press enter to drop marker': 'Start - drücken um einen Marker zu plazieren',
-  'End - press enter to drop marker': 'Ende - drücken um einen Marker zu plazieren',
-  'Via point - press enter to drop marker': 'Zwischenstop - drücken um einen Marker zu plazieren'
+  'Share Route': 'Route teilen',
+  'Link': 'Link',
+  'Shortlink': 'Kurzlink',
+  'Start - press enter to drop marker': 'Start - drücken um einen Marker zu platzieren',
+  'End - press enter to drop marker': 'Ende - drücken um einen Marker zu platzieren',
+  'Via point - press enter to drop marker': 'Zwischenstop - drücken um einen Marker zu platzieren',
+  'Bike': 'Fahrrad',
+  'Car': 'Auto',
+  'Foot': 'Fußgänger',
 };
