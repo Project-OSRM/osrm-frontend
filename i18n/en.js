@@ -16,5 +16,8 @@ module.exports = {
   'Bike': 'Bike',
   'Car': 'Car',
   'Foot': 'Foot',
+<<<<<<< HEAD
   'Build': 'Build: '
+=======
+>>>>>>> 1668176 (Add translations)
 };
