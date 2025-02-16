@@ -15,7 +15,7 @@ require('./polyfill');
 
 var parsedOptions = links.parse(window.location.search.slice(1));
 var mergedOptions = L.extend(leafletOptions.defaultState, parsedOptions);
-var local = localization.get(mergedOptions.language);
+var language = mergedOptions.language;
 
 // load only after language was chosen
 var ItineraryBuilder = require('./itinerary_builder')(mergedOptions.language);
@@ -115,8 +115,8 @@ var plan = new ReversablePlan([], {
   dragStyles: options.lrm.dragStyles,
   geocodersClassName: options.lrm.geocodersClassName,
   geocoderPlaceholder: function(i, n) {
-    var startend = [local['Start - press enter to drop marker'], local['End - press enter to drop marker']];
-    var via = [local['Via point - press enter to drop marker']];
+    var startend = [localization.t(language, 'Start - press enter to drop marker'), localization.t(language, 'End - press enter to drop marker')];
+    var via = [localization.t(language, 'Via point - press enter to drop marker')];
     if (i === 0) {
       return startend[0];
     }
@@ -142,11 +142,14 @@ var controlOptions = {
   showAlternatives: options.lrm.showAlternatives,
   units: mergedOptions.units,
   serviceUrl: leafletOptions.services[0].path,
+  useHints: false,
+  services: leafletOptions.services,
   useZoomParameter: options.lrm.useZoomParameter,
   routeDragInterval: options.lrm.routeDragInterval,
   collapsible: options.lrm.collapsible,
   itineraryBuilder: new ItineraryBuilder(),
 };
+
 var router = (new L.Routing.OSRMv1(controlOptions));
 router._convertRouteOriginal = router._convertRoute;
 router._convertRoute = function(responseRoute) {
