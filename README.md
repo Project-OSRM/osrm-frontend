@@ -16,8 +16,11 @@ Serves the frontend at `http://localhost:9966` running queries against the routi
 docker run -p 9966:9966 ghcr.io/project-osrm/osrm-frontend:latest
 ```
 
-Per default routing requests are made against the backend at `http://localhost:5000`.
-You can change the backend by using `-e OSRM_BACKEND='http://localhost:5001'` in the `docker run` command.
+By default, the docker container uses the settings in `config/config.json` file. If you'd like to provide a custom config file (with your own backend server, layers and overlays), you can run the container with the following command:
+
+```
+docker run -p 9966:9966 -v ./YOUR_CONFIG.json:/src/config/config.json osrm-frontend
+```
 
 In case Docker complains about not being able to connect to the Docker daemon make sure you are in the `docker` group.
 
@@ -56,14 +59,19 @@ npm run start-index
 
 ## Changing Backends
 
-In `src/leaflet_options.js` adjust:
+In `config/config.json` add or adjust your own services:
 
 ```
 services: [{
-  label: 'Car (fastest)',
+  label: 'Car',
   path: 'http://localhost:5000/route/v1'
 }],
 ```
+
+You can also adjust your own layers and overlays.
+
+## Debug
+> Note: "debug" pages currently do not work "out of the box" and require manual configuration
 
 For debug tiles showing speeds and small components available at `/debug` adjust in `debug/index.html`
 

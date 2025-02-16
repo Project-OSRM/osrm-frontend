@@ -1,0 +1,54 @@
+{
+    "zoom": 13,
+    "center": [
+        50.8503,
+        4.3517
+    ],
+    "language": "en",
+    "layers": [
+        {
+            "name": "openstreetmap.org",
+            "url": "//tile.openstreetmap.org/{z}/{x}/{y}.png",
+            "attribution": "© <a href=\"https://www.openstreetmap.org/copyright/en\">OpenStreetMap</a> contributors"
+        },
+        {
+            "name": "openstreetmap.de",
+            "url": "//tile.openstreetmap.de/tiles/osmde/{z}/{x}/{y}.png",
+            "attribution": "<a target=\"_blank\" href=\"http://www.openstreetmap.org/\">Karte hergestellt aus OpenStreetMap-Daten</a> | Lizenz: <a rel=\"license\" target=\"_blank\" href=\"http://opendatacommons.org/licenses/odbl/\">Open Database License (ODbL)</a>"
+        }
+    ],
+    "overlays":[
+        {
+            "name": "Hiking",
+            "url": "//tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png",
+            "attribution": "© <a href=\"http://waymarkedtrails.org\">Sarah Hoffmann</a> (<a href=\"https://creativecommons.org/licenses/by-sa/3.0/\">CC-BY-SA</a>)"
+        },
+        {
+            "name": "Bike",
+            "url": "//tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png",
+            "attribution": "© <a href=\"http://waymarkedtrails.org\">Sarah Hoffmann</a> (<a href=\"https://creativecommons.org/licenses/by-sa/3.0/\">CC-BY-SA</a>)"
+        },
+        {
+            "name": "Small Components",
+            "url": "https://tools.geofabrik.de/osmi/tiles/routing/{z}/{x}/{y}.png"
+        }
+        
+    ],
+    "services": [
+        {
+            "label": "Car",
+            "path": "https://routing.openstreetmap.de/routed-car/route/v1",
+            "debug": "car"
+        },
+        {
+            "label": "Bike",
+            "path": "https://routing.openstreetmap.de/routed-bike/route/v1",
+	    "debug": "bike"
+        },
+        {
+            "label": "Foot",
+            "path": "https://routing.openstreetmap.de/routed-foot/route/v1",
+            "debug": "foot"
+        }
+    ]
+}
