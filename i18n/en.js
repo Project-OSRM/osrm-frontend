@@ -7,7 +7,13 @@ module.exports = {
   'Open in editor': 'Open in editor',
   'Open in JOSM': 'Open in JOSM',
   'Select language': 'Select language',
+  'Share Route': 'Share Route',
+  'Link': 'Link',
+  'Shortlink': 'Shortlink',
   'Start - press enter to drop marker': 'Start - press enter to drop marker',
   'End - press enter to drop marker': 'End - press enter to drop marker',
-  'Via point - press enter to drop marker': 'Via point - press enter to drop marker'
+  'Via point - press enter to drop marker': 'Via point - press enter to drop marker',
+  'Bike': 'Bike',
+  'Car': 'Car',
+  'Foot': 'Foot',
 };

@@ -7,7 +7,13 @@ module.exports = {
   'Open in editor': 'Apri nell’editor',
   'Open in JOSM': 'Apri in JOSM',
   'Select language': 'Seleziona la lingua',
+  'Share Route': 'Condividi il percorso',
+  'Link': 'Link',
+  'Shortlink': 'Link breve',
   'Start - press enter to drop marker': 'Inizio - premere invio per rilasciare un marcatore',
   'End - press enter to drop marker': 'Fine - premere invio per rilasciare un marcatore',
-  'Via point - press enter to drop marker': 'Punto di passaggio - premere invio per rilasciare un marcatore'
+  'Via point - press enter to drop marker': 'Punto di passaggio - premere invio per rilasciare un marcatore',
+  'Bike': 'Bicicletta',
+  'Car': 'Auto',
+  'Foot': 'A piedi',
 };
