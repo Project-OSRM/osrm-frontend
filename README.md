@@ -46,7 +46,7 @@ Then compile assets and start the local server with
 npm start
 ```
 
-On Windows with no Unix tools installed (`bash`, `sed`, `cp`) the server could be started with two other commands
+On Windows with no Unix tools installed (`bash` and `cp`) the server could be started with two other commands
 executed by `npm start` internally:
 
 ```bash
