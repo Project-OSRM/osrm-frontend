@@ -37,16 +37,17 @@ function _parseInteger(intStr) {
 }
 
 function formatLink(options) {
+    // Output all waypoints as loc parameters, using empty string for missing
+    var locs = undefined;
+    if (options.waypoints) {
+        locs = options.waypoints.map(function(wp) {
+            return wp && wp.latLng ? _formatCoord(wp.latLng) : '';
+        });
+    }
     return qs.stringify({
         z: options.zoom,
         center: options.center ? _formatCoord(options.center) : undefined,
-        loc: options.waypoints ? options.waypoints.filter(function(wp) {
-            return wp.latLng !== undefined;
-          })
-          .map(function(wp) {
-            return wp.latLng;
-          })
-          .map(_formatCoord) : undefined,
+        loc: locs,
         hl: options.language,
         alt: options.alternative,
         df: options.units,
@@ -65,16 +66,12 @@ function parseLink(link) {
     parsedValues.center = q.center && _parseCoord(q.center);
     if (q.loc) {
       if (q.loc.constructor === Array) {
-        // more than one loc is given
-        parsedValues.waypoints = q.loc.filter(function (loc) {
-            return loc != "";
-        }).map(_parseCoord).map(
-            function (coord) {
-                return L.Routing.waypoint(coord);
-            }
-        );
+        // any number of locs: start, via, end, etc.
+        parsedValues.waypoints = q.loc.map(function(loc) {
+          return loc && loc !== '' ? L.Routing.waypoint(_parseCoord(loc)) : L.Routing.waypoint(null);
+        });
       } else if (q.loc.constructor === String) {
-        // exactly one loc is given
+        // exactly one loc is given (backward compatibility)
         parsedValues.waypoints = [L.Routing.waypoint(_parseCoord(q.loc))];
       }
     }
