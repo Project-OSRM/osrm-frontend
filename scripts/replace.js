@@ -12,6 +12,7 @@ function applyReplacements(content, env) {
   const BACKEND = env.OSRM_BACKEND || 'https://router.project-osrm.org'
   const LANGUAGE = env.OSRM_LANGUAGE || 'en'
   const DEFAULT_LAYER = env.OSRM_DEFAULT_LAYER || 'streets'
+  const NOMINATIM_ENDPOINT = env.NOMINATIM_ENDPOINT || 'https://nominatim.openstreetmap.org/'
 
   let options = content
 
@@ -34,6 +35,7 @@ function applyReplacements(content, env) {
     // Leaflet uses LatLng
     else options = options.replace('38.8995,-77.0269', latlng)
   }
+  if (NOMINATIM_ENDPOINT) options = options.replace('https://nominatim.openstreetmap.org/', NOMINATIM_ENDPOINT)
 
   return options
 }

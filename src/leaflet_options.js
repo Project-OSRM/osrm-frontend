@@ -65,5 +65,8 @@ module.exports = {
     three: satellite,
     four: osm,
     five: osm_de
+  },
+  nominatim: {
+    path: 'https://nominatim.openstreetmap.org/'
   }
 };
