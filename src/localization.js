@@ -9,6 +9,7 @@ var language_mapping = {
   ja: require('../i18n/ja'),
   ru: require('../i18n/ru'),
   sv: require('../i18n/sv'),
+  da: require('../i18n/da'),
   hu: require('../i18n/hu'),
   vi: require('../i18n/vi'),
   'pt-BR': require('../i18n/pt-BR'),
