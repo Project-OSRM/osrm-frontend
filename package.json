@@ -27,20 +27,20 @@
   "license": "ISC",
   "devDependencies": {
     "bistre": "^1.0.1",
-    "browserify": "^17.0.0",
+    "browserify": "^17.0.1",
     "budo": "^11.8.4",
-    "uglify-js": "^3.17.4"
+    "uglify-js": "^3.19.3"
   },
   "dependencies": {
     "file-saver": "^2.0.5",
     "jsonp": "^0.2.0",
     "jxon": "^2.0.0-beta.5",
     "leaflet": "~1.9.4",
-    "leaflet-control-geocoder": "~2.4.0",
+    "leaflet-control-geocoder": "^3.3.1",
     "leaflet-routing-machine": "3.2.12",
-    "leaflet.locatecontrol": "~0.79.0",
+    "leaflet.locatecontrol": "^0.89.0",
     "local-storage": "^2.0.0",
-    "osrm-text-instructions": "~0.11.0",
+    "osrm-text-instructions": "^0.15.0",
     "qs": "^6.4.1"
   }
 }

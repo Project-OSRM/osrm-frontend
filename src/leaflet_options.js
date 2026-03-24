@@ -2,32 +2,23 @@
 
 var L = require('leaflet');
 
-var mapboxTileURL = 'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}',
-    mapboxAttribution = '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> <strong><a href="https://www.mapbox.com/map-feedback/" target="_blank">Improve this map</a></strong>',
-    mapboxToken = 'pk.eyJ1IjoibXNsZWUiLCJhIjoiclpiTWV5SSJ9.P_h8r37vD8jpIH1A6i1VRg',
-    osmAttribution = '© <a href="https://www.openstreetmap.org/copyright/en">OpenStreetMap</a> contributors',
+var osmAttribution = '© <a href="https://www.openstreetmap.org/copyright/en">OpenStreetMap</a> contributors',
+    cartoAttribution = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
+    esriAttribution = 'Tiles © <a href="https://www.esri.com/">Esri</a> — Source: Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community',
     waymarkedtrailsAttribution = '© <a href="http://waymarkedtrails.org">Sarah Hoffmann</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)';
 
-var streets = L.tileLayer(mapboxTileURL, {
-    attribution: mapboxAttribution,
-    tileSize: 512,
-    zoomOffset: -1,
-    id: 'mapbox/streets-v11',
-    accessToken: mapboxToken
+var streets = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: cartoAttribution,
+    subdomains: 'abcd',
+    maxZoom: 19
   }),
-  outdoors = L.tileLayer(mapboxTileURL, {
-    attribution: mapboxAttribution,
-    tileSize: 512,
-    zoomOffset: -1,
-    id: 'mapbox/outdoors-v11',
-    accessToken: mapboxToken
+  outdoors = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+    attribution: osmAttribution + ', <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
+    maxZoom: 17
   }),
-  satellite = L.tileLayer(mapboxTileURL, {
-    attribution: mapboxAttribution,
-    tileSize: 512,
-    zoomOffset: -1,
-    id: 'mapbox/satellite-streets-v11',
-    accessToken: mapboxToken
+  satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: esriAttribution,
+    maxZoom: 19
   }),
   osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: osmAttribution,
@@ -54,14 +45,14 @@ module.exports = {
   },
   services: [{
     label: 'Car (fastest)',
-    path: 'https://router.project-osrm.org/route/v1'
+    path: 'http://127.0.0.1:5000/route/v1'
   }],
   layer: [{
-    'Mapbox Streets': streets,
-    'Mapbox Outdoors': outdoors,
-    'Mapbox Streets Satellite': satellite,
+    'Streets': streets,
+    'Outdoors': outdoors,
+    'Satellite': satellite,
     'openstreetmap.org': osm,
-    'openstreetmap.de.org': osm_de
+    'openstreetmap.de': osm_de
   }],
   overlay: {
     'Hiking': hiking,
