@@ -3,6 +3,11 @@
 var L = require('leaflet');
 var Geocoder = require('leaflet-control-geocoder');
 var LRM = require('leaflet-routing-machine');
+// leaflet.locatecontrol@0.89 UMD has a bug: after the CJS IIFE it tries
+// `window.L.Control.Locate.locate` but never sets L.Control.Locate in the
+// CJS path, causing a crash at bundle load time. Pre-initialising the
+// namespace here prevents the crash; we then call locate.locate() directly.
+L.Control.Locate = L.Control.Locate || {};
 var locate = require('leaflet.locatecontrol');
 var options = require('./lrm_options');
 var links = require('./links');
@@ -249,7 +254,7 @@ plan.on('waypointschanged', function(e) {
   }
 });
 
-L.control.locate({
+locate.locate({
   follow: false,
   setView: true,
   remainActive: false,
