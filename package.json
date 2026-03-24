@@ -4,7 +4,8 @@
   "description": "frontend interface for project osrm",
   "main": "src/index.js",
   "scripts": {
-    "test": "eslint src/*.js i18n/*.js",
+    "test": "jest",
+    "test:lint": "eslint src/*.js i18n/*.js",
     "replace": "node ./scripts/replace.js",
     "compile": "browserify -d src/index.js -s osrm > bundle.raw.js && uglifyjs bundle.raw.js -c -m --source-map filename=bundle.js.map -o bundle.js",
     "build": "npm run replace && npm run compile && cp node_modules/leaflet/dist/leaflet.css css/leaflet.css",
@@ -24,17 +25,24 @@
     "api"
   ],
   "author": "amy lee walton",
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/test/**/*.test.js"
+    ]
+  },
   "license": "ISC",
   "devDependencies": {
     "bistre": "^1.0.1",
     "browserify": "^17.0.1",
     "budo": "^11.8.4",
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0",
     "uglify-js": "^3.19.3"
   },
   "dependencies": {
     "file-saver": "^2.0.5",
     "jsonp": "^0.2.0",
-    "jxon": "^2.0.0-beta.5",
     "leaflet": "~1.9.4",
     "leaflet-control-geocoder": "^3.3.1",
     "leaflet-routing-machine": "3.2.12",
