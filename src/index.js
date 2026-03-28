@@ -1,7 +1,8 @@
 'use strict';
 
 var L = require('leaflet');
-var Geocoder = require('leaflet-control-geocoder');
+var createGeocoder = require('./geocoder');
+require('leaflet-control-geocoder');
 var LRM = require('leaflet-routing-machine');
 // leaflet.locatecontrol@0.89 UMD has a bug: after the CJS IIFE it tries
 // `window.L.Control.Locate.locate` but never sets L.Control.Locate in the
@@ -98,7 +99,7 @@ function makeIcon(i, n) {
   }
 }
 var plan = new ReversablePlan([], {
-  geocoder: L.Control.Geocoder.nominatim(),
+  geocoder: createGeocoder.coordPreserving(),
   routeWhileDragging: true,
   createMarker: function(i, wp, n) {
     var options = {
