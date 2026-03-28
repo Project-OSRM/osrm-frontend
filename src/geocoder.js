@@ -48,12 +48,17 @@ geocoder.coordPreserving = function() {
     return promise.then(function(results) {
       if (typeof cb === 'function') cb.call(context, results);
       return results;
+    }).catch(function() {
+      var fallback = [];
+      if (typeof cb === 'function') cb.call(context, fallback);
+      return fallback;
     });
   }
 
   // Helper: reverse-geocodes coordinates for display name, but preserves exact latlng.
   function coordResult(latlng, query) {
-    return nominatim.reverse(latlng, 67108864).then(function(results) {
+    // Use scale corresponding to zoom level 18 (was hard-coded as 256 * 2^18 = 67108864)
+    return nominatim.reverse(latlng, L.CRS.EPSG3857.scale(18)).then(function(results) {
       if (results && results.length > 0) {
         return [L.extend({}, results[0], {
           center: latlng,
