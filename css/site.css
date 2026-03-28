@@ -408,7 +408,7 @@
 .osrm-turn-left-icon        { background-position: -120px 0; }
 .osrm-bear-left-icon        { background-position: -140px 0; }
 .osrm-depart-icon           {
-	background-position: -160px -1;
+	background-position: -160px -1px;
 	background-color: #87DE9F;
 }
 .osrm-enter-roundabout-icon { background-position: -180px 0; }
@@ -558,7 +558,7 @@
   width: 20px;
   height: 20px;
   font-family: Arial;
-  font-variant: bold;
+  font-weight: bold;
   font-size: 20px;
   color: #fff;
 }
@@ -767,7 +767,7 @@ td.distance {
     margin-bottom: 0px;
   }
 .leaflet-control-zoom {
-  display: hidden;
+  display: none;
  }
 }
 
