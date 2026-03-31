@@ -186,6 +186,31 @@ var lrmControl = L.Routing.control(Object.assign(controlOptions, {
 })).addTo(map);
 var toolsControl = tools.control(localization.get(mergedOptions.language), localization.getLanguages(), options.tools).addTo(map);
 var state = state(map, lrmControl, toolsControl, mergedOptions);
+if (leafletOptions.services.length > 1) {
+  setTimeout(function() {
+    var lrmContainer = lrmControl.getContainer();
+    if (!lrmContainer) return;
+
+    var providerContainer = L.DomUtil.create('div', 'leaflet-osrm-select-provider-container');
+    var providerSelect = L.DomUtil.create('select', 'leaflet-osrm-select-provider', providerContainer);
+    providerSelect.setAttribute('title', 'Select routing provider');
+
+    leafletOptions.services.forEach(function(service, idx) {
+      var option = L.DomUtil.create('option', '', providerSelect);
+      option.setAttribute('value', idx);
+      option.appendChild(document.createTextNode(service.label));
+    });
+
+    L.DomEvent.on(providerSelect, 'change', function(e) {
+      var selectedIdx = parseInt(e.target.value, 10);
+      var selectedService = leafletOptions.services[selectedIdx];
+      router.options.serviceUrl = selectedService.path;
+      lrmControl.route();
+    });
+
+    lrmContainer.insertBefore(providerContainer, lrmContainer.firstChild);
+  }, 100);
+}
 
 plan.on('waypointgeocoded', function(e) {
   if (plan._waypoints.filter(function(wp) { return !!wp.latLng; }).length < 2) {

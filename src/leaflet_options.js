@@ -46,6 +46,9 @@ module.exports = {
   services: [{
     label: 'Car (fastest)',
     path: 'https://router.project-osrm.org/route/v1'
+  }, {
+    label: 'Car (shortest)',
+    path: 'https://router.project-osrm.org/route/v1'
   }],
   layer: [{
     'Streets': streets,
