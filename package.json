@@ -7,7 +7,7 @@
     "test": "jest",
     "test:lint": "eslint src/*.js i18n/*.js",
     "replace": "node ./scripts/replace.js",
-    "compile": "browserify -d src/index.js -s osrm > bundle.raw.js && uglifyjs bundle.raw.js -c -m --source-map filename=bundle.js.map -o bundle.js",
+    "compile": "webpack --config webpack.config.js",
     "build": "npm run replace && npm run compile && cp node_modules/leaflet/dist/leaflet.css css/leaflet.css",
     "start-index": "budo src/index.js --serve=bundle.js --live -d | bistre",
     "start-index-prod": "budo src/index.js --serve=bundle.js -d | bistre",
@@ -35,12 +35,10 @@
   },
   "license": "ISC",
   "devDependencies": {
-    "bistre": "^1.0.1",
-    "browserify": "^17.0.1",
-    "budo": "^11.8.4",
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0",
-    "uglify-js": "^3.19.3"
+    "webpack": "^5.105.4",
+    "webpack-cli": "^7.0.2"
   },
   "dependencies": {
     "file-saver": "^2.0.5",
