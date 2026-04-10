@@ -52,8 +52,8 @@
 /* Scale position */
 .leaflet-control-scale {
   position: absolute;
-  left: 320px;
   bottom: 1px;
+  right: 350px;
 }
 
 /* Zoom control position */
@@ -919,4 +919,37 @@ td.distance {
 .leaflet-routing-container-hide.dark, .leaflet-routing-container-hide .leaflet-routing-alternatives-container {
     margin-right: -400px !important;
     transition: 0.5s;
+}
+
+/* Version info */
+#version-info {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    font-size: 11px;
+    color: #666;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: help;
+    z-index: 999;
+}
+
+.leaflet-osrm-tools-version {
+    padding: 12px 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    margin-top: 8px;
+    font-size: 12px;
+    color: #fff;
+}
+
+.leaflet-osrm-tools-version-label {
+    font-weight: bold;
+    margin-right: 4px;
+    color: #fff;
+}
+
+.leaflet-osrm-tools-version-value {
+    cursor: help;
+    color: #fff;
 }

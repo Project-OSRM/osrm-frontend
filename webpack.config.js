@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('path');
+const webpack = require('webpack');
 
 module.exports = {
   entry: './src/index.js',
@@ -25,5 +26,10 @@ module.exports = {
       stream: false,
       buffer: false
     }
-  }
+  },
+  plugins: [
+    new webpack.DefinePlugin({
+      __BUILD_TIMESTAMP__: JSON.stringify(new Date().toISOString())
+    })
+  ]
 };

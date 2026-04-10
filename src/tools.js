@@ -3,6 +3,7 @@
 var L = require('leaflet');
 var FileSaver = require('file-saver');
 var buildGPX = require('./gpx');
+var version = require('./version');
 var Control = L.Control.extend({
   includes: L.Mixin.Events,
   options: {
@@ -60,6 +61,7 @@ var Control = L.Control.extend({
     L.DomEvent.on(gpxButton, 'click', this._downloadGPX, this);
     this._localizationContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-localization', this._container);
     this._createLocalizationList(this._localizationContainer);
+    this._createVersionInfo(this._container);
     return this._container;
   },
 
@@ -145,6 +147,16 @@ var Control = L.Control.extend({
         option.setAttribute('selected', '');
       }
     });
+  },
+
+  _createVersionInfo: function(container) {
+    var versionInfo = version.getVersionInfo();
+    var versionContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-version', container);
+    var versionLabel = L.DomUtil.create('span', 'leaflet-osrm-tools-version-label', versionContainer);
+    versionLabel.textContent = 'Build: ';
+    var versionValue = L.DomUtil.create('span', 'leaflet-osrm-tools-version-value', versionContainer);
+    versionValue.textContent = versionInfo.formatted;
+    versionValue.setAttribute('title', versionInfo.timestamp);
   }
 });
 

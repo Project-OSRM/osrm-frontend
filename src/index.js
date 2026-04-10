@@ -50,7 +50,7 @@ L.control.layers(mapLayer, overlay, {
   position: 'bottomleft'
 }).addTo(map);
 
-L.control.scale().addTo(map);
+L.control.scale({ position: 'bottomright' }).addTo(map);
 
 /* Store User preferences */
 // store baselayer changes
@@ -186,6 +186,19 @@ var lrmControl = L.Routing.control(Object.assign(controlOptions, {
 var toolsControl = tools.control(localization.get(mergedOptions.language), localization.getLanguages(), options.tools).addTo(map);
 var state = state(map, lrmControl, toolsControl, mergedOptions);
 
+// Hide directions pane by default
+var routingContainer = document.querySelector('.leaflet-routing-container');
+if (routingContainer) {
+  routingContainer.classList.add('leaflet-routing-container-hide');
+}
+
+// Show pane when route is computed
+lrmControl.on('routesfound', function(e) {
+  if (routingContainer) {
+    routingContainer.classList.remove('leaflet-routing-container-hide');
+  }
+});
+
 plan.on('waypointgeocoded', function(e) {
   if (plan._waypoints.filter(function(wp) {
     return !!wp.latLng; 
@@ -255,10 +268,13 @@ plan.on('waypointschanged', function(e) {
         return !wp.latLng; 
       }).length > 0) {
     toolsControl.setRouteGeoJSON(null);
+    if (routingContainer) {
+      routingContainer.classList.add('leaflet-routing-container-hide');
+    }
   }
 });
 
-locate.locate({
+L.control.locate({
   follow: false,
   setView: true,
   remainActive: false,
