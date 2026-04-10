@@ -162,10 +162,12 @@ for (var profile = 0, len = controlOptions.services.length; profile < len; profi
 
 var router = (new L.Routing.OSRMv1(controlOptions));
 
-// Patch _leftOrRight to preserve non-directional modifiers like 'straight'.
-// The original implementation defaults anything not containing 'left' to 'Right',
-// which causes on/off ramp steps with a straight modifier to incorrectly show
-// a right-turn arrow instead of a straight arrow (see issue #255).
+// TODO: remove this patch once the upstream bug is fixed in leaflet-routing-machine.
+// Upstream issue: https://github.com/perliedman/leaflet-routing-machine/issues/719
+//
+// _leftOrRight defaults anything not containing 'left' to 'Right', so an
+// 'on ramp straight' step incorrectly renders a right-turn arrow (osrm-frontend#255).
+// We override it here to preserve non-directional modifiers like 'straight'.
 router._leftOrRight = function(d) {
   if (!d) return d;
   if (d.indexOf('left') >= 0) return 'Left';
