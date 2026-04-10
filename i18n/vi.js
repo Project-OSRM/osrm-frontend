@@ -9,5 +9,6 @@ module.exports = {
   'Select language': 'Chọn ngôn ngữ',
   'Start - press enter to drop marker': 'Khởi hành – bấm Enter để thả ghim',
   'End - press enter to drop marker': 'Đến – bấm Enter để thả ghim',
-  'Via point - press enter to drop marker': 'Qua – bấm Enter để thả ghim'
+  'Via point - press enter to drop marker': 'Qua – bấm Enter để thả ghim',
+  'Build': 'Build: '
 };

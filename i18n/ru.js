@@ -9,5 +9,6 @@ module.exports = {
   'Select language': 'Выбрать язык',
   'Start - press enter to drop marker': 'Начало - нажмите Enter, чтобы удалить маркер',
   'End - press enter to drop marker': 'Конец - нажмите Enter, чтобы удалить маркер',
-  'Via point - press enter to drop marker': 'Промежуточная точка - нажмите Enter, чтобы удалить маркер'
+  'Via point - press enter to drop marker': 'Промежуточная точка - нажмите Enter, чтобы удалить маркер',
+  'Build': 'Сборка: '
 };

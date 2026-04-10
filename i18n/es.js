@@ -15,5 +15,6 @@ module.exports = {
   'Via point - press enter to drop marker': 'Punto en la vía - presione enter para colocar un marcador',
   'Bike': 'Bicicleta',
   'Car': 'Coche',
-  'Foot': 'Peatón'
+  'Foot': 'Peatón',
+  'Build': 'Compilación: '
 };

@@ -9,5 +9,6 @@ module.exports = {
   'Select language': '言語を選択',
   'Start - press enter to drop marker': '出発地 – ピンを置くにはEnterを押して下さい',
   'End - press enter to drop marker': '目的地 - ピンを置くにはEnterを押して下さい',
-  'Via point - press enter to drop marker': '経由地 - ピンを置くにはEnterを押してください'
+  'Via point - press enter to drop marker': '経由地 - ピンを置くにはEnterを押してください',
+  'Build': 'ビルド: '
 };
