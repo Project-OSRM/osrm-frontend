@@ -208,6 +208,42 @@ plan.on('waypointgeocoded', function(e) {
   }
 });
 
+// If dst/src address params were passed and no loc= waypoints exist, geocode them now.
+(function applyAddressParams() {
+  var hasLocWaypoints = mergedOptions.waypoints && mergedOptions.waypoints.some(function(wp) {
+    return wp && wp.latLng;
+  });
+  if (hasLocWaypoints) return;
+
+  var srcAddr = mergedOptions.originAddress;
+  var dstAddr = mergedOptions.destinationAddress;
+  if (!srcAddr && !dstAddr) return;
+
+  var geocoder = createGeocoder.coordPreserving();
+
+  function geocodeAddress(addr, cb) {
+    if (!addr) {
+      cb(null);
+      return;
+    }
+    geocoder.geocode(addr, function(results) {
+      cb(results && results.length > 0 ? results[0] : null);
+    });
+  }
+
+  geocodeAddress(srcAddr, function(srcResult) {
+    geocodeAddress(dstAddr, function(dstResult) {
+      var origin = srcResult
+        ? L.Routing.waypoint(srcResult.center, srcResult.name)
+        : L.Routing.waypoint(null, srcAddr || '');
+      var destination = dstResult
+        ? L.Routing.waypoint(dstResult.center, dstResult.name)
+        : L.Routing.waypoint(null, dstAddr || '');
+      lrmControl.setWaypoints([origin, destination]);
+    });
+  });
+}());
+
 // add onClick event
 map.on('click', function (e) {
   addWaypoint(e.latlng);
