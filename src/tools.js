@@ -153,7 +153,7 @@ var Control = L.Control.extend({
     var versionInfo = version.getVersionInfo();
     var versionContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-version', container);
     var versionLabel = L.DomUtil.create('span', 'leaflet-osrm-tools-version-label', versionContainer);
-    versionLabel.textContent = 'Build: ';
+    versionLabel.textContent = this._local['Build'] || 'Build: ';
     var versionValue = L.DomUtil.create('span', 'leaflet-osrm-tools-version-value', versionContainer);
     versionValue.textContent = versionInfo.formatted;
     versionValue.setAttribute('title', versionInfo.timestamp);

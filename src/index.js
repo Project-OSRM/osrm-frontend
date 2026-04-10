@@ -194,8 +194,9 @@ if (routingContainer) {
 
 // Show pane when route is computed
 lrmControl.on('routesfound', function(e) {
-  if (routingContainer) {
-    routingContainer.classList.remove('leaflet-routing-container-hide');
+  var container = document.querySelector('.leaflet-routing-container');
+  if (container) {
+    container.classList.remove('leaflet-routing-container-hide');
   }
 });
 
@@ -263,13 +264,14 @@ lrmControl.on('routeselected', function(e) {
   toolsControl.setRouteGeoJSON(routeGeoJSON);
 });
 plan.on('waypointschanged', function(e) {
-  if (!e.waypoints ||
-      e.waypoints.filter(function(wp) {
-        return !wp.latLng; 
-      }).length > 0) {
+  var validCount = e.waypoints ? e.waypoints.filter(function(wp) {
+    return !!wp.latLng;
+  }).length : 0;
+  if (validCount < 2) {
     toolsControl.setRouteGeoJSON(null);
-    if (routingContainer) {
-      routingContainer.classList.add('leaflet-routing-container-hide');
+    var container = document.querySelector('.leaflet-routing-container');
+    if (container) {
+      container.classList.add('leaflet-routing-container-hide');
     }
   }
 });

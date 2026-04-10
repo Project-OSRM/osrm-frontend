@@ -921,20 +921,6 @@ td.distance {
     transition: 0.5s;
 }
 
-/* Version info */
-#version-info {
-    position: fixed;
-    bottom: 10px;
-    right: 10px;
-    font-size: 11px;
-    color: #666;
-    background-color: rgba(255, 255, 255, 0.9);
-    padding: 4px 8px;
-    border-radius: 3px;
-    cursor: help;
-    z-index: 999;
-}
-
 .leaflet-osrm-tools-version {
     padding: 12px 8px;
     border-top: 1px solid rgba(255, 255, 255, 0.2);

@@ -10,11 +10,10 @@ module.exports = {
   },
   formatTimestamp: function(timestamp) {
     if (timestamp === 'unknown') return 'unknown';
-    try {
-      var date = new Date(timestamp);
-      return date.toLocaleString();
-    } catch (e) {
+    var date = new Date(timestamp);
+    if (isNaN(date.getTime())) {
       return timestamp;
     }
+    return date.toLocaleString();
   }
 };
