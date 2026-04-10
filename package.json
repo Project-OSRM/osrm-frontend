@@ -35,10 +35,11 @@
   },
   "license": "ISC",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "eslint": "^10.2.0",
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0",
-    "webpack": "^5.105.4",
+    "webpack": "^5.106.1",
     "webpack-cli": "^7.0.2",
     "webpack-dev-server": "^5.0.0"
   },
