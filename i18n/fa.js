@@ -9,5 +9,6 @@ module.exports = {
   'Select language': 'انتخاب زبان',
   'Start - press enter to drop marker': 'شروع - برای درج نشانه روی نقشه اینتر بزنید',
   'End - press enter to drop marker': 'پایان - برای درج نشانه روی نقشه اینتر بزنید',
-  'Via point - press enter to drop marker': 'مسیر میانه - برای درج نشانه روی نقشه اینتر بزنید'
+  'Via point - press enter to drop marker': 'مسیر میانه - برای درج نشانه روی نقشه اینتر بزنید',
+  'Build': 'بیلد: '
 };

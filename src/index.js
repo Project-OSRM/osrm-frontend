@@ -50,7 +50,7 @@ L.control.layers(mapLayer, overlay, {
   position: 'bottomleft'
 }).addTo(map);
 
-L.control.scale().addTo(map);
+L.control.scale({ position: 'bottomright' }).addTo(map);
 
 /* Store User preferences */
 // store baselayer changes
@@ -186,6 +186,20 @@ var lrmControl = L.Routing.control(Object.assign(controlOptions, {
 var toolsControl = tools.control(localization.get(mergedOptions.language), localization.getLanguages(), options.tools).addTo(map);
 var state = state(map, lrmControl, toolsControl, mergedOptions);
 
+// Hide directions pane by default
+var routingContainer = document.querySelector('.leaflet-routing-container');
+if (routingContainer) {
+  routingContainer.classList.add('leaflet-routing-container-hide');
+}
+
+// Show pane when route is computed
+lrmControl.on('routesfound', function(e) {
+  var container = document.querySelector('.leaflet-routing-container');
+  if (container) {
+    container.classList.remove('leaflet-routing-container-hide');
+  }
+});
+
 plan.on('waypointgeocoded', function(e) {
   if (plan._waypoints.filter(function(wp) {
     return !!wp.latLng; 
@@ -286,15 +300,19 @@ lrmControl.on('routeselected', function(e) {
   toolsControl.setRouteGeoJSON(routeGeoJSON);
 });
 plan.on('waypointschanged', function(e) {
-  if (!e.waypoints ||
-      e.waypoints.filter(function(wp) {
-        return !wp.latLng; 
-      }).length > 0) {
+  var validCount = e.waypoints ? e.waypoints.filter(function(wp) {
+    return !!wp.latLng;
+  }).length : 0;
+  if (validCount < 2) {
     toolsControl.setRouteGeoJSON(null);
+    var container = document.querySelector('.leaflet-routing-container');
+    if (container) {
+      container.classList.add('leaflet-routing-container-hide');
+    }
   }
 });
 
-locate.locate({
+L.control.locate({
   follow: false,
   setView: true,
   remainActive: false,

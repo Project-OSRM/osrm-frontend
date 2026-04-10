@@ -9,5 +9,6 @@ module.exports = {
   'Select language': 'Select language',
   'Start - press enter to drop marker': 'Start - press enter to drop marker',
   'End - press enter to drop marker': 'End - press enter to drop marker',
-  'Via point - press enter to drop marker': 'Via point - press enter to drop marker'
+  'Via point - press enter to drop marker': 'Via point - press enter to drop marker',
+  'Build': '构建: '
 };

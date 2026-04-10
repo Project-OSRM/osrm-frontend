@@ -15,5 +15,6 @@ module.exports = {
   'Via point - press enter to drop marker': 'Zwischenstop - drücken um einen Marker zu plazieren',
   'Bike': 'Fahrrad',
   'Car': 'Auto',
-  'Foot': 'Fussgänger'
+  'Foot': 'Fussgänger',
+  'Build': 'Build: '
 };
