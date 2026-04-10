@@ -7,12 +7,11 @@
     "test": "jest",
     "test:lint": "eslint src/*.js i18n/*.js",
     "replace": "node ./scripts/replace.js",
+    "clean": "rm -f bundle.raw.js",
     "compile": "webpack --config webpack.config.js",
-    "build": "npm run replace && npm run compile && cp node_modules/leaflet/dist/leaflet.css css/leaflet.css",
-    "start-index": "budo src/index.js --serve=bundle.js --live -d | bistre",
-    "start-index-prod": "budo src/index.js --serve=bundle.js -d | bistre",
-    "start": "npm run build && npm run start-index",
-    "start-prod": "npm run build && npm run start-index-prod",
+    "build": "npm run clean && npm run replace && npm run compile && cp node_modules/leaflet/dist/leaflet.css css/leaflet.css",
+    "start": "npm run build && webpack serve --config webpack.config.js --mode development",
+    "start-prod": "npm run build",
     "prepub": "npm run build"
   },
   "repository": {
@@ -38,7 +37,8 @@
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0",
     "webpack": "^5.105.4",
-    "webpack-cli": "^7.0.2"
+    "webpack-cli": "^7.0.2",
+    "webpack-dev-server": "^5.0.0"
   },
   "dependencies": {
     "file-saver": "^2.0.5",
