@@ -10,8 +10,8 @@ module.exports = function (language) {
       return osrmTextInstructions.compile(language, step, {
         formatToken : function(token, value) {
         // enclose {way_name}, {rotary_name}, {destination} and {exit} vars with <b>..</b>
-        if (value) {
-          switch (token) {
+          if (value) {
+            switch (token) {
             case 'way_name':
             case 'rotary_name':
             case 'waypoint_name':
@@ -25,7 +25,7 @@ module.exports = function (language) {
           return value;
         }
       });
-    } catch(err) {
+    } catch (err) {
       console.log('Error when compiling text instruction', err, step);
       return undefined;
     }

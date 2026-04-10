@@ -38,6 +38,7 @@
     "bistre": "^1.0.1",
     "browserify": "^17.0.1",
     "budo": "^11.8.4",
+    "eslint": "^8.57.0",
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0",
     "uglify-js": "^3.19.3"

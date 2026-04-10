@@ -100,8 +100,7 @@ var Control = L.Control.extend({
     this.routeGeoJSON = routeGeoJSON;
     if (this.routeGeoJSON) {
       this._gpxButton.removeAttribute('disabled');
-    }
-    else {
+    } else {
       this._gpxButton.setAttribute('disabled', '');
     }
   },
@@ -118,10 +117,9 @@ var Control = L.Control.extend({
 
   _updatePopupPosition: function(button) {
     var rect = this._container.getBoundingClientRect(),
-        left = 0;
-    if (button)
-    {
-        left = button.getBoundingClientRect().left - rect.left;
+      left = 0;
+    if (button) {
+      left = button.getBoundingClientRect().left - rect.left;
     }
     this._popupWindow.style.position = 'absolute';
     this._popupWindow.style.left = left + 'px';
@@ -133,20 +131,19 @@ var Control = L.Control.extend({
     var localizationSelect = L.DomUtil.create('select', _this.options.localizationChooserClass, container);
     localizationSelect.setAttribute('title', _this._local['Select language']);
     L.DomEvent.on(localizationSelect, 'change', function(event) {
-        this.fire('languagechanged', {
-            language: event.target.value
-        });
+      this.fire('languagechanged', {
+        language: event.target.value
+      });
     }, _this);
     Object.keys(this._languages).forEach(function(key) {
-        var option = L.DomUtil.create('option', 'fill-osrm', localizationSelect);
-        option.setAttribute('value', key);
-        option.appendChild(
-            document.createTextNode(_this._languages[key])
-        );
-        if (key == _this._local.key)
-        {
-            option.setAttribute('selected', '');
-        }
+      var option = L.DomUtil.create('option', 'fill-osrm', localizationSelect);
+      option.setAttribute('value', key);
+      option.appendChild(
+        document.createTextNode(_this._languages[key])
+      );
+      if (key == _this._local.key) {
+        option.setAttribute('selected', '');
+      }
     });
   }
 });
