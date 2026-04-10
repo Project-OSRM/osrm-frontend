@@ -9,5 +9,6 @@
   'Select language': 'Nyelv kiválasztása',
   'Start - press enter to drop marker': 'Start - nyomjon entert a kezdőpont kijelöléséhez',
   'End - press enter to drop marker': 'Cél - nyomjon entert a cél kijelöléséhez',
-  'Via point - press enter to drop marker': 'Köztes megálló - nyomjon entert a köztes pont kijelöléséhez'
+  'Via point - press enter to drop marker': 'Köztes megálló - nyomjon entert a köztes pont kijelöléséhez',
+  'Build': 'Build: '
 };

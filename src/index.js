@@ -50,7 +50,7 @@ L.control.layers(mapLayer, overlay, {
   position: 'bottomleft'
 }).addTo(map);
 
-L.control.scale().addTo(map);
+L.control.scale({ position: 'bottomright' }).addTo(map);
 
 /* Store User preferences */
 // store baselayer changes
@@ -198,6 +198,20 @@ var lrmControl = L.Routing.control(Object.assign(controlOptions, {
 var toolsControl = tools.control(localization.get(mergedOptions.language), localization.getLanguages(), options.tools).addTo(map);
 var state = state(map, lrmControl, toolsControl, mergedOptions);
 
+// Hide directions pane by default
+var routingContainer = document.querySelector('.leaflet-routing-container');
+if (routingContainer) {
+  routingContainer.classList.add('leaflet-routing-container-hide');
+}
+
+// Show pane when route is computed
+lrmControl.on('routesfound', function(e) {
+  var container = document.querySelector('.leaflet-routing-container');
+  if (container) {
+    container.classList.remove('leaflet-routing-container-hide');
+  }
+});
+
 plan.on('waypointgeocoded', function(e) {
   if (plan._waypoints.filter(function(wp) {
     return !!wp.latLng; 
@@ -205,6 +219,42 @@ plan.on('waypointgeocoded', function(e) {
     map.panTo(e.waypoint.latLng);
   }
 });
+
+// If dst/src address params were passed and no loc= waypoints exist, geocode them now.
+(function applyAddressParams() {
+  var hasLocWaypoints = mergedOptions.waypoints && mergedOptions.waypoints.some(function(wp) {
+    return wp && wp.latLng;
+  });
+  if (hasLocWaypoints) return;
+
+  var srcAddr = mergedOptions.originAddress;
+  var dstAddr = mergedOptions.destinationAddress;
+  if (!srcAddr && !dstAddr) return;
+
+  var geocoder = createGeocoder.coordPreserving();
+
+  function geocodeAddress(addr, cb) {
+    if (!addr) {
+      cb(null);
+      return;
+    }
+    geocoder.geocode(addr, function(results) {
+      cb(results && results.length > 0 ? results[0] : null);
+    });
+  }
+
+  geocodeAddress(srcAddr, function(srcResult) {
+    geocodeAddress(dstAddr, function(dstResult) {
+      var origin = srcResult
+        ? L.Routing.waypoint(srcResult.center, srcResult.name)
+        : L.Routing.waypoint(null, srcAddr || '');
+      var destination = dstResult
+        ? L.Routing.waypoint(dstResult.center, dstResult.name)
+        : L.Routing.waypoint(null, dstAddr || '');
+      lrmControl.setWaypoints([origin, destination]);
+    });
+  });
+}());
 
 // add onClick event
 map.on('click', function (e) {
@@ -262,15 +312,19 @@ lrmControl.on('routeselected', function(e) {
   toolsControl.setRouteGeoJSON(routeGeoJSON);
 });
 plan.on('waypointschanged', function(e) {
-  if (!e.waypoints ||
-      e.waypoints.filter(function(wp) {
-        return !wp.latLng; 
-      }).length > 0) {
+  var validCount = e.waypoints ? e.waypoints.filter(function(wp) {
+    return !!wp.latLng;
+  }).length : 0;
+  if (validCount < 2) {
     toolsControl.setRouteGeoJSON(null);
+    var container = document.querySelector('.leaflet-routing-container');
+    if (container) {
+      container.classList.add('leaflet-routing-container-hide');
+    }
   }
 });
 
-locate.locate({
+L.control.locate({
   follow: false,
   setView: true,
   remainActive: false,
