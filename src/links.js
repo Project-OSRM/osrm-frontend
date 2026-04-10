@@ -80,6 +80,8 @@ function parseLink(link) {
     parsedValues.units = q.df;
     parsedValues.layer = q.ly;
     parsedValues.service = q.srv;
+    parsedValues.originAddress = q.src;
+    parsedValues.destinationAddress = q.dst;
   } catch (e) {
     console.log("Exception " + e.name + ": " + e.message);
   }
