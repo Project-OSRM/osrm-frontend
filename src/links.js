@@ -37,22 +37,22 @@ function _parseInteger(intStr) {
 }
 
 function formatLink(options) {
-    // Output all waypoints as loc parameters, using empty string for missing
-    var locs = undefined;
-    if (options.waypoints) {
-        locs = options.waypoints.map(function(wp) {
-            return wp && wp.latLng ? _formatCoord(wp.latLng) : '';
-        });
-    }
-    return qs.stringify({
-        z: options.zoom,
-        center: options.center ? _formatCoord(options.center) : undefined,
-        loc: locs,
-        hl: options.language,
-        alt: options.alternative,
-        df: options.units,
-        srv: options.service
-    }, {indices: false});
+  // Output all waypoints as loc parameters, using empty string for missing
+  var locs = undefined;
+  if (options.waypoints) {
+    locs = options.waypoints.map(function(wp) {
+      return wp && wp.latLng ? _formatCoord(wp.latLng) : '';
+    });
+  }
+  return qs.stringify({
+    z: options.zoom,
+    center: options.center ? _formatCoord(options.center) : undefined,
+    loc: locs,
+    hl: options.language,
+    alt: options.alternative,
+    df: options.units,
+    srv: options.service
+  }, {indices: false});
 }
 
 function parseLink(link) {

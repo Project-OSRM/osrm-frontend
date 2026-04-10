@@ -17,11 +17,21 @@ var State = L.Class.extend({
       this.options.alternative = e.route.routesIndex;
     }, this);
 
-    this._lrm.getPlan().on('waypointschanged', function() { this.options.waypoints = this._lrm.getWaypoints(); this.update(); }.bind(this));
-    this._map.on('zoomend', function() { this.options.zoom = this._map.getZoom();  this.update(); }.bind(this));
-    this._map.on('moveend', function() { this.options.center = this._map.getCenter(); this.update(); }.bind(this));
-    this._tools.on('languagechanged', function(e) { this.options.language = e.language; this.reload(); }.bind(this));
-    this._tools.on('unitschanged', function(e) { this.options.units = e.unit; this.update(); }.bind(this));
+    this._lrm.getPlan().on('waypointschanged', function() {
+      this.options.waypoints = this._lrm.getWaypoints(); this.update(); 
+    }.bind(this));
+    this._map.on('zoomend', function() {
+      this.options.zoom = this._map.getZoom();  this.update(); 
+    }.bind(this));
+    this._map.on('moveend', function() {
+      this.options.center = this._map.getCenter(); this.update(); 
+    }.bind(this));
+    this._tools.on('languagechanged', function(e) {
+      this.options.language = e.language; this.reload(); 
+    }.bind(this));
+    this._tools.on('unitschanged', function(e) {
+      this.options.units = e.unit; this.update(); 
+    }.bind(this));
   },
 
   get: function() {
@@ -46,7 +56,7 @@ var State = L.Class.extend({
     var newURL = baseURL.concat('?').concat(newParms);
     window.location.hash = newParms;
     history.replaceState({}, 'Project OSRM Demo', newURL);
-  },
+  }
 });
 
 module.exports = function(map, lrm_control, tools, default_options) {

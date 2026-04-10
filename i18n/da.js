@@ -15,5 +15,5 @@ module.exports = {
   'Via point - press enter to drop marker': 'Via - tryk for at placere delmålspunkt',
   'Bike': 'Cykel',
   'Car': 'Bil',
-  'Foot': 'Til fods',
+  'Foot': 'Til fods'
 };

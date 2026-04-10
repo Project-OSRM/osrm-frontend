@@ -153,11 +153,10 @@ var controlOptions = {
   useZoomParameter: options.lrm.useZoomParameter,
   routeDragInterval: options.lrm.routeDragInterval,
   collapsible: options.lrm.collapsible,
-  itineraryBuilder: new ItineraryBuilder(),
+  itineraryBuilder: new ItineraryBuilder()
 };
 // translate profile names
-for (var profile = 0, len = controlOptions.services.length; profile < len; profile++)
-{
+for (var profile = 0, len = controlOptions.services.length; profile < len; profile++) {
   controlOptions.services[profile].label = localization.t(language, controlOptions.services[profile].label) || controlOptions.services[profile].label;
 }
 
@@ -188,13 +187,15 @@ var toolsControl = tools.control(localization.get(mergedOptions.language), local
 var state = state(map, lrmControl, toolsControl, mergedOptions);
 
 plan.on('waypointgeocoded', function(e) {
-  if (plan._waypoints.filter(function(wp) { return !!wp.latLng; }).length < 2) {
+  if (plan._waypoints.filter(function(wp) {
+    return !!wp.latLng; 
+  }).length < 2) {
     map.panTo(e.waypoint.latLng);
   }
 });
 
 // add onClick event
-map.on('click', function (e){
+map.on('click', function (e) {
   addWaypoint(e.latlng);
 });
 function addWaypoint(waypoint) {
@@ -250,7 +251,9 @@ lrmControl.on('routeselected', function(e) {
 });
 plan.on('waypointschanged', function(e) {
   if (!e.waypoints ||
-      e.waypoints.filter(function(wp) { return !wp.latLng; }).length > 0) {
+      e.waypoints.filter(function(wp) {
+        return !wp.latLng; 
+      }).length > 0) {
     toolsControl.setRouteGeoJSON(null);
   }
 });
