@@ -2,6 +2,9 @@ name: CI Checks
 
 on:
   pull_request:
+    branches:
+      - gh-pages
+      - main
   push:
     branches:
       - gh-pages
