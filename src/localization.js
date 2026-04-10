@@ -13,7 +13,7 @@ var language_mapping = {
   da: require('../i18n/da'),
   hu: require('../i18n/hu'),
   vi: require('../i18n/vi'),
-  'pt-BR': require('../i18n/pt-BR'),
+  'pt-BR': require('../i18n/pt-BR')
 };
 
 module.exports = {
