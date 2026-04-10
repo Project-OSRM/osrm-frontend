@@ -161,6 +161,18 @@ for (var profile = 0, len = controlOptions.services.length; profile < len; profi
 }
 
 var router = (new L.Routing.OSRMv1(controlOptions));
+
+// Patch _leftOrRight to preserve non-directional modifiers like 'straight'.
+// The original implementation defaults anything not containing 'left' to 'Right',
+// which causes on/off ramp steps with a straight modifier to incorrectly show
+// a right-turn arrow instead of a straight arrow (see issue #255).
+router._leftOrRight = function(d) {
+  if (!d) return d;
+  if (d.indexOf('left') >= 0) return 'Left';
+  if (d.indexOf('right') >= 0) return 'Right';
+  return d;
+};
+
 router._convertRouteOriginal = router._convertRoute;
 router._convertRoute = function(responseRoute) {
   // monkey-patch L.Routing.OSRMv1 until it's easier to overwrite with a hook
