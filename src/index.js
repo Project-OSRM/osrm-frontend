@@ -1,6 +1,7 @@
 'use strict';
 
 var L = require('leaflet');
+var routerPatches = require('./router_patches');
 var createGeocoder = require('./geocoder');
 require('leaflet-control-geocoder');
 var LRM = require('leaflet-routing-machine');
@@ -161,19 +162,7 @@ for (var profile = 0, len = controlOptions.services.length; profile < len; profi
 }
 
 var router = (new L.Routing.OSRMv1(controlOptions));
-
-// TODO: remove this patch once the upstream bug is fixed in leaflet-routing-machine.
-// Upstream issue: https://github.com/perliedman/leaflet-routing-machine/issues/719
-//
-// _leftOrRight defaults anything not containing 'left' to 'Right', so an
-// 'on ramp straight' step incorrectly renders a right-turn arrow (osrm-frontend#255).
-// We override it here to preserve non-directional modifiers like 'straight'.
-router._leftOrRight = function(d) {
-  if (!d) return d;
-  if (d.indexOf('left') >= 0) return 'Left';
-  if (d.indexOf('right') >= 0) return 'Right';
-  return d;
-};
+routerPatches.applyPatches(router);
 
 router._convertRouteOriginal = router._convertRoute;
 router._convertRoute = function(responseRoute) {
