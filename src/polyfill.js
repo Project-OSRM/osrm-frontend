@@ -1,5 +1,4 @@
 if (typeof Object.assign != 'function') {
-  // eslint-disable-next-line no-eq-null
   Object.assign = function(target) {
     'use strict';
     // eslint-disable-next-line no-eq-null
