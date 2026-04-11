@@ -4,6 +4,8 @@ var L = require('leaflet');
 var routerPatches = require('./router_patches');
 var createGeocoder = require('./geocoder');
 require('leaflet-control-geocoder');
+var geocoderPatches = require('./geocoder_patches');
+geocoderPatches();
 var LRM = require('leaflet-routing-machine');
 // leaflet.locatecontrol@0.89 UMD has a bug: after the CJS IIFE it tries
 // `window.L.Control.Locate.locate` but never sets L.Control.Locate in the
