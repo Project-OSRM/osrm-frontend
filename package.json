@@ -25,7 +25,7 @@
     "routing",
     "api"
   ],
-  "author": "amy lee walton",
+  "author": "OSRM contributors",
   "jest": {
     "testEnvironment": "node",
     "testMatch": [
@@ -51,6 +51,6 @@
     "leaflet.locatecontrol": "^0.89.0",
     "local-storage": "^2.0.0",
     "osrm-text-instructions": "^0.15.0",
-    "qs": "^6.15.0"
+    "qs": "^6.15.1"
   }
 }
