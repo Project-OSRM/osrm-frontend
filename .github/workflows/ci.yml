@@ -39,3 +39,13 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+  docker-build-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -f docker/Dockerfile .
