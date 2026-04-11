@@ -10,6 +10,9 @@ on:
       - gh-pages
       - main
 
+permissions:
+  contents: read
+
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
