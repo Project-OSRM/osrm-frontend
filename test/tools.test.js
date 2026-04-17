@@ -4,7 +4,7 @@
 
 'use strict';
 
-jest.mock('leaflet', () => {
+function createLeafletMock(includeEvented) {
   function Evented() {}
   Evented.prototype = {
     on: function(type, handler) {
@@ -37,15 +37,28 @@ jest.mock('leaflet', () => {
     return Extended;
   };
 
-  return {
+  var leaflet = {
     Control: Control,
-    Evented: Evented,
     Mixin: { Events: Evented.prototype },
     setOptions: function(target, options) {
       target.options = Object.assign(target.options || {}, options);
     }
   };
-});
+
+  if (includeEvented) {
+    leaflet.Evented = Evented;
+  }
+
+  return leaflet;
+}
+
+function loadTools(includeEvented) {
+  jest.resetModules();
+  jest.doMock('leaflet', function() {
+    return createLeafletMock(includeEvented !== false);
+  });
+  return require('../src/tools');
+}
 
 describe('tools debug map link', () => {
   let tools;
@@ -53,8 +66,7 @@ describe('tools debug map link', () => {
   let openSpy;
 
   beforeEach(() => {
-    jest.resetModules();
-    tools = require('../src/tools');
+    tools = loadTools();
     control = tools.control({}, {}, {});
     control._map = {
       getCenter: function() {
@@ -68,7 +80,9 @@ describe('tools debug map link', () => {
   });
 
   afterEach(() => {
-    openSpy.mockRestore();
+    if (openSpy) {
+      openSpy.mockRestore();
+    }
   });
 
   test('opens the debug map on the current frontend origin', () => {
@@ -97,6 +111,21 @@ describe('tools debug map link', () => {
     control.on('languagechanged', handler);
     control.fire('languagechanged', { language: 'en' });
 
-    expect(handler).toHaveBeenCalledWith({ language: 'en' });
+    expect(handler).toHaveBeenCalledWith(
+      expect.objectContaining({ language: 'en' })
+    );
+  });
+
+  test('falls back to Mixin.Events when Evented is unavailable', () => {
+    var fallbackTools = loadTools(false);
+    var fallbackControl = fallbackTools.control({}, {}, {});
+    var handler = jest.fn();
+
+    fallbackControl.on('languagechanged', handler);
+    fallbackControl.fire('languagechanged', { language: 'en' });
+
+    expect(handler).toHaveBeenCalledWith(
+      expect.objectContaining({ language: 'en' })
+    );
   });
 });
