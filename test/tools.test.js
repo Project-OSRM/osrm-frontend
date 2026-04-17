@@ -4,7 +4,24 @@
 
 'use strict';
 
-jest.mock('leaflet', () => {
+function createLeafletMock(includeEvented) {
+  function Evented() {}
+  Evented.prototype = {
+    on: function(type, handler) {
+      this._events = this._events || {};
+      this._events[type] = this._events[type] || [];
+      this._events[type].push(handler);
+      return this;
+    },
+    fire: function(type, event) {
+      var handlers = this._events && this._events[type] || [];
+      handlers.forEach(function(handler) {
+        handler.call(this, event);
+      }, this);
+      return this;
+    }
+  };
+
   function Control() {}
 
   Control.extend = function(props) {
@@ -15,18 +32,33 @@ jest.mock('leaflet', () => {
       }
     }
 
-    Extended.prototype = Object.assign({}, props);
+    Extended.prototype = Object.assign({}, props.includes || {}, props);
+    delete Extended.prototype.includes;
     return Extended;
   };
 
-  return {
+  var leaflet = {
     Control: Control,
-    Mixin: { Events: {} },
+    Mixin: { Events: Evented.prototype },
     setOptions: function(target, options) {
       target.options = Object.assign(target.options || {}, options);
     }
   };
-});
+
+  if (includeEvented) {
+    leaflet.Evented = Evented;
+  }
+
+  return leaflet;
+}
+
+function loadTools(includeEvented) {
+  jest.resetModules();
+  jest.doMock('leaflet', function() {
+    return createLeafletMock(includeEvented !== false);
+  });
+  return require('../src/tools');
+}
 
 describe('tools debug map link', () => {
   let tools;
@@ -34,8 +66,7 @@ describe('tools debug map link', () => {
   let openSpy;
 
   beforeEach(() => {
-    jest.resetModules();
-    tools = require('../src/tools');
+    tools = loadTools();
     control = tools.control({}, {}, {});
     control._map = {
       getCenter: function() {
@@ -49,7 +80,9 @@ describe('tools debug map link', () => {
   });
 
   afterEach(() => {
-    openSpy.mockRestore();
+    if (openSpy) {
+      openSpy.mockRestore();
+    }
   });
 
   test('opens the debug map on the current frontend origin', () => {
@@ -69,6 +102,30 @@ describe('tools debug map link', () => {
 
     expect(openSpy).toHaveBeenCalledWith(
       'http://localhost/osrm-frontend/debug/#13/38.899500/-77.026900'
+    );
+  });
+
+  test('keeps the Leaflet event API on the control', () => {
+    var handler = jest.fn();
+
+    control.on('languagechanged', handler);
+    control.fire('languagechanged', { language: 'en' });
+
+    expect(handler).toHaveBeenCalledWith(
+      expect.objectContaining({ language: 'en' })
+    );
+  });
+
+  test('falls back to Mixin.Events when Evented is unavailable', () => {
+    var fallbackTools = loadTools(false);
+    var fallbackControl = fallbackTools.control({}, {}, {});
+    var handler = jest.fn();
+
+    fallbackControl.on('languagechanged', handler);
+    fallbackControl.fire('languagechanged', { language: 'en' });
+
+    expect(handler).toHaveBeenCalledWith(
+      expect.objectContaining({ language: 'en' })
     );
   });
 });

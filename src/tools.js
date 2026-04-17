@@ -4,8 +4,9 @@ var L = require('leaflet');
 var FileSaver = require('file-saver');
 var buildGPX = require('./gpx');
 var version = require('./version');
+var eventedMethods = L.Evented ? L.Evented.prototype : L.Mixin.Events;
 var Control = L.Control.extend({
-  includes: L.Mixin.Events,
+  includes: eventedMethods,
   options: {
     toolContainerClass: "",
     editorButtonClass: "",
