@@ -314,6 +314,12 @@
 .osrm-debug-icon  { background-position: -96px 0; }
 .osrm-mapillary-icon  { background-position: -120px 0; }
 .osrm-gpx-icon  { background-position: -146px 0; }
+.osrm-share-icon  {
+    background-image: url('../images/share.svg');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 20px 20px;
+}
 .osrm-localization-chooser {
     color: #ffffff;
     background: transparent;
@@ -333,6 +339,76 @@
 .leaflet-osrm-tools-hide
 {
   display: none;
+}
+
+.leaflet-osrm-tools-share {
+  position: relative;
+}
+
+.share-popup {
+  display: none;
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 4px);
+  min-width: 220px;
+  padding: 4px;
+  border-radius: 4px;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+  cursor: default;
+}
+
+.share-popup-visible .share-popup {
+  display: block;
+}
+
+.share-popup .share-overlay {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  cursor: default;
+}
+
+.share-popup .share-container {
+  position: relative;
+  z-index: 1;
+  display: block;
+  padding: 0;
+}
+
+.share-popup .share-type-button-container {
+  display: flex;
+  width: 100%;
+  padding: 0;
+}
+
+.share-popup .share-type {
+  display: inline-block;
+  width: 50%;
+  margin: 0;
+  border: none;
+  color: #ffffff;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.share-popup .share-type:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.share-popup .share-type.selected {
+  background-color: rgba(255, 255, 255, 0.2);
+  cursor: default;
+}
+
+.share-popup .share-url {
+  width: 100%;
+  margin-top: 4px;
+  border: none;
+  padding: 5px;
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 /* OSRM geocoder directions inputs */

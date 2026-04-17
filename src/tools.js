@@ -3,8 +3,26 @@
 var L = require('leaflet');
 var FileSaver = require('file-saver');
 var buildGPX = require('./gpx');
+var shortlink = require('./shortlink');
 var version = require('./version');
 var eventedMethods = L.Evented ? L.Evented.prototype : L.Mixin.Events;
+
+function stopEvent(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+}
+
+function selectInput(input) {
+  input.focus();
+  input.select();
+}
+
+function defer(fn) {
+  window.setTimeout(fn, 0);
+}
+
 var Control = L.Control.extend({
   includes: eventedMethods,
   options: {
@@ -13,6 +31,7 @@ var Control = L.Control.extend({
     josmButtonClass: "",
     debugButtonClass: "",
     mapillaryButtonClass: "",
+    shareButtonClass: "",
     gpxButtonClass: "",
     localizationChooserClass: ""
   },
@@ -32,6 +51,7 @@ var Control = L.Control.extend({
       debugButton,
       mapillaryContainer,
       mapillaryButton,
+      shareContainer,
       localizationButton,
       popupCloseButton,
       gpxContainer,
@@ -54,6 +74,15 @@ var Control = L.Control.extend({
     mapillaryButton = L.DomUtil.create('span', this.options.mapillaryButtonClass, mapillaryContainer);
     mapillaryButton.title = this._local['Open in Mapillary'];
     L.DomEvent.on(mapillaryButton, 'click', this._openMapillary, this);
+    shareContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-share', this._container);
+    this._shareContainer = shareContainer;
+    L.DomEvent.disableClickPropagation(shareContainer);
+    L.DomEvent.on(shareContainer, 'mousedown', stopEvent);
+    L.DomEvent.on(shareContainer, 'mouseup', stopEvent);
+    L.DomEvent.on(shareContainer, 'click', stopEvent);
+    this._shareButton = L.DomUtil.create('span', this.options.shareButtonClass, shareContainer);
+    this._shareButton.title = this._local['Share Route'];
+    L.DomEvent.on(this._shareButton, 'click', this._toggleSharePopup, this);
     gpxContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-gpx', this._container);
     gpxButton = L.DomUtil.create('span', this.options.gpxButtonClass, gpxContainer);
     this._gpxButton = gpxButton;
@@ -99,6 +128,107 @@ var Control = L.Control.extend({
       zoom = this._map.getZoom(),
       prec = 6;
     window.open("https://www.mapillary.com/app/?lat=" + position.lat.toFixed(prec) + "&lng=" + position.lng.toFixed(prec) + "&z=" + zoom);
+  },
+
+  _toggleSharePopup: function(event) {
+    stopEvent(event);
+    if (L.DomUtil.hasClass(this._shareContainer, 'share-popup-visible')) {
+      this._hideSharePopup();
+    } else {
+      this._showSharePopup();
+    }
+  },
+
+  _showSharePopup: function() {
+    var linkButton,
+      shortLinkButton,
+      overlay,
+      container,
+      currentUrl = window.document.location.href,
+      input,
+      typeButtonContainer;
+
+    this._hideSharePopup();
+    L.DomUtil.addClass(this._shareContainer, 'share-popup-visible');
+    this._sharePopup = L.DomUtil.create('div', 'share-popup fill-osrm dark', this._shareContainer);
+
+    overlay = L.DomUtil.create('div', 'share-overlay', this._sharePopup);
+    L.DomEvent.on(overlay, 'mousedown', stopEvent);
+    L.DomEvent.on(overlay, 'mouseup', stopEvent);
+    L.DomEvent.on(overlay, 'click', this._hideSharePopup, this);
+
+    container = L.DomUtil.create('div', 'share-container', this._sharePopup);
+    L.DomEvent.on(container, 'mousedown', stopEvent);
+    L.DomEvent.on(container, 'mouseup', stopEvent);
+    L.DomEvent.on(container, 'click', function(event) {
+      stopEvent(event);
+    });
+
+    typeButtonContainer = L.DomUtil.create('div', 'share-type-button-container', container);
+    linkButton = L.DomUtil.create('button', 'share-type selected', typeButtonContainer);
+    linkButton.setAttribute('type', 'button');
+    linkButton.textContent = this._local['Link'];
+
+    shortLinkButton = L.DomUtil.create('button', 'share-type', typeButtonContainer);
+    shortLinkButton.setAttribute('type', 'button');
+    shortLinkButton.textContent = this._local['Shortlink'];
+
+    input = L.DomUtil.create('input', 'share-url', container);
+    input.setAttribute('readonly', '');
+    input.value = currentUrl;
+    this._shareUrlInput = input;
+    this._shareUrl = currentUrl;
+    selectInput(input);
+
+    L.DomEvent.on(input, 'click', function() {
+      selectInput(input);
+    });
+
+    L.DomEvent.on(linkButton, 'click', function(event) {
+      stopEvent(event);
+      if (!L.DomUtil.hasClass(linkButton, 'selected')) {
+        L.DomUtil.addClass(linkButton, 'selected');
+        L.DomUtil.removeClass(shortLinkButton, 'selected');
+      }
+      input.value = currentUrl;
+      selectInput(input);
+    });
+
+    L.DomEvent.on(shortLinkButton, 'click', function(event) {
+      stopEvent(event);
+      if (!L.DomUtil.hasClass(shortLinkButton, 'selected')) {
+        L.DomUtil.addClass(shortLinkButton, 'selected');
+        L.DomUtil.removeClass(linkButton, 'selected');
+      }
+      if (this._shortLink && this._shortLinkUrl === currentUrl) {
+        input.value = this._shortLink;
+        selectInput(input);
+        return;
+      }
+      shortlink.osmli(currentUrl, function(shortUrl) {
+        if (this._shareUrl !== currentUrl || this._shareUrlInput !== input) {
+          return;
+        }
+        this._shortLink = shortUrl || currentUrl;
+        this._shortLinkUrl = currentUrl;
+        input.value = this._shortLink;
+        selectInput(input);
+      }.bind(this));
+    }, this);
+  },
+
+  _hideSharePopup: function(event) {
+    var sharePopup = this._sharePopup;
+    stopEvent(event);
+    this._shareUrl = null;
+    this._shareUrlInput = null;
+    L.DomUtil.removeClass(this._shareContainer, 'share-popup-visible');
+    this._sharePopup = null;
+    defer(function() {
+      if (sharePopup && sharePopup.parentNode) {
+        sharePopup.parentNode.removeChild(sharePopup);
+      }
+    });
   },
 
   setRouteGeoJSON: function(routeGeoJSON) {
