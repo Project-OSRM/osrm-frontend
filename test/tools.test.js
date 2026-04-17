@@ -5,6 +5,23 @@
 'use strict';
 
 jest.mock('leaflet', () => {
+  function Evented() {}
+  Evented.prototype = {
+    on: function(type, handler) {
+      this._events = this._events || {};
+      this._events[type] = this._events[type] || [];
+      this._events[type].push(handler);
+      return this;
+    },
+    fire: function(type, event) {
+      var handlers = this._events && this._events[type] || [];
+      handlers.forEach(function(handler) {
+        handler.call(this, event);
+      }, this);
+      return this;
+    }
+  };
+
   function Control() {}
 
   Control.extend = function(props) {
@@ -15,13 +32,15 @@ jest.mock('leaflet', () => {
       }
     }
 
-    Extended.prototype = Object.assign({}, props);
+    Extended.prototype = Object.assign({}, props.includes || {}, props);
+    delete Extended.prototype.includes;
     return Extended;
   };
 
   return {
     Control: Control,
-    Mixin: { Events: {} },
+    Evented: Evented,
+    Mixin: { Events: Evented.prototype },
     setOptions: function(target, options) {
       target.options = Object.assign(target.options || {}, options);
     }
@@ -70,5 +89,14 @@ describe('tools debug map link', () => {
     expect(openSpy).toHaveBeenCalledWith(
       'http://localhost/osrm-frontend/debug/#13/38.899500/-77.026900'
     );
+  });
+
+  test('keeps the Leaflet event API on the control', () => {
+    var handler = jest.fn();
+
+    control.on('languagechanged', handler);
+    control.fire('languagechanged', { language: 'en' });
+
+    expect(handler).toHaveBeenCalledWith({ language: 'en' });
   });
 });
