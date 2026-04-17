@@ -9,5 +9,6 @@ module.exports = {
   'Select language': 'Välj språk',
   'Start - press enter to drop marker': 'Start - tryck för att placera startpunkt',
   'End - press enter to drop marker': 'Mål - tryck för att placera slutpunkt',
-  'Via point - press enter to drop marker': 'Via - tryck för att placera delmålspunkt'
+  'Via point - press enter to drop marker': 'Via - tryck för att placera delmålspunkt',
+  'Build': 'Build: '
 };

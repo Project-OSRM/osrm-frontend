@@ -36,7 +36,7 @@ module.exports = {
   },
   popup: {
     removeButtonClass: 'osrm-directions-icon osrm-close-light-icon',
-    uturnButtonClass: 'osrm-directions-icon osrm-u-turn-icon',
+    uturnButtonClass: 'osrm-directions-icon osrm-u-turn-icon'
   },
   tools: {
     popupWindowClass: 'fill-osrm dark',

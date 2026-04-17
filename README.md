@@ -13,7 +13,7 @@ We base [our Docker images](https://hub.docker.com/r/osrm/osrm-frontend/) on Alp
 Serves the frontend at `http://localhost:9966` running queries against the routing engine backend:
 
 ```
-docker run -p 9966:9966 osrm/osrm-frontend
+docker run -p 9966:9966 ghcr.io/project-osrm/osrm-frontend:latest
 ```
 
 Per default routing requests are made against the backend at `http://localhost:5000`.
@@ -46,7 +46,7 @@ Then compile assets and start the local server with
 npm start
 ```
 
-On Windows with no Unix tools installed (`bash`, `sed`, `cp`) the server could be started with two other commands
+On Windows with no Unix tools installed (`bash` and `cp`) the server could be started with two other commands
 executed by `npm start` internally:
 
 ```bash

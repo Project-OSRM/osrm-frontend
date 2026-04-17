@@ -5,9 +5,16 @@ module.exports = {
   'Open in JOSM': 'Ouvrir dans JOSM',
   'Open in Debug Map': 'Ouvrir dans Debug Map',
   'Open in Mapillary': 'Ouvrir dans Mapillary',
-  'GPX': 'Export GPX file',
+  'GPX': 'Exporter fichier GPX',
   'Select language': 'Choisir la langue',
-  'Start - press enter to drop marker': 'Point de départ',
-  'End - press enter to drop marker': 'Étape intermédiaire',
-  'Via point - press enter to drop marker': 'Point d\'arrivée'
+  'Share Route': 'Partager l\'itinéraire',
+  'Link': 'Lien',
+  'Shortlink': 'Lien court',
+  'Start - press enter to drop marker': 'Point de départ - appuyez sur entrée pour placer le marqueur',
+  'End - press enter to drop marker': 'Point d\'arrivée - appuyez sur entrée pour placer le marqueur',
+  'Via point - press enter to drop marker': 'Étape intermédiaire - appuyez sur Entrée pour placer le marqueur',
+  'Bike': 'Vélo',
+  'Car': 'Voiture',
+  'Foot': 'Piéton',
+  'Build': 'Build : '
 };

@@ -1,4 +1,4 @@
-FROM alpine:3.5
+FROM alpine:3.21
 
 # Enables customized options using environment variables
 ENV OSRM_BACKEND='http://localhost:5000'
@@ -12,7 +12,7 @@ RUN mkdir -p /src
 COPY package.json /src
 
 # Install app dependencies
-RUN apk add --no-cache sed nodejs && \
+RUN apk add --no-cache npm && \
     cd /src && \
     npm install
 
@@ -22,4 +22,4 @@ WORKDIR /src
 
 # Run App
 EXPOSE 9966
-CMD ["npm", "start"]
+CMD ["npm", "run", "start-prod"]

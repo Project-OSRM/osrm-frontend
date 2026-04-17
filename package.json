@@ -4,12 +4,14 @@
   "description": "frontend interface for project osrm",
   "main": "src/index.js",
   "scripts": {
-    "test": "eslint src/*.js i18n/*.js",
+    "test": "jest",
+    "test:lint": "eslint src/*.js i18n/*.js",
     "replace": "node ./scripts/replace.js",
-    "compile": "browserify -d src/index.js -s osrm > bundle.raw.js && uglifyjs bundle.raw.js -c -m --source-map=bundle.js.map -o bundle.js",
-    "build": "npm run replace && npm run compile && cp node_modules/leaflet/dist/leaflet.css css/leaflet.css",
-    "start-index": "budo src/index.js --serve=bundle.js --live -d | bistre",
-    "start": "npm run build && npm run start-index",
+    "clean": "rm -f bundle.raw.js",
+    "compile": "webpack --config webpack.config.js",
+    "build": "npm run clean && npm run replace && npm run compile && cp node_modules/leaflet/dist/leaflet.css css/leaflet.css",
+    "start": "npm run build && webpack serve --config webpack.config.js --mode development",
+    "start-prod": "npm run build",
     "prepub": "npm run build"
   },
   "repository": {
@@ -23,24 +25,32 @@
     "routing",
     "api"
   ],
-  "author": "amy lee walton",
+  "author": "OSRM contributors",
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/test/**/*.test.js"
+    ]
+  },
   "license": "ISC",
   "devDependencies": {
-    "bistre": "^1.0.1",
-    "browserify": "^14.3.0",
-    "budo": "^9.4.0",
-    "uglify-js": "^2.8.0"
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.2.0",
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0",
+    "webpack": "^5.106.1",
+    "webpack-cli": "^7.0.2",
+    "webpack-dev-server": "^5.0.0"
   },
   "dependencies": {
-    "file-saver": "^1.3.8",
-    "jsonp": "^0.2.0",
-    "jxon": "^2.0.0-beta.5",
-    "leaflet": "~0.7.7",
-    "leaflet-control-geocoder": "~1.2.1",
-    "leaflet-routing-machine": "~3.1.0",
-    "leaflet.locatecontrol": "~0.44.0",
-    "local-storage": "^1.4.2",
-    "osrm-text-instructions": "~0.13.0",
-    "qs": "^6.1.0"
+    "file-saver": "^2.0.5",
+    "jsonp": "^0.2.1",
+    "leaflet": "~1.9.4",
+    "leaflet-control-geocoder": "^3.3.1",
+    "leaflet-routing-machine": "3.2.12",
+    "leaflet.locatecontrol": "^0.89.0",
+    "local-storage": "^2.0.0",
+    "osrm-text-instructions": "^0.15.0",
+    "qs": "^6.15.1"
   }
 }
