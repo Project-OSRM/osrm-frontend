@@ -11,7 +11,7 @@
     "compile": "webpack --config webpack.config.js",
     "build": "npm run clean && npm run replace && npm run compile && cp node_modules/leaflet/dist/leaflet.css css/leaflet.css",
     "start": "npm run build && webpack serve --config webpack.config.js --mode development",
-    "start-prod": "npm run build",
+    "start-prod": "npm run build && webpack serve --config webpack.config.js --mode production",
     "prepub": "npm run build"
   },
   "repository": {
