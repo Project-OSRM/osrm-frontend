@@ -44,7 +44,12 @@ module.exports = {
         callback('');
         return;
       }
-      data = JSON.parse(responseText);
+      try {
+        data = JSON.parse(responseText);
+      } catch (error) {
+        callback('');
+        return;
+      }
       callback(data && data.ShortURL || '');
     }, true);
   },

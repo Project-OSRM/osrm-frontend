@@ -5,7 +5,7 @@ jest.mock('corslite', () => jest.fn());
 const corslite = require('corslite');
 const shortlink = require('../src/shortlink');
 
-describe('shortlink.osmli', () => {
+describe('shortlink', () => {
   beforeEach(() => {
     corslite.mockReset();
   });

@@ -319,6 +319,7 @@
     background-position: center;
     background-repeat: no-repeat;
     background-size: 20px 20px;
+    -webkit-background-size: 20px 20px;
 }
 .osrm-localization-chooser {
     color: #ffffff;

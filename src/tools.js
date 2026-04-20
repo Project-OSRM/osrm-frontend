@@ -26,7 +26,7 @@ function defer(fn) {
 var Control = L.Control.extend({
   includes: eventedMethods,
   options: {
-    toolContainerClass: "",
+    toolsContainerClass: "",
     editorButtonClass: "",
     josmButtonClass: "",
     debugButtonClass: "",
