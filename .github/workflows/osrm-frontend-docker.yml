@@ -26,6 +26,6 @@ jobs:
           file: ./docker/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/frontend:latest
-            ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
+            ghcr.io/${{ github.repository | downcase }}/frontend:latest
+            ghcr.io/${{ github.repository | downcase }}/frontend:${{ github.sha }}
 
