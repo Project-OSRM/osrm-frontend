@@ -1,41 +1,31 @@
-name: build and publish container image
+name: Publish frontend
+
 on:
   push:
-    branches:
-      - gh-pages
+    branches: [main]
 
 jobs:
-  publish:
+  build-and-push:
     runs-on: ubuntu-latest
-    steps:       
-      - name: Check out the repo
-        uses: actions/checkout@v2
+    permissions:
+      packages: write
+      contents: read
 
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v3
-        with:
-          images: ghcr.io/${{ github.repository }}          
-          flavor: |
-            latest=true
-
-
-      - name: Log in to GitHub Docker Registry
-        uses: docker/login-action@v1
+      - uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-
-      - name: Build container image 
-        uses: docker/build-push-action@v2
+      - uses: docker/build-push-action@v6
         with:
-          push: true
+          context: .
           file: ./docker/Dockerfile
-          tags: ${{ steps.meta.outputs.tags  }}
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/frontend:latest
+            ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
 
-
-
-            
