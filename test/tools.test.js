@@ -40,6 +40,36 @@ function createLeafletMock(includeEvented) {
   var leaflet = {
     Control: Control,
     Mixin: { Events: Evented.prototype },
+    DomUtil: {
+      create: function(tagName, className, container) {
+        var element = document.createElement(tagName);
+        if (className) {
+          element.className = className;
+        }
+        if (container) {
+          container.appendChild(element);
+        }
+        return element;
+      },
+      addClass: function(element, className) {
+        element.classList.add(className);
+      },
+      removeClass: function(element, className) {
+        element.classList.remove(className);
+      },
+      hasClass: function(element, className) {
+        return element.classList.contains(className);
+      }
+    },
+    DomEvent: {
+      on: function(element, type, handler, context) {
+        element.addEventListener(type, context ? handler.bind(context) : handler);
+      },
+      disableClickPropagation: function() {},
+      stopPropagation: function(event) {
+        event.stopPropagation();
+      }
+    },
     setOptions: function(target, options) {
       target.options = Object.assign(target.options || {}, options);
     }
@@ -52,10 +82,13 @@ function createLeafletMock(includeEvented) {
   return leaflet;
 }
 
-function loadTools(includeEvented) {
+function loadTools(includeEvented, shortlinkMock) {
   jest.resetModules();
   jest.doMock('leaflet', function() {
     return createLeafletMock(includeEvented !== false);
+  });
+  jest.doMock('../src/shortlink', function() {
+    return shortlinkMock || { osmli: jest.fn() };
   });
   return require('../src/tools');
 }
@@ -127,5 +160,66 @@ describe('tools debug map link', () => {
     expect(handler).toHaveBeenCalledWith(
       expect.objectContaining({ language: 'en' })
     );
+  });
+});
+
+describe('tools share popup', () => {
+  let shortlinkMock;
+  let tools;
+  let control;
+  let container;
+
+  beforeEach(() => {
+    shortlinkMock = {
+      osmli: jest.fn(function(url, callback) {
+        callback('https://osm.li/test');
+      })
+    };
+    tools = loadTools(true, shortlinkMock);
+    control = tools.control({
+      'Share Route': 'Share Route',
+      'Link': 'Link',
+      'Shortlink': 'Shortlink',
+      'Select language': 'Select language',
+      'Build': 'Build: '
+    }, {}, {
+      shareButtonClass: 'osrm-share-icon'
+    });
+    container = control.onAdd();
+  });
+
+  test('shows the current URL in the share popup by default', () => {
+    var shareButton = container.querySelector('.osrm-share-icon');
+
+    window.history.replaceState({}, '', '/?z=13');
+    shareButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(shortlinkMock.osmli).not.toHaveBeenCalled();
+    expect(container.querySelector('.share-url').value).toBe('http://localhost/?z=13');
+  });
+
+  test('switches to a shortlink and closes when the overlay is clicked', async () => {
+    var shareButton = container.querySelector('.osrm-share-icon');
+    var shortlinkButton;
+    var overlay;
+
+    window.history.replaceState({}, '', '/?z=13');
+    shareButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    shortlinkButton = container.querySelectorAll('.share-type')[1];
+    shortlinkButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(shortlinkMock.osmli).toHaveBeenCalledWith(
+      'http://localhost/?z=13',
+      expect.any(Function)
+    );
+    expect(container.querySelector('.share-url').value).toBe('https://osm.li/test');
+
+    overlay = container.querySelector('.share-overlay');
+    overlay.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await new Promise(function(resolve) {
+      window.setTimeout(resolve, 0);
+    });
+
+    expect(container.querySelector('.share-url')).toBeNull();
   });
 });
