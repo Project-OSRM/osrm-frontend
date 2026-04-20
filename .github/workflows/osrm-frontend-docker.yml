@@ -14,6 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Set lowercase image name
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}/frontend" >> $GITHUB_ENV
+
       - uses: docker/login-action@v4
         with:
           registry: ghcr.io
@@ -26,6 +29,6 @@ jobs:
           file: ./docker/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/frontend:latest
-            ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
 
