@@ -37,4 +37,4 @@ COPY --from=build /app/fonts /usr/share/nginx/html/fonts
 COPY --from=build /app/images /usr/share/nginx/html/images
 COPY --from=build /app/i18n /usr/share/nginx/html/i18n
 COPY --from=build /app/debug /usr/share/nginx/html/debug
-EXPOSE 80
+EXPOSE 9966
