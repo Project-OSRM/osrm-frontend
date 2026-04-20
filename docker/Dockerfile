@@ -1,5 +1,5 @@
 # Stage 1: build
-FROM node:22-alpine AS build
+FROM node:24-alpine AS build
 
 # Build-time configuration — override with --build-arg
 ARG OSRM_BACKEND=https://router.project-osrm.org
