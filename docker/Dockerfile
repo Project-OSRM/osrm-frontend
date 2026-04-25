@@ -25,7 +25,19 @@ RUN npm run build
 
 # Stage 2: serve
 FROM nginx:alpine
+
+# Set runtime environment defaults for entrypoint
+ENV OSRM_BACKEND=https://router.project-osrm.org \
+    OSRM_CENTER=38.8995,-77.0269 \
+    OSRM_ZOOM=13 \
+    OSRM_LANGUAGE=en \
+    OSRM_LABEL="Car (fastest)" \
+    OSRM_DEFAULT_LAYER=streets
+
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 # Webpack outputs bundle.js to the project root; copy all static assets
 COPY --from=build /app/index.html /usr/share/nginx/html/
 COPY --from=build /app/favicon.ico /usr/share/nginx/html/
@@ -37,4 +49,6 @@ COPY --from=build /app/fonts /usr/share/nginx/html/fonts
 COPY --from=build /app/images /usr/share/nginx/html/images
 COPY --from=build /app/i18n /usr/share/nginx/html/i18n
 COPY --from=build /app/debug /usr/share/nginx/html/debug
+
 EXPOSE 9966
+ENTRYPOINT ["/docker-entrypoint.sh"]
