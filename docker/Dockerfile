@@ -29,7 +29,8 @@ FROM nginx:alpine
 # Set runtime environment defaults for entrypoint
 # Note: Default OSRM_BACKEND is localhost:5000 (as documented in README.md:19)
 # Override with -e OSRM_BACKEND='http://...' at runtime
-ENV OSRM_BACKEND=http://localhost:5000 \
+ENV OSRM_ENVIRONMENT=docker \
+    OSRM_BACKEND=http://localhost:5000 \
     OSRM_CENTER=38.8995,-77.0269 \
     OSRM_ZOOM=13 \
     OSRM_LANGUAGE=en \

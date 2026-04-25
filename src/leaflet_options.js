@@ -72,6 +72,17 @@ function getBackend() {
   return config.OSRM_BACKEND || 'http://localhost:5000';
 }
 
+// Get bike/foot backend URL based on environment
+// In Docker: use same backend as driving (localhost:5000)
+// In local dev: use known public services (routing.openstreetmap.de)
+function getAlternativeBackend() {
+  if (config.OSRM_ENVIRONMENT === 'docker') {
+    return getBackend();
+  }
+  // Local dev mode: use public routing services
+  return undefined;
+}
+
 // Get zoom level from config with validation
 function getZoom() {
   var zoomValue = config.OSRM_ZOOM;
@@ -127,12 +138,12 @@ module.exports = {
     },
     {
       label: 'Bike',
-      path: getBackend() + '/route/v1',
+      path: (getAlternativeBackend() || 'https://routing.openstreetmap.de/routed-bike') + '/route/v1',
       profile: 'bike'
     },
     {
       label: 'Foot',
-      path: getBackend() + '/route/v1',
+      path: (getAlternativeBackend() || 'https://routing.openstreetmap.de/routed-foot') + '/route/v1',
       profile: 'foot'
     }
   ],
