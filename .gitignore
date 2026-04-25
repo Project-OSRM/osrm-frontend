@@ -1,4 +1,7 @@
 node_modules/
 *.swp
+.DS_Store
+bundle.js
+bundle.js.LICENSE.txt
+bundle.js.map
 bundle*raw*
-bundle*map
