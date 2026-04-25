@@ -38,16 +38,28 @@ var streets = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager
   }),
   small_components = L.tileLayer('https://tools.geofabrik.de/osmi/tiles/routing/{z}/{x}/{y}.png', {});
 
-// Parse center coordinates from config
+// Parse center coordinates from config with validation
 function parseCenter() {
-  var centerStr = config.OSRM_CENTER || '38.8995,-77.0269';
+  var defaultCenterStr = '38.8995,-77.0269';
+  var centerStr = config.OSRM_CENTER || defaultCenterStr;
   var parts = centerStr.split(/[, ]+/);
-  return L.latLng(parseFloat(parts[0]), parseFloat(parts[1]));
-}
+  var lat;
+  var lng;
 
-// Get backend URL from config
-function getBackend() {
-  return config.OSRM_BACKEND || 'https://router.project-osrm.org';
+  if (parts.length < 2) {
+    parts = defaultCenterStr.split(/[, ]+/);
+  }
+
+  lat = parseFloat(parts[0]);
+  lng = parseFloat(parts[1]);
+
+  if (!isFinite(lat) || !isFinite(lng)) {
+    parts = defaultCenterStr.split(/[, ]+/);
+    lat = parseFloat(parts[0]);
+    lng = parseFloat(parts[1]);
+  }
+
+  return L.latLng(lat, lng);
 }
 
 // Get service label from config
@@ -55,9 +67,27 @@ function getLabel() {
   return config.OSRM_LABEL || 'Car (fastest)';
 }
 
-// Get zoom level from config
+// Get backend URL from config
+function getBackend() {
+  return config.OSRM_BACKEND || 'http://localhost:5000';
+}
+
+// Get zoom level from config with validation
 function getZoom() {
-  return parseInt(config.OSRM_ZOOM || 13, 10);
+  var zoomValue = config.OSRM_ZOOM;
+  var parsedZoom;
+
+  if (zoomValue === undefined || zoomValue === null) {
+    return 13;
+  }
+
+  parsedZoom = parseInt(zoomValue, 10);
+
+  if (isNaN(parsedZoom)) {
+    return 13;
+  }
+
+  return parsedZoom;
 }
 
 // Get language from config
