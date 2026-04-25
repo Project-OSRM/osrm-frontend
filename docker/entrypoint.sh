@@ -19,11 +19,16 @@ escape_json() {
   printf '%s\n' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/$/\\/' | tr -d '\n' | sed 's/\\$//'
 }
 
-# Load modes from /etc/osrm/modes.json if it exists, otherwise generate defaults
+# Load modes from OSRM_MODES env var first (if provided), then from /etc/osrm/modes.json, otherwise use defaults
 MODES_JSON=""
-if [ -f /etc/osrm/modes.json ]; then
+if [ -n "$OSRM_MODES" ]; then
+  # Use env var directly (allows docker run -e OSRM_MODES='[...]')
+  MODES_JSON="$OSRM_MODES"
+elif [ -f /etc/osrm/modes.json ]; then
+  # Fall back to mounted file (allows docker run -v /path/to/modes.json:/etc/osrm/modes.json)
   MODES_JSON=$(cat /etc/osrm/modes.json)
 else
+  # Fall back to defaults
   # Generate default modes (driving, bike, foot) all using OSRM_BACKEND
   MODES_JSON=$(cat <<'MODES_EOF'
 [
