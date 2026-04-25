@@ -130,8 +130,15 @@ describe('leaflet_options — runtime configuration overrides', () => {
       delete global.window;
     });
 
-    test('defaults to localhost:5000 when OSRM_BACKEND is not set', () => {
+    test('uses public router.project-osrm.org in dev mode (no OSRM_ENVIRONMENT)', () => {
       global.window = { osrmConfig: {} };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.services[0].path).toBe('https://router.project-osrm.org/route/v1');
+      delete global.window;
+    });
+
+    test('uses localhost:5000 in Docker mode (OSRM_ENVIRONMENT=docker)', () => {
+      global.window = { osrmConfig: { OSRM_ENVIRONMENT: 'docker' } };
       const leafletOptions = require('../src/leaflet_options');
       expect(leafletOptions.services[0].path).toBe('http://localhost:5000/route/v1');
       delete global.window;

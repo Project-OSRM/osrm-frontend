@@ -67,9 +67,15 @@ function getLabel() {
   return config.OSRM_LABEL || 'Car (fastest)';
 }
 
-// Get backend URL from config
+// Get backend URL based on environment
+// In Docker: use configured OSRM_BACKEND (defaults to localhost:5000)
+// In dev: use public routing.project-osrm.org service
 function getBackend() {
-  return config.OSRM_BACKEND || 'http://localhost:5000';
+  if (config.OSRM_ENVIRONMENT === 'docker') {
+    return config.OSRM_BACKEND || 'http://localhost:5000';
+  }
+  // Local dev mode: use public routing service
+  return config.OSRM_BACKEND || 'https://router.project-osrm.org';
 }
 
 // Get bike/foot backend URL based on environment
