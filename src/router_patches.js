@@ -18,5 +18,16 @@ module.exports = {
     router._leftOrRight = leftOrRight;
   },
   // Exported for unit testing
-  leftOrRight: leftOrRight
+  leftOrRight: leftOrRight,
+  
+  // Allow setting the active service by index
+  setActiveService: function(router, serviceIndex, services) {
+    if (serviceIndex >= 0 && serviceIndex < services.length) {
+      var service = services[serviceIndex];
+      router.options.serviceUrl = service.path;
+      if (service.profile) {
+        router.options.profile = service.profile;
+      }
+    }
+  }
 };

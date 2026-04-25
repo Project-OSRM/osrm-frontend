@@ -43,10 +43,23 @@ module.exports = {
     alternative: 0,
     layer: streets
   },
-  services: [{
-    label: 'Car (fastest)',
-    path: 'https://router.project-osrm.org/route/v1'
-  }],
+  services: [
+    {
+      label: 'Car',
+      path: 'https://router.project-osrm.org/route/v1',
+      profile: 'driving'
+    },
+    {
+      label: 'Bike',
+      path: 'https://routing.openstreetmap.de/routed-bike/route/v1',
+      profile: 'bike'
+    },
+    {
+      label: 'Foot',
+      path: 'https://routing.openstreetmap.de/routed-foot/route/v1',
+      profile: 'foot'
+    }
+  ],
   layer: [{
     'Streets': streets,
     'Outdoors': outdoors,

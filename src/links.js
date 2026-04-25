@@ -51,7 +51,8 @@ function formatLink(options) {
     hl: options.language,
     alt: options.alternative,
     df: options.units,
-    srv: options.service
+    srv: options.service,
+    profile: options.profile
   }, {indices: false});
 }
 
@@ -80,6 +81,7 @@ function parseLink(link) {
     parsedValues.units = q.df;
     parsedValues.layer = q.ly;
     parsedValues.service = q.srv;
+    parsedValues.profile = q.profile;
     parsedValues.originAddress = q.src;
     parsedValues.destinationAddress = q.dst;
   } catch (e) {

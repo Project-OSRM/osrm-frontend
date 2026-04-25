@@ -285,11 +285,13 @@ var Control = L.Control.extend({
   _createVersionInfo: function(container) {
     var versionInfo = version.getVersionInfo();
     var versionContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-version', container);
-    var versionLabel = L.DomUtil.create('span', 'leaflet-osrm-tools-version-label', versionContainer);
-    versionLabel.textContent = this._local['Build'] || 'Build: ';
-    var versionValue = L.DomUtil.create('span', 'leaflet-osrm-tools-version-value', versionContainer);
-    versionValue.textContent = versionInfo.formatted;
-    versionValue.setAttribute('title', versionInfo.timestamp);
+    var infoIcon = L.DomUtil.create('div', 'osrm-info-icon', versionContainer);
+    infoIcon.setAttribute('title', this._local['Build'] + ': ' + versionInfo.timestamp);
+    infoIcon.textContent = '\u24D8';
+  },
+
+  updateLocalization: function(localization) {
+    this._local = localization;
   }
 });
 
