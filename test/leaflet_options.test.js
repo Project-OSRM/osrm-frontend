@@ -211,13 +211,6 @@ describe('leaflet_options — runtime configuration overrides', () => {
   });
 
   describe('OSRM_LABEL and OSRM_DEFAULT_LAYER overrides', () => {
-    test('uses custom service label when provided', () => {
-      global.window = { osrmConfig: { OSRM_LABEL: 'Custom Service' } };
-      const leafletOptions = require('../src/leaflet_options');
-      expect(leafletOptions.services[0].label).toBe('Custom Service');
-      delete global.window;
-    });
-
     test('uses custom default layer when provided', () => {
       global.window = { osrmConfig: { OSRM_DEFAULT_LAYER: 'satellite' } };
       const leafletOptions = require('../src/leaflet_options');
@@ -233,59 +226,77 @@ describe('leaflet_options — runtime configuration overrides', () => {
     });
   });
 
-  describe('Per-mode backend configuration (OSRM_BACKEND_*)', () => {
-    test('uses OSRM_BACKEND_DRIVING when provided in Docker mode', () => {
-      global.window = {
-        osrmConfig: {
-          OSRM_ENVIRONMENT: 'docker',
-          OSRM_BACKEND_DRIVING: 'http://localhost:5001'
-        }
-      };
+  describe('OSRM_MODES - free-form mode configuration', () => {
+    test('uses default modes when OSRM_MODES not provided', () => {
+      global.window = { osrmConfig: { OSRM_ENVIRONMENT: 'docker' } };
       const leafletOptions = require('../src/leaflet_options');
-      expect(leafletOptions.services[0].path).toContain('localhost:5001');
+      expect(leafletOptions.services.length).toBe(3);
+      expect(leafletOptions.services[0].label).toBe('Car (fastest)');
+      expect(leafletOptions.services[0].path).toContain('localhost:5000');
       delete global.window;
     });
 
-    test('uses OSRM_BACKEND_BIKE when provided in Docker mode', () => {
+    test('uses custom modes from OSRM_MODES JSON', () => {
+      const modesJSON = JSON.stringify([
+        { name: 'Fast Route', url: 'http://custom:5000' },
+        { name: 'Scenic Route', url: 'http://custom:5001' }
+      ]);
       global.window = {
         osrmConfig: {
           OSRM_ENVIRONMENT: 'docker',
-          OSRM_BACKEND_BIKE: 'http://localhost:5002'
+          OSRM_MODES: modesJSON
         }
       };
       const leafletOptions = require('../src/leaflet_options');
-      const bikeService = leafletOptions.services.find(s => s.profile === 'bike');
-      expect(bikeService.path).toContain('localhost:5002');
+      expect(leafletOptions.services.length).toBe(2);
+      expect(leafletOptions.services[0].label).toBe('Fast Route');
+      expect(leafletOptions.services[0].path).toContain('custom:5000');
+      expect(leafletOptions.services[1].label).toBe('Scenic Route');
+      expect(leafletOptions.services[1].path).toContain('custom:5001');
       delete global.window;
     });
 
-    test('uses OSRM_BACKEND_FOOT when provided in Docker mode', () => {
+    test('each mode has an internal profile for routing', () => {
+      const modesJSON = JSON.stringify([
+        { name: 'Car', url: 'http://localhost:5000' },
+        { name: 'Bike', url: 'http://localhost:5000' }
+      ]);
+      global.window = {
+        osrmConfig: {
+          OSRM_MODES: modesJSON
+        }
+      };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.services[0].profile).toBe('driving');
+      expect(leafletOptions.services[1].profile).toBe('bike');
+      delete global.window;
+    });
+
+    test('defaults to all three modes in dev mode with public services', () => {
+      global.window = { osrmConfig: { OSRM_ENVIRONMENT: undefined } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.services.length).toBe(3);
+      expect(leafletOptions.services[0].path).toContain('router.project-osrm.org');
+      expect(leafletOptions.services[1].path).toContain('routing.openstreetmap.de');
+      expect(leafletOptions.services[2].path).toContain('routing.openstreetmap.de');
+      delete global.window;
+    });
+
+    test('gracefully handles invalid JSON in OSRM_MODES', () => {
       global.window = {
         osrmConfig: {
           OSRM_ENVIRONMENT: 'docker',
-          OSRM_BACKEND_FOOT: 'http://localhost:5003'
+          OSRM_MODES: 'invalid json'
         }
       };
       const leafletOptions = require('../src/leaflet_options');
-      const footService = leafletOptions.services.find(s => s.profile === 'foot');
-      expect(footService.path).toContain('localhost:5003');
+      // Should fall back to defaults
+      expect(leafletOptions.services.length).toBe(3);
+      expect(leafletOptions.services[0].label).toBe('Car (fastest)');
       delete global.window;
     });
 
-    test('per-mode backends override global OSRM_BACKEND', () => {
-      global.window = {
-        osrmConfig: {
-          OSRM_ENVIRONMENT: 'docker',
-          OSRM_BACKEND: 'http://localhost:5000',
-          OSRM_BACKEND_DRIVING: 'http://localhost:5001'
-        }
-      };
-      const leafletOptions = require('../src/leaflet_options');
-      expect(leafletOptions.services[0].path).toContain('localhost:5001');
-      delete global.window;
-    });
-
-    test('uses global OSRM_BACKEND as fallback when per-mode not set', () => {
+    test('respects OSRM_BACKEND in default modes', () => {
       global.window = {
         osrmConfig: {
           OSRM_ENVIRONMENT: 'docker',
@@ -293,23 +304,7 @@ describe('leaflet_options — runtime configuration overrides', () => {
         }
       };
       const leafletOptions = require('../src/leaflet_options');
-      const bikeService = leafletOptions.services.find(s => s.profile === 'bike');
-      expect(bikeService.path).toContain('my-backend:5000');
-      delete global.window;
-    });
-
-    test('all three modes available in dev mode with public services', () => {
-      global.window = {
-        osrmConfig: {
-          OSRM_ENVIRONMENT: undefined  // dev mode
-        }
-      };
-      const leafletOptions = require('../src/leaflet_options');
-      expect(leafletOptions.services.length).toBe(3);
-      expect(leafletOptions.services.map(s => s.profile)).toEqual(['driving', 'bike', 'foot']);
-      expect(leafletOptions.services[0].path).toContain('router.project-osrm.org');
-      expect(leafletOptions.services[1].path).toContain('routing.openstreetmap.de');
-      expect(leafletOptions.services[2].path).toContain('routing.openstreetmap.de');
+      expect(leafletOptions.services[0].path).toContain('my-backend:5000');
       delete global.window;
     });
   });

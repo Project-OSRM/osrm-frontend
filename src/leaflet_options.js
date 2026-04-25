@@ -67,6 +67,50 @@ function getLabel() {
   return config.OSRM_LABEL || 'Car (fastest)';
 }
 
+// Parse modes from OSRM_MODES config (array of {name, url})
+// Returns array of {name, url, profile} with sensible defaults
+function parseModes() {
+  var modesStr = config.OSRM_MODES;
+  var backend = config.OSRM_BACKEND;
+  
+  // Determine default backend based on environment
+  if (config.OSRM_ENVIRONMENT === 'docker') {
+    backend = backend || 'http://localhost:5000';
+  } else {
+    backend = backend || 'https://router.project-osrm.org';
+  }
+
+  var defaultModes = [
+    { name: 'Car (fastest)', url: backend },
+    { name: 'Bike', url: 'https://routing.openstreetmap.de' },
+    { name: 'Foot', url: 'https://routing.openstreetmap.de' }
+  ];
+
+  if (!modesStr) {
+    return defaultModes;
+  }
+
+  try {
+    var modes = JSON.parse(modesStr);
+    if (Array.isArray(modes) && modes.length > 0) {
+      // Map each mode entry to include a profile field for routing
+      return modes.map(function(mode, index) {
+        var profileNames = ['driving', 'bike', 'foot'];
+        return {
+          name: mode.name || ('Mode ' + (index + 1)),
+          url: mode.url || 'http://localhost:5000',
+          profile: profileNames[index] || 'driving'  // Use standard profile for routing
+        };
+      });
+    }
+  } catch (e) {
+    // JSON parse failed, return defaults
+    console.warn('Failed to parse OSRM_MODES:', e);
+  }
+
+  return defaultModes;
+}
+
 // Get backend URL based on environment and profile
 // In Docker: use configured OSRM_BACKEND_* (defaults to OSRM_BACKEND)
 // In dev: use public OSRM services
@@ -147,50 +191,17 @@ var layerMap = {
 
 var defaultLayer = layerMap[getDefaultLayer()] || streets;
 
-// Available service profiles with their labels and backends
-var availableProfiles = {
-  driving: {
-    label: getLabel()
-  },
-  bike: {
-    label: 'Bike'
-  },
-  foot: {
-    label: 'Foot'
-  }
-};
-
-// Build services array based on configured profiles
-// OSRM_PROFILES env var can limit which modes are available (default: all)
+// Build services array from OSRM_MODES config
+// Each service has a name, URL prefix, and internal profile for routing
 function buildServices() {
-  var profilesConfig = config.OSRM_PROFILES;
-  var enabledProfiles = profilesConfig ? profilesConfig.split(/[,\s]+/) : ['driving', 'bike', 'foot'];
-  var services = [];
-
-  enabledProfiles.forEach(function(profile) {
-    if (availableProfiles[profile]) {
-      var backend = getBackendForProfile(profile);
-      if (backend) {
-        services.push({
-          label: availableProfiles[profile].label,
-          path: backend + '/route/v1',
-          profile: profile
-        });
-      }
-    }
+  var modes = parseModes();
+  return modes.map(function(mode) {
+    return {
+      label: mode.name,
+      path: mode.url + '/route/v1',
+      profile: mode.profile
+    };
   });
-
-  // Always include at least driving
-  if (services.length === 0 && availableProfiles.driving) {
-    var backend = availableProfiles.driving.getBackend();
-    services.push({
-      label: availableProfiles.driving.label,
-      path: backend + '/route/v1',
-      profile: 'driving'
-    });
-  }
-
-  return services;
 }
 
 module.exports = {
