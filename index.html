@@ -18,11 +18,9 @@
       // OSRM_ENVIRONMENT indicates execution context: 'docker' or undefined (local dev)
       window.osrmConfig = {
         OSRM_ENVIRONMENT: (typeof process !== 'undefined' && process.env) ? process.env.OSRM_ENVIRONMENT : undefined,
-        OSRM_BACKEND: 'http://localhost:5000',
         OSRM_CENTER: '38.8995,-77.0269',
         OSRM_ZOOM: 13,
         OSRM_LANGUAGE: 'en',
-        OSRM_LABEL: 'Car (fastest)',
         OSRM_DEFAULT_LAYER: 'streets'
       };
 
