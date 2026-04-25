@@ -48,6 +48,7 @@ module.exports = {
     shareButtonClass: 'osrm-directions-icon osrm-share-icon',
     gpxButtonClass: 'osrm-directions-icon osrm-gpx-icon',
     localizationChooserClass: 'osrm-localization-chooser',
+    profileChooserClass: 'osrm-profile-chooser',
     printButtonClass: 'osrm-directions-icon osrm-printer-icon',
     toolsContainerClass: 'fill-osrm dark',
     position: 'bottomleft'
