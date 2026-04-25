@@ -120,11 +120,9 @@ function parseModes() {
     ];
   }
   
-  // Docker mode default: same three public profiles as dev
+  // Docker mode default: single "default" profile using localhost:5000
   return [
-    { name: 'driving', url: 'https://router.project-osrm.org', path: 'https://router.project-osrm.org/route/v1', profile: 'driving' },
-    { name: 'bike', url: 'https://routing.openstreetmap.de', path: 'https://routing.openstreetmap.de/routed-bike/route/v1', profile: 'bike' },
-    { name: 'foot', url: 'https://routing.openstreetmap.de', path: 'https://routing.openstreetmap.de/routed-foot/route/v1', profile: 'foot' }
+    { name: 'default', url: 'http://localhost:5000', profile: 'driving' }
   ];
 }
 
