@@ -67,23 +67,43 @@ function getLabel() {
   return config.OSRM_LABEL || 'Car (fastest)';
 }
 
+// Get backend URL based on environment and profile
+// In Docker: use configured OSRM_BACKEND_* (defaults to OSRM_BACKEND)
+// In dev: use public OSRM services
+function getBackendForProfile(profile) {
+  var profileBackend = config['OSRM_BACKEND_' + profile.toUpperCase()];
+  var backend = profileBackend || config.OSRM_BACKEND;
+
+  if (config.OSRM_ENVIRONMENT === 'docker') {
+    return backend || 'http://localhost:5000';
+  }
+
+  // Local dev mode: use public OSRM services based on profile
+  if (backend) {
+    return backend;  // Explicit override
+  }
+  if (profile === 'driving') {
+    return 'https://router.project-osrm.org';
+  }
+  // Bike and foot use routing.openstreetmap.de in dev mode
+  return 'https://routing.openstreetmap.de';
+}
+
+// Legacy functions for backward compatibility
 // Get backend URL based on environment
 // In Docker: use configured OSRM_BACKEND (defaults to localhost:5000)
 // In dev: use public routing.project-osrm.org service
 function getBackend() {
-  if (config.OSRM_ENVIRONMENT === 'docker') {
-    return config.OSRM_BACKEND || 'http://localhost:5000';
-  }
-  // Local dev mode: use public routing service
-  return config.OSRM_BACKEND || 'https://router.project-osrm.org';
+  return getBackendForProfile('driving');
 }
 
 // Get bike/foot backend URL based on environment
-// In Docker: use same backend as driving (localhost:5000)
+// In Docker: use configured OSRM_BACKEND_BIKE/OSRM_BACKEND_FOOT
 // In local dev: use known public services (routing.openstreetmap.de)
 function getAlternativeBackend() {
+  // In Docker: use bike backend
   if (config.OSRM_ENVIRONMENT === 'docker') {
-    return getBackend();
+    return getBackendForProfile('bike') || getBackend();
   }
   // Local dev mode: use public routing services
   return undefined;
@@ -127,6 +147,52 @@ var layerMap = {
 
 var defaultLayer = layerMap[getDefaultLayer()] || streets;
 
+// Available service profiles with their labels and backends
+var availableProfiles = {
+  driving: {
+    label: getLabel()
+  },
+  bike: {
+    label: 'Bike'
+  },
+  foot: {
+    label: 'Foot'
+  }
+};
+
+// Build services array based on configured profiles
+// OSRM_PROFILES env var can limit which modes are available (default: all)
+function buildServices() {
+  var profilesConfig = config.OSRM_PROFILES;
+  var enabledProfiles = profilesConfig ? profilesConfig.split(/[,\s]+/) : ['driving', 'bike', 'foot'];
+  var services = [];
+
+  enabledProfiles.forEach(function(profile) {
+    if (availableProfiles[profile]) {
+      var backend = getBackendForProfile(profile);
+      if (backend) {
+        services.push({
+          label: availableProfiles[profile].label,
+          path: backend + '/route/v1',
+          profile: profile
+        });
+      }
+    }
+  });
+
+  // Always include at least driving
+  if (services.length === 0 && availableProfiles.driving) {
+    var backend = availableProfiles.driving.getBackend();
+    services.push({
+      label: availableProfiles.driving.label,
+      path: backend + '/route/v1',
+      profile: 'driving'
+    });
+  }
+
+  return services;
+}
+
 module.exports = {
   defaultState: {
     center: parseCenter(),
@@ -136,23 +202,7 @@ module.exports = {
     alternative: 0,
     layer: defaultLayer
   },
-  services: [
-    {
-      label: getLabel(),
-      path: getBackend() + '/route/v1',
-      profile: 'driving'
-    },
-    {
-      label: 'Bike',
-      path: (getAlternativeBackend() || 'https://routing.openstreetmap.de/routed-bike') + '/route/v1',
-      profile: 'bike'
-    },
-    {
-      label: 'Foot',
-      path: (getAlternativeBackend() || 'https://routing.openstreetmap.de/routed-foot') + '/route/v1',
-      profile: 'foot'
-    }
-  ],
+  services: buildServices(),
   layer: [{
     'Streets': streets,
     'Outdoors': outdoors,

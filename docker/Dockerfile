@@ -35,7 +35,8 @@ ENV OSRM_ENVIRONMENT=docker \
     OSRM_ZOOM=13 \
     OSRM_LANGUAGE=en \
     OSRM_LABEL="Car (fastest)" \
-    OSRM_DEFAULT_LAYER=streets
+    OSRM_DEFAULT_LAYER=streets \
+    OSRM_PROFILES=driving,bike,foot
 
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker/entrypoint.sh /docker-entrypoint.sh
