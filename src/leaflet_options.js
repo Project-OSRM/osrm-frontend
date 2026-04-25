@@ -219,7 +219,7 @@ function buildServices() {
   });
 }
 
-module.exports = {
+var leafletOptions = {
   defaultState: {
     center: parseCenter(),
     zoom: getZoom(),
@@ -228,7 +228,9 @@ module.exports = {
     alternative: 0,
     layer: defaultLayer
   },
-  services: buildServices(),
+  get services() {
+    return buildServices();
+  },
   layer: [{
     'Streets': streets,
     'Outdoors': outdoors,
@@ -249,3 +251,5 @@ module.exports = {
     five: osm_de
   }
 };
+
+module.exports = leafletOptions;
