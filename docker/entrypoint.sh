@@ -39,10 +39,12 @@ EOF
 )
 else
   # Fall back to defaults
-  # Docker default: single "default" profile using localhost:5000
+  # Docker default: use same three public profiles as dev mode
   MODES_JSON=$(cat <<'MODES_EOF'
 [
-  { "name": "default", "url": "http://localhost:5000" }
+  { "name": "driving", "url": "https://router.project-osrm.org", "path": "https://router.project-osrm.org/route/v1" },
+  { "name": "bike", "url": "https://routing.openstreetmap.de", "path": "https://routing.openstreetmap.de/routed-bike/route/v1" },
+  { "name": "foot", "url": "https://routing.openstreetmap.de", "path": "https://routing.openstreetmap.de/routed-foot/route/v1" }
 ]
 MODES_EOF
 )
