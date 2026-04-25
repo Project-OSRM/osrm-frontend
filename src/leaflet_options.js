@@ -127,12 +127,12 @@ module.exports = {
     },
     {
       label: 'Bike',
-      path: 'https://routing.openstreetmap.de/routed-bike/route/v1',
+      path: getBackend() + '/route/v1',
       profile: 'bike'
     },
     {
       label: 'Foot',
-      path: 'https://routing.openstreetmap.de/routed-foot/route/v1',
+      path: getBackend() + '/route/v1',
       profile: 'foot'
     }
   ],
