@@ -71,8 +71,10 @@ function getLabel() {
 // Supports both new OSRM_MODES JSON and legacy OSRM_BACKEND for backward compatibility
 // Priority: OSRM_MODES > OSRM_BACKEND (with deprecation warning) > defaults
 function parseModes() {
-  var modesStr = config.OSRM_MODES;
-  var legacyBackend = config.OSRM_BACKEND;
+  // Read config fresh from window each time, not the captured config variable
+  var currentConfig = (typeof window !== 'undefined' ? window.osrmConfig : null) || {};
+  var modesStr = currentConfig.OSRM_MODES;
+  var legacyBackend = currentConfig.OSRM_BACKEND;
   
   // If both are configured, prefer OSRM_MODES and warn about deprecation
   if (modesStr && legacyBackend) {
@@ -112,7 +114,7 @@ function parseModes() {
   }
   
   // If in dev mode (no OSRM_ENVIRONMENT or not 'docker'), use three public profiles
-  if (config.OSRM_ENVIRONMENT !== 'docker') {
+  if (currentConfig.OSRM_ENVIRONMENT !== 'docker') {
     return [
       { name: 'driving', url: 'https://router.project-osrm.org', path: 'https://router.project-osrm.org/route/v1', profile: 'driving' },
       { name: 'bike', url: 'https://routing.openstreetmap.de', path: 'https://routing.openstreetmap.de/routed-bike/route/v1', profile: 'bike' },
