@@ -74,8 +74,6 @@ function parseModes() {
   var modesStr = config.OSRM_MODES;
   var legacyBackend = config.OSRM_BACKEND;
   
-  console.log('parseModes() called. config:', config);
-  
   // If both are configured, prefer OSRM_MODES and warn about deprecation
   if (modesStr && legacyBackend) {
     console.warn('DEPRECATION WARNING: Both OSRM_MODES and OSRM_BACKEND are set. Using OSRM_MODES. Please migrate to OSRM_MODES only.');
@@ -115,21 +113,17 @@ function parseModes() {
   
   // If in dev mode (no OSRM_ENVIRONMENT or not 'docker'), use three public profiles
   if (config.OSRM_ENVIRONMENT !== 'docker') {
-    var devModes = [
-      { name: 'driving', url: 'https://router.project-osrm.org', profile: 'driving' },
-      { name: 'bike', url: 'https://routing.openstreetmap.de', profile: 'bike' },
-      { name: 'foot', url: 'https://routing.openstreetmap.de', profile: 'foot' }
+    return [
+      { name: 'driving', url: 'https://router.project-osrm.org', path: 'https://router.project-osrm.org/route/v1', profile: 'driving' },
+      { name: 'bike', url: 'https://routing.openstreetmap.de', path: 'https://routing.openstreetmap.de/routed-bike/route/v1', profile: 'bike' },
+      { name: 'foot', url: 'https://routing.openstreetmap.de', path: 'https://routing.openstreetmap.de/routed-foot/route/v1', profile: 'foot' }
     ];
-    console.log('Using dev mode profiles:', devModes);
-    return devModes;
   }
   
   // Docker mode default: single "default" profile
-  var dockerModes = [
+  return [
     { name: 'default', url: 'http://localhost:5000', profile: 'driving' }
   ];
-  console.log('Using Docker mode profiles:', dockerModes);
-  return dockerModes;
 }
 
 // Get backend URL based on environment and profile
@@ -216,15 +210,13 @@ var defaultLayer = layerMap[getDefaultLayer()] || streets;
 // Each service has a name, URL prefix, and internal profile for routing
 function buildServices() {
   var modes = parseModes();
-  var services = modes.map(function(mode) {
+  return modes.map(function(mode) {
     return {
       label: mode.name,
-      path: mode.url + '/route/v1',
+      path: mode.path || (mode.url + '/route/v1'),
       profile: mode.profile
     };
   });
-  console.log('buildServices() result:', services);
-  return services;
 }
 
 module.exports = {

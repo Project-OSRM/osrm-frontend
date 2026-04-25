@@ -21,7 +21,6 @@ escape_json() {
 
 # Load modes from OSRM_MODES env var, file, or use OSRM_BACKEND for backwards compat
 MODES_JSON=""
-OSRM_BACKEND="${OSRM_BACKEND:-}"
 
 if [ -n "$OSRM_MODES" ]; then
   # Use new OSRM_MODES env var (highest priority)
@@ -29,8 +28,8 @@ if [ -n "$OSRM_MODES" ]; then
 elif [ -f /etc/osrm/modes.json ]; then
   # Fall back to mounted file (allows docker run -v /path/to/modes.json:/etc/osrm/modes.json)
   MODES_JSON=$(cat /etc/osrm/modes.json)
-elif [ -n "$OSRM_BACKEND" ]; then
-  # Backward compatibility: if old OSRM_BACKEND is set, create single mode
+elif [ -n "$OSRM_BACKEND" ] && [ "$OSRM_BACKEND" != "http://localhost:5000" ]; then
+  # Backward compatibility: if old OSRM_BACKEND is set to non-default, create single mode
   # User should migrate to OSRM_MODES, but we support this for backward compat
   MODES_JSON=$(cat <<EOF
 [
