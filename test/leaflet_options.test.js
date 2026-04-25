@@ -308,6 +308,47 @@ describe('leaflet_options — runtime configuration overrides', () => {
       };
       const leafletOptions = require('../src/leaflet_options');
       expect(leafletOptions.services[0].path).toContain('my-backend:5000');
+      expect(leafletOptions.services[0].label).toBe('default');
+      delete global.window;
+    });
+
+    test('OSRM_MODES takes priority over OSRM_BACKEND', () => {
+      const modesJSON = JSON.stringify([
+        { name: 'Custom', url: 'http://custom:5000' }
+      ]);
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      global.window = {
+        osrmConfig: {
+          OSRM_ENVIRONMENT: 'docker',
+          OSRM_BACKEND: 'http://ignored:5000',
+          OSRM_MODES: modesJSON
+        }
+      };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.services[0].label).toBe('Custom');
+      expect(leafletOptions.services[0].path).toContain('custom:5000');
+      // Should warn about both env vars being set
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('DEPRECATION WARNING'));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Both OSRM_MODES and OSRM_BACKEND'));
+      warnSpy.mockRestore();
+      delete global.window;
+    });
+
+    test('legacy OSRM_BACKEND alone shows deprecation warning', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      global.window = {
+        osrmConfig: {
+          OSRM_ENVIRONMENT: 'docker',
+          OSRM_BACKEND: 'http://legacy:5000'
+        }
+      };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.services[0].label).toBe('default');
+      expect(leafletOptions.services[0].path).toContain('legacy:5000');
+      // Should warn about deprecation
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('DEPRECATION WARNING'));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('OSRM_BACKEND is deprecated'));
+      warnSpy.mockRestore();
       delete global.window;
     });
   });

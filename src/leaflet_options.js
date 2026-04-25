@@ -68,57 +68,62 @@ function getLabel() {
 }
 
 // Parse modes from OSRM_MODES config (array of {name, url})
-// Returns array of {name, url, profile} with sensible defaults
+// Supports both new OSRM_MODES JSON and legacy OSRM_BACKEND for backward compatibility
+// Priority: OSRM_MODES > OSRM_BACKEND (with deprecation warning) > defaults
 function parseModes() {
   var modesStr = config.OSRM_MODES;
-  var backend = config.OSRM_BACKEND;
+  var legacyBackend = config.OSRM_BACKEND;
   
-  var defaultModes;
+  // If both are configured, prefer OSRM_MODES and warn about deprecation
+  if (modesStr && legacyBackend) {
+    console.warn('DEPRECATION WARNING: Both OSRM_MODES and OSRM_BACKEND are set. Using OSRM_MODES. Please migrate to OSRM_MODES only.');
+  }
   
-  if (config.OSRM_ENVIRONMENT === 'docker') {
-    // Docker: single "default" profile using localhost:5000
-    defaultModes = [
-      { name: 'default', url: backend || 'http://localhost:5000' }
+  // If OSRM_MODES is provided, use it
+  if (modesStr) {
+    try {
+      var modes = JSON.parse(modesStr);
+      if (Array.isArray(modes) && modes.length > 0) {
+        // Map each mode entry to include a profile field for routing
+        return modes.map(function(mode, index) {
+          var profileNames = ['driving', 'bike', 'foot'];
+          return {
+            name: mode.name || ('Mode ' + (index + 1)),
+            url: mode.url || 'http://localhost:5000',
+            profile: profileNames[index] || 'driving'  // Use standard profile for routing
+          };
+        });
+      }
+    } catch (e) {
+      console.warn('Failed to parse OSRM_MODES JSON:', e);
+    }
+  }
+  
+  // Legacy support: if OSRM_BACKEND is set (and OSRM_MODES wasn't), warn and use single mode
+  if (legacyBackend) {
+    console.warn('DEPRECATION WARNING: OSRM_BACKEND is deprecated. Please use OSRM_MODES instead. Example: OSRM_MODES=\'[{"name":"default","url":"' + legacyBackend + '"}]\'');
+    return [
+      {
+        name: 'default',
+        url: legacyBackend,
+        profile: 'driving'
+      }
     ];
-  } else {
-    // Dev: three public profiles using OSRM instances
-    // But if OSRM_BACKEND is explicitly set, use it for the first mode
-    if (backend) {
-      defaultModes = [
-        { name: 'driving', url: backend }
-      ];
-    } else {
-      defaultModes = [
-        { name: 'driving', url: 'https://router.project-osrm.org' },
-        { name: 'bike', url: 'https://routing.openstreetmap.de' },
-        { name: 'foot', url: 'https://routing.openstreetmap.de' }
-      ];
-    }
   }
-
-  if (!modesStr) {
-    return defaultModes;
+  
+  // If in dev mode (no OSRM_ENVIRONMENT or not 'docker'), use three public profiles
+  if (config.OSRM_ENVIRONMENT !== 'docker') {
+    return [
+      { name: 'driving', url: 'https://router.project-osrm.org', profile: 'driving' },
+      { name: 'bike', url: 'https://routing.openstreetmap.de', profile: 'bike' },
+      { name: 'foot', url: 'https://routing.openstreetmap.de', profile: 'foot' }
+    ];
   }
-
-  try {
-    var modes = JSON.parse(modesStr);
-    if (Array.isArray(modes) && modes.length > 0) {
-      // Map each mode entry to include a profile field for routing
-      return modes.map(function(mode, index) {
-        var profileNames = ['driving', 'bike', 'foot'];
-        return {
-          name: mode.name || ('Mode ' + (index + 1)),
-          url: mode.url || 'http://localhost:5000',
-          profile: profileNames[index] || 'driving'  // Use standard profile for routing
-        };
-      });
-    }
-  } catch (e) {
-    // JSON parse failed, return defaults
-    console.warn('Failed to parse OSRM_MODES:', e);
-  }
-
-  return defaultModes;
+  
+  // Docker mode default: single "default" profile
+  return [
+    { name: 'default', url: 'http://localhost:5000', profile: 'driving' }
+  ];
 }
 
 // Get backend URL based on environment and profile

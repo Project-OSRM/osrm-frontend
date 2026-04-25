@@ -19,14 +19,25 @@ escape_json() {
   printf '%s\n' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/$/\\/' | tr -d '\n' | sed 's/\\$//'
 }
 
-# Load modes from OSRM_MODES env var first (if provided), then from /etc/osrm/modes.json, otherwise use defaults
+# Load modes from OSRM_MODES env var, file, or use OSRM_BACKEND for backwards compat
 MODES_JSON=""
+OSRM_BACKEND="${OSRM_BACKEND:-}"
+
 if [ -n "$OSRM_MODES" ]; then
-  # Use env var directly (allows docker run -e OSRM_MODES='[...]')
+  # Use new OSRM_MODES env var (highest priority)
   MODES_JSON="$OSRM_MODES"
 elif [ -f /etc/osrm/modes.json ]; then
   # Fall back to mounted file (allows docker run -v /path/to/modes.json:/etc/osrm/modes.json)
   MODES_JSON=$(cat /etc/osrm/modes.json)
+elif [ -n "$OSRM_BACKEND" ]; then
+  # Backward compatibility: if old OSRM_BACKEND is set, create single mode
+  # User should migrate to OSRM_MODES, but we support this for backward compat
+  MODES_JSON=$(cat <<EOF
+[
+  { "name": "default", "url": "$OSRM_BACKEND" }
+]
+EOF
+)
 else
   # Fall back to defaults
   # Docker default: single "default" profile using localhost:5000

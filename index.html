@@ -17,11 +17,13 @@
       // Falls back to bundled defaults if config.json is not available
       // OSRM_ENVIRONMENT indicates execution context: 'docker' or undefined (local dev)
       window.osrmConfig = {
-        OSRM_ENVIRONMENT: (typeof process !== 'undefined' && process.env) ? process.env.OSRM_ENVIRONMENT : undefined,
+        // OSRM_ENVIRONMENT only set to 'docker' if explicitly running in Docker
+        // In all other cases (dev, browser), leave it undefined to use public services
         OSRM_CENTER: '38.8995,-77.0269',
         OSRM_ZOOM: 13,
         OSRM_LANGUAGE: 'en',
         OSRM_DEFAULT_LAYER: 'streets'
+        // OSRM_BACKEND and OSRM_MODES will be set by config.json if available
       };
 
       (function() {
