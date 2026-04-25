@@ -227,11 +227,11 @@ describe('leaflet_options — runtime configuration overrides', () => {
   });
 
   describe('OSRM_MODES - free-form mode configuration', () => {
-    test('uses default modes when OSRM_MODES not provided', () => {
+    test('uses single "default" mode in Docker by default', () => {
       global.window = { osrmConfig: { OSRM_ENVIRONMENT: 'docker' } };
       const leafletOptions = require('../src/leaflet_options');
-      expect(leafletOptions.services.length).toBe(3);
-      expect(leafletOptions.services[0].label).toBe('Car (fastest)');
+      expect(leafletOptions.services.length).toBe(1);
+      expect(leafletOptions.services[0].label).toBe('default');
       expect(leafletOptions.services[0].path).toContain('localhost:5000');
       delete global.window;
     });
@@ -272,12 +272,15 @@ describe('leaflet_options — runtime configuration overrides', () => {
       delete global.window;
     });
 
-    test('defaults to all three modes in dev mode with public services', () => {
+    test('defaults to three public profiles in dev mode', () => {
       global.window = { osrmConfig: { OSRM_ENVIRONMENT: undefined } };
       const leafletOptions = require('../src/leaflet_options');
       expect(leafletOptions.services.length).toBe(3);
+      expect(leafletOptions.services[0].label).toBe('driving');
       expect(leafletOptions.services[0].path).toContain('router.project-osrm.org');
+      expect(leafletOptions.services[1].label).toBe('bike');
       expect(leafletOptions.services[1].path).toContain('routing.openstreetmap.de');
+      expect(leafletOptions.services[2].label).toBe('foot');
       expect(leafletOptions.services[2].path).toContain('routing.openstreetmap.de');
       delete global.window;
     });
@@ -291,12 +294,12 @@ describe('leaflet_options — runtime configuration overrides', () => {
       };
       const leafletOptions = require('../src/leaflet_options');
       // Should fall back to defaults
-      expect(leafletOptions.services.length).toBe(3);
-      expect(leafletOptions.services[0].label).toBe('Car (fastest)');
+      expect(leafletOptions.services.length).toBe(1);
+      expect(leafletOptions.services[0].label).toBe('default');
       delete global.window;
     });
 
-    test('respects OSRM_BACKEND in default modes', () => {
+    test('respects OSRM_BACKEND in Docker default mode', () => {
       global.window = {
         osrmConfig: {
           OSRM_ENVIRONMENT: 'docker',

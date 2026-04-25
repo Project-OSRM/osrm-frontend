@@ -29,12 +29,10 @@ elif [ -f /etc/osrm/modes.json ]; then
   MODES_JSON=$(cat /etc/osrm/modes.json)
 else
   # Fall back to defaults
-  # Generate default modes (driving, bike, foot) all using OSRM_BACKEND
+  # Docker default: single "default" profile using localhost:5000
   MODES_JSON=$(cat <<'MODES_EOF'
 [
-  { "name": "Car (fastest)", "url": "http://localhost:5000" },
-  { "name": "Bike", "url": "http://localhost:5000" },
-  { "name": "Foot", "url": "http://localhost:5000" }
+  { "name": "default", "url": "http://localhost:5000" }
 ]
 MODES_EOF
 )

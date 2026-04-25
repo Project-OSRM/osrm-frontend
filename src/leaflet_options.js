@@ -73,18 +73,28 @@ function parseModes() {
   var modesStr = config.OSRM_MODES;
   var backend = config.OSRM_BACKEND;
   
-  // Determine default backend based on environment
+  var defaultModes;
+  
   if (config.OSRM_ENVIRONMENT === 'docker') {
-    backend = backend || 'http://localhost:5000';
+    // Docker: single "default" profile using localhost:5000
+    defaultModes = [
+      { name: 'default', url: backend || 'http://localhost:5000' }
+    ];
   } else {
-    backend = backend || 'https://router.project-osrm.org';
+    // Dev: three public profiles using OSRM instances
+    // But if OSRM_BACKEND is explicitly set, use it for the first mode
+    if (backend) {
+      defaultModes = [
+        { name: 'driving', url: backend }
+      ];
+    } else {
+      defaultModes = [
+        { name: 'driving', url: 'https://router.project-osrm.org' },
+        { name: 'bike', url: 'https://routing.openstreetmap.de' },
+        { name: 'foot', url: 'https://routing.openstreetmap.de' }
+      ];
+    }
   }
-
-  var defaultModes = [
-    { name: 'Car (fastest)', url: backend },
-    { name: 'Bike', url: 'https://routing.openstreetmap.de' },
-    { name: 'Foot', url: 'https://routing.openstreetmap.de' }
-  ];
 
   if (!modesStr) {
     return defaultModes;
