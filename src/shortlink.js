@@ -1,6 +1,6 @@
 'use strict';
 
-var corslite = require('corslite');
+var corslite = require('@mapbox/corslite');
 var PUBLIC_FRONTEND_URL = 'https://map.project-osrm.org/';
 
 function isLoopbackHostname(hostname) {
