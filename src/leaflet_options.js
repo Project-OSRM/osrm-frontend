@@ -67,26 +67,41 @@ function getLabel() {
   return config.OSRM_LABEL || 'Car (fastest)';
 }
 
-// Parse modes from OSRM_MODES config (array of {name, url})
-// Supports both new OSRM_MODES JSON and legacy OSRM_BACKEND for backward compatibility
-// Priority: OSRM_MODES > OSRM_BACKEND (with deprecation warning) > defaults
+// Parse routing modes from runtime config.
+// OSRM_MODES is the preferred JSON-based format: [{ name, url }, ...].
+// OSRM_BACKEND is deprecated and only kept as a single-backend fallback.
+// Priority: OSRM_MODES > OSRM_BACKEND (with deprecation warning) > environment defaults.
 function parseModes() {
   // Read config fresh from window each time, not the captured config variable
   var currentConfig = (typeof window !== 'undefined' ? window.osrmConfig : null) || {};
-  var modesStr = currentConfig.OSRM_MODES;
+  var modesValue = currentConfig.OSRM_MODES;
   var legacyBackend = currentConfig.OSRM_BACKEND;
+  var modes;
+  var hasModes;
+
+  if (Array.isArray(modesValue)) {
+    modes = modesValue;
+    hasModes = modes.length > 0;
+  } else if (typeof modesValue === 'string') {
+    hasModes = modesValue.trim().length > 0;
+  } else {
+    hasModes = false;
+  }
   
-  // If both are configured, prefer OSRM_MODES and warn about deprecation
-  if (modesStr && legacyBackend) {
+  // If both are configured, prefer OSRM_MODES and warn about the deprecated fallback.
+  if (hasModes && legacyBackend) {
     console.warn('DEPRECATION WARNING: Both OSRM_MODES and OSRM_BACKEND are set. Using OSRM_MODES. Please migrate to OSRM_MODES only.');
   }
   
-  // If OSRM_MODES is provided, use it
-  if (modesStr) {
+  // If OSRM_MODES is provided, parse it and use the configured modes.
+  if (hasModes) {
     try {
-      var modes = JSON.parse(modesStr);
+      if (!Array.isArray(modes)) {
+        modes = JSON.parse(modesValue);
+      }
+
       if (Array.isArray(modes) && modes.length > 0) {
-        // Map each mode entry to include a profile field for routing
+        // Keep freely named user-facing modes while assigning known internal routing profiles.
         return modes.map(function(mode, index) {
           var profileNames = ['driving', 'bike', 'foot'];
           return {
@@ -101,7 +116,7 @@ function parseModes() {
     }
   }
   
-  // Legacy support: if OSRM_BACKEND is set (and OSRM_MODES wasn't), warn and use single mode
+  // Legacy support: OSRM_BACKEND alone configures one backend named "default".
   if (legacyBackend) {
     console.warn('DEPRECATION WARNING: OSRM_BACKEND is deprecated. Please use OSRM_MODES instead. Example: OSRM_MODES=\'[{"name":"default","url":"' + legacyBackend + '"}]\'');
     return [

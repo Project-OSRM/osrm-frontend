@@ -123,10 +123,14 @@ describe('leaflet_options — runtime configuration overrides', () => {
   });
 
   describe('OSRM_BACKEND override', () => {
-    test('uses custom backend when OSRM_BACKEND is set', () => {
+    test('uses custom backend when OSRM_BACKEND is set and warns about deprecation', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
       global.window = { osrmConfig: { OSRM_BACKEND: 'http://custom:5001' } };
       const leafletOptions = require('../src/leaflet_options');
       expect(leafletOptions.services[0].path).toBe('http://custom:5001/route/v1');
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('DEPRECATION WARNING'));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('OSRM_BACKEND is deprecated'));
+      warnSpy.mockRestore();
       delete global.window;
     });
 
@@ -237,6 +241,7 @@ describe('leaflet_options — runtime configuration overrides', () => {
     });
 
     test('uses custom modes from OSRM_MODES JSON', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
       const modesJSON = JSON.stringify([
         { name: 'Fast Route', url: 'http://custom:5000' },
         { name: 'Scenic Route', url: 'http://custom:5001' }
@@ -253,6 +258,8 @@ describe('leaflet_options — runtime configuration overrides', () => {
       expect(leafletOptions.services[0].path).toContain('custom:5000');
       expect(leafletOptions.services[1].label).toBe('Scenic Route');
       expect(leafletOptions.services[1].path).toContain('custom:5001');
+      expect(warnSpy).not.toHaveBeenCalledWith(expect.stringContaining('DEPRECATION WARNING'));
+      warnSpy.mockRestore();
       delete global.window;
     });
 
@@ -286,6 +293,7 @@ describe('leaflet_options — runtime configuration overrides', () => {
     });
 
     test('gracefully handles invalid JSON in OSRM_MODES', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
       global.window = {
         osrmConfig: {
           OSRM_ENVIRONMENT: 'docker',
@@ -296,10 +304,13 @@ describe('leaflet_options — runtime configuration overrides', () => {
       // Should fall back to defaults
       expect(leafletOptions.services.length).toBe(1);
       expect(leafletOptions.services[0].label).toBe('default');
+      expect(warnSpy).toHaveBeenCalledWith('Failed to parse OSRM_MODES JSON:', expect.any(SyntaxError));
+      warnSpy.mockRestore();
       delete global.window;
     });
 
-    test('respects OSRM_BACKEND in Docker default mode', () => {
+    test('respects OSRM_BACKEND in Docker default mode and warns about deprecation', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
       global.window = {
         osrmConfig: {
           OSRM_ENVIRONMENT: 'docker',
@@ -309,6 +320,9 @@ describe('leaflet_options — runtime configuration overrides', () => {
       const leafletOptions = require('../src/leaflet_options');
       expect(leafletOptions.services[0].path).toContain('my-backend:5000');
       expect(leafletOptions.services[0].label).toBe('default');
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('DEPRECATION WARNING'));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('OSRM_BACKEND is deprecated'));
+      warnSpy.mockRestore();
       delete global.window;
     });
 

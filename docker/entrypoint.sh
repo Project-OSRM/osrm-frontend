@@ -19,45 +19,42 @@ escape_json() {
   printf '%s\n' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/$/\\/' | tr -d '\n' | sed 's/\\$//'
 }
 
-# Load modes from OSRM_MODES env var, file, or use OSRM_BACKEND for backwards compat
+# Load routing modes from the preferred OSRM_MODES config.
+# OSRM_BACKEND is deprecated and only kept as a single-backend fallback.
 MODES_JSON=""
+CONFIG_BACKEND=""
 
 if [ -n "$OSRM_MODES" ]; then
-  # Use new OSRM_MODES env var (highest priority)
+  # Use the JSON-based mode configuration directly.
   MODES_JSON="$OSRM_MODES"
+  if [ "$OSRM_BACKEND" != "http://localhost:5000" ]; then
+    CONFIG_BACKEND="$OSRM_BACKEND"
+  fi
 elif [ -f /etc/osrm/modes.json ]; then
-  # Fall back to mounted file (allows docker run -v /path/to/modes.json:/etc/osrm/modes.json)
+  # Fall back to a mounted JSON file with the same shape as OSRM_MODES.
   MODES_JSON=$(cat /etc/osrm/modes.json)
+  if [ "$OSRM_BACKEND" != "http://localhost:5000" ]; then
+    CONFIG_BACKEND="$OSRM_BACKEND"
+  fi
 elif [ -n "$OSRM_BACKEND" ] && [ "$OSRM_BACKEND" != "http://localhost:5000" ]; then
-  # Backward compatibility: if old OSRM_BACKEND is set to non-default, create single mode
-  # User should migrate to OSRM_MODES, but we support this for backward compat
-  MODES_JSON=$(cat <<EOF
-[
-  { "name": "default", "url": "$OSRM_BACKEND" }
-]
-EOF
-)
+  # Backward compatibility: a non-default OSRM_BACKEND means one deprecated single backend.
+  CONFIG_BACKEND="$OSRM_BACKEND"
 else
-  # Fall back to defaults
-  # Docker default: single "default" profile using localhost:5000
-  MODES_JSON=$(cat <<'MODES_EOF'
-[
-  { "name": "default", "url": "http://localhost:5000" }
-]
-MODES_EOF
-)
+  # With no runtime override, keep the Docker default:
+  # one profile named "default" pointing at http://localhost:5000.
+  MODES_JSON=""
 fi
 
 # Generate config.json with proper JSON escaping
 cat > /usr/share/nginx/html/config.json << EOF
 {
-  "OSRM_BACKEND": "$(escape_json "$OSRM_BACKEND")",
+  "OSRM_BACKEND": "$(escape_json "$CONFIG_BACKEND")",
   "OSRM_CENTER": "$(escape_json "$OSRM_CENTER")",
   "OSRM_ZOOM": $OSRM_ZOOM,
   "OSRM_LANGUAGE": "$(escape_json "$OSRM_LANGUAGE")",
   "OSRM_DEFAULT_LAYER": "$(escape_json "$OSRM_DEFAULT_LAYER")",
   "OSRM_ENVIRONMENT": "$(escape_json "$OSRM_ENVIRONMENT")",
-  "OSRM_MODES": $(escape_json "$MODES_JSON")
+  "OSRM_MODES": "$(escape_json "$MODES_JSON")"
 }
 EOF
 
