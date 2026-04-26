@@ -116,3 +116,254 @@ describe('leaflet_options — tileset migration', () => {
     });
   });
 });
+
+describe('leaflet_options — runtime configuration overrides', () => {
+  beforeEach(() => {
+    jest.resetModules();
+  });
+
+  describe('OSRM_BACKEND override', () => {
+    test('uses custom backend when OSRM_BACKEND is set and warns about deprecation', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      global.window = { osrmConfig: { OSRM_BACKEND: 'http://custom:5001' } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.services[0].path).toBe('http://custom:5001/route/v1');
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('DEPRECATION WARNING'));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('OSRM_BACKEND is deprecated'));
+      warnSpy.mockRestore();
+      delete global.window;
+    });
+
+    test('uses public router.project-osrm.org in dev mode (no OSRM_ENVIRONMENT)', () => {
+      global.window = { osrmConfig: {} };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.services[0].path).toBe('https://router.project-osrm.org/route/v1');
+      delete global.window;
+    });
+
+    test('uses localhost:5000 in Docker mode (OSRM_ENVIRONMENT=docker)', () => {
+      global.window = { osrmConfig: { OSRM_ENVIRONMENT: 'docker' } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.services[0].path).toBe('http://localhost:5000/route/v1');
+      delete global.window;
+    });
+  });
+
+  describe('OSRM_CENTER override with validation', () => {
+    test('uses custom center when valid lat,lng is provided', () => {
+      global.window = { osrmConfig: { OSRM_CENTER: '40.7128,-74.0060' } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.defaultState.center.lat).toBeCloseTo(40.7128);
+      expect(leafletOptions.defaultState.center.lng).toBeCloseTo(-74.0060);
+      delete global.window;
+    });
+
+    test('falls back to default center for invalid coordinates', () => {
+      global.window = { osrmConfig: { OSRM_CENTER: 'invalid' } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.defaultState.center.lat).toBeCloseTo(38.8995);
+      expect(leafletOptions.defaultState.center.lng).toBeCloseTo(-77.0269);
+      delete global.window;
+    });
+
+    test('falls back to default center when only one coordinate provided', () => {
+      global.window = { osrmConfig: { OSRM_CENTER: '40.7128' } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.defaultState.center.lat).toBeCloseTo(38.8995);
+      expect(leafletOptions.defaultState.center.lng).toBeCloseTo(-77.0269);
+      delete global.window;
+    });
+  });
+
+  describe('OSRM_ZOOM override with validation', () => {
+    test('uses custom zoom when numeric value is provided', () => {
+      global.window = { osrmConfig: { OSRM_ZOOM: 15 } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.defaultState.zoom).toBe(15);
+      delete global.window;
+    });
+
+    test('uses custom zoom when numeric string is provided', () => {
+      global.window = { osrmConfig: { OSRM_ZOOM: '18' } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.defaultState.zoom).toBe(18);
+      delete global.window;
+    });
+
+    test('falls back to default zoom for non-numeric value', () => {
+      global.window = { osrmConfig: { OSRM_ZOOM: 'invalid' } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.defaultState.zoom).toBe(13);
+      delete global.window;
+    });
+  });
+
+  describe('OSRM_LANGUAGE override', () => {
+    test('uses custom language when provided', () => {
+      global.window = { osrmConfig: { OSRM_LANGUAGE: 'de' } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.defaultState.language).toBe('de');
+      delete global.window;
+    });
+
+    test('defaults to en when language not provided', () => {
+      global.window = { osrmConfig: {} };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.defaultState.language).toBe('en');
+      delete global.window;
+    });
+  });
+
+  describe('OSRM_LABEL and OSRM_DEFAULT_LAYER overrides', () => {
+    test('uses custom default layer when provided', () => {
+      global.window = { osrmConfig: { OSRM_DEFAULT_LAYER: 'satellite' } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.defaultState.layer._url).toContain('arcgisonline.com');
+      delete global.window;
+    });
+
+    test('falls back to streets layer for unknown layer name', () => {
+      global.window = { osrmConfig: { OSRM_DEFAULT_LAYER: 'unknown' } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.defaultState.layer._url).toContain('cartocdn.com');
+      delete global.window;
+    });
+  });
+
+  describe('OSRM_MODES - free-form mode configuration', () => {
+    test('uses single "default" mode in Docker by default', () => {
+      global.window = { osrmConfig: { OSRM_ENVIRONMENT: 'docker' } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.services.length).toBe(1);
+      expect(leafletOptions.services[0].label).toBe('default');
+      expect(leafletOptions.services[0].path).toContain('localhost:5000');
+      delete global.window;
+    });
+
+    test('uses custom modes from OSRM_MODES JSON', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const modesJSON = JSON.stringify([
+        { name: 'Fast Route', url: 'http://custom:5000' },
+        { name: 'Scenic Route', url: 'http://custom:5001' }
+      ]);
+      global.window = {
+        osrmConfig: {
+          OSRM_ENVIRONMENT: 'docker',
+          OSRM_MODES: modesJSON
+        }
+      };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.services.length).toBe(2);
+      expect(leafletOptions.services[0].label).toBe('Fast Route');
+      expect(leafletOptions.services[0].path).toContain('custom:5000');
+      expect(leafletOptions.services[1].label).toBe('Scenic Route');
+      expect(leafletOptions.services[1].path).toContain('custom:5001');
+      expect(warnSpy).not.toHaveBeenCalledWith(expect.stringContaining('DEPRECATION WARNING'));
+      warnSpy.mockRestore();
+      delete global.window;
+    });
+
+    test('each mode has an internal profile for routing', () => {
+      const modesJSON = JSON.stringify([
+        { name: 'Car', url: 'http://localhost:5000' },
+        { name: 'Bike', url: 'http://localhost:5000' }
+      ]);
+      global.window = {
+        osrmConfig: {
+          OSRM_MODES: modesJSON
+        }
+      };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.services[0].profile).toBe('driving');
+      expect(leafletOptions.services[1].profile).toBe('bike');
+      delete global.window;
+    });
+
+    test('defaults to three public profiles in dev mode', () => {
+      global.window = { osrmConfig: { OSRM_ENVIRONMENT: undefined } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.services.length).toBe(3);
+      expect(leafletOptions.services[0].label).toBe('driving');
+      expect(leafletOptions.services[0].path).toContain('router.project-osrm.org');
+      expect(leafletOptions.services[1].label).toBe('bike');
+      expect(leafletOptions.services[1].path).toContain('routing.openstreetmap.de');
+      expect(leafletOptions.services[2].label).toBe('foot');
+      expect(leafletOptions.services[2].path).toContain('routing.openstreetmap.de');
+      delete global.window;
+    });
+
+    test('gracefully handles invalid JSON in OSRM_MODES', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      global.window = {
+        osrmConfig: {
+          OSRM_ENVIRONMENT: 'docker',
+          OSRM_MODES: 'invalid json'
+        }
+      };
+      const leafletOptions = require('../src/leaflet_options');
+      // Should fall back to defaults
+      expect(leafletOptions.services.length).toBe(1);
+      expect(leafletOptions.services[0].label).toBe('default');
+      expect(warnSpy).toHaveBeenCalledWith('Failed to parse OSRM_MODES JSON:', expect.any(SyntaxError));
+      warnSpy.mockRestore();
+      delete global.window;
+    });
+
+    test('respects OSRM_BACKEND in Docker default mode and warns about deprecation', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      global.window = {
+        osrmConfig: {
+          OSRM_ENVIRONMENT: 'docker',
+          OSRM_BACKEND: 'http://my-backend:5000'
+        }
+      };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.services[0].path).toContain('my-backend:5000');
+      expect(leafletOptions.services[0].label).toBe('default');
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('DEPRECATION WARNING'));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('OSRM_BACKEND is deprecated'));
+      warnSpy.mockRestore();
+      delete global.window;
+    });
+
+    test('OSRM_MODES takes priority over OSRM_BACKEND', () => {
+      const modesJSON = JSON.stringify([
+        { name: 'Custom', url: 'http://custom:5000' }
+      ]);
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      global.window = {
+        osrmConfig: {
+          OSRM_ENVIRONMENT: 'docker',
+          OSRM_BACKEND: 'http://ignored:5000',
+          OSRM_MODES: modesJSON
+        }
+      };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.services[0].label).toBe('Custom');
+      expect(leafletOptions.services[0].path).toContain('custom:5000');
+      // Should warn about both env vars being set
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('DEPRECATION WARNING'));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Both OSRM_MODES and OSRM_BACKEND'));
+      warnSpy.mockRestore();
+      delete global.window;
+    });
+
+    test('legacy OSRM_BACKEND alone shows deprecation warning', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      global.window = {
+        osrmConfig: {
+          OSRM_ENVIRONMENT: 'docker',
+          OSRM_BACKEND: 'http://legacy:5000'
+        }
+      };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.services[0].label).toBe('default');
+      expect(leafletOptions.services[0].path).toContain('legacy:5000');
+      // Should warn about deprecation
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('DEPRECATION WARNING'));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('OSRM_BACKEND is deprecated'));
+      warnSpy.mockRestore();
+      delete global.window;
+    });
+  });
+});
