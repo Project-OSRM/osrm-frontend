@@ -34,15 +34,24 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Commit and push changes
+      - name: Commit and open PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
+
           if ! git diff --quiet; then
+            BRANCH="chore/update-dependencies-$(date +%Y%m%d)"
+            git checkout -b "$BRANCH"
             git add -A
             git commit -m "chore: update dependencies"
-            git push
+            git push origin "$BRANCH"
+            gh pr create \
+              --base gh-pages \
+              --head "$BRANCH" \
+              --title "chore: update dependencies" \
+              --body "Automated dependency update via \`npm update\` and bundle rebuild."
           else
             echo "No changes to commit"
           fi
