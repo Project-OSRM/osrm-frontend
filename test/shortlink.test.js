@@ -1,8 +1,8 @@
 'use strict';
 
-jest.mock('corslite', () => jest.fn());
+jest.mock('@mapbox/corslite', () => jest.fn());
 
-const corslite = require('corslite');
+const corslite = require('@mapbox/corslite');
 const shortlink = require('../src/shortlink');
 
 describe('shortlink', () => {
