@@ -42,7 +42,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           if ! git diff --quiet; then
-            BRANCH="chore/update-dependencies-$(date +%Y%m%d)"
+            BRANCH="chore/update-dependencies-$(date +%Y%m%d-%H%M%S)"
             git checkout -b "$BRANCH"
             git add -A
             git commit -m "chore: update dependencies"
