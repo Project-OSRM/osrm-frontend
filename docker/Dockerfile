@@ -1,26 +1,59 @@
-FROM alpine:3.21
+# Stage 1: build
+FROM node:24-alpine AS build
 
-# Enables customized options using environment variables
-ENV OSRM_BACKEND='http://localhost:5000'
-ENV OSRM_CENTER='38.8995,-77.0269'
-ENV OSRM_ZOOM='13'
-ENV OSRM_LANGUAGE='en'
-ENV OSRM_LABEL='Car (fastest)'
-ENV OSRM_MAPBOX_TOKEN='pk.eyJ1IjoibXNsZWUiLCJhIjoiclpiTWV5SSJ9.P_h8r37vD8jpIH1A6i1VRg'
+# Build-time configuration — override with --build-arg
+ARG OSRM_BACKEND=https://router.project-osrm.org
+ARG OSRM_CENTER=38.8995,-77.0269
+ARG OSRM_ZOOM=13
+ARG OSRM_LANGUAGE=en
+ARG OSRM_LABEL=Car (fastest)
+ARG OSRM_DEFAULT_LAYER=streets
 
-# Copy package.json
-RUN mkdir -p /src
-COPY package.json /src
+ENV OSRM_BACKEND=$OSRM_BACKEND \
+    OSRM_CENTER=$OSRM_CENTER \
+    OSRM_ZOOM=$OSRM_ZOOM \
+    OSRM_LANGUAGE=$OSRM_LANGUAGE \
+    OSRM_LABEL=$OSRM_LABEL \
+    OSRM_DEFAULT_LAYER=$OSRM_DEFAULT_LAYER
 
-# Install app dependencies
-RUN apk add --no-cache npm && \
-    cd /src && \
-    npm install
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+# replace.js reads the ENV vars above and patches src/leaflet_options.js before webpack runs
+RUN npm run build
 
-# Create app directory
-COPY . /src
-WORKDIR /src
+# Stage 2: serve
+FROM nginx:alpine
 
-# Run App
+# Set runtime environment defaults for entrypoint
+# Note: Default OSRM_BACKEND is localhost:5000 (as documented in README.md:19)
+# Override with -e OSRM_BACKEND='http://...' at runtime
+ENV OSRM_ENVIRONMENT=docker \
+    OSRM_BACKEND=http://localhost:5000 \
+    OSRM_CENTER=38.8995,-77.0269 \
+    OSRM_ZOOM=13 \
+    OSRM_LANGUAGE=en \
+    OSRM_LABEL="Car (fastest)" \
+    OSRM_DEFAULT_LAYER=streets \
+    OSRM_PROFILES=driving,bike,foot
+
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+# Webpack outputs bundle.js to the project root; copy all static assets
+COPY --from=build /app/index.html /usr/share/nginx/html/
+COPY --from=build /app/favicon.ico /usr/share/nginx/html/
+COPY --from=build /app/bundle.js /usr/share/nginx/html/
+COPY --from=build /app/bundle.js.LICENSE.txt /usr/share/nginx/html/
+COPY --from=build /app/bundle.js.map /usr/share/nginx/html/
+COPY --from=build /app/css /usr/share/nginx/html/css
+COPY --from=build /app/fonts /usr/share/nginx/html/fonts
+COPY --from=build /app/images /usr/share/nginx/html/images
+COPY --from=build /app/i18n /usr/share/nginx/html/i18n
+COPY --from=build /app/debug /usr/share/nginx/html/debug
+
 EXPOSE 9966
-CMD ["npm", "run", "start-prod"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]

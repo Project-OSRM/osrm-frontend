@@ -7,7 +7,11 @@ module.exports = {
   'Open in editor': 'Öppna i redigerare',
   'Open in JOSM': 'Öppna i JOSM',
   'Select language': 'Välj språk',
+  'Share Route': 'Dela rutt',
+  'Link': 'Länk',
+  'Shortlink': 'Kortlänk',
   'Start - press enter to drop marker': 'Start - tryck för att placera startpunkt',
   'End - press enter to drop marker': 'Mål - tryck för att placera slutpunkt',
-  'Via point - press enter to drop marker': 'Via - tryck för att placera delmålspunkt'
+  'Via point - press enter to drop marker': 'Via - tryck för att placera delmålspunkt',
+  'Build': 'Build: '
 };

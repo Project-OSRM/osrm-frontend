@@ -27,6 +27,21 @@
     <div style="color: white;">km/h:</div><div style="background: #5e4fa2">0-10</div><div style="background: #3288bd">10-20</div><div style="background: #66c2a5">20-30</div><div style="background: #abdda4">30-40</div><div style="background: #e6f598">40-50</div><div style="background: #fee08b">50-60</div><div style="background: #fdae61">60-70</div><div style="background: #f46d43">70-80</div><div style="background: #d53e4f">80-90</div><div style="background: #9e0142">90+</div>
 </div>
 <script>
+function numberFieldText(fieldName, suffix) {
+    return [
+        "concat",
+        [
+            "number-format",
+            ["get", fieldName],
+            {
+                "min-fraction-digits": 0,
+                "max-fraction-digits": 2
+            }
+        ],
+        suffix || ""
+    ];
+}
+
 var simple = {
     "version": 8,
     "name": "OSRM debug",
@@ -194,9 +209,6 @@ var simple = {
                 "visibility": "visible",
                 "line-cap": "round"
             },
-            "metadata": {
-                "mapbox:group": "1457989050091.615"
-            },
             "filter": [
                 "all",
                 [
@@ -257,9 +269,6 @@ var simple = {
             "minzoom": 12,
             "layout": {
                 "line-cap": "round"
-            },
-            "metadata": {
-                "mapbox:group": "1457989050091.615"
             },
             "filter": [
                 "all",
@@ -330,9 +339,6 @@ var simple = {
             "layout": {
                 "line-cap": "round"
             },
-            "metadata": {
-                "mapbox:group": "1457989050091.615"
-            },
             "filter": [
                 "all",
                 [
@@ -401,9 +407,6 @@ var simple = {
             "minzoom": 12,
             "layout": {
                 "line-cap": "round"
-            },
-            "metadata": {
-                "mapbox:group": "1457989050091.615"
             },
             "filter": [
                 "all",
@@ -474,9 +477,6 @@ var simple = {
             "layout": {
                 "line-cap": "round"
             },
-            "metadata": {
-                "mapbox:group": "1457989050091.615"
-            },
             "filter": [
                 "all",
                 [
@@ -545,9 +545,6 @@ var simple = {
             "minzoom": 12,
             "layout": {
                 "line-cap": "round"
-            },
-            "metadata": {
-                "mapbox:group": "1457989050091.615"
             },
             "filter": [
                 "all",
@@ -618,9 +615,6 @@ var simple = {
             "layout": {
                 "line-cap": "round"
             },
-            "metadata": {
-                "mapbox:group": "1457989050091.615"
-            },
             "filter": [
                 "all",
                 [
@@ -689,9 +683,6 @@ var simple = {
             "minzoom": 12,
             "layout": {
                 "line-cap": "round"
-            },
-            "metadata": {
-                "mapbox:group": "1457989050091.615"
             },
             "filter": [
                 "all",
@@ -762,9 +753,6 @@ var simple = {
             "layout": {
                 "line-cap": "round"
             },
-            "metadata": {
-                "mapbox:group": "1457989050091.615"
-            },
             "filter": [
                 "all",
                 [
@@ -833,9 +821,6 @@ var simple = {
             "minzoom": 12,
             "layout": {
                 "line-cap": "round"
-            },
-            "metadata": {
-                "mapbox:group": "1457989050091.615"
             },
             "filter": [
                 "all",
@@ -923,7 +908,7 @@ var simple = {
                 "text-rotation-alignment": "map",
                 "text-anchor": "center",
                 "text-keep-upright": false,
-                "text-field": "{speed} km/h ➜"
+                "text-field": numberFieldText("speed", " km/h ➜")
             },
             "metadata": {},
             "filter": [
@@ -946,7 +931,7 @@ var simple = {
         {
          "id": "osrm-0", "type": "symbol", "source": "osrm", "source-layer": "turns",
          "layout": { "icon-image": "0", "icon-offset": {stops: [[15,[10,0]],[18,[20,0]]]}, "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
-                    "text-field": "{cost}", "text-offset": {"base": 1, stops: [[15,[0.2,0.0]],[18,[3,0]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
+                    "text-field": numberFieldText("cost"), "text-offset": {"base": 1, stops: [[15,[0.2,0.0]],[18,[3,0]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
                      "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": ["Noto Sans Bold"], "symbol-avoid-edges": false},
          "paint": { "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2,
             "text-color": "hsl(0, 0%, 100%)", "text-halo-width": 1, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0},
@@ -955,7 +940,7 @@ var simple = {
         {
          "id": "osrm-45", "type": "symbol", "source": "osrm", "source-layer": "turns",
          "layout": { "icon-image": "45", "icon-offset": {stops: [[15,[15,15]],[18,[30,30]]]}, "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
-                    "text-field": "{cost}", "text-offset": {"base": 1, stops: [[15,[0.2,0.2]],[18,[3,3]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
+                    "text-field": numberFieldText("cost"), "text-offset": {"base": 1, stops: [[15,[0.2,0.2]],[18,[3,3]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
                      "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": ["Noto Sans Bold"], "symbol-avoid-edges": false},
          "paint": { "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2,
             "text-color": "hsl(0, 0%, 100%)", "text-halo-width": 1, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0},
@@ -964,7 +949,7 @@ var simple = {
         {
          "id": "osrm-90", "type": "symbol", "source": "osrm", "source-layer": "turns",
          "layout": { "icon-image": "90", "icon-offset": {stops: [[15,[15,15]],[18,[30,30]]]}, "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
-                    "text-field": "{cost}", "text-offset": {"base": 1, stops: [[15,[0.2,0.2]],[18,[3,3]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
+                    "text-field": numberFieldText("cost"), "text-offset": {"base": 1, stops: [[15,[0.2,0.2]],[18,[3,3]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
                      "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": ["Noto Sans Bold"], "symbol-avoid-edges": false},
          "paint": { "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2,
             "text-color": "hsl(0, 0%, 100%)", "text-halo-width": 1, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0},
@@ -973,7 +958,7 @@ var simple = {
         {
          "id": "osrm-135", "type": "symbol", "source": "osrm", "source-layer": "turns",
          "layout": { "icon-image": "135", "icon-offset": {stops: [[15,[15,15]],[18,[30,30]]]}, "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
-                    "text-field": "{cost}", "text-offset": {"base": 1, stops: [[15,[0.2,0.2]],[18,[3,3]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
+                    "text-field": numberFieldText("cost"), "text-offset": {"base": 1, stops: [[15,[0.2,0.2]],[18,[3,3]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
                      "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": ["Noto Sans Bold"], "symbol-avoid-edges": false},
          "paint": { "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2,
             "text-color": "hsl(0, 0%, 100%)", "text-halo-width": 1, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0},
@@ -982,7 +967,7 @@ var simple = {
         {
          "id": "osrm-n45", "type": "symbol", "source": "osrm", "source-layer": "turns",
          "layout": { "icon-image": "n45", "icon-offset": {stops: [[15,[15,30]],[18,[30,60]]]}, "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
-                    "text-field": "{cost}", "text-offset": {"base": 1, stops: [[15,[0.15,0.4]],[18,[2.5,6]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
+                    "text-field": numberFieldText("cost"), "text-offset": {"base": 1, stops: [[15,[0.15,0.4]],[18,[2.5,6]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
                      "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": ["Noto Sans Bold"], "symbol-avoid-edges": false},
          "paint": { "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2,
             "text-color": "hsl(0, 0%, 100%)", "text-halo-width": 1, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0},
@@ -991,7 +976,7 @@ var simple = {
         {
          "id": "osrm-n90", "type": "symbol", "source": "osrm", "source-layer": "turns",
          "layout": { "icon-image": "n90", "icon-offset": {stops: [[15,[15,30]],[18,[30,60]]]}, "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
-                    "text-field": "{cost}", "text-offset": {"base": 1, stops: [[15,[0.15,0.4]],[18,[2.5,6]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
+                    "text-field": numberFieldText("cost"), "text-offset": {"base": 1, stops: [[15,[0.15,0.4]],[18,[2.5,6]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
                      "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": ["Noto Sans Bold"], "symbol-avoid-edges": false},
          "paint": { "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2,
             "text-color": "hsl(0, 0%, 100%)", "text-halo-width": 1, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0},
@@ -1000,7 +985,7 @@ var simple = {
         {
          "id": "osrm-n135", "type": "symbol", "source": "osrm", "source-layer": "turns",
          "layout": { "icon-image": "n135", "icon-offset": {stops: [[15,[15,30]],[18,[30,60]]]}, "icon-allow-overlap": true, "icon-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] },
-                    "text-field": "{cost}", "text-offset": {"base": 1, stops: [[15,[0.15,0.4]],[18,[2.5,6]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
+                    "text-field": numberFieldText("cost"), "text-offset": {"base": 1, stops: [[15,[0.15,0.4]],[18,[2.5,6]]]}, "text-allow-overlap": true, "text-rotate": { property: "bearing_in", stops: [[0, 0], [360, 360]] } ,
                      "text-size": { "base": 1, "stops": [ [ 10, 8 ], [ 18, 11 ] ] }, "text-font": ["Noto Sans Bold"], "symbol-avoid-edges": false},
          "paint": { "icon-color" : "#ffffff", "icon-halo-color" : "#ffffff", "icon-halo-width" : 2,
             "text-color": "hsl(0, 0%, 100%)", "text-halo-width": 1, "text-halo-color": "hsl(0, 0%, 0%)", "text-halo-blur": 0},

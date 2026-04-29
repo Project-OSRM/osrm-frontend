@@ -1,9 +1,13 @@
 'use strict';
 
 var L = require('leaflet');
+var routerPatches = require('./router_patches');
 var createGeocoder = require('./geocoder');
 require('leaflet-control-geocoder');
+var geocoderPatches = require('./geocoder_patches');
+geocoderPatches();
 var LRM = require('leaflet-routing-machine');
+var modeSelectorModule = require('./mode_selector');
 // leaflet.locatecontrol@0.89 UMD has a bug: after the CJS IIFE it tries
 // `window.L.Control.Locate.locate` but never sets L.Control.Locate in the
 // CJS path, causing a crash at bundle load time. Pre-initialising the
@@ -22,6 +26,9 @@ require('./polyfill');
 var parsedOptions = links.parse(window.location.search.slice(1));
 var mergedOptions = L.extend(leafletOptions.defaultState, parsedOptions);
 var language = mergedOptions.language;
+
+// Create mode selector early so it can be injected when geocoders are created
+var modeSelector = modeSelectorModule.createModeSelector(localization.get(language), leafletOptions.services);
 
 // load only after language was chosen
 var ItineraryBuilder = require('./itinerary_builder')(mergedOptions.language);
@@ -50,7 +57,7 @@ L.control.layers(mapLayer, overlay, {
   position: 'bottomleft'
 }).addTo(map);
 
-L.control.scale().addTo(map);
+L.control.scale({ position: 'bottomright' }).addTo(map);
 
 /* Store User preferences */
 // store baselayer changes
@@ -69,6 +76,15 @@ map.on('overlayremove', function(e) {
 var ReversablePlan = L.Routing.Plan.extend({
   createGeocoders: function() {
     var container = L.Routing.Plan.prototype.createGeocoders.call(this);
+    // Inject mode selector after geocoders are created
+    if (modeSelector && modeSelector.container) {
+      var buttons = container.querySelector('button');
+      if (buttons && buttons.parentNode === container) {
+        container.insertBefore(modeSelector.container, buttons);
+      } else {
+        container.appendChild(modeSelector.container);
+      }
+    }
     return container;
   }
 });
@@ -98,8 +114,10 @@ function makeIcon(i, n) {
     });
   }
 }
+
 var plan = new ReversablePlan([], {
   geocoder: createGeocoder.coordPreserving(leafletOptions.nominatim && leafletOptions.nominatim.path),
+  language: mergedOptions.language,
   routeWhileDragging: true,
   createMarker: function(i, wp, n) {
     var options = {
@@ -120,9 +138,10 @@ var plan = new ReversablePlan([], {
   reverseWaypoints: true,
   dragStyles: options.lrm.dragStyles,
   geocodersClassName: options.lrm.geocodersClassName,
-  geocoderPlaceholder: function(i, n) {
-    var startend = [localization.t(language, 'Start - press enter to drop marker'), localization.t(language, 'End - press enter to drop marker')];
-    var via = [localization.t(language, 'Via point - press enter to drop marker')];
+  geocoderPlaceholder: function(i, n, geocoderElement) {
+    var activeLanguage = geocoderElement && geocoderElement.options ? geocoderElement.options.language : mergedOptions.language;
+    var startend = [localization.t(activeLanguage, 'Start - press enter to drop marker'), localization.t(activeLanguage, 'End - press enter to drop marker')];
+    var via = [localization.t(activeLanguage, 'Via point - press enter to drop marker')];
     if (i === 0) {
       return startend[0];
     }
@@ -153,15 +172,41 @@ var controlOptions = {
   useZoomParameter: options.lrm.useZoomParameter,
   routeDragInterval: options.lrm.routeDragInterval,
   collapsible: options.lrm.collapsible,
-  itineraryBuilder: new ItineraryBuilder(),
+  itineraryBuilder: new ItineraryBuilder()
 };
 // translate profile names
-for (var profile = 0, len = controlOptions.services.length; profile < len; profile++)
-{
-  controlOptions.services[profile].label = localization.t(language, controlOptions.services[profile].label) || controlOptions.services[profile].label;
+for (var profile = 0, len = controlOptions.services.length; profile < len; profile++) {
+  var profileLabelKey = controlOptions.services[profile].labelKey || controlOptions.services[profile].label;
+  controlOptions.services[profile].labelKey = profileLabelKey;
+  controlOptions.services[profile].label = localization.t(language, profileLabelKey) || profileLabelKey;
 }
 
+// Load and set initial profile BEFORE creating router and lrmControl
+// This ensures the router uses the correct serviceUrl when calculating initial routes
+var urlProfile = mergedOptions.profile;
+var savedProfile = ls.get('profile');
+var activeProfileIndex;
+
+if (urlProfile !== undefined && urlProfile !== null) {
+  activeProfileIndex = parseInt(urlProfile, 10);
+} else if (savedProfile !== null && savedProfile !== undefined) {
+  activeProfileIndex = parseInt(savedProfile, 10);
+} else {
+  activeProfileIndex = 0;
+}
+
+// Ensure valid profile index
+if (activeProfileIndex < 0 || activeProfileIndex >= leafletOptions.services.length) {
+  activeProfileIndex = 0;
+}
+
+// Set the initial serviceUrl and profile on controlOptions
+controlOptions.serviceUrl = leafletOptions.services[activeProfileIndex].path;
+controlOptions.profile = leafletOptions.services[activeProfileIndex].profile;
+
 var router = (new L.Routing.OSRMv1(controlOptions));
+routerPatches.applyPatches(router);
+
 router._convertRouteOriginal = router._convertRoute;
 router._convertRoute = function(responseRoute) {
   // monkey-patch L.Routing.OSRMv1 until it's easier to overwrite with a hook
@@ -185,16 +230,130 @@ var lrmControl = L.Routing.control(Object.assign(controlOptions, {
   router: router
 })).addTo(map);
 var toolsControl = tools.control(localization.get(mergedOptions.language), localization.getLanguages(), options.tools).addTo(map);
-var state = state(map, lrmControl, toolsControl, mergedOptions);
+
+var state = state(map, lrmControl, toolsControl, modeSelector, mergedOptions);
+
+// Profile switching logic
+(function initializeProfileSelection() {
+  // Set initial profile on modeSelector for UI sync
+  if (modeSelector && modeSelector.select) {
+    modeSelector.select.value = activeProfileIndex;
+  }
+  
+  // Also update the state object so profile is preserved on language change
+  state.options.profile = activeProfileIndex;
+  
+  // Listen for profile changes
+  if (modeSelector && modeSelector.select) {
+    function clearProfileSelectorSelection(select) {
+      window.setTimeout(function() {
+        select.blur();
+        if (window.getSelection) {
+          window.getSelection().removeAllRanges();
+        }
+      }, 0);
+    }
+
+    L.DomEvent.on(modeSelector.select, 'change', function(event) {
+      var profileIndex = parseInt(event.target.value, 10);
+      clearProfileSelectorSelection(event.target);
+      routerPatches.setActiveService(router, profileIndex, leafletOptions.services);
+      ls.set('profile', profileIndex);
+      
+      // Also update the state object so profile is preserved on language change
+      state.options.profile = profileIndex;
+      
+      // Update URL to include profile parameter - reparse current URL and update profile
+      var currentParams = links.parse(window.location.search.slice(1));
+      currentParams.profile = profileIndex;
+      var newUrl = '?' + links.format(currentParams);
+      window.history.replaceState({}, '', newUrl);
+      
+      // Trigger re-route with current waypoints if they exist
+      var waypoints = lrmControl.getWaypoints();
+      var validWaypoints = waypoints.filter(function(wp) {
+        return wp && wp.latLng;
+      });
+      if (validWaypoints.length >= 2) {
+        // Clear existing routes before computing new ones
+        lrmControl._routes = [];
+        if (lrmControl._selectedRoute !== undefined && lrmControl._line) {
+          lrmControl._map.removeLayer(lrmControl._line);
+          lrmControl._line = null;
+        }
+        lrmControl._selectedRoute = undefined;
+        if (lrmControl._itinerary) {
+          lrmControl._itinerary._routes = [];
+          lrmControl._itinerary._updateSummary();
+        }
+        // Now compute the new route with the new profile
+        lrmControl.route();
+      }
+    });
+
+  }
+}());
+
+// Hide directions pane by default
+var routingContainer = document.querySelector('.leaflet-routing-container');
+if (routingContainer) {
+  routingContainer.classList.add('leaflet-routing-container-hide');
+}
+
+// Show pane when route is computed
+lrmControl.on('routesfound', function(e) {
+  var container = document.querySelector('.leaflet-routing-container');
+  if (container) {
+    container.classList.remove('leaflet-routing-container-hide');
+  }
+});
 
 plan.on('waypointgeocoded', function(e) {
-  if (plan._waypoints.filter(function(wp) { return !!wp.latLng; }).length < 2) {
+  if (plan._waypoints.filter(function(wp) {
+    return !!wp.latLng; 
+  }).length < 2) {
     map.panTo(e.waypoint.latLng);
   }
 });
 
+// If dst/src address params were passed and no loc= waypoints exist, geocode them now.
+(function applyAddressParams() {
+  var hasLocWaypoints = mergedOptions.waypoints && mergedOptions.waypoints.some(function(wp) {
+    return wp && wp.latLng;
+  });
+  if (hasLocWaypoints) return;
+
+  var srcAddr = mergedOptions.originAddress;
+  var dstAddr = mergedOptions.destinationAddress;
+  if (!srcAddr && !dstAddr) return;
+
+  var geocoder = createGeocoder.coordPreserving();
+
+  function geocodeAddress(addr, cb) {
+    if (!addr) {
+      cb(null);
+      return;
+    }
+    geocoder.geocode(addr, function(results) {
+      cb(results && results.length > 0 ? results[0] : null);
+    });
+  }
+
+  geocodeAddress(srcAddr, function(srcResult) {
+    geocodeAddress(dstAddr, function(dstResult) {
+      var origin = srcResult
+        ? L.Routing.waypoint(srcResult.center, srcResult.name)
+        : L.Routing.waypoint(null, srcAddr || '');
+      var destination = dstResult
+        ? L.Routing.waypoint(dstResult.center, dstResult.name)
+        : L.Routing.waypoint(null, dstAddr || '');
+      lrmControl.setWaypoints([origin, destination]);
+    });
+  });
+}());
+
 // add onClick event
-map.on('click', function (e){
+map.on('click', function (e) {
   addWaypoint(e.latlng);
 });
 function addWaypoint(waypoint) {
@@ -249,13 +408,19 @@ lrmControl.on('routeselected', function(e) {
   toolsControl.setRouteGeoJSON(routeGeoJSON);
 });
 plan.on('waypointschanged', function(e) {
-  if (!e.waypoints ||
-      e.waypoints.filter(function(wp) { return !wp.latLng; }).length > 0) {
+  var validCount = e.waypoints ? e.waypoints.filter(function(wp) {
+    return !!wp.latLng;
+  }).length : 0;
+  if (validCount < 2) {
     toolsControl.setRouteGeoJSON(null);
+    var container = document.querySelector('.leaflet-routing-container');
+    if (container) {
+      container.classList.add('leaflet-routing-container-hide');
+    }
   }
 });
 
-locate.locate({
+L.control.locate({
   follow: false,
   setView: true,
   remainActive: false,

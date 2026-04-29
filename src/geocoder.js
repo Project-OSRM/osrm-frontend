@@ -18,6 +18,16 @@ var geocoder = function(i, num) {
     name = String.fromCharCode(65 + i),
     icon = L.DomUtil.create('div', 'leaflet-osrm-geocoder-label', label);
   icon.innerHTML = name;
+  
+  // Disable click propagation on the entire container to prevent any clicks from bubbling to the map
+  L.DomEvent.disableClickPropagation(container);
+  
+  // Also explicitly handle click on the close button
+  L.DomEvent.on(close, 'click', function(e) {
+    e.stopPropagation();
+    e.preventDefault();
+  });
+  
   return {
     container: container,
     input: input,

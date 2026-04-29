@@ -16,4 +16,5 @@ module.exports = {
   'Bike': 'Bicicletta',
   'Car': 'Auto',
   'Foot': 'A piedi',
+  'Build': 'Build: '
 };

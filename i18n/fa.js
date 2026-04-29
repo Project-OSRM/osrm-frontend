@@ -7,7 +7,11 @@ module.exports = {
   'Open in editor': 'در ویرایشگر باز کن',
   'Open in JOSM': 'در JOSM باز کن',
   'Select language': 'انتخاب زبان',
+  'Share Route': 'اشتراک‌گذاری مسیر',
+  'Link': 'پیوند',
+  'Shortlink': 'پیوند کوتاه',
   'Start - press enter to drop marker': 'شروع - برای درج نشانه روی نقشه اینتر بزنید',
   'End - press enter to drop marker': 'پایان - برای درج نشانه روی نقشه اینتر بزنید',
-  'Via point - press enter to drop marker': 'مسیر میانه - برای درج نشانه روی نقشه اینتر بزنید'
+  'Via point - press enter to drop marker': 'مسیر میانه - برای درج نشانه روی نقشه اینتر بزنید',
+  'Build': 'بیلد: '
 };

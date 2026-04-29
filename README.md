@@ -16,8 +16,33 @@ Serves the frontend at `http://localhost:9966` running queries against the routi
 docker run -p 9966:9966 ghcr.io/project-osrm/osrm-frontend:latest
 ```
 
-Per default routing requests are made against the backend at `http://localhost:5000`.
-You can change the backend by using `-e OSRM_BACKEND='http://localhost:5001'` in the `docker run` command.
+By default Docker uses a single routing profile named `default` and sends requests to `http://localhost:5000`.
+
+### Recommended: multiple profiles with `OSRM_MODES`
+
+`OSRM_MODES` is the current Docker runtime configuration interface. It accepts a JSON array of objects with `name` and `url` fields.
+
+```bash
+docker run -p 9966:9966 \
+  -e 'OSRM_MODES=[{"name":"car","url":"https://routing.openstreetmap.de/routed-car"},{"name":"foot","url":"https://routing.openstreetmap.de/routed-foot"},{"name":"bike","url":"https://routing.openstreetmap.de/routed-bike"}]' \
+  ghcr.io/project-osrm/osrm-frontend:latest
+```
+
+### Deprecated: single backend with `OSRM_BACKEND`
+
+`OSRM_BACKEND` is deprecated. It is still supported for backward compatibility and configures exactly one backend named `default`.
+
+```bash
+docker run -p 9966:9966 \
+  -e OSRM_BACKEND='http://localhost:5001' \
+  ghcr.io/project-osrm/osrm-frontend:latest
+```
+
+### Precedence
+
+1. If only `OSRM_BACKEND` is set, the frontend configures one backend and emits a deprecation warning.
+2. If only `OSRM_MODES` is set, the frontend parses the JSON and configures the listed modes.
+3. If both are set, `OSRM_MODES` wins and the frontend emits a deprecation warning for `OSRM_BACKEND`.
 
 In case Docker complains about not being able to connect to the Docker daemon make sure you are in the `docker` group.
 
@@ -28,7 +53,7 @@ sudo usermod -aG docker $USER
 To build the docker image locally:
 
 ```bash
-docker build . -f docker/Dockerfile -t osrm-frontend
+docker build -f docker/Dockerfile -t osrm-frontend .
 docker run -p 9966:9966 osrm-frontend
 ```
 
@@ -56,7 +81,9 @@ npm run start-index
 
 ## Changing Backends
 
-In `src/leaflet_options.js` adjust:
+For Docker deployments, prefer runtime configuration via `OSRM_MODES` instead of editing source files.
+
+For source-level customization, adjust `src/leaflet_options.js`:
 
 ```
 services: [{

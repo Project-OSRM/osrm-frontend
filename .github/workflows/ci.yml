@@ -1,0 +1,71 @@
+name: CI Checks
+
+on:
+  pull_request:
+    branches:
+      - gh-pages
+      - main
+  push:
+    branches:
+      - gh-pages
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  conventional-pr-title:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate pull request title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          pattern='^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([[:alnum:]_.-]+\))?(!)?: .+$'
+
+          if [[ ! "$PR_TITLE" =~ $pattern ]]; then
+            echo "PR title must follow Conventional Commits, for example: feat(ui): add route summary"
+            echo "Got: $PR_TITLE"
+            exit 1
+          fi
+
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [22.x, 24.x, latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: npm run test:lint
+
+      - name: Build code
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
+
+  docker-build-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -f docker/Dockerfile .

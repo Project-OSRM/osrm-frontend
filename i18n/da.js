@@ -16,4 +16,5 @@ module.exports = {
   'Bike': 'Cykel',
   'Car': 'Bil',
   'Foot': 'Til fods',
+  'Build': 'Bygget: '
 };

@@ -16,4 +16,5 @@ module.exports = {
   'Bike': 'Bike',
   'Car': 'Car',
   'Foot': 'Foot',
+  'Build': 'Build: '
 };

@@ -7,12 +7,11 @@
     "test": "jest",
     "test:lint": "eslint src/*.js i18n/*.js",
     "replace": "node ./scripts/replace.js",
-    "compile": "browserify -d src/index.js -s osrm > bundle.raw.js && uglifyjs bundle.raw.js -c -m --source-map filename=bundle.js.map -o bundle.js",
-    "build": "npm run replace && npm run compile && cp node_modules/leaflet/dist/leaflet.css css/leaflet.css",
-    "start-index": "budo src/index.js --serve=bundle.js --live -d | bistre",
-    "start-index-prod": "budo src/index.js --serve=bundle.js -d | bistre",
-    "start": "npm run build && npm run start-index",
-    "start-prod": "npm run build && npm run start-index-prod",
+    "clean": "rm -f bundle.raw.js",
+    "compile": "webpack --config webpack.config.js",
+    "build": "npm run clean && npm run replace && npm run compile && cp node_modules/leaflet/dist/leaflet.css css/leaflet.css",
+    "start": "npm run build && webpack serve --config webpack.config.js --mode development",
+    "start-prod": "npm run build && webpack serve --config webpack.config.js --mode production",
     "prepub": "npm run build"
   },
   "repository": {
@@ -26,7 +25,7 @@
     "routing",
     "api"
   ],
-  "author": "amy lee walton",
+  "author": "OSRM contributors",
   "jest": {
     "testEnvironment": "node",
     "testMatch": [
@@ -35,14 +34,16 @@
   },
   "license": "ISC",
   "devDependencies": {
-    "bistre": "^1.0.1",
-    "browserify": "^17.0.1",
-    "budo": "^11.8.4",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.2.1",
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0",
-    "uglify-js": "^3.19.3"
+    "webpack": "^5.106.2",
+    "webpack-cli": "^7.0.2",
+    "webpack-dev-server": "^5.0.0"
   },
   "dependencies": {
+    "@mapbox/corslite": "^0.0.7",
     "file-saver": "^2.0.5",
     "jsonp": "^0.2.1",
     "leaflet": "~1.9.4",
@@ -51,6 +52,6 @@
     "leaflet.locatecontrol": "^0.89.0",
     "local-storage": "^2.0.0",
     "osrm-text-instructions": "^0.15.0",
-    "qs": "^6.15.0"
+    "qs": "^6.15.1"
   }
 }
