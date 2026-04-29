@@ -100,6 +100,31 @@ function parseModes() {
         modes = JSON.parse(modesValue);
       }
 
+      // If modes is an array of strings and contains multiple entries, map them to Mode 1/2/..
+      if (Array.isArray(modes) && modes.length > 1 && modes.every(function(m) {
+        return typeof m === 'string'; 
+      })) {
+        var profileNames = ['driving', 'bike', 'foot'];
+        return modes.map(function(url, index) {
+          return {
+            name: 'Mode ' + (index + 1),
+            url: url,
+            profile: profileNames[index] || 'driving'
+          };
+        });
+      }
+
+      // Special-case: accept a single-string array as the legacy single backend URL
+      if (Array.isArray(modes) && modes.length === 1 && typeof modes[0] === 'string') {
+        return [
+          {
+            name: 'default',
+            url: modes[0],
+            profile: 'driving'
+          }
+        ];
+      }
+
       if (Array.isArray(modes) && modes.length > 0) {
         // Keep freely named user-facing modes while assigning known internal routing profiles.
         return modes.map(function(mode, index) {
