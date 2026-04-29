@@ -7,6 +7,7 @@ OSRM_CENTER="${OSRM_CENTER:-38.8995,-77.0269}"
 OSRM_ZOOM="${OSRM_ZOOM:-13}"
 OSRM_LANGUAGE="${OSRM_LANGUAGE:-en}"
 OSRM_DEFAULT_LAYER="${OSRM_DEFAULT_LAYER:-streets}"
+NOMINATIM_ENDPOINT="${NOMINATIM_ENDPOINT:-https://nominatim.openstreetmap.org/}"
 OSRM_ENVIRONMENT="${OSRM_ENVIRONMENT:-docker}"
 
 # Validate OSRM_ZOOM is numeric (for valid JSON output)
@@ -53,6 +54,7 @@ cat > /usr/share/nginx/html/config.json << EOF
   "OSRM_ZOOM": $OSRM_ZOOM,
   "OSRM_LANGUAGE": "$(escape_json "$OSRM_LANGUAGE")",
   "OSRM_DEFAULT_LAYER": "$(escape_json "$OSRM_DEFAULT_LAYER")",
+  "NOMINATIM_ENDPOINT": "$(escape_json "$NOMINATIM_ENDPOINT")",
   "OSRM_ENVIRONMENT": "$(escape_json "$OSRM_ENVIRONMENT")",
   "OSRM_MODES": "$(escape_json "$MODES_JSON")"
 }

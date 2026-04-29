@@ -293,7 +293,7 @@ var leafletOptions = {
     five: osm_de
   },
   nominatim: {
-    path: 'https://nominatim.openstreetmap.org/'
+    path: (config.NOMINATIM_ENDPOINT && config.NOMINATIM_ENDPOINT.length) ? config.NOMINATIM_ENDPOINT : 'https://nominatim.openstreetmap.org/'
   }
 };
 
