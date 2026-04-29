@@ -291,9 +291,6 @@ var state = state(map, lrmControl, toolsControl, modeSelector, mergedOptions);
       }
     });
 
-    L.DomEvent.on(modeSelector.select, 'mouseup', function(event) {
-      clearProfileSelectorSelection(event.target);
-    });
   }
 }());
 
