@@ -15,6 +15,10 @@ function createModeSelector(localization, profiles) {
   var container = L.DomUtil.create('span', 'leaflet-osrm-mode-selector');
   var profileSelect = L.DomUtil.create('select', 'osrm-profile-chooser', container);
   profileSelect.setAttribute('title', localization['Select profile'] || 'Select profile');
+  // Allow opening the native select dropdown while preventing events from bubbling to parent map controls
+  L.DomEvent.on(profileSelect, 'mousedown', L.DomEvent.stopPropagation);
+  L.DomEvent.on(profileSelect, 'click', L.DomEvent.stopPropagation);
+  L.DomEvent.on(profileSelect, 'touchstart', L.DomEvent.stopPropagation);
 
   profiles.forEach(function(profile, index) {
     var option = L.DomUtil.create('option', 'fill-osrm', profileSelect);
