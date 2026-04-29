@@ -326,6 +326,38 @@ describe('leaflet_options — runtime configuration overrides', () => {
       delete global.window;
     });
 
+    test('accepts single-string URL in a JSON array as a single mode', () => {
+      const modesJSON = JSON.stringify(['http://custom:5000']);
+      global.window = {
+        osrmConfig: {
+          OSRM_ENVIRONMENT: 'docker',
+          OSRM_MODES: modesJSON
+        }
+      };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.services.length).toBe(1);
+      expect(leafletOptions.services[0].path).toContain('custom:5000');
+      expect(leafletOptions.services[0].label).toBe('default');
+      delete global.window;
+    });
+
+    test('accepts array of string URLs as multiple modes', () => {
+      const modesJSON = JSON.stringify(['http://custom:5000','http://custom:5001']);
+      global.window = {
+        osrmConfig: {
+          OSRM_ENVIRONMENT: 'docker',
+          OSRM_MODES: modesJSON
+        }
+      };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.services.length).toBe(2);
+      expect(leafletOptions.services[0].path).toContain('custom:5000');
+      expect(leafletOptions.services[1].path).toContain('custom:5001');
+      expect(leafletOptions.services[0].label).toBe('Mode 1');
+      expect(leafletOptions.services[1].label).toBe('Mode 2');
+      delete global.window;
+    });
+
     test('OSRM_MODES takes priority over OSRM_BACKEND', () => {
       const modesJSON = JSON.stringify([
         { name: 'Custom', url: 'http://custom:5000' }
