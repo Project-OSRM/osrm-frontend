@@ -101,7 +101,9 @@ function parseModes() {
       }
 
       // If modes is an array of strings and contains multiple entries, map them to Mode 1/2/..
-      if (Array.isArray(modes) && modes.length > 1 && modes.every(function(m) { return typeof m === 'string'; })) {
+      if (Array.isArray(modes) && modes.length > 1 && modes.every(function(m) {
+        return typeof m === 'string'; 
+      })) {
         var profileNames = ['driving', 'bike', 'foot'];
         return modes.map(function(url, index) {
           return {
