@@ -71,7 +71,27 @@ var State = L.Class.extend({
       }
     }.bind(this));
     this._tools.on('unitschanged', function(e) {
-      this.options.units = e.unit; this.update(); 
+      this.options.units = e.unit;
+      this.update();
+      // Update routing control units and re-render itinerary/directions
+      if (this._lrm) {
+        // Update control options
+        this._lrm.options = this._lrm.options || {};
+        this._lrm.options.units = e.unit;
+        // Update formatter used by itinerary (if present)
+        if (this._lrm._formatter && typeof this._lrm._formatter === 'object') {
+          this._lrm._formatter.options = this._lrm._formatter.options || {};
+          this._lrm._formatter.options.units = e.unit;
+        }
+        try {
+          if (this._lrm._routes) {
+            // Re-render itinerary and alternatives using updated formatter
+            this._lrm.setAlternatives(this._lrm._routes);
+          }
+        } catch (err) {
+          console.error('Error updating itinerary on units change:', err);
+        }
+      }
     }.bind(this));
   },
 
