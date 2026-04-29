@@ -57,7 +57,11 @@ L.control.layers(mapLayer, overlay, {
   position: 'bottomleft'
 }).addTo(map);
 
-L.control.scale({ position: 'bottomright' }).addTo(map);
+var scaleControl = L.control.scale({
+  position: 'bottomright',
+  metric: mergedOptions.units === 'metric' || mergedOptions.units === undefined,
+  imperial: mergedOptions.units === 'imperial'
+}).addTo(map);
 
 /* Store User preferences */
 // store baselayer changes
@@ -229,9 +233,38 @@ router._convertRoute = function(responseRoute) {
 var lrmControl = L.Routing.control(Object.assign(controlOptions, {
   router: router
 })).addTo(map);
-var toolsControl = tools.control(localization.get(mergedOptions.language), localization.getLanguages(), options.tools).addTo(map);
+var toolsControl = tools.control(localization.get(mergedOptions.language), localization.getLanguages(), Object.assign({}, options.tools, { initialUnits: mergedOptions.units })).addTo(map);
 
 var state = state(map, lrmControl, toolsControl, modeSelector, mergedOptions);
+
+// Listen for unit changes from tools and update scale and routing control
+if (toolsControl && toolsControl.on) {
+  toolsControl.on('unitschanged', function(e) {
+    try {
+      if (lrmControl) {
+        lrmControl.options = lrmControl.options || {};
+        lrmControl.options.units = e.unit;
+        if (lrmControl._formatter && typeof lrmControl._formatter === 'object') {
+          lrmControl._formatter.options = lrmControl._formatter.options || {};
+          lrmControl._formatter.options.units = e.unit;
+        }
+        if (lrmControl._routes) {
+          lrmControl.setAlternatives(lrmControl._routes);
+        }
+      }
+      if (typeof scaleControl !== 'undefined' && scaleControl) {
+        map.removeControl(scaleControl);
+      }
+      scaleControl = L.control.scale({
+        position: 'bottomright',
+        metric: e.unit === 'metric',
+        imperial: e.unit === 'imperial'
+      }).addTo(map);
+    } catch (err) {
+      console.error('Error updating scale control or routing units:', err);
+    }
+  });
+}
 
 // Profile switching logic
 (function initializeProfileSelection() {
