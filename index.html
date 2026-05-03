@@ -8,6 +8,7 @@
     <link rel='stylesheet' href="css/leaflet.css" />
     <link rel="stylesheet" href="css/fonts.css" />
     <link href='css/site.css' rel='stylesheet' />
+    <meta name="osrm-environment" content="">
 
   </head>
   <body>
@@ -59,7 +60,13 @@
           });
         }
 
-        loadConfig().then(loadBundle);
+        var envMeta = document.querySelector('meta[name="osrm-environment"]');
+        if (envMeta && envMeta.content === 'docker') {
+          loadConfig().then(loadBundle);
+        } else {
+          // Not running in Docker — skip fetching config.json to avoid noisy 404s
+          loadBundle();
+        }
       })();
     </script>
   </body>

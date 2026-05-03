@@ -7,7 +7,8 @@ const { execFileSync } = require('child_process');
 
 const entrypointPath = path.join(__dirname, '..', 'docker', 'entrypoint.sh');
 
-function generateConfig(envOverrides) {
+function generateConfig(envOverrides, options) {
+  options = options || {};
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'osrm-entrypoint-'));
   const outputDir = path.join(tempDir, 'usr', 'share', 'nginx', 'html');
   const tempEntrypointPath = path.join(tempDir, 'entrypoint.sh');
@@ -19,6 +20,10 @@ function generateConfig(envOverrides) {
   );
   fs.chmodSync(tempEntrypointPath, 0o755);
 
+  if (options.indexHtml) {
+    fs.writeFileSync(path.join(outputDir, 'index.html'), options.indexHtml, 'utf8');
+  }
+
   try {
     execFileSync(tempEntrypointPath, ['true'], {
       env: {
@@ -28,7 +33,19 @@ function generateConfig(envOverrides) {
       stdio: 'pipe'
     });
 
-    return JSON.parse(fs.readFileSync(path.join(outputDir, 'config.json'), 'utf8'));
+    const config = JSON.parse(fs.readFileSync(path.join(outputDir, 'config.json'), 'utf8'));
+
+    if (options.indexHtml) {
+      let rewritten = null;
+      try {
+        rewritten = fs.readFileSync(path.join(outputDir, 'index.html'), 'utf8');
+      } catch (e) {
+        // ignore
+      }
+      return { config: config, indexHtml: rewritten };
+    }
+
+    return config;
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
