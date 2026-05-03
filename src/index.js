@@ -295,8 +295,10 @@ var toolsControl = tools.control(localization.get(mergedOptions.language), local
           console.warn('Exclude fallback probe error', e);
         }
       }
-      // call original callback in all other cases
-      callback(err, routes);
+      // call original callback in all other cases (preserve 'this' binding)
+      if (typeof callback === 'function') {
+        callback.call(context || callback, err, routes);
+      }
     }, context, options);
   };
 })(router, toolsControl);
