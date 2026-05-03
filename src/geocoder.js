@@ -237,7 +237,9 @@ geocoder.coordPreserving = function(nominatimUrl) {
     }
     // Fallback to original nominatim implementation (useful for tests/mocks)
     return nominatim.geocode(query).then(function(results) {
-      try { cache.set(url, results); } catch (e) {}
+      try {
+        cache.set(url, results);
+      } catch (e) {}
       setInputBgFromContext(context, 'white');
       return results;
     }).catch(function(err) {
@@ -293,7 +295,9 @@ geocoder.coordPreserving = function(nominatimUrl) {
     }
     // Fallback to original nominatim implementation (useful for tests/mocks)
     return nominatim.reverse(latlng, scale).then(function(results) {
-      try { cache.set(url, results); } catch (e) {}
+      try {
+        cache.set(url, results);
+      } catch (e) {}
       setInputBgFromContext(context, 'white');
       return results;
     }).catch(function(err) {
