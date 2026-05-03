@@ -52,8 +52,17 @@
 /* Scale position */
 .leaflet-control-scale {
   position: absolute;
-  bottom: 1px;
-  right: 350px;
+  /* Align baseline with menu bar text */
+  bottom: 35px;
+  /* Move further left to avoid overlapping the directions pane */
+  right: 400px;
+  display: inline-block;
+  /* Make the scale widget 25% larger */
+  transform: scale(1.25);
+  -webkit-transform: scale(1.25);
+  transform-origin: left center;
+  -webkit-transform-origin: left center;
+  z-index: 1000;
 }
 
 /* Zoom control position */

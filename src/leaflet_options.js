@@ -267,6 +267,7 @@ var leafletOptions = {
     zoom: getZoom(),
     waypoints: [],
     language: getLanguage(),
+    units: 'metric',
     alternative: 0,
     layer: defaultLayer
   },

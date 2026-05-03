@@ -50,7 +50,7 @@ function formatLink(options) {
     loc: locs,
     hl: options.language,
     alt: options.alternative,
-    df: options.units,
+    scale: options.units,
     srv: options.service,
     profile: options.profile
   }, {indices: false});
@@ -78,7 +78,7 @@ function parseLink(link) {
     }
     parsedValues.language = q.hl;
     parsedValues.alternative = q.alt;
-    parsedValues.units = q.df;
+    parsedValues.units = q.scale || q.df;
     parsedValues.layer = q.ly;
     parsedValues.service = q.srv;
     parsedValues.profile = q.profile;

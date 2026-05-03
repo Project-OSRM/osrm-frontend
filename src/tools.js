@@ -33,7 +33,8 @@ var Control = L.Control.extend({
     mapillaryButtonClass: "",
     shareButtonClass: "",
     gpxButtonClass: "",
-    localizationChooserClass: ""
+    localizationChooserClass: "",
+    unitsChooserClass: ""
   },
 
   initialize: function(localization, languages, options) {
@@ -91,6 +92,7 @@ var Control = L.Control.extend({
     L.DomEvent.on(gpxButton, 'click', this._downloadGPX, this);
     this._localizationContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-localization', this._container);
     this._createLocalizationList(this._localizationContainer);
+    this._createUnitsChooser(this._localizationContainer);
     this._createVersionInfo(this._container);
     return this._container;
   },
@@ -280,6 +282,32 @@ var Control = L.Control.extend({
         option.setAttribute('selected', '');
       }
     });
+  },
+
+  _createUnitsChooser: function(container) {
+    var _this = this;
+    var unitsSelect = L.DomUtil.create('select', _this.options.localizationChooserClass, container);
+    unitsSelect.setAttribute('title', _this._local['Select units'] || 'Select units');
+    L.DomEvent.on(unitsSelect, 'change', function(event) {
+      _this.fire('unitschanged', {
+        unit: event.target.value
+      });
+    }, _this);
+
+    var metricOption = L.DomUtil.create('option', 'fill-osrm', unitsSelect);
+    metricOption.setAttribute('value', 'metric');
+    metricOption.appendChild(document.createTextNode(_this._local['Metric'] || 'Metric'));
+
+    var imperialOption = L.DomUtil.create('option', 'fill-osrm', unitsSelect);
+    imperialOption.setAttribute('value', 'imperial');
+    imperialOption.appendChild(document.createTextNode(_this._local['Imperial'] || 'Imperial'));
+
+    var initialUnits = _this.options.initialUnits || 'metric';
+    if (initialUnits === 'imperial') {
+      imperialOption.setAttribute('selected', '');
+    } else {
+      metricOption.setAttribute('selected', '');
+    }
   },
 
   _createVersionInfo: function(container) {
