@@ -199,17 +199,49 @@ describe('leaflet_options — runtime configuration overrides', () => {
   });
 
   describe('language precedence (URL > browser > en)', () => {
-    test('ignores runtime OSRM_LANGUAGE and falls back to English when no browser language', () => {
-      global.window = { osrmConfig: { OSRM_LANGUAGE: 'de' } };
+    test('uses browser language exact match', () => {
+      global.window = { navigator: { languages: ['de'], language: 'de' } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.defaultState.language).toBe('de');
+      delete global.window;
+    });
+
+    test('uses primary subtag when regional locale provided (en-US -> en)', () => {
+      global.window = { navigator: { languages: ['en-US'], language: 'en-US' } };
       const leafletOptions = require('../src/leaflet_options');
       expect(leafletOptions.defaultState.language).toBe('en');
       delete global.window;
     });
 
-    test('defaults to en when language not provided', () => {
-      global.window = { osrmConfig: {} };
+    test('prefers first candidate in navigator.languages array', () => {
+      global.window = { navigator: { languages: ['fr-CA', 'de'], language: 'fr-CA' } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.defaultState.language).toBe('fr');
+      delete global.window;
+    });
+
+    test('matches exact regional variant when available (pt-BR)', () => {
+      global.window = { navigator: { languages: ['pt-BR'], language: 'pt-BR' } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.defaultState.language).toBe('pt-BR');
+      delete global.window;
+    });
+
+    test('falls back to English when no supported browser languages', () => {
+      global.window = { navigator: { languages: ['xx','yy'], language: 'xx' } };
       const leafletOptions = require('../src/leaflet_options');
       expect(leafletOptions.defaultState.language).toBe('en');
+      delete global.window;
+    });
+
+    test('URL param (hl) takes precedence over browser default when merged', () => {
+      // Simulate browser default 'en' but URL param asks for 'de'
+      global.window = { navigator: { languages: ['en'], language: 'en' } };
+      const leafletOptions = require('../src/leaflet_options');
+      const links = require('../src/links');
+      const parsed = links.parse('hl=de');
+      const merged = Object.assign({}, leafletOptions.defaultState, parsed);
+      expect(merged.language).toBe('de');
       delete global.window;
     });
   });
