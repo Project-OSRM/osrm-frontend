@@ -60,13 +60,29 @@ EOF
 
 # Inject OSRM_ENVIRONMENT into index.html meta tag to signal client to load config.json
 if [ -f /usr/share/nginx/html/index.html ]; then
-  TMPFILE=$(mktemp)
-  awk -v env="$OSRM_ENVIRONMENT" '{
-    if ($0 ~ /<meta name="osrm-environment"/) {
-      sub(/content="[^"]*"/, "content=\"" env "\"")
-    }
-    print
-  }' /usr/share/nginx/html/index.html > "$TMPFILE" && chmod 644 "$TMPFILE" && mv "$TMPFILE" /usr/share/nginx/html/index.html || true
+  TMPFILE=$(mktemp) || {
+    echo "Warning: failed to create temporary file for index.html patch" >&2
+    TMPFILE=""
+  }
+  if [ -n "$TMPFILE" ]; then
+    if awk -v env="$OSRM_ENVIRONMENT" '{
+      if ($0 ~ /<meta name="osrm-environment"/) {
+        sub(/content="[^"]*"/, "content=\"" env "\"")
+      }
+      print
+    }' /usr/share/nginx/html/index.html > "$TMPFILE"; then
+      if ! chmod 644 "$TMPFILE"; then
+        echo "Warning: chmod failed for $TMPFILE" >&2
+        rm -f "$TMPFILE"
+      elif ! mv "$TMPFILE" /usr/share/nginx/html/index.html; then
+        echo "Warning: failed to move $TMPFILE into place" >&2
+        rm -f "$TMPFILE"
+      fi
+    else
+      echo "Warning: failed to inject OSRM_ENVIRONMENT into index.html" >&2
+      rm -f "$TMPFILE"
+    fi
+  fi
 fi
 
 # Execute the default command (nginx) or any command passed to the container
