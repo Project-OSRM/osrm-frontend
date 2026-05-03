@@ -66,7 +66,7 @@ if [ -f /usr/share/nginx/html/index.html ]; then
       sub(/content="[^"]*"/, "content=\"" env "\"")
     }
     print
-  }' /usr/share/nginx/html/index.html > "$TMPFILE" && mv "$TMPFILE" /usr/share/nginx/html/index.html || true
+  }' /usr/share/nginx/html/index.html > "$TMPFILE" && chmod 644 "$TMPFILE" && mv "$TMPFILE" /usr/share/nginx/html/index.html || true
 fi
 
 # Execute the default command (nginx) or any command passed to the container
