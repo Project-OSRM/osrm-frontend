@@ -171,7 +171,7 @@ var controlOptions = {
   containerClassName: options.lrm.containerClassName,
   alternativeClassName: options.lrm.alternativeClassName,
   stepClassName: options.lrm.stepClassName,
-  language: 'en', // we are injecting own translations via osrm-text-instructions
+  language: mergedOptions.language, // we are injecting own translations via osrm-text-instructions
   showAlternatives: options.lrm.showAlternatives,
   units: mergedOptions.units,
   serviceUrl: leafletOptions.services[0].path,
