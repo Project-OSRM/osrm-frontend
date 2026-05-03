@@ -276,13 +276,33 @@ var toolsControl = tools.control(localization.get(mergedOptions.language), local
     return origRoute(waypoints, function(err, routes) {
       if (err) {
         try {
+          // Emit diagnostics to help debug 400/unsupported errors
+          try {
+            console.warn('router.route error', {
+              err: err,
+              requestParameters: self && self.options && self.options.requestParameters
+            });
+            if (err && err.url) console.warn('Request URL:', err.url);
+            if (err && err.target && err.target.responseText) {
+              var txt = String(err.target.responseText || '').slice(0, 2000);
+              console.warn('Response text (truncated):', txt);
+            }
+          } catch (diagErr) {
+            // ignore diagnostics failures
+          }
+
           var backendKey = self.options.serviceUrl || '';
           var alreadyProbed = unsupportedCache[backendKey];
           var needsFallback = false;
           if (!alreadyProbed) {
+            // existing heuristics
             if (err && typeof err.status === 'string' && /invalid|unsupported|invalidoptions|notimpl/i.test(err.status)) needsFallback = true;
             if (err && err.message && /exclude/i.test(err.message)) needsFallback = true;
+            // new heuristics: HTTP 400 from server may indicate invalid param (e.g., unsupported exclude)
+            if (err && err.status && Number(err.status) === 400) needsFallback = true;
+            if (err && err.target && err.target.status && Number(err.target.status) === 400) needsFallback = true;
           }
+
           if (needsFallback && self.options.requestParameters && self.options.requestParameters.exclude) {
             unsupportedCache[backendKey] = true;
             delete self.options.requestParameters.exclude;
@@ -295,6 +315,7 @@ var toolsControl = tools.control(localization.get(mergedOptions.language), local
           console.warn('Exclude fallback probe error', e);
         }
       }
+
       // call original callback in all other cases (preserve 'this' binding)
       if (typeof callback === 'function') {
         callback.call(context || callback, err, routes);
