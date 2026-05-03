@@ -124,7 +124,7 @@ function makeIcon(i, n) {
 }
 
 var plan = new ReversablePlan([], {
-  geocoder: createGeocoder.coordPreserving(),
+  geocoder: createGeocoder.coordPreserving(leafletOptions.nominatim && leafletOptions.nominatim.path),
   language: mergedOptions.language,
   routeWhileDragging: true,
   createMarker: function(i, wp, n) {

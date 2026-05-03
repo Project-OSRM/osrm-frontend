@@ -51,8 +51,8 @@ function parseCoords(query) {
 // For non-coordinate input, falls through to Nominatim forward-geocode as normal.
 // Also bridges leaflet-control-geocoder's Promise API to the callback-based API
 // that leaflet-routing-machine's autocomplete expects.
-geocoder.coordPreserving = function() {
-  var nominatim = L.Control.Geocoder.nominatim();
+geocoder.coordPreserving = function(nominatimUrl) {
+  var nominatim = L.Control.Geocoder.nominatim({serviceUrl: nominatimUrl});
 
   function withCallback(promise, cb, context) {
     return promise.then(function(results) {
