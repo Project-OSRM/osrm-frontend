@@ -228,9 +228,60 @@ function getZoom() {
   return parsedZoom;
 }
 
-// Get language from config
+// Get language, prefer browser settings if available, then runtime config, then 'en'.
+// Precedence (effective): URL param (handled in index.js) > browser language > runtime config > 'en'
 function getLanguage() {
-  return config.OSRM_LANGUAGE || 'en';
+  // Prefer browser-provided languages when running in a browser environment
+  try {
+    if (typeof window !== 'undefined' && window.navigator) {
+      var nav = window.navigator;
+      var candidates = [];
+
+      if (Array.isArray(nav.languages)) {
+        candidates = candidates.concat(nav.languages);
+      }
+      if (nav.language) candidates.push(nav.language);
+      if (nav.userLanguage) candidates.push(nav.userLanguage); // IE fallback
+
+      var localization = require('./localization');
+      for (var i = 0; i < candidates.length; i++) {
+        var lang = candidates[i];
+        if (!lang) continue;
+        lang = lang.trim();
+        // exact match (e.g., 'pt-BR')
+        if (localization.get(lang)) {
+          return lang;
+        }
+        // primary subtag match (e.g., 'en-US' -> 'en')
+        var short = lang.split('-')[0];
+        if (localization.get(short)) {
+          return short;
+        }
+      }
+    }
+  } catch (e) {
+    // Ignore detection errors and fall back to config or default
+    console.warn('Error detecting browser language:', e);
+  }
+
+  // Fall back to runtime config if provided and supported
+  if (config.OSRM_LANGUAGE) {
+    try {
+      var localization2 = require('./localization');
+      if (localization2.get(config.OSRM_LANGUAGE)) {
+        return config.OSRM_LANGUAGE;
+      }
+      var shortCfg = (config.OSRM_LANGUAGE || '').split('-')[0];
+      if (localization2.get(shortCfg)) {
+        return shortCfg;
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // Final fallback to English
+  return 'en';
 }
 
 // Get default layer from config
