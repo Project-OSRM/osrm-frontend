@@ -35,7 +35,7 @@ function applyReplacements(content, env) {
     // Leaflet uses LatLng
     else options = options.replace('38.8995,-77.0269', latlng)
   }
-  if (NOMINATIM_ENDPOINT) options = options.replace('https://nominatim.openstreetmap.org/', NOMINATIM_ENDPOINT)
+  if (NOMINATIM_ENDPOINT) options = options.replace(/https?:\/\/nominatim\.openstreetmap\.org\/?/g, function() { return NOMINATIM_ENDPOINT; })
 
   return options
 }

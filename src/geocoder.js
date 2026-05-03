@@ -52,7 +52,13 @@ function parseCoords(query) {
 // Also bridges leaflet-control-geocoder's Promise API to the callback-based API
 // that leaflet-routing-machine's autocomplete expects.
 geocoder.coordPreserving = function(nominatimUrl) {
-  var nominatim = L.Control.Geocoder.nominatim({serviceUrl: nominatimUrl});
+  var nominatim;
+  if (typeof nominatimUrl === 'string' && nominatimUrl.trim().length > 0) {
+    nominatim = L.Control.Geocoder.nominatim({serviceUrl: nominatimUrl});
+  } else {
+    // Preserve Leaflet-Control-Geocoder's default behavior when no URL provided
+    nominatim = L.Control.Geocoder.nominatim();
+  }
 
   function withCallback(promise, cb, context) {
     return promise.then(function(results) {
