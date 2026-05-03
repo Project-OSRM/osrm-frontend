@@ -36,5 +36,5 @@ Notes
 - Use `npm run build` before serving in production or when updating bundle.js.
 - Commit generated artifacts only when necessary; follow repository guidelines.
 - User might be running a dev instance in background that automatically rebuilds.
-- All new functionality must be covered in unit tests
-- Every code change must be done through a PR, never commit to master.
+- All new functionality must be covered in unit tests.
+- Every code change must be done through a PR, never commit directly to main.
