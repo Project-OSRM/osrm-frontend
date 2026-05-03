@@ -16,8 +16,5 @@ module.exports = {
   'Bike': 'Bicicleta',
   'Car': 'Coche',
   'Foot': 'Peatón',
-<<<<<<< HEAD
   'Build': 'Compilación: '
-=======
->>>>>>> 1668176 (Add translations)
 };

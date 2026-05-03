@@ -16,8 +16,5 @@ module.exports = {
   'Bike': 'Vélo',
   'Car': 'Voiture',
   'Foot': 'Piéton',
-<<<<<<< HEAD
   'Build': 'Build : '
-=======
->>>>>>> 1668176 (Add translations)
 };
