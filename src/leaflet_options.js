@@ -228,10 +228,70 @@ function getZoom() {
   return parsedZoom;
 }
 
-// Get language from config
+// Get language, prefer browser settings when available; fallback to 'en'.
+// Precedence (effective): URL param (handled in index.js) > browser language > 'en'
 function getLanguage() {
-  return config.OSRM_LANGUAGE || 'en';
+  try {
+    // Read runtime config each time (honor OSRM_LANGUAGE when set at runtime)
+    var currentConfig = (typeof window !== 'undefined' ? window.osrmConfig : null) || {};
+    var localization = require('./localization');
+    var languages = localization.getLanguages();
+
+    function resolveCandidate(candidate) {
+      if (!candidate) return undefined;
+      candidate = String(candidate).trim();
+      // exact match (case-sensitive)
+      if (localization.get(candidate)) return candidate;
+
+      // case-insensitive exact match against available keys (e.g., pt-br -> pt-BR)
+      var lower = candidate.toLowerCase();
+      var keys = Object.keys(languages);
+      for (var k = 0; k < keys.length; k++) {
+        if (keys[k].toLowerCase() === lower) return keys[k];
+      }
+
+      // primary subtag fallback (e.g., en-US -> en)
+      var primary = candidate.split(/[-_]/)[0];
+      if (!primary) return undefined;
+      if (localization.get(primary)) return primary;
+      var lowerPrimary = primary.toLowerCase();
+      for (var j = 0; j < keys.length; j++) {
+        if (keys[j].toLowerCase() === lowerPrimary) return keys[j];
+      }
+      return undefined;
+    }
+
+    if (currentConfig.OSRM_LANGUAGE) {
+      var resolved = resolveCandidate(currentConfig.OSRM_LANGUAGE);
+      return resolved || currentConfig.OSRM_LANGUAGE;
+    }
+
+    if (typeof window !== 'undefined' && window.navigator) {
+      var nav = window.navigator;
+      var candidates = [];
+
+      if (Array.isArray(nav.languages)) {
+        candidates = candidates.concat(nav.languages);
+      }
+      if (nav.language) candidates.push(nav.language);
+      if (nav.userLanguage) candidates.push(nav.userLanguage); // IE fallback
+
+      for (var i = 0; i < candidates.length; i++) {
+        var lang = candidates[i];
+        if (!lang) continue;
+        var resolvedLang = resolveCandidate(lang);
+        if (resolvedLang) return resolvedLang;
+      }
+    }
+  } catch (e) {
+    // Ignore detection errors and fall back to default
+    console.warn('Error detecting browser language:', e);
+  }
+
+  // Fallback to English when no browser language matches
+  return 'en';
 }
+
 
 // Get default layer from config
 function getDefaultLayer() {

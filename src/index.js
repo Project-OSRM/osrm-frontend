@@ -35,6 +35,10 @@ var ItineraryBuilder = require('./itinerary_builder')(mergedOptions.language);
 
 var mapLayer = leafletOptions.layer;
 var overlay = leafletOptions.overlay;
+
+// Track whether the Bike overlay was auto-enabled by profile selection
+var bikeOverlayAutoActivated = false;
+var bikeOverlayOriginallyActive = false;
 var baselayer = ls.get('layer') ? mapLayer[0][ls.get('layer')] : leafletOptions.defaultState.layer;
 var layers = ls.get('getOverlay') && [baselayer, overlay['Small Components']] || baselayer;
 var map = L.map('map', {
@@ -167,7 +171,7 @@ var controlOptions = {
   containerClassName: options.lrm.containerClassName,
   alternativeClassName: options.lrm.alternativeClassName,
   stepClassName: options.lrm.stepClassName,
-  language: 'en', // we are injecting own translations via osrm-text-instructions
+  language: mergedOptions.language, // we are injecting own translations via osrm-text-instructions
   showAlternatives: options.lrm.showAlternatives,
   units: mergedOptions.units,
   serviceUrl: leafletOptions.services[0].path,
@@ -326,6 +330,35 @@ if (toolsControl && toolsControl.on) {
 
   }
 }());
+
+// Auto-toggle Bike overlay when profile selection changes
+if (modeSelector && modeSelector.select) {
+  L.DomEvent.on(modeSelector.select, 'change', function(event) {
+    var profileIndex = parseInt(event.target.value, 10);
+    var selectedProfile = leafletOptions.services[profileIndex] && leafletOptions.services[profileIndex].profile;
+    var bikeLayer = overlay && overlay['Bike'];
+    if (!bikeLayer) return;
+
+    if (selectedProfile === 'bike') {
+      if (map.hasLayer(bikeLayer)) {
+        bikeOverlayOriginallyActive = true;
+        bikeOverlayAutoActivated = false;
+      } else {
+        bikeOverlayOriginallyActive = false;
+        map.addLayer(bikeLayer);
+        bikeOverlayAutoActivated = true;
+      }
+    } else {
+      if (bikeOverlayAutoActivated) {
+        if (map.hasLayer(bikeLayer) && !bikeOverlayOriginallyActive) {
+          map.removeLayer(bikeLayer);
+        }
+        bikeOverlayAutoActivated = false;
+        bikeOverlayOriginallyActive = false;
+      }
+    }
+  });
+}
 
 // Hide directions pane by default
 var routingContainer = document.querySelector('.leaflet-routing-container');

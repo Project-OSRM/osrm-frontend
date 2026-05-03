@@ -8,6 +8,7 @@
     <link rel='stylesheet' href="css/leaflet.css" />
     <link rel="stylesheet" href="css/fonts.css" />
     <link href='css/site.css' rel='stylesheet' />
+    <meta name="osrm-environment" content="">
 
   </head>
   <body>
@@ -21,7 +22,6 @@
         // In all other cases (dev, browser), leave it undefined to use public services
         OSRM_CENTER: '38.8995,-77.0269',
         OSRM_ZOOM: 13,
-        OSRM_LANGUAGE: 'en',
         OSRM_DEFAULT_LAYER: 'streets'
         // OSRM_BACKEND and OSRM_MODES will be set by config.json if available
       };
@@ -59,7 +59,13 @@
           });
         }
 
-        loadConfig().then(loadBundle);
+        var envMeta = document.querySelector('meta[name="osrm-environment"]');
+        if (envMeta && envMeta.content === 'docker') {
+          loadConfig().then(loadBundle);
+        } else {
+          // Not running in Docker — skip fetching config.json to avoid noisy 404s
+          loadBundle();
+        }
       })();
     </script>
   </body>
