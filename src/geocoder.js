@@ -53,8 +53,9 @@ function parseCoords(query) {
 // that leaflet-routing-machine's autocomplete expects.
 geocoder.coordPreserving = function(nominatimUrl) {
   var nominatim;
-  if (typeof nominatimUrl === 'string' && nominatimUrl.trim().length > 0) {
-    nominatim = L.Control.Geocoder.nominatim({serviceUrl: nominatimUrl});
+  var normalizedNominatimUrl = typeof nominatimUrl === 'string' ? nominatimUrl.trim() : '';
+  if (normalizedNominatimUrl.length > 0) {
+    nominatim = L.Control.Geocoder.nominatim({serviceUrl: normalizedNominatimUrl});
   } else {
     // Preserve Leaflet-Control-Geocoder's default behavior when no URL provided
     nominatim = L.Control.Geocoder.nominatim();
