@@ -29,6 +29,9 @@ var language = mergedOptions.language;
 
 // Create mode selector early so it can be injected when geocoders are created
 var modeSelector = modeSelectorModule.createModeSelector(localization.get(language), leafletOptions.services);
+var excludeSelectorModule = require('./exclude_selector');
+var defaultExcludeClasses = ['motorway', 'ferry', 'toll'];
+var excludeSelector = excludeSelectorModule.createExcludeSelector(localization.get(language), defaultExcludeClasses);
 
 // load only after language was chosen
 var ItineraryBuilder = require('./itinerary_builder')(mergedOptions.language);
@@ -87,6 +90,15 @@ var ReversablePlan = L.Routing.Plan.extend({
         container.insertBefore(modeSelector.container, buttons);
       } else {
         container.appendChild(modeSelector.container);
+      }
+    }
+    // Inject exclude selector next to mode selector
+    if (excludeSelector && excludeSelector.container) {
+      var buttons2 = container.querySelector('button');
+      if (buttons2 && buttons2.parentNode === container) {
+        container.insertBefore(excludeSelector.container, buttons2);
+      } else {
+        container.appendChild(excludeSelector.container);
       }
     }
     return container;
@@ -230,12 +242,104 @@ router._convertRoute = function(responseRoute) {
 
   return resp;
 };
+
+// Initialize router requestParameters and exclude based on URL or profile defaults
+router.options.requestParameters = router.options.requestParameters || {};
+var initialExcludes = (mergedOptions.exclude && Array.isArray(mergedOptions.exclude)) ? mergedOptions.exclude : null;
+if (!initialExcludes || initialExcludes.length === 0) {
+  var svc = leafletOptions.services[activeProfileIndex] || {};
+  initialExcludes = svc.excludeDefaults || [];
+}
+if (initialExcludes && initialExcludes.length > 0) {
+  router.options.requestParameters.exclude = initialExcludes.join(',');
+} else {
+  delete router.options.requestParameters.exclude;
+}
+// Sync exclude selector UI (mergedOptions passed to state later)
+if (excludeSelector && excludeSelector.setSelected) {
+  excludeSelector.setSelected(initialExcludes);
+}
+// Ensure mergedOptions carries the exclude selection so it is persisted into state
+mergedOptions.exclude = initialExcludes;
+
 var lrmControl = L.Routing.control(Object.assign(controlOptions, {
   router: router
 })).addTo(map);
 var toolsControl = tools.control(localization.get(mergedOptions.language), localization.getLanguages(), Object.assign({}, options.tools, { initialUnits: mergedOptions.units })).addTo(map);
 
+// Add exclude fallback probe + retry on error (cached per backend)
+(function(router, toolsControl) {
+  var origRoute = router.route.bind(router);
+  var unsupportedCache = {}; // keyed by serviceUrl
+  router.route = function(waypoints, callback, context, options) {
+    var self = this;
+    return origRoute(waypoints, function(err, routes) {
+      if (err) {
+        try {
+          var backendKey = self.options.serviceUrl || '';
+          var alreadyProbed = unsupportedCache[backendKey];
+          var needsFallback = false;
+          if (!alreadyProbed) {
+            if (err && typeof err.status === 'string' && /invalid|unsupported|invalidoptions|notimpl/i.test(err.status)) needsFallback = true;
+            if (err && err.message && /exclude/i.test(err.message)) needsFallback = true;
+          }
+          if (needsFallback && self.options.requestParameters && self.options.requestParameters.exclude) {
+            unsupportedCache[backendKey] = true;
+            delete self.options.requestParameters.exclude;
+            if (toolsControl && typeof toolsControl.notify === 'function') {
+              toolsControl.notify('Backend does not support exclude parameter — retrying without excludes (one-time).');
+            }
+            return origRoute(waypoints, callback, context, options);
+          }
+        } catch (e) {
+          console.warn('Exclude fallback probe error', e);
+        }
+      }
+      // call original callback in all other cases
+      callback(err, routes);
+    }, context, options);
+  };
+})(router, toolsControl);
+
 var state = state(map, lrmControl, toolsControl, modeSelector, mergedOptions);
+
+// Wire up exclude selector changes to router and URL/state
+if (excludeSelector && excludeSelector.onChange) {
+  excludeSelector.onChange(function(selected) {
+    router.options.requestParameters = router.options.requestParameters || {};
+    if (selected && selected.length > 0) {
+      router.options.requestParameters.exclude = selected.join(',');
+    } else {
+      delete router.options.requestParameters.exclude;
+    }
+    // Persist and update URL
+    state.options.exclude = selected;
+    state.update();
+    var currentParams = links.parse(window.location.search.slice(1));
+    currentParams.exclude = selected && selected.length ? selected.join(',') : undefined;
+    var newUrl = '?' + links.format(currentParams);
+    window.history.replaceState({}, '', newUrl);
+
+    // Trigger reroute with current waypoints if they exist
+    var waypoints = lrmControl.getWaypoints();
+    var validWaypoints = waypoints.filter(function(wp) {
+      return wp && wp.latLng;
+    });
+    if (validWaypoints.length >= 2) {
+      lrmControl._routes = [];
+      if (lrmControl._selectedRoute !== undefined && lrmControl._line) {
+        lrmControl._map.removeLayer(lrmControl._line);
+        lrmControl._line = null;
+      }
+      lrmControl._selectedRoute = undefined;
+      if (lrmControl._itinerary) {
+        lrmControl._itinerary._routes = [];
+        lrmControl._itinerary._updateSummary();
+      }
+      lrmControl.route();
+    }
+  });
+}
 
 // Listen for unit changes from tools and update scale and routing control
 if (toolsControl && toolsControl.on) {
@@ -295,10 +399,31 @@ if (toolsControl && toolsControl.on) {
       
       // Also update the state object so profile is preserved on language change
       state.options.profile = profileIndex;
+
+      // Determine exclude selection: prefer existing user selection, otherwise apply profile defaults
+      var service = leafletOptions.services[profileIndex] || {};
+      var currentExcludes = state.options.exclude && Array.isArray(state.options.exclude) ? state.options.exclude : null;
+      if (!currentExcludes || currentExcludes.length === 0) {
+        currentExcludes = service.excludeDefaults || [];
+      }
+      // Apply to router request parameters
+      router.options.requestParameters = router.options.requestParameters || {};
+      if (currentExcludes && currentExcludes.length > 0) {
+        router.options.requestParameters.exclude = currentExcludes.join(',');
+      } else {
+        delete router.options.requestParameters.exclude;
+      }
+      // Sync UI
+      if (excludeSelector && excludeSelector.setSelected) {
+        excludeSelector.setSelected(currentExcludes);
+      }
+      // Persist choices to state
+      state.options.exclude = currentExcludes;
       
-      // Update URL to include profile parameter - reparse current URL and update profile
+      // Update URL to include profile and exclude parameter - reparse current URL and update values
       var currentParams = links.parse(window.location.search.slice(1));
       currentParams.profile = profileIndex;
+      currentParams.exclude = currentExcludes && currentExcludes.length ? currentExcludes.join(',') : undefined;
       var newUrl = '?' + links.format(currentParams);
       window.history.replaceState({}, '', newUrl);
       

@@ -45,6 +45,14 @@ else
   MODES_JSON=""
 fi
 
+# FRONTEND_PROFILES support: accept JSON via env var FRONTEND_PROFILES or mounted /etc/osrm/frontend_profiles.json
+FRONTEND_PROFILES_JSON=""
+if [ -n "$FRONTEND_PROFILES" ]; then
+  FRONTEND_PROFILES_JSON="$FRONTEND_PROFILES"
+elif [ -f /etc/osrm/frontend_profiles.json ]; then
+  FRONTEND_PROFILES_JSON=$(cat /etc/osrm/frontend_profiles.json)
+fi
+
 # Generate config.json with proper JSON escaping
 cat > /usr/share/nginx/html/config.json << EOF
 {
@@ -54,7 +62,8 @@ cat > /usr/share/nginx/html/config.json << EOF
   "OSRM_LANGUAGE": "$(escape_json "$OSRM_LANGUAGE")",
   "OSRM_DEFAULT_LAYER": "$(escape_json "$OSRM_DEFAULT_LAYER")",
   "OSRM_ENVIRONMENT": "$(escape_json "$OSRM_ENVIRONMENT")",
-  "OSRM_MODES": "$(escape_json "$MODES_JSON")"
+  "OSRM_MODES": "$(escape_json "$MODES_JSON")",
+  "FRONTEND_PROFILES": "$(escape_json "$FRONTEND_PROFILES_JSON")"
 }
 EOF
 

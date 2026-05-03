@@ -318,6 +318,23 @@ var Control = L.Control.extend({
     infoIcon.textContent = '\u24D8';
   },
 
+  // Show a short non-blocking notification inside the tools control
+  notify: function(message, timeout) {
+    timeout = timeout || 8000;
+    try {
+      var note = L.DomUtil.create('div', 'osrm-notification', this._container);
+      note.textContent = message;
+      setTimeout(function() {
+        try {
+          if (note && note.parentNode) note.parentNode.removeChild(note);
+        } catch (e) {}
+      }, timeout);
+    } catch (e) {
+      // If anything goes wrong, fall back to console
+      console.warn('Notification failed:', e, message);
+    }
+  },
+
   updateLocalization: function(localization) {
     this._local = localization;
   }

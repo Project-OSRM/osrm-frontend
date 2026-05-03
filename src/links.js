@@ -44,6 +44,17 @@ function formatLink(options) {
       return wp && wp.latLng ? _formatCoord(wp.latLng) : '';
     });
   }
+
+  // Normalize exclude into CSV string when provided as array
+  var excludeValue;
+  if (options.exclude) {
+    if (Array.isArray(options.exclude)) {
+      excludeValue = options.exclude.join(',');
+    } else {
+      excludeValue = options.exclude;
+    }
+  }
+
   return qs.stringify({
     z: options.zoom,
     center: options.center ? _formatCoord(options.center) : undefined,
@@ -52,7 +63,8 @@ function formatLink(options) {
     alt: options.alternative,
     scale: options.units,
     srv: options.service,
-    profile: options.profile
+    profile: options.profile,
+    exclude: excludeValue
   }, {indices: false});
 }
 
@@ -84,6 +96,18 @@ function parseLink(link) {
     parsedValues.profile = q.profile;
     parsedValues.originAddress = q.src;
     parsedValues.destinationAddress = q.dst;
+
+    // Parse exclude into an array of classes if provided
+    if (q.exclude) {
+      if (Array.isArray(q.exclude)) {
+        // flatten multiple exclude parameters and split CSVs
+        parsedValues.exclude = q.exclude.reduce(function(acc, item) {
+          return acc.concat(item.split(',').filter(Boolean));
+        }, []);
+      } else if (typeof q.exclude === 'string') {
+        parsedValues.exclude = q.exclude.split(',').filter(Boolean);
+      }
+    }
   } catch (e) {
     console.log("Exception " + e.name + ": " + e.message);
   }

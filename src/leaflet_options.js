@@ -252,13 +252,45 @@ var defaultLayer = layerMap[getDefaultLayer()] || streets;
 // Each service has a name, URL prefix, and internal profile for routing
 function buildServices() {
   var modes = parseModes();
-  return modes.map(function(mode) {
+  var services = modes.map(function(mode) {
     return {
       label: mode.name,
       path: mode.path || (mode.url + '/route/v1'),
       profile: mode.profile
     };
   });
+
+  // Allow additional profile metadata to be provided via FRONTEND_PROFILES
+  // FRONTEND_PROFILES can be a JSON string (from Docker env) or an array.
+  var currentConfig = (typeof window !== 'undefined' ? window.osrmConfig : null) || {};
+  var frontendProfiles = currentConfig.FRONTEND_PROFILES;
+  try {
+    if (typeof frontendProfiles === 'string' && frontendProfiles.trim().length > 0) {
+      frontendProfiles = JSON.parse(frontendProfiles);
+    }
+    if (Array.isArray(frontendProfiles)) {
+      services = services.map(function(service, index) {
+        var meta = frontendProfiles[index] || {};
+        if (meta.exclude && Array.isArray(meta.exclude)) {
+          service.excludeDefaults = meta.exclude;
+        }
+        if (meta.supportsExclude !== undefined) {
+          service.supportsExclude = !!meta.supportsExclude;
+        }
+        if (meta.id) {
+          service.id = meta.id;
+        }
+        if (meta.label) {
+          service.label = meta.label;
+        }
+        return service;
+      });
+    }
+  } catch (e) {
+    console.warn('Failed to parse FRONTEND_PROFILES JSON:', e);
+  }
+
+  return services;
 }
 
 var leafletOptions = {
@@ -269,7 +301,9 @@ var leafletOptions = {
     language: getLanguage(),
     units: 'metric',
     alternative: 0,
-    layer: defaultLayer
+    layer: defaultLayer,
+    // Exclude classes default (empty = no excludes)
+    exclude: []
   },
   get services() {
     return buildServices();
