@@ -198,11 +198,11 @@ describe('leaflet_options — runtime configuration overrides', () => {
     });
   });
 
-  describe('OSRM_LANGUAGE override', () => {
-    test('uses custom language when provided', () => {
+  describe('language precedence (URL > browser > en)', () => {
+    test('ignores runtime OSRM_LANGUAGE and falls back to English when no browser language', () => {
       global.window = { osrmConfig: { OSRM_LANGUAGE: 'de' } };
       const leafletOptions = require('../src/leaflet_options');
-      expect(leafletOptions.defaultState.language).toBe('de');
+      expect(leafletOptions.defaultState.language).toBe('en');
       delete global.window;
     });
 

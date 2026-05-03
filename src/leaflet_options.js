@@ -228,10 +228,9 @@ function getZoom() {
   return parsedZoom;
 }
 
-// Get language, prefer browser settings if available, then runtime config, then 'en'.
-// Precedence (effective): URL param (handled in index.js) > browser language > runtime config > 'en'
+// Get language, prefer browser settings when available; fallback to 'en'.
+// Precedence (effective): URL param (handled in index.js) > browser language > 'en'
 function getLanguage() {
-  // Prefer browser-provided languages when running in a browser environment
   try {
     if (typeof window !== 'undefined' && window.navigator) {
       var nav = window.navigator;
@@ -260,27 +259,11 @@ function getLanguage() {
       }
     }
   } catch (e) {
-    // Ignore detection errors and fall back to config or default
+    // Ignore detection errors and fall back to default
     console.warn('Error detecting browser language:', e);
   }
 
-  // Fall back to runtime config if provided and supported
-  if (config.OSRM_LANGUAGE) {
-    try {
-      var localization2 = require('./localization');
-      if (localization2.get(config.OSRM_LANGUAGE)) {
-        return config.OSRM_LANGUAGE;
-      }
-      var shortCfg = (config.OSRM_LANGUAGE || '').split('-')[0];
-      if (localization2.get(shortCfg)) {
-        return shortCfg;
-      }
-    } catch (e) {
-      // ignore
-    }
-  }
-
-  // Final fallback to English
+  // Fallback to English when no browser language matches
   return 'en';
 }
 
