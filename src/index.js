@@ -273,14 +273,47 @@ var toolsControl = tools.control(localization.get(mergedOptions.language), local
   var unsupportedCache = {}; // keyed by serviceUrl
   router.route = function(waypoints, callback, context, options) {
     var self = this;
+
+    // Sanitize requestParameters for this call (remove empty values)
+    var sanitizedParams = null;
+    if (self && self.options && self.options.requestParameters) {
+      sanitizedParams = {};
+      Object.keys(self.options.requestParameters).forEach(function(k) {
+        var v = self.options.requestParameters[k];
+        if (v !== undefined && v !== null && String(v).length > 0) {
+          sanitizedParams[k] = v;
+        }
+      });
+    }
+
+    // Temporarily apply sanitized params so the outgoing URL is valid
+    var oldParams = self.options.requestParameters;
+    self.options.requestParameters = sanitizedParams;
+
+    // Log the computed URL for diagnostics
+    try {
+      var computed = self.buildRouteUrl(waypoints, options || {});
+      if (sanitizedParams && Object.keys(sanitizedParams).length) {
+        computed += L.Util.getParamString(sanitizedParams, computed);
+      }
+      console.warn('Computed route URL:', computed);
+    } catch (e) {
+      console.warn('Computed route URL failed', e);
+    }
+
     return origRoute(waypoints, function(err, routes) {
+      // Restore original params immediately on callback
+      try {
+        self.options.requestParameters = oldParams;
+      } catch (e) {}
+
       if (err) {
         try {
           // Emit diagnostics to help debug 400/unsupported errors
           try {
             console.warn('router.route error', {
               err: err,
-              requestParameters: self && self.options && self.options.requestParameters
+              requestParameters: oldParams
             });
             if (err && err.url) console.warn('Request URL:', err.url);
             if (err && err.target && err.target.responseText) {
@@ -291,21 +324,24 @@ var toolsControl = tools.control(localization.get(mergedOptions.language), local
             // ignore diagnostics failures
           }
 
-          var backendKey = self.options.serviceUrl || '';
+          var backendKey = (self && self.options && self.options.serviceUrl) || '';
           var alreadyProbed = unsupportedCache[backendKey];
           var needsFallback = false;
           if (!alreadyProbed) {
-            // existing heuristics
             if (err && typeof err.status === 'string' && /invalid|unsupported|invalidoptions|notimpl/i.test(err.status)) needsFallback = true;
             if (err && err.message && /exclude/i.test(err.message)) needsFallback = true;
-            // new heuristics: HTTP 400 from server may indicate invalid param (e.g., unsupported exclude)
             if (err && err.status && Number(err.status) === 400) needsFallback = true;
             if (err && err.target && err.target.status && Number(err.target.status) === 400) needsFallback = true;
           }
 
-          if (needsFallback && self.options.requestParameters && self.options.requestParameters.exclude) {
+          if (needsFallback && oldParams && oldParams.exclude) {
             unsupportedCache[backendKey] = true;
-            delete self.options.requestParameters.exclude;
+            // Retry without exclude
+            var retryParams = Object.assign({}, oldParams);
+            delete retryParams.exclude;
+            try {
+              self.options.requestParameters = retryParams;
+            } catch (e) {}
             if (toolsControl && typeof toolsControl.notify === 'function') {
               toolsControl.notify('Backend does not support exclude parameter — retrying without excludes (one-time).');
             }
