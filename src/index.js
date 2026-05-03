@@ -27,8 +27,14 @@ var parsedOptions = links.parse(window.location.search.slice(1));
 var mergedOptions = L.extend(leafletOptions.defaultState, parsedOptions);
 var language = mergedOptions.language;
 
-// Create mode selector early so it can be injected when geocoders are created
-var modeSelector = modeSelectorModule.createModeSelector(localization.get(language), leafletOptions.services);
+// Build and translate services early so modeSelector can use translated labels
+var services = leafletOptions.services;
+for (var i = 0, len = services.length; i < len; i++) {
+  var profileLabelKey = services[i].labelKey || services[i].label;
+  services[i].labelKey = profileLabelKey;
+  services[i].label = localization.t(language, profileLabelKey) || profileLabelKey;
+}
+var modeSelector = modeSelectorModule.createModeSelector(localization.get(language), services);
 
 // load only after language was chosen
 var ItineraryBuilder = require('./itinerary_builder')(mergedOptions.language);
@@ -174,20 +180,16 @@ var controlOptions = {
   language: mergedOptions.language, // we are injecting own translations via osrm-text-instructions
   showAlternatives: options.lrm.showAlternatives,
   units: mergedOptions.units,
-  serviceUrl: leafletOptions.services[0].path,
+  serviceUrl: services[0].path,
   useHints: false,
-  services: leafletOptions.services,
+  services: services,
   useZoomParameter: options.lrm.useZoomParameter,
   routeDragInterval: options.lrm.routeDragInterval,
   collapsible: options.lrm.collapsible,
   itineraryBuilder: new ItineraryBuilder()
 };
-// translate profile names
-for (var profile = 0, len = controlOptions.services.length; profile < len; profile++) {
-  var profileLabelKey = controlOptions.services[profile].labelKey || controlOptions.services[profile].label;
-  controlOptions.services[profile].labelKey = profileLabelKey;
-  controlOptions.services[profile].label = localization.t(language, profileLabelKey) || profileLabelKey;
-}
+// profile labels already translated earlier
+
 
 // Load and set initial profile BEFORE creating router and lrmControl
 // This ensures the router uses the correct serviceUrl when calculating initial routes
@@ -204,13 +206,13 @@ if (urlProfile !== undefined && urlProfile !== null) {
 }
 
 // Ensure valid profile index
-if (activeProfileIndex < 0 || activeProfileIndex >= leafletOptions.services.length) {
+if (activeProfileIndex < 0 || activeProfileIndex >= services.length) {
   activeProfileIndex = 0;
 }
 
 // Set the initial serviceUrl and profile on controlOptions
-controlOptions.serviceUrl = leafletOptions.services[activeProfileIndex].path;
-controlOptions.profile = leafletOptions.services[activeProfileIndex].profile;
+controlOptions.serviceUrl = services[activeProfileIndex].path;
+controlOptions.profile = services[activeProfileIndex].profile;
 
 var router = (new L.Routing.OSRMv1(controlOptions));
 routerPatches.applyPatches(router);
@@ -294,7 +296,7 @@ if (toolsControl && toolsControl.on) {
     L.DomEvent.on(modeSelector.select, 'change', function(event) {
       var profileIndex = parseInt(event.target.value, 10);
       clearProfileSelectorSelection(event.target);
-      routerPatches.setActiveService(router, profileIndex, leafletOptions.services);
+      routerPatches.setActiveService(router, profileIndex, services);
       ls.set('profile', profileIndex);
       
       // Also update the state object so profile is preserved on language change
@@ -335,7 +337,7 @@ if (toolsControl && toolsControl.on) {
 if (modeSelector && modeSelector.select) {
   L.DomEvent.on(modeSelector.select, 'change', function(event) {
     var profileIndex = parseInt(event.target.value, 10);
-    var selectedProfile = leafletOptions.services[profileIndex] && leafletOptions.services[profileIndex].profile;
+    var selectedProfile = services[profileIndex] && services[profileIndex].profile;
     var bikeLayer = overlay && overlay['Bike'];
     if (!bikeLayer) return;
 

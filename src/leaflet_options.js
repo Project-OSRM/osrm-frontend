@@ -312,9 +312,19 @@ var defaultLayer = layerMap[getDefaultLayer()] || streets;
 // Each service has a name, URL prefix, and internal profile for routing
 function buildServices() {
   var modes = parseModes();
+  var defaultLabelMapping = {
+    driving: 'Car',
+    bike: 'Bike',
+    foot: 'Foot',
+    default: 'Car'
+  };
   return modes.map(function(mode) {
+    var name = mode.name;
+    var label = mode.label || name;
+    var labelKey = mode.labelKey || defaultLabelMapping[name] || label;
     return {
-      label: mode.name,
+      label: label,
+      labelKey: labelKey,
       path: mode.path || (mode.url + '/route/v1'),
       profile: mode.profile
     };
