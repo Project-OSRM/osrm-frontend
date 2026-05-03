@@ -199,8 +199,22 @@ describe('leaflet_options — runtime configuration overrides', () => {
   });
 
   describe('language precedence (URL > browser > en)', () => {
+    test('honors OSRM_LANGUAGE runtime override', () => {
+      global.window = { osrmConfig: { OSRM_LANGUAGE: 'de' } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.defaultState.language).toBe('de');
+      delete global.window;
+    });
+
     test('uses browser language exact match', () => {
       global.window = { navigator: { languages: ['de'], language: 'de' } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.defaultState.language).toBe('de');
+      delete global.window;
+    });
+
+    test('falls back to navigator.language when navigator.languages absent', () => {
+      global.window = { navigator: { language: 'de' } };
       const leafletOptions = require('../src/leaflet_options');
       expect(leafletOptions.defaultState.language).toBe('de');
       delete global.window;
@@ -222,6 +236,13 @@ describe('leaflet_options — runtime configuration overrides', () => {
 
     test('matches exact regional variant when available (pt-BR)', () => {
       global.window = { navigator: { languages: ['pt-BR'], language: 'pt-BR' } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.defaultState.language).toBe('pt-BR');
+      delete global.window;
+    });
+
+    test('case-insensitive regional tag (pt-br)', () => {
+      global.window = { navigator: { languages: ['pt-br'], language: 'pt-br' } };
       const leafletOptions = require('../src/leaflet_options');
       expect(leafletOptions.defaultState.language).toBe('pt-BR');
       delete global.window;
