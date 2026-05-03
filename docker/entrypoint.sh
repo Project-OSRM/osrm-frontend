@@ -58,6 +58,17 @@ cat > /usr/share/nginx/html/config.json << EOF
 }
 EOF
 
+# Inject OSRM_ENVIRONMENT into index.html meta tag to signal client to load config.json
+if [ -f /usr/share/nginx/html/index.html ]; then
+  TMPFILE=$(mktemp)
+  awk -v env="$OSRM_ENVIRONMENT" '{
+    if ($0 ~ /<meta name="osrm-environment"/) {
+      sub(/content="[^"]*"/, "content=\"" env "\"")
+    }
+    print
+  }' /usr/share/nginx/html/index.html > "$TMPFILE" && mv "$TMPFILE" /usr/share/nginx/html/index.html || true
+fi
+
 # Execute the default command (nginx) or any command passed to the container
 if [ "$#" -eq 0 ]; then
   exec nginx -g "daemon off;"
