@@ -75,7 +75,7 @@ geocoder.coordPreserving = function(nominatimUrl) {
       } catch (e) {}
     }
 
-    // Load existing entries, skipping those older than ttl. Rehydrate centers to L.latLng when possible.
+    // Load existing entries, skipping those older than ttl. Rehydrate centers and bboxes to Leaflet objects when possible.
     try {
       if (typeof localStorage !== 'undefined' && localStorage.getItem) {
         var raw = localStorage.getItem(storageKey);
@@ -89,14 +89,40 @@ geocoder.coordPreserving = function(nominatimUrl) {
                 var obj = pair[1];
                 if (!obj || typeof obj.ts !== 'number') return;
                 if (now - obj.ts > ttl) return;
-                // rehydrate center -> L.latLng if necessary
+                // Rehydrate value array items (center and bbox) to Leaflet types when possible
                 if (obj.value && Array.isArray(obj.value)) {
                   obj.value.forEach(function(r) {
                     try {
+                      // rehydrate center -> L.latLng if necessary
                       if (r && r.center && r.center.lat !== undefined && r.center.lng !== undefined) {
-                        // If it's not a Leaflet LatLng (no toBounds method), make one
                         if (!(r.center && typeof r.center.toBounds === 'function')) {
                           r.center = L.latLng(r.center.lat, r.center.lng);
+                        }
+                      }
+                      // rehydrate bbox -> L.latLngBounds when possible
+                      if (r && r.bbox) {
+                        // bbox stored as array [south, north, west, east]
+                        if (Array.isArray(r.bbox) && r.bbox.length === 4) {
+                          r.bbox = L.latLngBounds(
+                            L.latLng(parseFloat(r.bbox[0]), parseFloat(r.bbox[2])),
+                            L.latLng(parseFloat(r.bbox[1]), parseFloat(r.bbox[3]))
+                          );
+                        } else if (r.bbox._southWest && r.bbox._northEast) {
+                          // leaflet's LatLngBounds serialised shape
+                          try {
+                            r.bbox = L.latLngBounds(
+                              L.latLng(parseFloat(r.bbox._southWest.lat), parseFloat(r.bbox._southWest.lng)),
+                              L.latLng(parseFloat(r.bbox._northEast.lat), parseFloat(r.bbox._northEast.lng))
+                            );
+                          } catch (e) {}
+                        } else if (r.bbox.south !== undefined && r.bbox.north !== undefined && r.bbox.west !== undefined && r.bbox.east !== undefined) {
+                          // custom object shape
+                          try {
+                            r.bbox = L.latLngBounds(
+                              L.latLng(parseFloat(r.bbox.south), parseFloat(r.bbox.west)),
+                              L.latLng(parseFloat(r.bbox.north), parseFloat(r.bbox.east))
+                            );
+                          } catch (e) {}
                         }
                       }
                     } catch (e) {}
@@ -113,13 +139,16 @@ geocoder.coordPreserving = function(nominatimUrl) {
     function removeExpired() {
       try {
         var now = Date.now();
+        var changed = false;
         for (var it = map.entries(), res = it.next(); !res.done; res = it.next()) {
           var key = res.value[0];
           var entry = res.value[1];
           if (!entry || typeof entry.ts !== 'number' || now - entry.ts > ttl) {
             map.delete(key);
+            changed = true;
           }
         }
+        if (changed) persist();
       } catch (e) {}
     }
 
@@ -132,6 +161,9 @@ geocoder.coordPreserving = function(nominatimUrl) {
         // move to recently used
         map.delete(key);
         map.set(key, entry);
+        try {
+          persist();
+        } catch (e) {}
         return entry.value;
       },
       set: function(key, value) {
@@ -179,8 +211,21 @@ geocoder.coordPreserving = function(nominatimUrl) {
   function buildReverseUrl(latlng, scale) {
     var lat = (latlng && latlng.lat) || (latlng && latlng[0]) || 0;
     var lon = (latlng && latlng.lng) || (latlng && latlng[1]) || 0;
-    // Use zoom 18 for reverse display like original behaviour
+    // Derive a zoom level from the provided `scale` when possible. Accept either
+    // a Leaflet scale (e.g., 256 * 2^zoom) or a direct zoom value.
     var zoom = 18;
+    try {
+      if (typeof scale === 'number' && !isNaN(scale)) {
+        if (scale > 30) {
+          // Likely a pixel scale like 256 * 2^zoom — invert to get zoom
+          zoom = Math.round(Math.log2(scale / 256));
+        } else {
+          // Likely already a zoom level
+          zoom = Math.round(scale);
+        }
+      }
+    } catch (e) {}
+    zoom = Math.max(0, Math.min(18, zoom));
     return serviceBase + 'reverse?format=json&addressdetails=1&lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lon) + '&zoom=' + encodeURIComponent(zoom);
   }
 
@@ -211,7 +256,8 @@ geocoder.coordPreserving = function(nominatimUrl) {
       setInputBgFromContext(context, 'white');
       return Promise.resolve(cached);
     }
-    if (supportsFetch) {
+
+    function fetchSearch() {
       return fetch(url, { headers: { 'Accept': 'application/json' } }).then(function(resp) {
         if (resp.status === 429) {
           setInputBgFromContext(context, 'orange');
@@ -235,18 +281,32 @@ geocoder.coordPreserving = function(nominatimUrl) {
         return [];
       });
     }
-    // Fallback to original nominatim implementation (useful for tests/mocks)
-    return nominatim.geocode(query).then(function(results) {
-      try {
-        cache.set(url, results);
-      } catch (e) {}
-      setInputBgFromContext(context, 'white');
-      return results;
-    }).catch(function(err) {
-      if (err && err.status === 429) setInputBgFromContext(context, 'orange');
-      else setInputBgFromContext(context, '');
-      return [];
-    });
+
+    // Prefer using nominatim.geocode when available (helps tests that mock it).
+    if (nominatim && typeof nominatim.geocode === 'function') {
+      return nominatim.geocode(query).then(function(results) {
+        try {
+          cache.set(url, results);
+        } catch (e) {}
+        setInputBgFromContext(context, 'white');
+        return results;
+      }).catch(function(err) {
+        if (err && err.status === 429) {
+          setInputBgFromContext(context, 'orange');
+          return [];
+        }
+        // fall back to fetch path when available
+        if (supportsFetch) return fetchSearch();
+        return [];
+      });
+    }
+
+    if (supportsFetch) {
+      return fetchSearch();
+    }
+
+    // no fetch and no nominatim: give up with empty result
+    return Promise.resolve([]);
   }
 
   function doReverse(latlng, scale, context) {
