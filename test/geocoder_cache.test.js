@@ -170,4 +170,52 @@ describe('geocoder cache', function() {
     expect(arr.find(function(e) { return e[0] === newUrl; })).toBeDefined();
   });
 
+  test('uses nominatim geocode path and caches results', async function() {
+    jest.resetModules();
+    var geocodeMock = jest.fn().mockResolvedValue([{ name: 'NPlace', center: { lat: 10, lng: 20 }, bbox: [10,11,20,21] }]);
+    jest.doMock('leaflet', function() {
+      var m = makeLeafletMock();
+      m.Control.Geocoder.nominatim = jest.fn(function() { return { geocode: geocodeMock }; });
+      return m;
+    });
+    try { delete global.fetch; } catch (e) {}
+
+    var geocoder = require('../src/geocoder');
+    var g = geocoder.coordPreserving('https://nominatim.example/');
+    var ctx = { input: { style: {} } };
+
+    var res1 = await g.geocode('NPlace', undefined, ctx);
+    expect(geocodeMock).toHaveBeenCalledTimes(1);
+    expect(ctx.input.style.backgroundColor).toBe('white');
+
+    var res2 = await g.geocode('NPlace', undefined, ctx);
+    expect(geocodeMock).toHaveBeenCalledTimes(1);
+  });
+
+  test('caches nominatim.reverse results and reuses them', async function() {
+    jest.resetModules();
+    var reverseMock = jest.fn().mockResolvedValue([{ name: 'RPlace', center: { lat: 11, lng: 22 }, bbox: [11,12,22,23] }]);
+    var nominatimFactory = jest.fn(function() { return { reverse: reverseMock }; });
+    jest.doMock('leaflet', function() {
+      return {
+        Control: { Geocoder: { nominatim: nominatimFactory } },
+        CRS: { EPSG3857: { scale: function() { return 1; } } },
+        latLng: function(lat, lng) { return { lat: +lat, lng: +lng, toBounds: function() { return {}; } }; },
+        extend: Object.assign
+      };
+    });
+    try { delete global.fetch; } catch (e) {}
+
+    var geocoder = require('../src/geocoder');
+    var g = geocoder.coordPreserving('https://nominatim.example/');
+    var ctx = { input: { style: {} } };
+
+    var res1 = await g.reverse({ lat: 11, lng: 22 }, 18, undefined, ctx);
+    expect(reverseMock).toHaveBeenCalledTimes(1);
+    expect(ctx.input.style.backgroundColor).toBe('white');
+
+    var res2 = await g.reverse({ lat: 11, lng: 22 }, 18, undefined, ctx);
+    expect(reverseMock).toHaveBeenCalledTimes(1);
+  });
+
 });

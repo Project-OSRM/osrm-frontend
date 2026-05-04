@@ -45,6 +45,29 @@ function parseCoords(query) {
   return m ? L.latLng(+m[1], +m[2]) : null;
 }
 
+var globalNominatimCache = null;
+var liveRegionEl = null;
+function announceRateLimit(msg) {
+  try {
+    if (typeof document === 'undefined') return;
+    if (!liveRegionEl) {
+      liveRegionEl = document.getElementById('osrm-nominatim-live');
+      if (!liveRegionEl) {
+        liveRegionEl = document.createElement('div');
+        liveRegionEl.id = 'osrm-nominatim-live';
+        liveRegionEl.setAttribute('aria-live', 'polite');
+        liveRegionEl.style.position = 'absolute';
+        liveRegionEl.style.left = '-9999px';
+        liveRegionEl.style.width = '1px';
+        liveRegionEl.style.height = '1px';
+        liveRegionEl.style.overflow = 'hidden';
+        document.body.appendChild(liveRegionEl);
+      }
+    }
+    liveRegionEl.textContent = msg;
+  } catch (e) {}
+}
+
 // Returns a geocoder that, when given coordinate input, preserves the exact
 // lat/lon instead of snapping to the nearest address, while still calling
 // Nominatim reverse-geocode so a human-readable name is displayed.
@@ -158,12 +181,9 @@ geocoder.coordPreserving = function(nominatimUrl) {
         if (!map.has(key)) return null;
         var entry = map.get(key);
         if (!entry) return null;
-        // move to recently used
+        // move to recently used (in-memory only)
         map.delete(key);
         map.set(key, entry);
-        try {
-          persist();
-        } catch (e) {}
         return entry.value;
       },
       set: function(key, value) {
@@ -180,26 +200,19 @@ geocoder.coordPreserving = function(nominatimUrl) {
     };
   }
 
-  var cache = createLRUCache('osrm_nominatim_cache_v1', 128, 24 * 60 * 60 * 1000);
+  if (!globalNominatimCache) globalNominatimCache = createLRUCache('osrm_nominatim_cache_v1', 128, 24 * 60 * 60 * 1000);
+  var cache = globalNominatimCache;
   var supportsFetch = typeof fetch === 'function';
   var serviceBase = (normalizedNominatimUrl && normalizedNominatimUrl.length > 0) ? normalizedNominatimUrl.replace(/\/+$/, '') + '/' : 'https://nominatim.openstreetmap.org/';
 
   function setInputBgFromContext(context, color) {
     try {
-      if (!context) {
-        if (typeof document !== 'undefined' && document.activeElement && document.activeElement.tagName === 'INPUT') {
-          document.activeElement.style.backgroundColor = color;
-        }
-        return;
-      }
+      if (!context) return;
       var input = null;
       if (context.input && context.input.style) input = context.input;
       else if (context._input && context._input.style) input = context._input;
       else if (context.container && context.container.querySelector) input = context.container.querySelector('input');
       else if (context.querySelector) input = context.querySelector('input');
-      if (!input && typeof document !== 'undefined' && document.activeElement && document.activeElement.tagName === 'INPUT') {
-        input = document.activeElement;
-      }
       if (input && input.style) input.style.backgroundColor = color;
     } catch (e) {}
   }
@@ -261,6 +274,7 @@ geocoder.coordPreserving = function(nominatimUrl) {
       return fetch(url, { headers: { 'Accept': 'application/json' } }).then(function(resp) {
         if (resp.status === 429) {
           setInputBgFromContext(context, 'orange');
+          announceRateLimit('Geocoder rate-limited (HTTP 429)');
           return [];
         }
         if (!resp.ok) {
@@ -293,6 +307,7 @@ geocoder.coordPreserving = function(nominatimUrl) {
       }).catch(function(err) {
         if (err && err.status === 429) {
           setInputBgFromContext(context, 'orange');
+          announceRateLimit('Geocoder rate-limited (HTTP 429)');
           return [];
         }
         // fall back to fetch path when available
@@ -326,8 +341,12 @@ geocoder.coordPreserving = function(nominatimUrl) {
         setInputBgFromContext(context, 'white');
         return results;
       }).catch(function(err) {
-        if (err && err.status === 429) setInputBgFromContext(context, 'orange');
-        else setInputBgFromContext(context, '');
+        if (err && err.status === 429) {
+          setInputBgFromContext(context, 'orange');
+          announceRateLimit('Geocoder rate-limited (HTTP 429)');
+        } else {
+          setInputBgFromContext(context, '');
+        }
         return [];
       });
     }
@@ -336,6 +355,7 @@ geocoder.coordPreserving = function(nominatimUrl) {
       return fetch(url, { headers: { 'Accept': 'application/json' } }).then(function(resp) {
         if (resp.status === 429) {
           setInputBgFromContext(context, 'orange');
+          announceRateLimit('Geocoder rate-limited (HTTP 429)');
           return [];
         }
         if (!resp.ok) {
