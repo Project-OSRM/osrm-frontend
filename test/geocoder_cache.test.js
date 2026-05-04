@@ -45,7 +45,12 @@ describe('geocoder cache', function() {
 
   test('caches successful search responses and reuses cache', async function() {
     jest.resetModules();
-    jest.doMock('leaflet', function() { return makeLeafletMock(); });
+    jest.doMock('leaflet', function() { 
+      var m = makeLeafletMock();
+      // Force fetch path by returning an object without a geocode() function
+      m.Control.Geocoder.nominatim = jest.fn(function() { return {}; });
+      return m;
+    });
 
     var fetchMock = jest.fn().mockResolvedValue({ ok: true, status: 200, json: async function() {
       return [{ display_name: 'Place A', lat: '10', lon: '20', boundingbox: ['10','11','20','21'] }];
@@ -80,7 +85,11 @@ describe('geocoder cache', function() {
 
   test('sets input background to orange on 429', async function() {
     jest.resetModules();
-    jest.doMock('leaflet', function() { return makeLeafletMock(); });
+    jest.doMock('leaflet', function() { 
+      var m = makeLeafletMock();
+      m.Control.Geocoder.nominatim = jest.fn(function() { return {}; });
+      return m;
+    });
 
     var fetchMock = jest.fn().mockResolvedValue({ ok: false, status: 429 });
     global.fetch = fetchMock;
@@ -104,7 +113,11 @@ describe('geocoder cache', function() {
     localStorage.setItem('osrm_nominatim_cache_v1', JSON.stringify(stored));
 
     jest.resetModules();
-    jest.doMock('leaflet', function() { return makeLeafletMock(); });
+    jest.doMock('leaflet', function() { 
+      var m = makeLeafletMock();
+      m.Control.Geocoder.nominatim = jest.fn(function() { return {}; });
+      return m;
+    });
 
     var fetchMock = jest.fn().mockResolvedValue({ ok: true, status: 200, json: async function() {
       return [{ display_name: 'NewOld', lat: '11', lon: '22', boundingbox: ['11','12','22','23'] }];
