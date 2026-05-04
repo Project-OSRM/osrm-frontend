@@ -256,6 +256,22 @@ geocoder.coordPreserving = function(nominatimUrl) {
       setInputBgFromContext(context, 'white');
       return Promise.resolve(cached);
     }
+
+    // Prefer nominatim.reverse when available to preserve existing behaviour and support test mocks
+    if (nominatim && typeof nominatim.reverse === 'function') {
+      return nominatim.reverse(latlng, scale).then(function(results) {
+        try {
+          cache.set(url, results);
+        } catch (e) {}
+        setInputBgFromContext(context, 'white');
+        return results;
+      }).catch(function(err) {
+        if (err && err.status === 429) setInputBgFromContext(context, 'orange');
+        else setInputBgFromContext(context, '');
+        return [];
+      });
+    }
+
     if (supportsFetch) {
       return fetch(url, { headers: { 'Accept': 'application/json' } }).then(function(resp) {
         if (resp.status === 429) {
@@ -293,18 +309,8 @@ geocoder.coordPreserving = function(nominatimUrl) {
         return [];
       });
     }
-    // Fallback to original nominatim implementation (useful for tests/mocks)
-    return nominatim.reverse(latlng, scale).then(function(results) {
-      try {
-        cache.set(url, results);
-      } catch (e) {}
-      setInputBgFromContext(context, 'white');
-      return results;
-    }).catch(function(err) {
-      if (err && err.status === 429) setInputBgFromContext(context, 'orange');
-      else setInputBgFromContext(context, '');
-      return [];
-    });
+
+    return Promise.resolve([]);
   }
 
   // Helper: reverse-geocodes coordinates for display name, but preserves exact latlng.
