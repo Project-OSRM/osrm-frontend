@@ -8,7 +8,7 @@ If you need a simple OSRM integration in your webpage, you should start from the
 ## Using Docker
 
 The easiest and quickest way to setup your own routing engine backend is to use Docker images we provide.
-We base [our Docker images)[https://github.com/Project-OSRM/osrm-frontend/pkgs/container/osrm-frontend) on Alpine Linux and make sure they are as lightweight as possible.
+We base [our Docker images](https://github.com/Project-OSRM/osrm-frontend/pkgs/container/osrm-frontend) on Alpine Linux and make sure they are as lightweight as possible.
 
 Serves the frontend at `http://localhost:9966` running queries against the routing engine backend:
 
