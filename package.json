@@ -4,7 +4,7 @@
   "description": "frontend interface for project osrm",
   "main": "src/index.js",
   "scripts": {
-    "test": "jest",
+    "test": "node --no-warnings node_modules/.bin/jest",
     "test:lint": "eslint src/*.js i18n/*.js",
     "replace": "node ./scripts/replace.js",
     "clean": "rm -f bundle.raw.js",
