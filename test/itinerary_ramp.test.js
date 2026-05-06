@@ -96,6 +96,67 @@ describe('wrapWaypoints (issues #206, #307)', () => {
     expect(routed[0].latLng.lng).toBeCloseTo(-2.806);
   });
 
+  test('re-offsets snapped route.waypoints back to original coordinate space', () => {
+    // LRM calls setWaypoints(route.waypoints) after routing (snap mode),
+    // so snapped coords must stay in the same world copy as the original click.
+    const router = {
+      route: function(wps, cb) {
+        // Simulate OSRM returning a snapped position at the wrapped coordinates
+        const snapped = [{ latLng: { lat: 53.270, lng: -2.800 }, name: '' }];
+        cb(null, [{ waypoints: snapped }]);
+      }
+    };
+    wrapWaypoints(router);
+
+    let receivedRoutes;
+    router.route(
+      [{ latLng: makeLatLng(53.265, -362.806), name: 'A' }],
+      function(err, routes) { receivedRoutes = routes; }
+    );
+    // The snapped waypoint (-2.800) should be re-offset by -360 to match the
+    // original world copy (-362.800).
+    expect(receivedRoutes[0].waypoints[0].latLng.lng).toBeCloseTo(-362.800);
+  });
+
+  test('re-offset snapped waypoint preserves wrap() for further use', () => {
+    const router = {
+      route: function(wps, cb) {
+        const snapped = [{ latLng: { lat: 39.9, lng: 116.603 }, name: '' }];
+        cb(null, [{ waypoints: snapped }]);
+      }
+    };
+    wrapWaypoints(router);
+
+    let receivedRoutes;
+    router.route(
+      [{ latLng: makeLatLng(39.9, 1556.6), name: 'B' }],
+      function(err, routes) { receivedRoutes = routes; }
+    );
+    const reoffset = receivedRoutes[0].waypoints[0].latLng;
+    // Snapped lng 116.603 + offset 1440 = 1556.603
+    expect(reoffset.lng).toBeCloseTo(1556.603);
+    // wrap() on the re-offset latlng should return the in-range value
+    expect(reoffset.wrap().lng).toBeCloseTo(116.603);
+  });
+
+  test('does not re-offset snapped waypoints when original coords are in range', () => {
+    const router = {
+      route: function(wps, cb) {
+        const snapped = [{ latLng: { lat: 48.8, lng: 2.303 }, name: '' }];
+        cb(null, [{ waypoints: snapped }]);
+      }
+    };
+    wrapWaypoints(router);
+
+    let receivedRoutes;
+    router.route(
+      [{ latLng: makeLatLng(48.8, 2.3), name: 'Paris' }],
+      function(err, routes) { receivedRoutes = routes; }
+    );
+    // No offset applied — result stays as-is
+    expect(receivedRoutes[0].waypoints[0].latLng.lng).toBeCloseTo(2.303);
+  });
+
   test('wraps a waypoint with longitude > +180 before routing', () => {
     const routed = [];
     const router = { route: function(wps, cb) { routed.push(...wps); } };

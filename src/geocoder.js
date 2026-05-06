@@ -428,16 +428,18 @@ geocoder.coordPreserving = function(nominatimUrl) {
     // Wrap longitude into [-180, 180] so Nominatim receives valid coordinates
     // when the map has been scrolled past the antimeridian (issues #206, #307).
     var latlngWrapped = (latlng && typeof latlng.wrap === 'function') ? latlng.wrap() : latlng;
+    // Offset to re-project result centers back into the same "world copy" as
+    // the original latlng, so LRM's geocoder-element distance-tolerance check
+    // (rs[0].center.distanceTo(wp.latLng)) passes correctly.
+    var lngOffset = (latlng && latlngWrapped) ? latlng.lng - latlngWrapped.lng : 0;
     var url = buildReverseUrl(latlngWrapped, scale);
     var cached = cache.get(url);
+    var basePromise;
     if (cached) {
       setInputBgFromContext(context, 'white');
-      return Promise.resolve(cached);
-    }
-
-    // Prefer nominatim.reverse when available to preserve existing behaviour and support test mocks
-    if (nominatim && typeof nominatim.reverse === 'function') {
-      return nominatim.reverse(latlngWrapped, scale).then(function(results) {
+      basePromise = Promise.resolve(cached);
+    } else if (nominatim && typeof nominatim.reverse === 'function') {
+      basePromise = nominatim.reverse(latlngWrapped, scale).then(function(results) {
         try {
           cache.set(url, results);
         } catch (e) {}
@@ -452,10 +454,8 @@ geocoder.coordPreserving = function(nominatimUrl) {
         }
         return [];
       });
-    }
-
-    if (supportsFetch) {
-      return fetch(url, { headers: { 'Accept': 'application/json' } }).then(function(resp) {
+    } else if (supportsFetch) {
+      basePromise = fetch(url, { headers: { 'Accept': 'application/json' } }).then(function(resp) {
         if (resp.status === 429) {
           setInputBgFromContext(context, 'orange');
           announceRateLimit('Geocoder rate-limited (HTTP 429)');
@@ -491,9 +491,18 @@ geocoder.coordPreserving = function(nominatimUrl) {
         setInputBgFromContext(context, '');
         return [];
       });
+    } else {
+      basePromise = Promise.resolve([]);
     }
 
-    return Promise.resolve([]);
+    if (lngOffset === 0) return basePromise;
+    return basePromise.then(function(results) {
+      if (!results || !results.length) return results;
+      return results.map(function(r) {
+        if (!r || !r.center) return r;
+        return Object.assign({}, r, { center: L.latLng(r.center.lat, r.center.lng + lngOffset) });
+      });
+    });
   }
 
   // Helper: reverse-geocodes coordinates for display name, but preserves exact latlng.

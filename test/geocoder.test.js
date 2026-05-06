@@ -124,5 +124,87 @@ describe('geocoder.coordPreserving', () => {
       const calledWith = reverseMock.mock.calls[0][0];
       expect(calledWith.lng).toBeCloseTo(2.35);
     });
+
+    test('re-offsets result center back to original coordinate space when lng < -180', async () => {
+      // LRM's geocoder-element checks rs[0].center.distanceTo(wp.latLng).
+      // If center stays at the wrapped lng while wp.latLng is out-of-range, the
+      // distance test fails and LRM falls back to showing raw coordinates.
+      const { nominatimFactory } = makeMocks(
+        () => Promise.resolve([{ name: 'Berlin', center: { lat: 52.5, lng: 13.405 } }])
+      );
+
+      jest.doMock('leaflet', () => ({
+        Control: { Geocoder: { nominatim: nominatimFactory } },
+        CRS: { EPSG3857: { scale: () => 1 } },
+        latLng: (lat, lng) => {
+          const obj = { lat: +lat, lng: +lng, toBounds: () => ({}) };
+          obj.wrap = () => ({ lat: obj.lat, lng: wrapLng(obj.lng), toBounds: () => ({}) });
+          return obj;
+        },
+        latLngBounds: () => ({}),
+        extend: Object.assign
+      }));
+
+      const geocoder = require('../src/geocoder');
+      const g = geocoder.coordPreserving('https://nominatim.example/');
+
+      // Panned west two full turns: 13.405 - 720 = -706.595
+      const outOfRange = { lat: 52.5, lng: -706.595, wrap: () => ({ lat: 52.5, lng: 13.405 }) };
+      const results = await g.reverse(outOfRange, 1, function() {});
+      // center.lng should be re-offset by -720 (two full rotations west)
+      expect(results[0].center.lng).toBeCloseTo(-706.595);
+    });
+
+    test('re-offsets result center back to original coordinate space when lng > +180', async () => {
+      const { nominatimFactory } = makeMocks(
+        () => Promise.resolve([{ name: 'Beijing', center: { lat: 39.9, lng: 116.403 } }])
+      );
+
+      jest.doMock('leaflet', () => ({
+        Control: { Geocoder: { nominatim: nominatimFactory } },
+        CRS: { EPSG3857: { scale: () => 1 } },
+        latLng: (lat, lng) => {
+          const obj = { lat: +lat, lng: +lng, toBounds: () => ({}) };
+          obj.wrap = () => ({ lat: obj.lat, lng: wrapLng(obj.lng), toBounds: () => ({}) });
+          return obj;
+        },
+        latLngBounds: () => ({}),
+        extend: Object.assign
+      }));
+
+      const geocoder = require('../src/geocoder');
+      const g = geocoder.coordPreserving('https://nominatim.example/');
+
+      // Panned east four full turns: 116.403 + 1440 = 1556.403
+      const outOfRange = { lat: 39.9, lng: 1556.403, wrap: () => ({ lat: 39.9, lng: 116.403 }) };
+      const results = await g.reverse(outOfRange, 1, function() {});
+      expect(results[0].center.lng).toBeCloseTo(1556.403);
+    });
+
+    test('leaves result center unchanged when input is already in [-180, 180]', async () => {
+      const { nominatimFactory } = makeMocks(
+        () => Promise.resolve([{ name: 'Paris', center: { lat: 48.85, lng: 2.347 } }])
+      );
+
+      jest.doMock('leaflet', () => ({
+        Control: { Geocoder: { nominatim: nominatimFactory } },
+        CRS: { EPSG3857: { scale: () => 1 } },
+        latLng: (lat, lng) => {
+          const obj = { lat: +lat, lng: +lng, toBounds: () => ({}) };
+          obj.wrap = () => ({ lat: obj.lat, lng: wrapLng(obj.lng), toBounds: () => ({}) });
+          return obj;
+        },
+        latLngBounds: () => ({}),
+        extend: Object.assign
+      }));
+
+      const geocoder = require('../src/geocoder');
+      const g = geocoder.coordPreserving('https://nominatim.example/');
+
+      const inRange = { lat: 48.85, lng: 2.35, wrap: () => ({ lat: 48.85, lng: 2.35 }) };
+      const results = await g.reverse(inRange, 1, function() {});
+      // No re-offset — center stays as Nominatim returned it
+      expect(results[0].center.lng).toBeCloseTo(2.347);
+    });
   });
 });

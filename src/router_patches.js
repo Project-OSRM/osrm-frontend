@@ -17,6 +17,12 @@ function leftOrRight(d) {
 // sending them to the OSRM backend. Without this, panning the map past the
 // antimeridian produces out-of-range longitudes (e.g. -362.8) that OSRM
 // rejects with a 400 error (issues #206 and #307).
+//
+// After routing, LRM's 'snap' mode calls setWaypoints(route.waypoints) with the
+// snapped positions returned by OSRM. Those are in the wrapped (in-range)
+// coordinate space, so LRM would place markers at the wrong world copy.
+// We re-offset the snapped latlngs back by the same ±n×360° that was applied
+// during wrapping, keeping markers in the correct viewport position.
 function wrapWaypoints(router) {
   var origRoute = router.route.bind(router);
   router.route = function(waypoints, callback, context, options) {
@@ -24,7 +30,35 @@ function wrapWaypoints(router) {
       if (!wp || !wp.latLng || typeof wp.latLng.wrap !== 'function') return wp;
       return Object.assign({}, wp, { latLng: wp.latLng.wrap() });
     });
-    return origRoute(wrapped, callback, context, options);
+
+    var wrappedCallback = function(err, routes) {
+      if (!err && routes) {
+        routes.forEach(function(route) {
+          if (route && route.waypoints) {
+            route.waypoints = route.waypoints.map(function(snappedWp, i) {
+              var orig = waypoints[i];
+              if (!snappedWp || !snappedWp.latLng || !orig || !orig.latLng ||
+                  typeof orig.latLng.wrap !== 'function') return snappedWp;
+              var offset = orig.latLng.lng - orig.latLng.wrap().lng;
+              if (offset === 0) return snappedWp;
+              var reoffsetLng = snappedWp.latLng.lng + offset;
+              var reoffsetLatLng = {
+                lat: snappedWp.latLng.lat,
+                lng: reoffsetLng,
+                wrap: function() {
+                  var v = reoffsetLng;
+                  return { lat: snappedWp.latLng.lat, lng: ((v + 180) % 360 + 360) % 360 - 180 };
+                }
+              };
+              return Object.assign({}, snappedWp, { latLng: reoffsetLatLng });
+            });
+          }
+        });
+      }
+      if (typeof callback === 'function') callback.apply(context || callback, arguments);
+    };
+
+    return origRoute(wrapped, wrappedCallback, context, options);
   };
 }
 

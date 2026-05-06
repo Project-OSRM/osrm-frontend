@@ -1,11 +1,5 @@
 'use strict';
 
-// Minimal longitude-wrapping helper mirroring Leaflet's LatLng.wrap() behaviour.
-// Used outside jest.mock() factories where it can be referenced freely.
-function wrapLng(v) {
-  return ((v + 180) % 360 + 360) % 360 - 180;
-}
-
 // Mock leaflet and leaflet-routing-machine so tests run in Node without a DOM.
 // The latLng mock includes wrap() so _formatCoord's wrapping logic is exercised.
 jest.mock('leaflet', () => ({
@@ -102,8 +96,8 @@ describe('links.parse — existing loc= params still work', () => {
 describe('links.format — coordinate wrapping (issues #206, #307)', () => {
   const L = require('leaflet');
 
-  test('wraps waypoint longitude > 180 when formatting', () => {
-    // Simulates panning east past antimeridian: London scrolled to 360-2.8 = 357.2 degrees
+  test('wraps waypoint longitude < -180 when formatting', () => {
+    // Simulates panning west past antimeridian: London scrolled to -360-2.8 = -362.8 degrees
     const output = links.format({
       zoom: 9,
       center: L.latLng(51.5, 13.4),
