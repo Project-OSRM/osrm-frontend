@@ -21,6 +21,7 @@ var ls = require('local-storage');
 var tools = require('./tools');
 var state = require('./state');
 var localization = require('./localization');
+var initialLayers = require('./initial_layers');
 require('./polyfill');
 
 var parsedOptions = links.parse(window.location.search.slice(1));
@@ -43,10 +44,24 @@ var mapLayer = leafletOptions.layer;
 var overlay = leafletOptions.overlay;
 
 // Track whether the Bike overlay was auto-enabled by profile selection
-var bikeOverlayAutoActivated = false;
 var bikeOverlayOriginallyActive = false;
 var baselayer = ls.get('layer') ? mapLayer[0][ls.get('layer')] : leafletOptions.defaultState.layer;
-var layers = ls.get('getOverlay') && [baselayer, overlay['Small Components']] || baselayer;
+
+// Determine the initial profile so we can pick the right overlay
+var _urlProfile = parsedOptions.profile;
+var _savedProfile = ls.get('profile');
+var _initProfileIndex;
+if (_urlProfile !== undefined && _urlProfile !== null) {
+  _initProfileIndex = parseInt(_urlProfile, 10);
+} else if (_savedProfile !== null && _savedProfile !== undefined) {
+  _initProfileIndex = parseInt(_savedProfile, 10);
+} else {
+  _initProfileIndex = 0;
+}
+
+var _initResult = initialLayers.determineInitialLayers(baselayer, overlay, services, _initProfileIndex, !!ls.get('getOverlay'));
+var layers = _initResult.layers;
+var bikeOverlayAutoActivated = _initResult.bikeOverlayAutoActivated;
 var map = L.map('map', {
   zoomControl: true,
   dragging: true,
