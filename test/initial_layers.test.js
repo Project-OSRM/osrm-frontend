@@ -35,13 +35,13 @@ describe('determineInitialLayers', function() {
 
   it('should show only baselayer when non-bike profile and no stored overlay', function() {
     var result = initialLayers.determineInitialLayers(baselayer, overlay, services, 0, false);
-    expect(result.layers).toBe(baselayer);
+    expect(result.layers).toEqual([baselayer]);
     expect(result.bikeOverlayAutoActivated).toBe(false);
   });
 
   it('should show only baselayer for foot profile without stored overlay', function() {
     var result = initialLayers.determineInitialLayers(baselayer, overlay, services, 2, false);
-    expect(result.layers).toBe(baselayer);
+    expect(result.layers).toEqual([baselayer]);
     expect(result.bikeOverlayAutoActivated).toBe(false);
   });
 
@@ -53,7 +53,7 @@ describe('determineInitialLayers', function() {
 
   it('should fall back to baselayer for invalid profile index', function() {
     var result = initialLayers.determineInitialLayers(baselayer, overlay, services, 99, false);
-    expect(result.layers).toBe(baselayer);
+    expect(result.layers).toEqual([baselayer]);
     expect(result.bikeOverlayAutoActivated).toBe(false);
   });
 

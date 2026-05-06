@@ -22,7 +22,7 @@ function determineInitialLayers(baselayer, overlay, services, profileIndex, hasS
     return { layers: [baselayer, overlay['Small Components']], bikeOverlayAutoActivated: false };
   }
 
-  return { layers: baselayer, bikeOverlayAutoActivated: false };
+  return { layers: [baselayer], bikeOverlayAutoActivated: false };
 }
 
 module.exports = { determineInitialLayers: determineInitialLayers };
