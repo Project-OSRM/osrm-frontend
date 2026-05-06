@@ -208,3 +208,45 @@ describe('geocoder.coordPreserving', () => {
     });
   });
 });
+
+describe('geocoder.wrappedWaypointNameFallback', () => {
+  beforeEach(() => {
+    jest.resetModules();
+  });
+
+  test('wraps longitude > +180 before formatting', () => {
+    const geocoder = require('../src/geocoder');
+    const latLng = { lat: 39.9, lng: 1556.6, wrap: () => ({ lat: 39.9, lng: 116.6 }) };
+    const result = geocoder.wrappedWaypointNameFallback(latLng);
+    expect(result).toBe('N39.9, E116.6');
+  });
+
+  test('wraps longitude < -180 before formatting', () => {
+    const geocoder = require('../src/geocoder');
+    const latLng = { lat: 53.265, lng: -362.806, wrap: () => ({ lat: 53.265, lng: -2.806 }) };
+    const result = geocoder.wrappedWaypointNameFallback(latLng);
+    expect(result).toBe('N53.265, W2.806');
+  });
+
+  test('leaves in-range coordinates unchanged', () => {
+    const geocoder = require('../src/geocoder');
+    const latLng = { lat: 48.8, lng: 2.35, wrap: () => ({ lat: 48.8, lng: 2.35 }) };
+    const result = geocoder.wrappedWaypointNameFallback(latLng);
+    expect(result).toBe('N48.8, E2.35');
+  });
+
+  test('handles latLng without wrap() gracefully', () => {
+    const geocoder = require('../src/geocoder');
+    const latLng = { lat: 39.9, lng: 1556.6 }; // no .wrap()
+    // Falls back to using the original (out-of-range) lng
+    const result = geocoder.wrappedWaypointNameFallback(latLng);
+    expect(result).toBe('N39.9, E1556.6');
+  });
+
+  test('uses S/W for negative lat/lng', () => {
+    const geocoder = require('../src/geocoder');
+    const latLng = { lat: -33.9, lng: -70.6, wrap: () => ({ lat: -33.9, lng: -70.6 }) };
+    const result = geocoder.wrappedWaypointNameFallback(latLng);
+    expect(result).toBe('S33.9, W70.6');
+  });
+});

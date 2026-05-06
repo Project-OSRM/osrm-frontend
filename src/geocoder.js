@@ -565,4 +565,18 @@ geocoder.coordPreserving = function(nominatimUrl) {
   };
 };
 
+// Replacement for LRM's built-in waypointNameFallback that wraps the longitude
+// into [-180, 180] before formatting. When reverse geocoding fails (no network,
+// rate limit, location in the ocean) and the raw coordinate is shown, this
+// ensures the displayed value is always within the valid geographic range.
+geocoder.wrappedWaypointNameFallback = function(latLng) {
+  var wrapped = (latLng && typeof latLng.wrap === 'function') ? latLng.wrap() : latLng;
+  var ll = wrapped || latLng || {};
+  var ns = (ll.lat || 0) < 0 ? 'S' : 'N';
+  var ew = (ll.lng || 0) < 0 ? 'W' : 'E';
+  var lat = (Math.round(Math.abs(ll.lat || 0) * 10000) / 10000).toString();
+  var lng = (Math.round(Math.abs(ll.lng || 0) * 10000) / 10000).toString();
+  return ns + lat + ', ' + ew + lng;
+};
+
 module.exports = geocoder;
