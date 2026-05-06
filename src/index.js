@@ -255,7 +255,11 @@ var lrmControl = L.Routing.control(Object.assign(controlOptions, {
   router: router
 })).addTo(map);
 
-// Prevent routing container from swallowing wheel events in some browsers (fixes #195)
+// Workaround: Leaflet Routing Machine's itinerary adds a 'mousewheel' handler
+// that stops propagation in some browsers, which can prevent the directions pane
+// from scrolling in Firefox (see https://bugzilla.mozilla.org/show_bug.cgi?id=1942589
+// and OSRM issue #195). Disable scroll propagation on the routing container so
+// the directions list can be scrolled by the user. Upstream LRM issue: https://github.com/perliedman/leaflet-routing-machine/issues/721
 if (L && L.DomEvent && typeof L.DomEvent.disableScrollPropagation === 'function') {
   var routingContainers = document.querySelectorAll('.leaflet-routing-container');
   for (var __i = 0; __i < routingContainers.length; __i++) {
