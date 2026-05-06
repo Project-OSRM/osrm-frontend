@@ -9,7 +9,8 @@ function _formatCoord(latLng) {
   if (!latLng) {
     return;
   }
-  return latLng.lat.toFixed(precision) + "," + latLng.lng.toFixed(precision);
+  var coord = typeof latLng.wrap === 'function' ? latLng.wrap() : latLng;
+  return coord.lat.toFixed(precision) + "," + coord.lng.toFixed(precision);
 }
 
 function _parseCoord(coordStr) {

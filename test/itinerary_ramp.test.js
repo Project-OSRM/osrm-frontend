@@ -51,11 +51,98 @@ describe('applyPatches', () => {
     const fakeRouter = {
       _leftOrRight: function(d) {
         return d.indexOf('left') >= 0 ? 'Left' : 'Right'; // original broken impl
-      }
+      },
+      route: function(waypoints, cb) { cb(null, waypoints); }
     };
     expect(fakeRouter._leftOrRight('straight')).toBe('Right'); // broken before patch
     applyPatches(fakeRouter);
     expect(fakeRouter._leftOrRight('straight')).toBe('straight'); // fixed after patch
   });
+
+  test('applyPatches also installs wrapWaypoints on the router', () => {
+    const { applyPatches } = require('../src/router_patches');
+    const routedWaypoints = [];
+    const fakeRouter = {
+      _leftOrRight: function() {},
+      route: function(waypoints, cb) {
+        routedWaypoints.push(...waypoints);
+        if (cb) cb(null, waypoints);
+      }
+    };
+    applyPatches(fakeRouter);
+
+    const wp = { latLng: { lat: 51.5, lng: -362.8, wrap: function() { return { lat: 51.5, lng: -2.8 }; } }, name: '' };
+    fakeRouter.route([wp], function() {});
+    expect(routedWaypoints[0].latLng.lng).toBeCloseTo(-2.8);
+  });
 });
 
+describe('wrapWaypoints (issues #206, #307)', () => {
+  const { wrapWaypoints } = require('../src/router_patches');
+
+  function makeLatLng(lat, lng) {
+    // Mirrors Leaflet's LatLng.wrap() using the standard modulo formula.
+    var obj = { lat: lat, lng: lng };
+    obj.wrap = function() { return { lat: lat, lng: ((lng + 180) % 360 + 360) % 360 - 180 }; };
+    return obj;
+  }
+
+  test('wraps a waypoint with longitude < -180 before routing', () => {
+    const routed = [];
+    const router = { route: function(wps, cb) { routed.push(...wps); } };
+    wrapWaypoints(router);
+
+    router.route([{ latLng: makeLatLng(53.265, -362.806), name: 'A' }], function() {});
+    expect(routed[0].latLng.lng).toBeCloseTo(-2.806);
+  });
+
+  test('wraps a waypoint with longitude > +180 before routing', () => {
+    const routed = [];
+    const router = { route: function(wps, cb) { routed.push(...wps); } };
+    wrapWaypoints(router);
+
+    router.route([{ latLng: makeLatLng(39.9, 1556.6), name: 'B' }], function() {});
+    // 1556.6 mod 360 = 116.6
+    expect(routed[0].latLng.lng).toBeCloseTo(116.6);
+  });
+
+  test('leaves coordinates already in [-180, 180] unchanged', () => {
+    const routed = [];
+    const router = { route: function(wps, cb) { routed.push(...wps); } };
+    wrapWaypoints(router);
+
+    router.route([{ latLng: makeLatLng(48.8, 2.3), name: 'Paris' }], function() {});
+    expect(routed[0].latLng.lng).toBeCloseTo(2.3);
+  });
+
+  test('handles null waypoints gracefully', () => {
+    const routed = [];
+    const router = { route: function(wps, cb) { routed.push(...wps); } };
+    wrapWaypoints(router);
+
+    expect(() => router.route([null, { latLng: makeLatLng(0, 0), name: '' }], function() {})).not.toThrow();
+    expect(routed[1].latLng.lng).toBeCloseTo(0);
+  });
+
+  test('handles waypoints without wrap() gracefully (no Leaflet LatLng)', () => {
+    const routed = [];
+    const router = { route: function(wps, cb) { routed.push(...wps); } };
+    wrapWaypoints(router);
+
+    const plainLatLng = { lat: 51.5, lng: -362.8 }; // no .wrap()
+    router.route([{ latLng: plainLatLng, name: 'X' }], function() {});
+    // Without .wrap(), the original (unwrapped) coordinate is passed through
+    expect(routed[0].latLng.lng).toBeCloseTo(-362.8);
+  });
+
+  test('does not mutate the original waypoint object', () => {
+    const routed = [];
+    const router = { route: function(wps, cb) { routed.push(...wps); } };
+    wrapWaypoints(router);
+
+    const original = { latLng: makeLatLng(51.5, -362.8), name: 'orig' };
+    router.route([original], function() {});
+    expect(original.latLng.lng).toBeCloseTo(-362.8); // unchanged
+    expect(routed[0].latLng.lng).toBeCloseTo(-2.8);   // wrapped copy
+  });
+});

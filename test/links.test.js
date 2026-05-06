@@ -1,8 +1,25 @@
 'use strict';
 
-// Mock leaflet and leaflet-routing-machine so tests run in Node without a DOM
+// Minimal longitude-wrapping helper mirroring Leaflet's LatLng.wrap() behaviour.
+// Used outside jest.mock() factories where it can be referenced freely.
+function wrapLng(v) {
+  return ((v + 180) % 360 + 360) % 360 - 180;
+}
+
+// Mock leaflet and leaflet-routing-machine so tests run in Node without a DOM.
+// The latLng mock includes wrap() so _formatCoord's wrapping logic is exercised.
 jest.mock('leaflet', () => ({
-  latLng: function(lat, lng) { return { lat: lat, lng: lng }; },
+  latLng: function(lat, lng) {
+    var obj = { lat: lat, lng: lng };
+    obj.wrap = function() {
+      // Inline Leaflet's wrapNum(lng, [-180, 180], true) without referencing
+      // out-of-scope variables (jest.mock hoisting restriction).
+      var v = obj.lng;
+      var wrapped = ((v + 180) % 360 + 360) % 360 - 180;
+      return { lat: obj.lat, lng: wrapped };
+    };
+    return obj;
+  },
   Routing: {
     waypoint: function(latlng, name) { return { latLng: latlng, name: name || '' }; }
   }
@@ -79,5 +96,70 @@ describe('links.parse — existing loc= params still work', () => {
     const result = links.parse('loc=52.5,13.4&loc=48.8,2.3&dst=Lyon');
     expect(result.waypoints).toHaveLength(2);
     expect(result.destinationAddress).toBe('Lyon');
+  });
+});
+
+describe('links.format — coordinate wrapping (issues #206, #307)', () => {
+  const L = require('leaflet');
+
+  test('wraps waypoint longitude > 180 when formatting', () => {
+    // Simulates panning east past antimeridian: London scrolled to 360-2.8 = 357.2 degrees
+    const output = links.format({
+      zoom: 9,
+      center: L.latLng(51.5, 13.4),
+      waypoints: [
+        { latLng: L.latLng(53.265, -362.806) },
+        { latLng: L.latLng(51.430, -360.203) }
+      ],
+      language: 'en',
+      alternative: 0
+    });
+    expect(output).toContain('loc=53.265000%2C-2.806000');
+    expect(output).toContain('loc=51.430000%2C-0.203000');
+    expect(output).not.toMatch(/loc=.*-3[56]\d/);
+  });
+
+  test('wraps waypoint longitude > +360 when formatting', () => {
+    // Issue #206: panning east many times produces very large longitudes
+    const output = links.format({
+      zoom: 9,
+      center: L.latLng(39.9, 1556.6),
+      waypoints: [
+        { latLng: L.latLng(39.899, 1556.241) },
+        { latLng: L.latLng(39.918, 1556.612) }
+      ],
+      language: 'en',
+      alternative: 0
+    });
+    // 1556.241 mod 360 = 116.241 (1556.241 - 4*360 = 116.241)
+    expect(output).toContain('loc=39.899000%2C116.241000');
+    expect(output).toContain('loc=39.918000%2C116.612000');
+    expect(output).not.toContain('1556');
+  });
+
+  test('wraps center longitude when formatting', () => {
+    const output = links.format({
+      zoom: 9,
+      center: L.latLng(51.5, -362.8),
+      waypoints: [],
+      language: 'en',
+      alternative: 0
+    });
+    expect(output).toContain('center=51.500000%2C-2.800000');
+    expect(output).not.toContain('-362');
+  });
+
+  test('does not alter coordinates already in [-180, 180]', () => {
+    const output = links.format({
+      zoom: 13,
+      center: L.latLng(52.5, 13.4),
+      waypoints: [
+        { latLng: L.latLng(48.8, 2.3) }
+      ],
+      language: 'en',
+      alternative: 0
+    });
+    expect(output).toContain('center=52.500000%2C13.400000');
+    expect(output).toContain('loc=48.800000%2C2.300000');
   });
 });

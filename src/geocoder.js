@@ -425,7 +425,10 @@ geocoder.coordPreserving = function(nominatimUrl) {
   }
 
   function doReverse(latlng, scale, context) {
-    var url = buildReverseUrl(latlng, scale);
+    // Wrap longitude into [-180, 180] so Nominatim receives valid coordinates
+    // when the map has been scrolled past the antimeridian (issues #206, #307).
+    var latlngWrapped = (latlng && typeof latlng.wrap === 'function') ? latlng.wrap() : latlng;
+    var url = buildReverseUrl(latlngWrapped, scale);
     var cached = cache.get(url);
     if (cached) {
       setInputBgFromContext(context, 'white');
@@ -434,7 +437,7 @@ geocoder.coordPreserving = function(nominatimUrl) {
 
     // Prefer nominatim.reverse when available to preserve existing behaviour and support test mocks
     if (nominatim && typeof nominatim.reverse === 'function') {
-      return nominatim.reverse(latlng, scale).then(function(results) {
+      return nominatim.reverse(latlngWrapped, scale).then(function(results) {
         try {
           cache.set(url, results);
         } catch (e) {}
