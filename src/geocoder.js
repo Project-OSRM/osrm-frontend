@@ -90,12 +90,45 @@ geocoder.coordPreserving = function(nominatimUrl) {
     var map = new Map();
     var ttl = typeof ttlMs === 'number' ? ttlMs : 24 * 60 * 60 * 1000;
 
+    // Normalize cached results to a portable format before JSON serialization.
+    // Converts Leaflet LatLng/LatLngBounds objects to plain {lat,lng} / [south,north,west,east]
+    // so persistence is decoupled from Leaflet's internal object shape.
+    function serializeEntries() {
+      return Array.from(map.entries()).map(function(pair) {
+        var key = pair[0];
+        var entry = pair[1];
+        if (!entry || !entry.value || !Array.isArray(entry.value)) return [key, entry];
+        return [key, {
+          ts: entry.ts,
+          value: entry.value.map(function(r) {
+            if (!r) return r;
+            var out = { name: r.name };
+            if (r.center) {
+              out.center = { lat: r.center.lat, lng: r.center.lng };
+            }
+            if (r.bbox) {
+              if (typeof r.bbox.getSouthWest === 'function') {
+                var sw = r.bbox.getSouthWest();
+                var ne = r.bbox.getNorthEast();
+                out.bbox = [sw.lat, ne.lat, sw.lng, ne.lng];
+              } else if (Array.isArray(r.bbox)) {
+                out.bbox = r.bbox;
+              } else {
+                out.bbox = r.bbox;
+              }
+            }
+            return out;
+          })
+        }];
+      });
+    }
+
     function persist() {
       try {
         if (typeof localStorage !== 'undefined' && localStorage.setItem) {
-          localStorage.setItem(storageKey, JSON.stringify(Array.from(map.entries())));
+          localStorage.setItem(storageKey, JSON.stringify(serializeEntries()));
         }
-      } catch (e) {}
+      } catch (e) { console.warn('osrm-cache: persist failed', e); }
     }
 
     // Load existing entries, skipping those older than ttl. Rehydrate centers and bboxes to Leaflet objects when possible.
@@ -124,14 +157,15 @@ geocoder.coordPreserving = function(nominatimUrl) {
                       }
                       // rehydrate bbox -> L.latLngBounds when possible
                       if (r && r.bbox) {
-                        // bbox stored as array [south, north, west, east]
+                        // Canonical format: array [south, north, west, east]
                         if (Array.isArray(r.bbox) && r.bbox.length === 4) {
                           r.bbox = L.latLngBounds(
                             L.latLng(parseFloat(r.bbox[0]), parseFloat(r.bbox[2])),
                             L.latLng(parseFloat(r.bbox[1]), parseFloat(r.bbox[3]))
                           );
                         } else if (r.bbox._southWest && r.bbox._northEast) {
-                          // leaflet's LatLngBounds serialised shape
+                          // Migration: Leaflet's LatLngBounds serialised shape from older cache versions.
+                          // Will be re-persisted in canonical array format on next persist().
                           try {
                             r.bbox = L.latLngBounds(
                               L.latLng(parseFloat(r.bbox._southWest.lat), parseFloat(r.bbox._southWest.lng)),
@@ -139,7 +173,7 @@ geocoder.coordPreserving = function(nominatimUrl) {
                             );
                           } catch (e) {}
                         } else if (r.bbox.south !== undefined && r.bbox.north !== undefined && r.bbox.west !== undefined && r.bbox.east !== undefined) {
-                          // custom object shape
+                          // Migration: custom object shape from older cache versions.
                           try {
                             r.bbox = L.latLngBounds(
                               L.latLng(parseFloat(r.bbox.south), parseFloat(r.bbox.west)),
@@ -154,10 +188,14 @@ geocoder.coordPreserving = function(nominatimUrl) {
                 map.set(k, obj);
               } catch (e) {}
             });
+            // Enforce maxEntries after load in case the limit was lowered between versions
+            while (map.size > maxEntries) {
+              map.delete(map.keys().next().value);
+            }
           }
         }
       }
-    } catch (e) {}
+    } catch (e) { console.warn('osrm-cache: failed to load from localStorage', e); }
 
     function removeExpired() {
       try {
@@ -172,18 +210,24 @@ geocoder.coordPreserving = function(nominatimUrl) {
           }
         }
         if (changed) persist();
-      } catch (e) {}
+      } catch (e) { console.warn('osrm-cache: removeExpired failed', e); }
     }
 
     return {
       get: function(key) {
-        removeExpired();
         if (!map.has(key)) return null;
         var entry = map.get(key);
         if (!entry) return null;
-        // move to recently used (in-memory only)
+        // Check TTL for this specific entry instead of scanning the whole map
+        if (typeof entry.ts !== 'number' || Date.now() - entry.ts > ttl) {
+          map.delete(key);
+          return null;
+        }
+        // Move to most-recently-used position and refresh timestamp (sliding TTL)
         map.delete(key);
+        entry.ts = Date.now();
         map.set(key, entry);
+        persist();
         return entry.value;
       },
       set: function(key, value) {

@@ -113,7 +113,7 @@ describe('geocoder cache', function() {
     localStorage.setItem('osrm_nominatim_cache_v1', JSON.stringify(stored));
 
     jest.resetModules();
-    jest.doMock('leaflet', function() { 
+    jest.doMock('leaflet', function() {
       var m = makeLeafletMock();
       m.Control.Geocoder.nominatim = jest.fn(function() { return {}; });
       return m;
@@ -132,6 +132,41 @@ describe('geocoder cache', function() {
     // expired entry should not be used -> fetch called
     expect(fetchMock).toHaveBeenCalled();
     expect(ctx.input.style.backgroundColor).toBe('white');
+  });
+
+  test('sliding TTL: accessing an entry refreshes its expiry', async function() {
+    // Seed a cache entry that is 23h old (within 24h TTL)
+    var q = 'SlidingPlace';
+    var service = 'https://nominatim.example/';
+    var url = service + 'search?format=json&addressdetails=1&limit=5&q=' + encodeURIComponent(q);
+    var almostExpiredTs = Date.now() - (23 * 60 * 60 * 1000); // 23h ago
+    var stored = [[url, { value: [{ name: 'Sliding', center: { lat: 1, lng: 2 } }], ts: almostExpiredTs }]];
+    localStorage.setItem('osrm_nominatim_cache_v1', JSON.stringify(stored));
+
+    jest.resetModules();
+    jest.doMock('leaflet', function() {
+      var m = makeLeafletMock();
+      m.Control.Geocoder.nominatim = jest.fn(function() { return {}; });
+      return m;
+    });
+    global.fetch = jest.fn();
+
+    var geocoder = require('../src/geocoder');
+    var g = geocoder.coordPreserving(service);
+    var ctx = { input: { style: {} } };
+
+    // First access: should hit cache (entry is 23h old, within 24h TTL)
+    var res1 = await g.geocode(q, undefined, ctx);
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(res1.length).toBe(1);
+
+    // The timestamp in localStorage should now be refreshed (close to Date.now())
+    var raw = JSON.parse(localStorage.getItem('osrm_nominatim_cache_v1'));
+    var entry = raw.find(function(e) { return e[0] === url; });
+    expect(entry).toBeDefined();
+    var refreshedTs = entry[1].ts;
+    // Refreshed timestamp should be much more recent than the original 23h-old one
+    expect(Date.now() - refreshedTs).toBeLessThan(5000);
   });
 
   test('evicts oldest entry when capacity exceeded', async function() {
@@ -216,6 +251,117 @@ describe('geocoder cache', function() {
 
     var res2 = await g.reverse({ lat: 11, lng: 22 }, 18, undefined, ctx);
     expect(reverseMock).toHaveBeenCalledTimes(1);
+  });
+
+  test('LRU order is persisted to localStorage on get()', async function() {
+    // Seed 3 entries: q0 (oldest/LRU), q1, q2 (newest/MRU)
+    var service = 'https://nominatim.example/';
+    var now = Date.now();
+    var entries = [];
+    for (var i = 0; i < 3; i++) {
+      var u = service + 'search?format=json&addressdetails=1&limit=5&q=' + encodeURIComponent('q' + i);
+      entries.push([u, { value: [{ name: 'P' + i, center: { lat: i, lng: i } }], ts: now }]);
+    }
+    localStorage.setItem('osrm_nominatim_cache_v1', JSON.stringify(entries));
+
+    jest.resetModules();
+    jest.doMock('leaflet', function() {
+      var m = makeLeafletMock();
+      m.Control.Geocoder.nominatim = jest.fn(function() { return {}; });
+      return m;
+    });
+    try { delete global.fetch; } catch (e) {}
+
+    var geocoder = require('../src/geocoder');
+    var g = geocoder.coordPreserving(service);
+    var ctx = { input: { style: {} } };
+
+    // Access q0 — this should move it to the end (MRU position)
+    await g.geocode('q0', undefined, ctx);
+
+    // Check that localStorage now has q0 last (MRU)
+    var raw = JSON.parse(localStorage.getItem('osrm_nominatim_cache_v1'));
+    var keys = raw.map(function(e) { return e[0]; });
+    var q0Url = service + 'search?format=json&addressdetails=1&limit=5&q=' + encodeURIComponent('q0');
+    expect(keys[keys.length - 1]).toBe(q0Url);
+    // q1 should now be the first (LRU) entry
+    var q1Url = service + 'search?format=json&addressdetails=1&limit=5&q=' + encodeURIComponent('q1');
+    expect(keys[0]).toBe(q1Url);
+  });
+
+  test('enforces maxEntries on load', async function() {
+    // Seed 140 entries (more than the 128 limit)
+    var service = 'https://nominatim.example/';
+    var now = Date.now();
+    var entries = [];
+    for (var i = 0; i < 140; i++) {
+      var u = service + 'search?format=json&addressdetails=1&limit=5&q=' + encodeURIComponent('over' + i);
+      entries.push([u, { value: [{ name: 'P' + i, center: { lat: i, lng: i } }], ts: now }]);
+    }
+    localStorage.setItem('osrm_nominatim_cache_v1', JSON.stringify(entries));
+
+    jest.resetModules();
+    jest.doMock('leaflet', function() {
+      var m = makeLeafletMock();
+      m.Control.Geocoder.nominatim = jest.fn(function() { return {}; });
+      return m;
+    });
+    try { delete global.fetch; } catch (e) {}
+
+    var geocoder = require('../src/geocoder');
+    geocoder.coordPreserving(service);
+
+    // After load, the first cache operation should have already trimmed.
+    // Access any entry to trigger a persist and check the stored count.
+    var g = geocoder.coordPreserving(service);
+    var ctx = { input: { style: {} } };
+    await g.geocode('over139', undefined, ctx);
+
+    var raw = JSON.parse(localStorage.getItem('osrm_nominatim_cache_v1'));
+    expect(raw.length).toBeLessThanOrEqual(128);
+    // The oldest entries (over0..over11) should have been evicted
+    var firstUrl = service + 'search?format=json&addressdetails=1&limit=5&q=' + encodeURIComponent('over0');
+    expect(raw.find(function(e) { return e[0] === firstUrl; })).toBeUndefined();
+  });
+
+  test('persists bbox in canonical array format', async function() {
+    jest.resetModules();
+    // Mock Leaflet with latLngBounds that has getSouthWest/getNorthEast
+    jest.doMock('leaflet', function() {
+      return {
+        Control: { Geocoder: { nominatim: jest.fn(function() { return {}; }) } },
+        CRS: { EPSG3857: { scale: function() { return 1; } } },
+        latLng: function(lat, lng) { return { lat: +lat, lng: +lng, toBounds: function() { return {}; } }; },
+        latLngBounds: function(sw, ne) {
+          return {
+            _southWest: sw, _northEast: ne,
+            getSouthWest: function() { return sw; },
+            getNorthEast: function() { return ne; }
+          };
+        },
+        extend: Object.assign
+      };
+    });
+
+    var fetchMock = jest.fn().mockResolvedValue({ ok: true, status: 200, json: async function() {
+      return [{ display_name: 'BboxPlace', lat: '10', lon: '20', boundingbox: ['10','11','20','21'] }];
+    } });
+    global.fetch = fetchMock;
+
+    var geocoder = require('../src/geocoder');
+    var g = geocoder.coordPreserving('https://nominatim.example/');
+    var ctx = { input: { style: {} } };
+
+    await g.geocode('BboxPlace', undefined, ctx);
+
+    var raw = JSON.parse(localStorage.getItem('osrm_nominatim_cache_v1'));
+    expect(raw.length).toBe(1);
+    var cached = raw[0][1].value[0];
+    // bbox should be stored as canonical [south, north, west, east] array
+    expect(Array.isArray(cached.bbox)).toBe(true);
+    expect(cached.bbox).toEqual([10, 11, 20, 21]);
+    // center should be stored as plain {lat, lng} object
+    expect(cached.center).toEqual({ lat: 10, lng: 20 });
   });
 
 });
