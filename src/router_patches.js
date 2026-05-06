@@ -31,6 +31,16 @@ function wrapWaypoints(router) {
       return Object.assign({}, wp, { latLng: wp.latLng.wrap() });
     });
 
+    // Compute the lng offset for each input waypoint (n×360° applied during wrapping).
+    var offsets = (waypoints || []).map(function(wp) {
+      if (!wp || !wp.latLng || typeof wp.latLng.wrap !== 'function') return 0;
+      return wp.latLng.lng - wp.latLng.wrap().lng;
+    });
+    // Use the first non-zero offset to re-project route.coordinates (the polyline).
+    var coordOffset = offsets.reduce(function(acc, o) {
+      return acc !== 0 ? acc : o;
+    }, 0);
+
     var wrappedCallback = function(err, routes) {
       if (!err && routes) {
         routes.forEach(function(route) {
@@ -51,6 +61,15 @@ function wrapWaypoints(router) {
                 }
               };
               return Object.assign({}, snappedWp, { latLng: reoffsetLatLng });
+            });
+          }
+          // Re-project the route polyline into the same world copy as the waypoints
+          // so LRM draws the line at the correct map position and fitBounds() doesn't
+          // jump the viewport to the wrapped world copy (which would hide the markers).
+          if (route && route.coordinates && coordOffset !== 0) {
+            route.coordinates = route.coordinates.map(function(coord) {
+              if (!coord) return coord;
+              return { lat: coord.lat, lng: coord.lng + coordOffset };
             });
           }
         });

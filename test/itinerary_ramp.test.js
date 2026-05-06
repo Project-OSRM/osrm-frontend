@@ -206,4 +206,50 @@ describe('wrapWaypoints (issues #206, #307)', () => {
     expect(original.latLng.lng).toBeCloseTo(-362.8); // unchanged
     expect(routed[0].latLng.lng).toBeCloseTo(-2.8);   // wrapped copy
   });
+
+  test('re-offsets route.coordinates so the polyline draws in the correct world copy', () => {
+    // OSRM returns in-range coordinates (e.g. lng≈116 for Seattle-area routes).
+    // When the map is panned to lng≈1556 (4 × 360° east), the polyline must be
+    // re-projected by +1440° so LRM draws it at the right viewport position and
+    // fitBounds() does not jump the map to the wrapped world copy.
+    const coords = [
+      { lat: 39.90, lng: 116.39 },
+      { lat: 39.92, lng: 116.45 },
+    ];
+    const router = {
+      route: function(wps, cb) {
+        cb(null, [{
+          waypoints: [{ latLng: { lat: 39.90, lng: 116.39 }, name: '' }],
+          coordinates: coords,
+        }]);
+      }
+    };
+    wrapWaypoints(router);
+
+    let receivedRoutes;
+    router.route(
+      [{ latLng: makeLatLng(39.9, 1556.6), name: 'B' }],
+      function(err, routes) { receivedRoutes = routes; }
+    );
+    // Offset = 1556.6 - 116.6 = 1440 (4 × 360°)
+    expect(receivedRoutes[0].coordinates[0].lng).toBeCloseTo(116.39 + 1440);
+    expect(receivedRoutes[0].coordinates[1].lng).toBeCloseTo(116.45 + 1440);
+  });
+
+  test('does not re-offset route.coordinates when coords are already in range', () => {
+    const coords = [{ lat: 48.8, lng: 2.30 }, { lat: 48.9, lng: 2.35 }];
+    const router = {
+      route: function(wps, cb) {
+        cb(null, [{ waypoints: [{ latLng: { lat: 48.8, lng: 2.30 }, name: '' }], coordinates: coords }]);
+      }
+    };
+    wrapWaypoints(router);
+
+    let receivedRoutes;
+    router.route(
+      [{ latLng: makeLatLng(48.8, 2.3), name: 'Paris' }],
+      function(err, routes) { receivedRoutes = routes; }
+    );
+    expect(receivedRoutes[0].coordinates[0].lng).toBeCloseTo(2.30);
+  });
 });
