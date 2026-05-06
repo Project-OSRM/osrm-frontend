@@ -239,6 +239,15 @@ router._convertRoute = function(responseRoute) {
 var lrmControl = L.Routing.control(Object.assign(controlOptions, {
   router: router
 })).addTo(map);
+
+// Prevent routing container from swallowing wheel events in some browsers (fixes #195)
+if (L && L.DomEvent && typeof L.DomEvent.disableScrollPropagation === 'function') {
+  var routingContainers = document.querySelectorAll('.leaflet-routing-container');
+  for (var __i = 0; __i < routingContainers.length; __i++) {
+    L.DomEvent.disableScrollPropagation(routingContainers[__i]);
+  }
+}
+
 var toolsControl = tools.control(localization.get(mergedOptions.language), localization.getLanguages(), Object.assign({}, options.tools, { initialUnits: mergedOptions.units })).addTo(map);
 
 var state = state(map, lrmControl, toolsControl, modeSelector, mergedOptions);
