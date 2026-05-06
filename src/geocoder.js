@@ -128,7 +128,9 @@ geocoder.coordPreserving = function(nominatimUrl) {
         if (typeof localStorage !== 'undefined' && localStorage.setItem) {
           localStorage.setItem(storageKey, JSON.stringify(serializeEntries()));
         }
-      } catch (e) { console.warn('osrm-cache: persist failed', e); }
+      } catch (e) {
+        console.warn('osrm-cache: persist failed', e); 
+      }
     }
 
     // Load existing entries, skipping those older than ttl. Rehydrate centers and bboxes to Leaflet objects when possible.
@@ -195,7 +197,9 @@ geocoder.coordPreserving = function(nominatimUrl) {
           }
         }
       }
-    } catch (e) { console.warn('osrm-cache: failed to load from localStorage', e); }
+    } catch (e) {
+      console.warn('osrm-cache: failed to load from localStorage', e); 
+    }
 
     function removeExpired() {
       try {
@@ -210,7 +214,9 @@ geocoder.coordPreserving = function(nominatimUrl) {
           }
         }
         if (changed) persist();
-      } catch (e) { console.warn('osrm-cache: removeExpired failed', e); }
+      } catch (e) {
+        console.warn('osrm-cache: removeExpired failed', e); 
+      }
     }
 
     return {
