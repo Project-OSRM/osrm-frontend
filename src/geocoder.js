@@ -90,6 +90,55 @@ geocoder.coordPreserving = function(nominatimUrl) {
     var map = new Map();
     var ttl = typeof ttlMs === 'number' ? ttlMs : 24 * 60 * 60 * 1000;
 
+    // Persistence scheduling to avoid synchronous localStorage writes on every cache hit.
+    var _persistTimeout = null;
+    var _persistDelay = 1000; // ms
+    var _warned = Object.create(null);
+
+    function warnOnce(key, msg, err) {
+      try {
+        if (!_warned[key]) {
+          _warned[key] = true;
+          console.warn(msg, err);
+        }
+      } catch (e) {}
+    }
+
+    function schedulePersist() {
+      try {
+        // In test or non-browser environments persist synchronously to keep tests deterministic.
+        if (typeof window === 'undefined') {
+          persist();
+          return;
+        }
+        if (_persistTimeout) return;
+        _persistTimeout = setTimeout(function() {
+          _persistTimeout = null;
+          try {
+            persist();
+          } catch (e) {
+            warnOnce('persist', 'osrm-cache: persist failed', e);
+          }
+        }, _persistDelay);
+      } catch (e) {}
+    }
+
+    // Ensure data flushed on page unload when possible.
+    try {
+      if (typeof window !== 'undefined' && window && typeof window.addEventListener === 'function') {
+        window.addEventListener('beforeunload', function() {
+          try {
+            if (_persistTimeout) {
+              clearTimeout(_persistTimeout);
+              _persistTimeout = null;
+            }
+            persist();
+          } catch (e) {}
+        });
+      }
+    } catch (e) {}
+
+
     // Normalize cached results to a portable format before JSON serialization.
     // Converts Leaflet LatLng/LatLngBounds objects to plain {lat,lng} / [south,north,west,east]
     // so persistence is decoupled from Leaflet's internal object shape.
@@ -129,7 +178,7 @@ geocoder.coordPreserving = function(nominatimUrl) {
           localStorage.setItem(storageKey, JSON.stringify(serializeEntries()));
         }
       } catch (e) {
-        console.warn('osrm-cache: persist failed', e); 
+        warnOnce('persist', 'osrm-cache: persist failed', e);
       }
     }
 
@@ -198,7 +247,7 @@ geocoder.coordPreserving = function(nominatimUrl) {
         }
       }
     } catch (e) {
-      console.warn('osrm-cache: failed to load from localStorage', e); 
+      warnOnce('load', 'osrm-cache: failed to load from localStorage', e);
     }
 
     function removeExpired() {
@@ -213,9 +262,9 @@ geocoder.coordPreserving = function(nominatimUrl) {
             changed = true;
           }
         }
-        if (changed) persist();
+        if (changed) schedulePersist();
       } catch (e) {
-        console.warn('osrm-cache: removeExpired failed', e); 
+        warnOnce('removeExpired', 'osrm-cache: removeExpired failed', e);
       }
     }
 
@@ -227,13 +276,14 @@ geocoder.coordPreserving = function(nominatimUrl) {
         // Check TTL for this specific entry instead of scanning the whole map
         if (typeof entry.ts !== 'number' || Date.now() - entry.ts > ttl) {
           map.delete(key);
+          schedulePersist();
           return null;
         }
         // Move to most-recently-used position and refresh timestamp (sliding TTL)
         map.delete(key);
         entry.ts = Date.now();
         map.set(key, entry);
-        persist();
+        schedulePersist();
         return entry.value;
       },
       set: function(key, value) {
@@ -245,7 +295,7 @@ geocoder.coordPreserving = function(nominatimUrl) {
           var firstKey = map.keys().next().value;
           map.delete(firstKey);
         }
-        persist();
+        schedulePersist();
       }
     };
   }

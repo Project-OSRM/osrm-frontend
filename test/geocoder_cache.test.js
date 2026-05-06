@@ -144,6 +144,11 @@ describe('geocoder cache', function() {
     localStorage.setItem('osrm_nominatim_cache_v1', JSON.stringify(stored));
 
     jest.resetModules();
+    // Use fake timers to make timestamp assertions deterministic
+    jest.useFakeTimers('modern');
+    var now = Date.now();
+    jest.setSystemTime(now);
+
     jest.doMock('leaflet', function() {
       var m = makeLeafletMock();
       m.Control.Geocoder.nominatim = jest.fn(function() { return {}; });
@@ -160,13 +165,18 @@ describe('geocoder cache', function() {
     expect(global.fetch).not.toHaveBeenCalled();
     expect(res1.length).toBe(1);
 
-    // The timestamp in localStorage should now be refreshed (close to Date.now())
+    // Advance timers so the scheduled persist runs and updates localStorage
+    jest.advanceTimersByTime(1000);
+
+    // The timestamp in localStorage should now be refreshed to the fake 'now'
     var raw = JSON.parse(localStorage.getItem('osrm_nominatim_cache_v1'));
     var entry = raw.find(function(e) { return e[0] === url; });
     expect(entry).toBeDefined();
     var refreshedTs = entry[1].ts;
-    // Refreshed timestamp should be much more recent than the original 23h-old one
-    expect(Date.now() - refreshedTs).toBeLessThan(5000);
+    expect(refreshedTs).toBe(now);
+
+    // Restore real timers
+    jest.useRealTimers();
   });
 
   test('evicts oldest entry when capacity exceeded', async function() {
