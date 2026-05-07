@@ -7,6 +7,24 @@ require('leaflet-control-geocoder');
 var geocoderPatches = require('./geocoder_patches');
 geocoderPatches();
 var LRM = require('leaflet-routing-machine');
+
+// Register app languages that LRM does not have built-in so LRM does not throw
+// "No localization for language" when they are selected. We reuse English
+// strings because LRM's UI labels (start/end/via placeholders, units) are
+// overridden by the app anyway via geocoderPlaceholder and osrm-text-instructions.
+// LRM sets L.Routing as a side-effect, so use that to reach its Localization registry.
+(function registerMissingLRMLanguages() {
+  var lrmLoc = L.Routing && L.Routing.Localization;
+  if (!lrmLoc || !lrmLoc['en']) return;
+  var englishFallback = lrmLoc['en'];
+  ['da', 'fa', 'hu', 'ja', 'vi', 'zh-Hans'].forEach(function(lang) {
+    var generalizedCode = /([A-Za-z]+)/.exec(lang)[1];
+    if (!lrmLoc[lang] && !lrmLoc[generalizedCode]) {
+      lrmLoc[lang] = englishFallback;
+    }
+  });
+}());
+
 var modeSelectorModule = require('./mode_selector');
 // leaflet.locatecontrol@0.89 UMD has a bug: after the CJS IIFE it tries
 // `window.L.Control.Locate.locate` but never sets L.Control.Locate in the
