@@ -313,8 +313,8 @@ var Control = L.Control.extend({
   _createVersionInfo: function(container) {
     var versionInfo = version.getVersionInfo();
     var versionContainer = L.DomUtil.create('div', 'leaflet-osrm-tools-version', container);
-    var infoIcon = L.DomUtil.create('div', 'osrm-info-icon', versionContainer);
-    infoIcon.setAttribute('title', this._local['Build'] + ': ' + versionInfo.timestamp);
+    var infoIcon = L.DomUtil.create('span', 'osrm-info-icon', versionContainer);
+    infoIcon.setAttribute('data-tooltip', this._local['Build'] + ': ' + versionInfo.timestamp);
     infoIcon.textContent = '\u24D8';
   },
 
