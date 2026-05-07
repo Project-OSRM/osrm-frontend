@@ -186,6 +186,7 @@ var plan = new ReversablePlan([], {
 // add marker labels
 var controlOptions = {
   plan: plan,
+  fitSelectedRoutes: false,
   routeWhileDragging: options.lrm.routeWhileDragging,
   lineOptions: options.lrm.lineOptions,
   altLineOptions: options.lrm.altLineOptions,
@@ -398,11 +399,13 @@ if (routingContainer) {
 }
 
 // Show pane when route is computed
+var shouldFitRoute = false;
 lrmControl.on('routesfound', function(e) {
   var container = document.querySelector('.leaflet-routing-container');
   if (container) {
     container.classList.remove('leaflet-routing-container-hide');
   }
+  shouldFitRoute = true;
 });
 
 plan.on('waypointgeocoded', function(e) {
@@ -504,6 +507,53 @@ lrmControl.on('routeselected', function(e) {
   };
   toolsControl.setRouteGeoJSON(routeGeoJSON);
 });
+lrmControl.on('routeselected', function(e) {
+  if (!shouldFitRoute) return;
+  shouldFitRoute = false;
+
+  var route = e.route;
+  if (!route || !route.coordinates || route.coordinates.length === 0) return;
+
+  var bounds = L.latLngBounds(route.coordinates);
+
+  var container = document.querySelector('.leaflet-routing-container');
+  var paneWidth = 0;
+  if (container && !container.classList.contains('leaflet-routing-container-hide')) {
+    paneWidth = container.offsetWidth;
+  }
+
+  var currentZoom = map.getZoom();
+  var fitPadding = 20;
+  var paddingOpts = {
+    paddingTopLeft: L.point(fitPadding, fitPadding),
+    paddingBottomRight: L.point(paneWidth + fitPadding, fitPadding)
+  };
+
+  if (currentZoom >= 13) {
+    var mapSize = map.getSize();
+    var availableWidth = mapSize.x - paneWidth - 2 * fitPadding;
+    var availableHeight = mapSize.y - 2 * fitPadding;
+
+    var sw = map.project(bounds.getSouthWest(), currentZoom);
+    var ne = map.project(bounds.getNorthEast(), currentZoom);
+    var routePixelWidth = Math.abs(ne.x - sw.x);
+    var routePixelHeight = Math.abs(sw.y - ne.y);
+
+    if (routePixelWidth <= availableWidth && routePixelHeight <= availableHeight) {
+      var center = bounds.getCenter();
+      var centerPixel = map.project(center, currentZoom);
+      centerPixel.x += paneWidth / 2;
+      var newMapCenter = map.unproject(centerPixel, currentZoom);
+      map.panTo(newMapCenter);
+    } else {
+      paddingOpts.maxZoom = currentZoom;
+      map.fitBounds(bounds, paddingOpts);
+    }
+  } else {
+    map.fitBounds(bounds, paddingOpts);
+  }
+});
+
 plan.on('waypointschanged', function(e) {
   var validCount = e.waypoints ? e.waypoints.filter(function(wp) {
     return !!wp.latLng;

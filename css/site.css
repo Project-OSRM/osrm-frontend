@@ -1079,17 +1079,14 @@ td.distance {
     transition: 0.5s;
 }
 
-.leaflet-osrm-tools-version {
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 0px 4px;
+.leaflet-osrm-tools-container .leaflet-osrm-tools-version {
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 2px 4px;
     margin-left: auto;
-    vertical-align: middle;
-    display: inline-block;
-    height: 24px;
-    line-height: 24px;
 }
 
 .osrm-info-icon {
+    position: relative;
     display: inline-block;
     width: 24px;
     height: 24px;
@@ -1104,4 +1101,20 @@ td.distance {
 
 .osrm-info-icon:hover {
     background-color: rgba(255, 255, 255, 0.2);
+}
+
+.osrm-info-icon:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 4px);
+    right: 0;
+    white-space: nowrap;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background-color: rgba(37, 72, 127, 0.9);
+    color: #fff;
+    font-size: 12px;
+    font-weight: normal;
+    pointer-events: none;
+    z-index: 1000;
 }
