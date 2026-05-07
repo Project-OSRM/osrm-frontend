@@ -13,12 +13,82 @@ function leftOrRight(d) {
   return d;
 }
 
+// Patch router.route() to wrap waypoint longitudes into [-180, 180] before
+// sending them to the OSRM backend. Without this, panning the map past the
+// antimeridian produces out-of-range longitudes (e.g. -362.8) that OSRM
+// rejects with a 400 error (issues #206 and #307).
+//
+// After routing, LRM's 'snap' mode calls setWaypoints(route.waypoints) with the
+// snapped positions returned by OSRM. Those are in the wrapped (in-range)
+// coordinate space, so LRM would place markers at the wrong world copy.
+// We re-offset the snapped latlngs back by the same ±n×360° that was applied
+// during wrapping, keeping markers in the correct viewport position.
+function wrapWaypoints(router) {
+  var origRoute = router.route.bind(router);
+  router.route = function(waypoints, callback, context, options) {
+    var wrapped = (waypoints || []).map(function(wp) {
+      if (!wp || !wp.latLng || typeof wp.latLng.wrap !== 'function') return wp;
+      return Object.assign({}, wp, { latLng: wp.latLng.wrap() });
+    });
+
+    // Compute the lng offset for each input waypoint (n×360° applied during wrapping).
+    var offsets = (waypoints || []).map(function(wp) {
+      if (!wp || !wp.latLng || typeof wp.latLng.wrap !== 'function') return 0;
+      return wp.latLng.lng - wp.latLng.wrap().lng;
+    });
+    // Use the first non-zero offset to re-project route.coordinates (the polyline).
+    var coordOffset = offsets.reduce(function(acc, o) {
+      return acc !== 0 ? acc : o;
+    }, 0);
+
+    var wrappedCallback = function(err, routes) {
+      if (!err && routes) {
+        routes.forEach(function(route) {
+          if (route && route.waypoints) {
+            route.waypoints = route.waypoints.map(function(snappedWp, i) {
+              var orig = waypoints[i];
+              if (!snappedWp || !snappedWp.latLng || !orig || !orig.latLng ||
+                  typeof orig.latLng.wrap !== 'function') return snappedWp;
+              var offset = orig.latLng.lng - orig.latLng.wrap().lng;
+              if (offset === 0) return snappedWp;
+              var reoffsetLng = snappedWp.latLng.lng + offset;
+              var reoffsetLatLng = {
+                lat: snappedWp.latLng.lat,
+                lng: reoffsetLng,
+                wrap: function() {
+                  var v = reoffsetLng;
+                  return { lat: snappedWp.latLng.lat, lng: ((v + 180) % 360 + 360) % 360 - 180 };
+                }
+              };
+              return Object.assign({}, snappedWp, { latLng: reoffsetLatLng });
+            });
+          }
+          // Re-project the route polyline into the same world copy as the waypoints
+          // so LRM draws the line at the correct map position and fitBounds() doesn't
+          // jump the viewport to the wrapped world copy (which would hide the markers).
+          if (route && route.coordinates && coordOffset !== 0) {
+            route.coordinates = route.coordinates.map(function(coord) {
+              if (!coord) return coord;
+              return { lat: coord.lat, lng: coord.lng + coordOffset };
+            });
+          }
+        });
+      }
+      if (typeof callback === 'function') callback.apply(context || callback, arguments);
+    };
+
+    return origRoute(wrapped, wrappedCallback, context, options);
+  };
+}
+
 module.exports = {
   applyPatches: function(router) {
     router._leftOrRight = leftOrRight;
+    wrapWaypoints(router);
   },
   // Exported for unit testing
   leftOrRight: leftOrRight,
+  wrapWaypoints: wrapWaypoints,
   
   // Allow setting the active service by index
   setActiveService: function(router, serviceIndex, services) {
