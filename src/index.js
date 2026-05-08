@@ -454,9 +454,10 @@ plan.on('waypointgeocoded', function(e) {
 
 // add onClick event
 map.on('click', function (e) {
-  addWaypoint(e.latlng);
+  addWaypoint(e);
 });
-function addWaypoint(waypoint) {
+function addWaypoint(evt) {
+  var waypoint = evt && evt.latlng ? evt.latlng : evt;
   var length = lrmControl.getWaypoints().filter(function(pnt) {
     return pnt.latLng;
   });
@@ -464,7 +465,15 @@ function addWaypoint(waypoint) {
 
   // If both source and target are set, do not change existing markers by clicking on the map.
   // Any marker should stay where it is unless explicitly removed by clicking directly on it.
-  if (length >= 2) {
+  // Allow adding a via-point when Ctrl (or Meta on macOS) is held during the click.
+  var modifierPressed = evt && evt.originalEvent && (evt.originalEvent.ctrlKey || evt.originalEvent.metaKey);
+  if (length >= 2 && !modifierPressed) {
+    return;
+  }
+
+  if (length >= 2 && modifierPressed) {
+    // Insert a via-point before the last waypoint (the target)
+    lrmControl.spliceWaypoints(length - 1, 0, waypoint);
     return;
   }
 
