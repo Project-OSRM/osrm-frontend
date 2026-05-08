@@ -1,7 +1,5 @@
 'use strict';
 
-var L = require('leaflet');
-
 module.exports = function createLocationFoundHandler(map, lrmControl) {
   return function(e) {
     try {
