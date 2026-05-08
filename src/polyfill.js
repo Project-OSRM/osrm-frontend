@@ -1,9 +1,9 @@
-if (typeof Object.assign != 'function') {
-  Object.assign = function(target) {
-    'use strict';
+if (typeof Object.assign != "function") {
+  Object.assign = function (target) {
+    "use strict";
     // eslint-disable-next-line no-eq-null
     if (target == null) {
-      throw new TypeError('Cannot convert undefined or null to object');
+      throw new TypeError("Cannot convert undefined or null to object");
     }
 
     target = Object(target);

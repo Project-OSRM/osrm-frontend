@@ -1,44 +1,51 @@
-'use strict';
+"use strict";
 
-var L = require('leaflet');
+var L = require("leaflet");
 
-var geocoder = function(i, num) {
-  var container = L.DomUtil.create('div',
-      function() {
+var geocoder = function (i, num) {
+  var container = L.DomUtil.create(
+      "div",
+      (function () {
         if (i === 0) {
           return "osrm-directions-origin";
         } else if (i === num - 1) {
           return "osrm-directions-destination";
         }
         return "osrm-directions-via";
-      }()),
-    label = L.DomUtil.create('label', 'osrm-form-label', container),
-    input = L.DomUtil.create('input', '', container),
-    close = L.DomUtil.create('span', 'osrm-directions-icon osrm-close-icon', container),
+      })(),
+    ),
+    label = L.DomUtil.create("label", "osrm-form-label", container),
+    input = L.DomUtil.create("input", "", container),
+    close = L.DomUtil.create(
+      "span",
+      "osrm-directions-icon osrm-close-icon",
+      container,
+    ),
     name = String.fromCharCode(65 + i),
-    icon = L.DomUtil.create('div', 'leaflet-osrm-geocoder-label', label);
+    icon = L.DomUtil.create("div", "leaflet-osrm-geocoder-label", label);
   icon.innerHTML = name;
-  
+
   // Disable click propagation on the entire container to prevent any clicks from bubbling to the map
   L.DomEvent.disableClickPropagation(container);
-  
+
   // Also explicitly handle click on the close button
-  L.DomEvent.on(close, 'click', function(e) {
+  L.DomEvent.on(close, "click", function (e) {
     e.stopPropagation();
     e.preventDefault();
   });
-  
+
   return {
     container: container,
     input: input,
-    closeButton: close
+    closeButton: close,
   };
 };
 
 // Matches plain decimal coordinate strings such as "34.129382,-118.141254"
 // or "34.129382 -118.141254" (with or without sign, comma or space separator).
 // Mirrors the last regex branch in leaflet-control-geocoder's parseLatLng.
-var COORD_PATTERN = /^\s*([+-]?\d+(?:\.\d*)?)\s*[\s,]\s*([+-]?\d+(?:\.\d*)?)\s*$/;
+var COORD_PATTERN =
+  /^\s*([+-]?\d+(?:\.\d*)?)\s*[\s,]\s*([+-]?\d+(?:\.\d*)?)\s*$/;
 
 function parseCoords(query) {
   var m = query.match(COORD_PATTERN);
@@ -49,18 +56,18 @@ var globalNominatimCache = null;
 var liveRegionEl = null;
 function announceRateLimit(msg) {
   try {
-    if (typeof document === 'undefined') return;
+    if (typeof document === "undefined") return;
     if (!liveRegionEl) {
-      liveRegionEl = document.getElementById('osrm-nominatim-live');
+      liveRegionEl = document.getElementById("osrm-nominatim-live");
       if (!liveRegionEl) {
-        liveRegionEl = document.createElement('div');
-        liveRegionEl.id = 'osrm-nominatim-live';
-        liveRegionEl.setAttribute('aria-live', 'polite');
-        liveRegionEl.style.position = 'absolute';
-        liveRegionEl.style.left = '-9999px';
-        liveRegionEl.style.width = '1px';
-        liveRegionEl.style.height = '1px';
-        liveRegionEl.style.overflow = 'hidden';
+        liveRegionEl = document.createElement("div");
+        liveRegionEl.id = "osrm-nominatim-live";
+        liveRegionEl.setAttribute("aria-live", "polite");
+        liveRegionEl.style.position = "absolute";
+        liveRegionEl.style.left = "-9999px";
+        liveRegionEl.style.width = "1px";
+        liveRegionEl.style.height = "1px";
+        liveRegionEl.style.overflow = "hidden";
         document.body.appendChild(liveRegionEl);
       }
     }
@@ -74,11 +81,14 @@ function announceRateLimit(msg) {
 // For non-coordinate input, falls through to Nominatim forward-geocode as normal.
 // Also bridges leaflet-control-geocoder's Promise API to the callback-based API
 // that leaflet-routing-machine's autocomplete expects.
-geocoder.coordPreserving = function(nominatimUrl) {
+geocoder.coordPreserving = function (nominatimUrl) {
   var nominatim;
-  var normalizedNominatimUrl = typeof nominatimUrl === 'string' ? nominatimUrl.trim() : '';
+  var normalizedNominatimUrl =
+    typeof nominatimUrl === "string" ? nominatimUrl.trim() : "";
   if (normalizedNominatimUrl.length > 0) {
-    nominatim = L.Control.Geocoder.nominatim({serviceUrl: normalizedNominatimUrl});
+    nominatim = L.Control.Geocoder.nominatim({
+      serviceUrl: normalizedNominatimUrl,
+    });
   } else {
     // Preserve Leaflet-Control-Geocoder's default behavior when no URL provided
     nominatim = L.Control.Geocoder.nominatim();
@@ -88,7 +98,7 @@ geocoder.coordPreserving = function(nominatimUrl) {
   // Evicts entries older than ttl (default 24h) or by LRU when capacity exceeded.
   function createLRUCache(storageKey, maxEntries, ttlMs) {
     var map = new Map();
-    var ttl = typeof ttlMs === 'number' ? ttlMs : 24 * 60 * 60 * 1000;
+    var ttl = typeof ttlMs === "number" ? ttlMs : 24 * 60 * 60 * 1000;
 
     // Persistence scheduling to avoid synchronous localStorage writes on every cache hit.
     var _persistTimeout = null;
@@ -107,17 +117,17 @@ geocoder.coordPreserving = function(nominatimUrl) {
     function schedulePersist() {
       try {
         // In test or non-browser environments persist synchronously to keep tests deterministic.
-        if (typeof window === 'undefined') {
+        if (typeof window === "undefined") {
           persist();
           return;
         }
         if (_persistTimeout) return;
-        _persistTimeout = setTimeout(function() {
+        _persistTimeout = setTimeout(function () {
           _persistTimeout = null;
           try {
             persist();
           } catch (e) {
-            warnOnce('persist', 'osrm-cache: persist failed', e);
+            warnOnce("persist", "osrm-cache: persist failed", e);
           }
         }, _persistDelay);
       } catch (e) {}
@@ -125,8 +135,12 @@ geocoder.coordPreserving = function(nominatimUrl) {
 
     // Ensure data flushed on page unload when possible.
     try {
-      if (typeof window !== 'undefined' && window && typeof window.addEventListener === 'function') {
-        window.addEventListener('beforeunload', function() {
+      if (
+        typeof window !== "undefined" &&
+        window &&
+        typeof window.addEventListener === "function"
+      ) {
+        window.addEventListener("beforeunload", function () {
           try {
             if (_persistTimeout) {
               clearTimeout(_persistTimeout);
@@ -138,71 +152,81 @@ geocoder.coordPreserving = function(nominatimUrl) {
       }
     } catch (e) {}
 
-
     // Normalize cached results to a portable format before JSON serialization.
     // Converts Leaflet LatLng/LatLngBounds objects to plain {lat,lng} / [south,north,west,east]
     // so persistence is decoupled from Leaflet's internal object shape.
     function serializeEntries() {
-      return Array.from(map.entries()).map(function(pair) {
+      return Array.from(map.entries()).map(function (pair) {
         var key = pair[0];
         var entry = pair[1];
-        if (!entry || !entry.value || !Array.isArray(entry.value)) return [key, entry];
-        return [key, {
-          ts: entry.ts,
-          value: entry.value.map(function(r) {
-            if (!r) return r;
-            var out = { name: r.name };
-            if (r.center) {
-              out.center = { lat: r.center.lat, lng: r.center.lng };
-            }
-            if (r.bbox) {
-              if (typeof r.bbox.getSouthWest === 'function') {
-                var sw = r.bbox.getSouthWest();
-                var ne = r.bbox.getNorthEast();
-                out.bbox = [sw.lat, ne.lat, sw.lng, ne.lng];
-              } else if (Array.isArray(r.bbox)) {
-                out.bbox = r.bbox;
-              } else {
-                out.bbox = r.bbox;
+        if (!entry || !entry.value || !Array.isArray(entry.value))
+          return [key, entry];
+        return [
+          key,
+          {
+            ts: entry.ts,
+            value: entry.value.map(function (r) {
+              if (!r) return r;
+              var out = { name: r.name };
+              if (r.center) {
+                out.center = { lat: r.center.lat, lng: r.center.lng };
               }
-            }
-            return out;
-          })
-        }];
+              if (r.bbox) {
+                if (typeof r.bbox.getSouthWest === "function") {
+                  var sw = r.bbox.getSouthWest();
+                  var ne = r.bbox.getNorthEast();
+                  out.bbox = [sw.lat, ne.lat, sw.lng, ne.lng];
+                } else if (Array.isArray(r.bbox)) {
+                  out.bbox = r.bbox;
+                } else {
+                  out.bbox = r.bbox;
+                }
+              }
+              return out;
+            }),
+          },
+        ];
       });
     }
 
     function persist() {
       try {
-        if (typeof localStorage !== 'undefined' && localStorage.setItem) {
+        if (typeof localStorage !== "undefined" && localStorage.setItem) {
           localStorage.setItem(storageKey, JSON.stringify(serializeEntries()));
         }
       } catch (e) {
-        warnOnce('persist', 'osrm-cache: persist failed', e);
+        warnOnce("persist", "osrm-cache: persist failed", e);
       }
     }
 
     // Load existing entries, skipping those older than ttl. Rehydrate centers and bboxes to Leaflet objects when possible.
     try {
-      if (typeof localStorage !== 'undefined' && localStorage.getItem) {
+      if (typeof localStorage !== "undefined" && localStorage.getItem) {
         var raw = localStorage.getItem(storageKey);
         if (raw) {
           var entries = JSON.parse(raw);
           if (Array.isArray(entries)) {
             var now = Date.now();
-            entries.forEach(function(pair) {
+            entries.forEach(function (pair) {
               try {
                 var k = pair[0];
                 var obj = pair[1];
-                if (!obj || typeof obj.ts !== 'number') return;
+                if (!obj || typeof obj.ts !== "number") return;
                 if (now - obj.ts > ttl) return;
                 // Rehydrate value array items (center and bbox) to Leaflet types when possible
                 if (obj.value && Array.isArray(obj.value)) {
-                  obj.value.forEach(function(r) {
+                  obj.value.forEach(function (r) {
                     try {
                       // rehydrate center -> L.latLng if necessary
-                      if (r && r.center && r.center.lat !== undefined && r.center.lng !== undefined) {
-                        if (!(r.center && typeof r.center.toBounds === 'function')) {
+                      if (
+                        r &&
+                        r.center &&
+                        r.center.lat !== undefined &&
+                        r.center.lng !== undefined
+                      ) {
+                        if (
+                          !(r.center && typeof r.center.toBounds === "function")
+                        ) {
                           r.center = L.latLng(r.center.lat, r.center.lng);
                         }
                       }
@@ -211,24 +235,47 @@ geocoder.coordPreserving = function(nominatimUrl) {
                         // Canonical format: array [south, north, west, east]
                         if (Array.isArray(r.bbox) && r.bbox.length === 4) {
                           r.bbox = L.latLngBounds(
-                            L.latLng(parseFloat(r.bbox[0]), parseFloat(r.bbox[2])),
-                            L.latLng(parseFloat(r.bbox[1]), parseFloat(r.bbox[3]))
+                            L.latLng(
+                              parseFloat(r.bbox[0]),
+                              parseFloat(r.bbox[2]),
+                            ),
+                            L.latLng(
+                              parseFloat(r.bbox[1]),
+                              parseFloat(r.bbox[3]),
+                            ),
                           );
                         } else if (r.bbox._southWest && r.bbox._northEast) {
                           // Migration: Leaflet's LatLngBounds serialised shape from older cache versions.
                           // Will be re-persisted in canonical array format on next persist().
                           try {
                             r.bbox = L.latLngBounds(
-                              L.latLng(parseFloat(r.bbox._southWest.lat), parseFloat(r.bbox._southWest.lng)),
-                              L.latLng(parseFloat(r.bbox._northEast.lat), parseFloat(r.bbox._northEast.lng))
+                              L.latLng(
+                                parseFloat(r.bbox._southWest.lat),
+                                parseFloat(r.bbox._southWest.lng),
+                              ),
+                              L.latLng(
+                                parseFloat(r.bbox._northEast.lat),
+                                parseFloat(r.bbox._northEast.lng),
+                              ),
                             );
                           } catch (e) {}
-                        } else if (r.bbox.south !== undefined && r.bbox.north !== undefined && r.bbox.west !== undefined && r.bbox.east !== undefined) {
+                        } else if (
+                          r.bbox.south !== undefined &&
+                          r.bbox.north !== undefined &&
+                          r.bbox.west !== undefined &&
+                          r.bbox.east !== undefined
+                        ) {
                           // Migration: custom object shape from older cache versions.
                           try {
                             r.bbox = L.latLngBounds(
-                              L.latLng(parseFloat(r.bbox.south), parseFloat(r.bbox.west)),
-                              L.latLng(parseFloat(r.bbox.north), parseFloat(r.bbox.east))
+                              L.latLng(
+                                parseFloat(r.bbox.south),
+                                parseFloat(r.bbox.west),
+                              ),
+                              L.latLng(
+                                parseFloat(r.bbox.north),
+                                parseFloat(r.bbox.east),
+                              ),
                             );
                           } catch (e) {}
                         }
@@ -247,34 +294,38 @@ geocoder.coordPreserving = function(nominatimUrl) {
         }
       }
     } catch (e) {
-      warnOnce('load', 'osrm-cache: failed to load from localStorage', e);
+      warnOnce("load", "osrm-cache: failed to load from localStorage", e);
     }
 
     function removeExpired() {
       try {
         var now = Date.now();
         var changed = false;
-        for (var it = map.entries(), res = it.next(); !res.done; res = it.next()) {
+        for (
+          var it = map.entries(), res = it.next();
+          !res.done;
+          res = it.next()
+        ) {
           var key = res.value[0];
           var entry = res.value[1];
-          if (!entry || typeof entry.ts !== 'number' || now - entry.ts > ttl) {
+          if (!entry || typeof entry.ts !== "number" || now - entry.ts > ttl) {
             map.delete(key);
             changed = true;
           }
         }
         if (changed) schedulePersist();
       } catch (e) {
-        warnOnce('removeExpired', 'osrm-cache: removeExpired failed', e);
+        warnOnce("removeExpired", "osrm-cache: removeExpired failed", e);
       }
     }
 
     return {
-      get: function(key) {
+      get: function (key) {
         if (!map.has(key)) return null;
         var entry = map.get(key);
         if (!entry) return null;
         // Check TTL for this specific entry instead of scanning the whole map
-        if (typeof entry.ts !== 'number' || Date.now() - entry.ts > ttl) {
+        if (typeof entry.ts !== "number" || Date.now() - entry.ts > ttl) {
           map.delete(key);
           schedulePersist();
           return null;
@@ -286,7 +337,7 @@ geocoder.coordPreserving = function(nominatimUrl) {
         schedulePersist();
         return entry.value;
       },
-      set: function(key, value) {
+      set: function (key, value) {
         removeExpired();
         var entry = { value: value, ts: Date.now() };
         if (map.has(key)) map.delete(key);
@@ -296,14 +347,22 @@ geocoder.coordPreserving = function(nominatimUrl) {
           map.delete(firstKey);
         }
         schedulePersist();
-      }
+      },
     };
   }
 
-  if (!globalNominatimCache) globalNominatimCache = createLRUCache('osrm_nominatim_cache_v1', 128, 24 * 60 * 60 * 1000);
+  if (!globalNominatimCache)
+    globalNominatimCache = createLRUCache(
+      "osrm_nominatim_cache_v1",
+      128,
+      24 * 60 * 60 * 1000,
+    );
   var cache = globalNominatimCache;
-  var supportsFetch = typeof fetch === 'function';
-  var serviceBase = (normalizedNominatimUrl && normalizedNominatimUrl.length > 0) ? normalizedNominatimUrl.replace(/\/+$/, '') + '/' : 'https://nominatim.openstreetmap.org/';
+  var supportsFetch = typeof fetch === "function";
+  var serviceBase =
+    normalizedNominatimUrl && normalizedNominatimUrl.length > 0
+      ? normalizedNominatimUrl.replace(/\/+$/, "") + "/"
+      : "https://nominatim.openstreetmap.org/";
 
   function setInputBgFromContext(context, color) {
     try {
@@ -311,14 +370,19 @@ geocoder.coordPreserving = function(nominatimUrl) {
       var input = null;
       if (context.input && context.input.style) input = context.input;
       else if (context._input && context._input.style) input = context._input;
-      else if (context.container && context.container.querySelector) input = context.container.querySelector('input');
-      else if (context.querySelector) input = context.querySelector('input');
+      else if (context.container && context.container.querySelector)
+        input = context.container.querySelector("input");
+      else if (context.querySelector) input = context.querySelector("input");
       if (input && input.style) input.style.backgroundColor = color;
     } catch (e) {}
   }
 
   function buildSearchUrl(query) {
-    return serviceBase + 'search?format=json&addressdetails=1&limit=5&q=' + encodeURIComponent(query);
+    return (
+      serviceBase +
+      "search?format=json&addressdetails=1&limit=5&q=" +
+      encodeURIComponent(query)
+    );
   }
 
   function buildReverseUrl(latlng, scale) {
@@ -328,7 +392,7 @@ geocoder.coordPreserving = function(nominatimUrl) {
     // a Leaflet scale (e.g., 256 * 2^zoom) or a direct zoom value.
     var zoom = 18;
     try {
-      if (typeof scale === 'number' && !isNaN(scale)) {
+      if (typeof scale === "number" && !isNaN(scale)) {
         if (scale > 30) {
           // Likely a pixel scale like 256 * 2^zoom — invert to get zoom
           zoom = Math.round(Math.log2(scale / 256));
@@ -339,25 +403,39 @@ geocoder.coordPreserving = function(nominatimUrl) {
       }
     } catch (e) {}
     zoom = Math.max(0, Math.min(18, zoom));
-    return serviceBase + 'reverse?format=json&addressdetails=1&lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lon) + '&zoom=' + encodeURIComponent(zoom);
+    return (
+      serviceBase +
+      "reverse?format=json&addressdetails=1&lat=" +
+      encodeURIComponent(lat) +
+      "&lon=" +
+      encodeURIComponent(lon) +
+      "&zoom=" +
+      encodeURIComponent(zoom)
+    );
   }
 
   function parseSearchResults(json) {
     if (!Array.isArray(json)) return [];
-    return json.map(function(r) {
+    return json.map(function (r) {
       var bbox = null;
       try {
         if (r.boundingbox && r.boundingbox.length === 4) {
           bbox = L.latLngBounds(
-            L.latLng(parseFloat(r.boundingbox[0]), parseFloat(r.boundingbox[2])),
-            L.latLng(parseFloat(r.boundingbox[1]), parseFloat(r.boundingbox[3]))
+            L.latLng(
+              parseFloat(r.boundingbox[0]),
+              parseFloat(r.boundingbox[2]),
+            ),
+            L.latLng(
+              parseFloat(r.boundingbox[1]),
+              parseFloat(r.boundingbox[3]),
+            ),
           );
         }
       } catch (e) {}
       return {
-        name: r.display_name || r.name || '',
+        name: r.display_name || r.name || "",
         bbox: bbox,
-        center: L.latLng(parseFloat(r.lat), parseFloat(r.lon))
+        center: L.latLng(parseFloat(r.lat), parseFloat(r.lon)),
       };
     });
   }
@@ -366,54 +444,62 @@ geocoder.coordPreserving = function(nominatimUrl) {
     var url = buildSearchUrl(query);
     var cached = cache.get(url);
     if (cached) {
-      setInputBgFromContext(context, 'white');
+      setInputBgFromContext(context, "white");
       return Promise.resolve(cached);
     }
 
     function fetchSearch() {
-      return fetch(url, { headers: { 'Accept': 'application/json' } }).then(function(resp) {
-        if (resp.status === 429) {
-          setInputBgFromContext(context, 'orange');
-          announceRateLimit('Geocoder rate-limited (HTTP 429)');
-          return [];
-        }
-        if (!resp.ok) {
-          setInputBgFromContext(context, '');
-          return [];
-        }
-        return resp.json().then(function(json) {
-          var results = parseSearchResults(json);
-          cache.set(url, results);
-          setInputBgFromContext(context, 'white');
-          return results;
-        }).catch(function() {
-          setInputBgFromContext(context, '');
+      return fetch(url, { headers: { Accept: "application/json" } })
+        .then(function (resp) {
+          if (resp.status === 429) {
+            setInputBgFromContext(context, "orange");
+            announceRateLimit("Geocoder rate-limited (HTTP 429)");
+            return [];
+          }
+          if (!resp.ok) {
+            setInputBgFromContext(context, "");
+            return [];
+          }
+          return resp
+            .json()
+            .then(function (json) {
+              var results = parseSearchResults(json);
+              cache.set(url, results);
+              setInputBgFromContext(context, "white");
+              return results;
+            })
+            .catch(function () {
+              setInputBgFromContext(context, "");
+              return [];
+            });
+        })
+        .catch(function () {
+          setInputBgFromContext(context, "");
           return [];
         });
-      }).catch(function() {
-        setInputBgFromContext(context, '');
-        return [];
-      });
     }
 
     // Prefer using nominatim.geocode when available (helps tests that mock it).
-    if (nominatim && typeof nominatim.geocode === 'function') {
-      return nominatim.geocode(query).then(function(results) {
-        try {
-          cache.set(url, results);
-        } catch (e) {}
-        setInputBgFromContext(context, 'white');
-        return results;
-      }).catch(function(err) {
-        if (err && err.status === 429) {
-          setInputBgFromContext(context, 'orange');
-          announceRateLimit('Geocoder rate-limited (HTTP 429)');
+    if (nominatim && typeof nominatim.geocode === "function") {
+      return nominatim
+        .geocode(query)
+        .then(function (results) {
+          try {
+            cache.set(url, results);
+          } catch (e) {}
+          setInputBgFromContext(context, "white");
+          return results;
+        })
+        .catch(function (err) {
+          if (err && err.status === 429) {
+            setInputBgFromContext(context, "orange");
+            announceRateLimit("Geocoder rate-limited (HTTP 429)");
+            return [];
+          }
+          // fall back to fetch path when available
+          if (supportsFetch) return fetchSearch();
           return [];
-        }
-        // fall back to fetch path when available
-        if (supportsFetch) return fetchSearch();
-        return [];
-      });
+        });
     }
 
     if (supportsFetch) {
@@ -427,80 +513,100 @@ geocoder.coordPreserving = function(nominatimUrl) {
   function doReverse(latlng, scale, context) {
     // Wrap longitude into [-180, 180] so Nominatim receives valid coordinates
     // when the map has been scrolled past the antimeridian (issues #206, #307).
-    var latlngWrapped = (latlng && typeof latlng.wrap === 'function') ? latlng.wrap() : latlng;
+    var latlngWrapped =
+      latlng && typeof latlng.wrap === "function" ? latlng.wrap() : latlng;
     // Offset to re-project result centers back into the same "world copy" as
     // the original latlng, so LRM's geocoder-element distance-tolerance check
     // (rs[0].center.distanceTo(wp.latLng)) passes correctly.
-    var lngOffset = (latlng && latlngWrapped) ? latlng.lng - latlngWrapped.lng : 0;
+    var lngOffset =
+      latlng && latlngWrapped ? latlng.lng - latlngWrapped.lng : 0;
     var url = buildReverseUrl(latlngWrapped, scale);
     var cached = cache.get(url);
     var basePromise;
     if (cached) {
-      setInputBgFromContext(context, 'white');
+      setInputBgFromContext(context, "white");
       basePromise = Promise.resolve(cached);
-    } else if (nominatim && typeof nominatim.reverse === 'function') {
-      basePromise = nominatim.reverse(latlngWrapped, scale).then(function(results) {
-        try {
-          cache.set(url, results);
-        } catch (e) {}
-        setInputBgFromContext(context, 'white');
-        return results;
-      }).catch(function(err) {
-        if (err && err.status === 429) {
-          setInputBgFromContext(context, 'orange');
-          announceRateLimit('Geocoder rate-limited (HTTP 429)');
-        } else {
-          setInputBgFromContext(context, '');
-        }
-        return [];
-      });
-    } else if (supportsFetch) {
-      basePromise = fetch(url, { headers: { 'Accept': 'application/json' } }).then(function(resp) {
-        if (resp.status === 429) {
-          setInputBgFromContext(context, 'orange');
-          announceRateLimit('Geocoder rate-limited (HTTP 429)');
-          return [];
-        }
-        if (!resp.ok) {
-          setInputBgFromContext(context, '');
-          return [];
-        }
-        return resp.json().then(function(json) {
-          var bbox = null;
+    } else if (nominatim && typeof nominatim.reverse === "function") {
+      basePromise = nominatim
+        .reverse(latlngWrapped, scale)
+        .then(function (results) {
           try {
-            if (json.boundingbox && json.boundingbox.length === 4) {
-              bbox = L.latLngBounds(
-                L.latLng(parseFloat(json.boundingbox[0]), parseFloat(json.boundingbox[2])),
-                L.latLng(parseFloat(json.boundingbox[1]), parseFloat(json.boundingbox[3]))
-              );
-            }
+            cache.set(url, results);
           } catch (e) {}
-          var res = [{
-            name: json.display_name || json.name || '',
-            bbox: bbox,
-            center: L.latLng(parseFloat(json.lat), parseFloat(json.lon))
-          }];
-          cache.set(url, res);
-          setInputBgFromContext(context, 'white');
-          return res;
-        }).catch(function() {
-          setInputBgFromContext(context, '');
+          setInputBgFromContext(context, "white");
+          return results;
+        })
+        .catch(function (err) {
+          if (err && err.status === 429) {
+            setInputBgFromContext(context, "orange");
+            announceRateLimit("Geocoder rate-limited (HTTP 429)");
+          } else {
+            setInputBgFromContext(context, "");
+          }
           return [];
         });
-      }).catch(function() {
-        setInputBgFromContext(context, '');
-        return [];
-      });
+    } else if (supportsFetch) {
+      basePromise = fetch(url, { headers: { Accept: "application/json" } })
+        .then(function (resp) {
+          if (resp.status === 429) {
+            setInputBgFromContext(context, "orange");
+            announceRateLimit("Geocoder rate-limited (HTTP 429)");
+            return [];
+          }
+          if (!resp.ok) {
+            setInputBgFromContext(context, "");
+            return [];
+          }
+          return resp
+            .json()
+            .then(function (json) {
+              var bbox = null;
+              try {
+                if (json.boundingbox && json.boundingbox.length === 4) {
+                  bbox = L.latLngBounds(
+                    L.latLng(
+                      parseFloat(json.boundingbox[0]),
+                      parseFloat(json.boundingbox[2]),
+                    ),
+                    L.latLng(
+                      parseFloat(json.boundingbox[1]),
+                      parseFloat(json.boundingbox[3]),
+                    ),
+                  );
+                }
+              } catch (e) {}
+              var res = [
+                {
+                  name: json.display_name || json.name || "",
+                  bbox: bbox,
+                  center: L.latLng(parseFloat(json.lat), parseFloat(json.lon)),
+                },
+              ];
+              cache.set(url, res);
+              setInputBgFromContext(context, "white");
+              return res;
+            })
+            .catch(function () {
+              setInputBgFromContext(context, "");
+              return [];
+            });
+        })
+        .catch(function () {
+          setInputBgFromContext(context, "");
+          return [];
+        });
     } else {
       basePromise = Promise.resolve([]);
     }
 
     if (lngOffset === 0) return basePromise;
-    return basePromise.then(function(results) {
+    return basePromise.then(function (results) {
       if (!results || !results.length) return results;
-      return results.map(function(r) {
+      return results.map(function (r) {
         if (!r || !r.center) return r;
-        return Object.assign({}, r, { center: L.latLng(r.center.lat, r.center.lng + lngOffset) });
+        return Object.assign({}, r, {
+          center: L.latLng(r.center.lat, r.center.lng + lngOffset),
+        });
       });
     });
   }
@@ -508,60 +614,66 @@ geocoder.coordPreserving = function(nominatimUrl) {
   // Helper: reverse-geocodes coordinates for display name, but preserves exact latlng.
   function coordResult(latlng, query, context) {
     // Use scale corresponding to zoom level 18 (was hard-coded as 256 * 2^18 = 67108864)
-    return doReverse(latlng, L.CRS.EPSG3857.scale(18), context).then(function(results) {
-      if (results && results.length > 0) {
-        return [L.extend({}, results[0], {
-          center: latlng,
-          bbox: latlng.toBounds(1000)
-        })];
-      }
-      return [{ name: query, center: latlng, bbox: latlng.toBounds(1000) }];
-    }).catch(function() {
-      return [{ name: query, center: latlng, bbox: latlng.toBounds(1000) }];
-    });
+    return doReverse(latlng, L.CRS.EPSG3857.scale(18), context)
+      .then(function (results) {
+        if (results && results.length > 0) {
+          return [
+            L.extend({}, results[0], {
+              center: latlng,
+              bbox: latlng.toBounds(1000),
+            }),
+          ];
+        }
+        return [{ name: query, center: latlng, bbox: latlng.toBounds(1000) }];
+      })
+      .catch(function () {
+        return [{ name: query, center: latlng, bbox: latlng.toBounds(1000) }];
+      });
   }
 
   return {
-    geocode: function(query, cb, context) {
+    geocode: function (query, cb, context) {
       var latlng = parseCoords(query);
       if (latlng) {
-        return coordResult(latlng, query, context).then(function(results) {
-          if (typeof cb === 'function') cb.call(context, results);
-          return results;
-        }).catch(function() {
-          var fallback = [];
-          if (typeof cb === 'function') cb.call(context, fallback);
-          return fallback;
-        });
+        return coordResult(latlng, query, context)
+          .then(function (results) {
+            if (typeof cb === "function") cb.call(context, results);
+            return results;
+          })
+          .catch(function () {
+            var fallback = [];
+            if (typeof cb === "function") cb.call(context, fallback);
+            return fallback;
+          });
       }
-      return doSearch(query, context).then(function(results) {
-        if (typeof cb === 'function') cb.call(context, results);
+      return doSearch(query, context).then(function (results) {
+        if (typeof cb === "function") cb.call(context, results);
         return results;
       });
     },
 
-    suggest: function(query, cb, context) {
+    suggest: function (query, cb, context) {
       var latlng = parseCoords(query);
       if (latlng) {
         // Coordinate input: return result with exact center so the
         // auto-selected dropdown item preserves the typed location.
-        return coordResult(latlng, query, context).then(function(results) {
-          if (typeof cb === 'function') cb.call(context, results);
+        return coordResult(latlng, query, context).then(function (results) {
+          if (typeof cb === "function") cb.call(context, results);
           return results;
         });
       }
-      return doSearch(query, context).then(function(results) {
-        if (typeof cb === 'function') cb.call(context, results);
+      return doSearch(query, context).then(function (results) {
+        if (typeof cb === "function") cb.call(context, results);
         return results;
       });
     },
 
-    reverse: function(latlng, scale, cb, context) {
-      return doReverse(latlng, scale, context).then(function(results) {
-        if (typeof cb === 'function') cb.call(context, results);
+    reverse: function (latlng, scale, cb, context) {
+      return doReverse(latlng, scale, context).then(function (results) {
+        if (typeof cb === "function") cb.call(context, results);
         return results;
       });
-    }
+    },
   };
 };
 
@@ -569,14 +681,15 @@ geocoder.coordPreserving = function(nominatimUrl) {
 // into [-180, 180] before formatting. When reverse geocoding fails (no network,
 // rate limit, location in the ocean) and the raw coordinate is shown, this
 // ensures the displayed value is always within the valid geographic range.
-geocoder.wrappedWaypointNameFallback = function(latLng) {
-  var wrapped = (latLng && typeof latLng.wrap === 'function') ? latLng.wrap() : latLng;
+geocoder.wrappedWaypointNameFallback = function (latLng) {
+  var wrapped =
+    latLng && typeof latLng.wrap === "function" ? latLng.wrap() : latLng;
   var ll = wrapped || latLng || {};
-  var ns = (ll.lat || 0) < 0 ? 'S' : 'N';
-  var ew = (ll.lng || 0) < 0 ? 'W' : 'E';
+  var ns = (ll.lat || 0) < 0 ? "S" : "N";
+  var ew = (ll.lng || 0) < 0 ? "W" : "E";
   var lat = (Math.round(Math.abs(ll.lat || 0) * 10000) / 10000).toString();
   var lng = (Math.round(Math.abs(ll.lng || 0) * 10000) / 10000).toString();
-  return ns + lat + ', ' + ew + lng;
+  return ns + lat + ", " + ew + lng;
 };
 
 module.exports = geocoder;

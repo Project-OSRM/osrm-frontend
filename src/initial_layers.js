@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /**
  * Determine the initial map layers based on the active profile and stored
@@ -11,15 +11,27 @@
  * @param {boolean} hasStoredOverlay – Whether localStorage indicates an overlay was active.
  * @returns {{ layers: object|Array, bikeOverlayAutoActivated: boolean }}
  */
-function determineInitialLayers(baselayer, overlay, services, profileIndex, hasStoredOverlay) {
+function determineInitialLayers(
+  baselayer,
+  overlay,
+  services,
+  profileIndex,
+  hasStoredOverlay,
+) {
   var profile = services[profileIndex] && services[profileIndex].profile;
 
-  if (profile === 'bike' && overlay['Bike']) {
-    return { layers: [baselayer, overlay['Bike']], bikeOverlayAutoActivated: true };
+  if (profile === "bike" && overlay["Bike"]) {
+    return {
+      layers: [baselayer, overlay["Bike"]],
+      bikeOverlayAutoActivated: true,
+    };
   }
 
   if (hasStoredOverlay) {
-    return { layers: [baselayer, overlay['Small Components']], bikeOverlayAutoActivated: false };
+    return {
+      layers: [baselayer, overlay["Small Components"]],
+      bikeOverlayAutoActivated: false,
+    };
   }
 
   return { layers: [baselayer], bikeOverlayAutoActivated: false };

@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 // TODO: remove this patch once the upstream bug is fixed in leaflet-routing-machine.
 // Upstream issue: https://github.com/perliedman/leaflet-routing-machine/issues/719
@@ -8,8 +8,8 @@
 // This replacement preserves non-directional modifiers like 'straight'.
 function leftOrRight(d) {
   if (!d) return d;
-  if (d.indexOf('left') >= 0) return 'Left';
-  if (d.indexOf('right') >= 0) return 'Right';
+  if (d.indexOf("left") >= 0) return "Left";
+  if (d.indexOf("right") >= 0) return "Right";
   return d;
 }
 
@@ -25,40 +25,49 @@ function leftOrRight(d) {
 // during wrapping, keeping markers in the correct viewport position.
 function wrapWaypoints(router) {
   var origRoute = router.route.bind(router);
-  router.route = function(waypoints, callback, context, options) {
-    var wrapped = (waypoints || []).map(function(wp) {
-      if (!wp || !wp.latLng || typeof wp.latLng.wrap !== 'function') return wp;
+  router.route = function (waypoints, callback, context, options) {
+    var wrapped = (waypoints || []).map(function (wp) {
+      if (!wp || !wp.latLng || typeof wp.latLng.wrap !== "function") return wp;
       return Object.assign({}, wp, { latLng: wp.latLng.wrap() });
     });
 
     // Compute the lng offset for each input waypoint (n×360° applied during wrapping).
-    var offsets = (waypoints || []).map(function(wp) {
-      if (!wp || !wp.latLng || typeof wp.latLng.wrap !== 'function') return 0;
+    var offsets = (waypoints || []).map(function (wp) {
+      if (!wp || !wp.latLng || typeof wp.latLng.wrap !== "function") return 0;
       return wp.latLng.lng - wp.latLng.wrap().lng;
     });
     // Use the first non-zero offset to re-project route.coordinates (the polyline).
-    var coordOffset = offsets.reduce(function(acc, o) {
+    var coordOffset = offsets.reduce(function (acc, o) {
       return acc !== 0 ? acc : o;
     }, 0);
 
-    var wrappedCallback = function(err, routes) {
+    var wrappedCallback = function (err, routes) {
       if (!err && routes) {
-        routes.forEach(function(route) {
+        routes.forEach(function (route) {
           if (route && route.waypoints) {
-            route.waypoints = route.waypoints.map(function(snappedWp, i) {
+            route.waypoints = route.waypoints.map(function (snappedWp, i) {
               var orig = waypoints[i];
-              if (!snappedWp || !snappedWp.latLng || !orig || !orig.latLng ||
-                  typeof orig.latLng.wrap !== 'function') return snappedWp;
+              if (
+                !snappedWp ||
+                !snappedWp.latLng ||
+                !orig ||
+                !orig.latLng ||
+                typeof orig.latLng.wrap !== "function"
+              )
+                return snappedWp;
               var offset = orig.latLng.lng - orig.latLng.wrap().lng;
               if (offset === 0) return snappedWp;
               var reoffsetLng = snappedWp.latLng.lng + offset;
               var reoffsetLatLng = {
                 lat: snappedWp.latLng.lat,
                 lng: reoffsetLng,
-                wrap: function() {
+                wrap: function () {
                   var v = reoffsetLng;
-                  return { lat: snappedWp.latLng.lat, lng: ((v + 180) % 360 + 360) % 360 - 180 };
-                }
+                  return {
+                    lat: snappedWp.latLng.lat,
+                    lng: ((((v + 180) % 360) + 360) % 360) - 180,
+                  };
+                },
               };
               return Object.assign({}, snappedWp, { latLng: reoffsetLatLng });
             });
@@ -67,14 +76,15 @@ function wrapWaypoints(router) {
           // so LRM draws the line at the correct map position and fitBounds() doesn't
           // jump the viewport to the wrapped world copy (which would hide the markers).
           if (route && route.coordinates && coordOffset !== 0) {
-            route.coordinates = route.coordinates.map(function(coord) {
+            route.coordinates = route.coordinates.map(function (coord) {
               if (!coord) return coord;
               return { lat: coord.lat, lng: coord.lng + coordOffset };
             });
           }
         });
       }
-      if (typeof callback === 'function') callback.apply(context || callback, arguments);
+      if (typeof callback === "function")
+        callback.apply(context || callback, arguments);
     };
 
     return origRoute(wrapped, wrappedCallback, context, options);
@@ -82,16 +92,16 @@ function wrapWaypoints(router) {
 }
 
 module.exports = {
-  applyPatches: function(router) {
+  applyPatches: function (router) {
     router._leftOrRight = leftOrRight;
     wrapWaypoints(router);
   },
   // Exported for unit testing
   leftOrRight: leftOrRight,
   wrapWaypoints: wrapWaypoints,
-  
+
   // Allow setting the active service by index
-  setActiveService: function(router, serviceIndex, services) {
+  setActiveService: function (router, serviceIndex, services) {
     if (serviceIndex >= 0 && serviceIndex < services.length) {
       var service = services[serviceIndex];
       router.options.serviceUrl = service.path;
@@ -99,5 +109,5 @@ module.exports = {
         router.options.profile = service.profile;
       }
     }
-  }
+  },
 };

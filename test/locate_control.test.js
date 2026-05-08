@@ -13,10 +13,10 @@
  * (it just sets window.L.control.locate = undefined — harmless).
  * The actual control is then created via the module's exported locate() factory.
  */
-'use strict';
+"use strict";
 
-describe('leaflet.locatecontrol CJS compatibility — JS semantics', () => {
-  test('reading .locate on undefined throws TypeError', () => {
+describe("leaflet.locatecontrol CJS compatibility — JS semantics", () => {
+  test("reading .locate on undefined throws TypeError", () => {
     // Reproduces what the library does when L.Control.Locate is undefined.
     expect(() => {
       const locateNS = undefined;
@@ -24,7 +24,7 @@ describe('leaflet.locatecontrol CJS compatibility — JS semantics', () => {
     }).toThrow(TypeError);
   });
 
-  test('pre-initialising namespace prevents the crash', () => {
+  test("pre-initialising namespace prevents the crash", () => {
     // Reproduces the guard added in src/index.js before the require().
     const Control = {};
     Control.Locate = Control.Locate || {};
@@ -35,7 +35,7 @@ describe('leaflet.locatecontrol CJS compatibility — JS semantics', () => {
   });
 });
 
-describe('leaflet.locatecontrol module exports', () => {
+describe("leaflet.locatecontrol module exports", () => {
   let mod;
 
   beforeAll(() => {
@@ -43,36 +43,40 @@ describe('leaflet.locatecontrol module exports', () => {
     // even in the CJS path (leaflet-src.js:14509), so the locate control's
     // post-IIFE window-patching runs. Pre-initialising L.Control.Locate
     // prevents the "Cannot read .locate of undefined" crash.
-    const L = require('leaflet');
+    const L = require("leaflet");
     L.Control.Locate = L.Control.Locate || {};
-    mod = require('leaflet.locatecontrol');
+    mod = require("leaflet.locatecontrol");
   });
 
-  test('exports a locate factory function', () => {
-    expect(typeof mod.locate).toBe('function');
+  test("exports a locate factory function", () => {
+    expect(typeof mod.locate).toBe("function");
   });
 
-  test('exports a LocateControl class', () => {
-    expect(typeof mod.LocateControl).toBe('function');
+  test("exports a LocateControl class", () => {
+    expect(typeof mod.LocateControl).toBe("function");
   });
 
-  test('locate factory returns an object with addTo method', () => {
+  test("locate factory returns an object with addTo method", () => {
     const ctrl = mod.locate({ showPopup: false, locateOptions: {} });
     expect(ctrl).toBeDefined();
-    expect(typeof ctrl.addTo).toBe('function');
+    expect(typeof ctrl.addTo).toBe("function");
   });
 
-  test('locate factory accepts all options used in src/index.js', () => {
+  test("locate factory accepts all options used in src/index.js", () => {
     const opts = {
       follow: false,
       setView: true,
       remainActive: false,
       keepCurrentZoomLevel: true,
       stopFollowingOnDrag: false,
-      onLocationError: function(err) { void err; },
-      onLocationOutsideMapBounds: function(ctx) { void ctx; },
+      onLocationError: function (err) {
+        void err;
+      },
+      onLocationOutsideMapBounds: function (ctx) {
+        void ctx;
+      },
       showPopup: false,
-      locateOptions: {}
+      locateOptions: {},
     };
     expect(() => mod.locate(opts)).not.toThrow();
   });

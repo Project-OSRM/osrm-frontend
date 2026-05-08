@@ -1,26 +1,26 @@
-'use strict';
+"use strict";
 
-var L = require('leaflet');
-var qs = require('qs');
-var jsonp = require('jsonp');
+var L = require("leaflet");
+var qs = require("qs");
+var jsonp = require("jsonp");
 
 function _formatCoord(latLng) {
   var precision = 6;
   if (!latLng) {
     return;
   }
-  var coord = typeof latLng.wrap === 'function' ? latLng.wrap() : latLng;
+  var coord = typeof latLng.wrap === "function" ? latLng.wrap() : latLng;
   return coord.lat.toFixed(precision) + "," + coord.lng.toFixed(precision);
 }
 
 function _parseCoord(coordStr) {
-  var latLng = coordStr.split(','),
+  var latLng = coordStr.split(","),
     lat = parseFloat(latLng[0]),
     lon = parseFloat(latLng[1]);
   if (isNaN(lat) || isNaN(lon)) {
     throw {
-      name: 'InvalidCoords',
-      message: "\"" + coordStr + "\" is not a valid coordinate."
+      name: "InvalidCoords",
+      message: '"' + coordStr + '" is not a valid coordinate.',
     };
   }
   return L.latLng(lat, lon);
@@ -30,8 +30,8 @@ function _parseInteger(intStr) {
   var integer = parseInt(intStr, 10);
   if (isNaN(integer)) {
     throw {
-      name: 'InvalidInt',
-      message: "\"" + intStr + "\" is not a valid integer."
+      name: "InvalidInt",
+      message: '"' + intStr + '" is not a valid integer.',
     };
   }
   return integer;
@@ -41,20 +41,23 @@ function formatLink(options) {
   // Output all waypoints as loc parameters, using empty string for missing
   var locs = undefined;
   if (options.waypoints) {
-    locs = options.waypoints.map(function(wp) {
-      return wp && wp.latLng ? _formatCoord(wp.latLng) : '';
+    locs = options.waypoints.map(function (wp) {
+      return wp && wp.latLng ? _formatCoord(wp.latLng) : "";
     });
   }
-  return qs.stringify({
-    z: options.zoom,
-    center: options.center ? _formatCoord(options.center) : undefined,
-    loc: locs,
-    hl: options.language,
-    alt: options.alternative,
-    scale: options.units,
-    srv: options.service,
-    profile: options.profile
-  }, {indices: false});
+  return qs.stringify(
+    {
+      z: options.zoom,
+      center: options.center ? _formatCoord(options.center) : undefined,
+      loc: locs,
+      hl: options.language,
+      alt: options.alternative,
+      scale: options.units,
+      srv: options.service,
+      profile: options.profile,
+    },
+    { indices: false },
+  );
 }
 
 function parseLink(link) {
@@ -64,13 +67,16 @@ function parseLink(link) {
     options = {},
     k;
   try {
-    if (q.z !== undefined && q.z !== null) parsedValues.zoom = _parseInteger(q.z);
+    if (q.z !== undefined && q.z !== null)
+      parsedValues.zoom = _parseInteger(q.z);
     parsedValues.center = q.center && _parseCoord(q.center);
     if (q.loc) {
       if (q.loc.constructor === Array) {
         // any number of locs: start, via, end, etc.
-        parsedValues.waypoints = q.loc.map(function(loc) {
-          return loc && loc !== '' ? L.Routing.waypoint(_parseCoord(loc)) : L.Routing.waypoint(null);
+        parsedValues.waypoints = q.loc.map(function (loc) {
+          return loc && loc !== ""
+            ? L.Routing.waypoint(_parseCoord(loc))
+            : L.Routing.waypoint(null);
         });
       } else if (q.loc.constructor === String) {
         // exactly one loc is given (backward compatibility)
@@ -96,9 +102,7 @@ function parseLink(link) {
   return options;
 }
 
-
 module.exports = {
-  'parse': parseLink,
-  'format': formatLink
+  parse: parseLink,
+  format: formatLink,
 };
-
