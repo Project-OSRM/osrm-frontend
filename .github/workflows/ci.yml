@@ -66,7 +66,7 @@ jobs:
         run: npm ci
 
       - name: Check formatting with Prettier
-        run: npx --yes prettier --check "src/**/*.js" "i18n/**/*.js" "test/**/*.js"
+        run: npx --yes prettier --check "**/*.{js,cjs,mjs}"
 
   docker-build-check:
     runs-on: ubuntu-latest
