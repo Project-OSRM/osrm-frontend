@@ -259,15 +259,24 @@ router._convertRoute = function(responseRoute) {
 
   if (resp.instructions && resp.instructions.length) {
     var i = 0;
-    responseRoute.legs.forEach(function(leg) {
+    var legCount = responseRoute.legs.length;
+    responseRoute.legs.forEach(function(leg, legIndex) {
       leg.steps.forEach(function(step) {
-        // abusing the text property to save the original osrm step
-        // for later use in the itnerary builder
-        resp.instructions[i].text = step;
-        i++;
-      });
-    });
-  };
+        // Only attach the original OSRM step to an LRM instruction when
+        // LRM actually creates an instruction for that maneuver type. This
+        // keeps the instruction index aligned with the step index and fixes
+        // missing/wrong road names for the foot profile.
+        var type = (typeof this._maneuverToInstructionType === 'function') ?
+          this._maneuverToInstructionType(step.maneuver, legIndex === legCount - 1) : null;
+        if (type && i < resp.instructions.length) {
+          // abusing the text property to save the original osrm step
+          // for later use in the itinerary builder
+          resp.instructions[i].text = step;
+          i++;
+        }
+      }.bind(this));
+    }.bind(this));
+  }
 
   return resp;
 };
