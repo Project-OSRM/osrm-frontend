@@ -15,5 +15,6 @@ module.exports = {
   'Via point - press enter to drop marker': '途经点 - 按回车键放置标记',
   'Bike': '自行车',
   'Car': '汽车',
-  'Foot': '步行',  'Build': '构建: '
+  'Foot': '步行',
+  'Build': '构建: '
 };
