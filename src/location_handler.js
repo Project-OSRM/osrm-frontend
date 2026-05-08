@@ -5,11 +5,13 @@ module.exports = function createLocationFoundHandler(map, lrmControl) {
     try {
       var latlng = e && e.latlng ? e.latlng : null;
       if (!latlng) return;
+      // Determine whether a route is present. Align with src/state.js which
+      // treats a non-empty _routes array as the source of truth.
       var hasRoute = false;
-      if (lrmControl) {
-        if (Array.isArray(lrmControl._routes) && lrmControl._routes.length > 0) hasRoute = true;
-        if (typeof lrmControl._selectedRoute !== 'undefined' && lrmControl._selectedRoute !== null) hasRoute = true;
+      if (lrmControl && Array.isArray(lrmControl._routes) && lrmControl._routes.length > 0) {
+        hasRoute = true;
       }
+
       if (!hasRoute) {
         map.setView(latlng, 14);
       }
