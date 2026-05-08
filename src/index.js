@@ -461,6 +461,13 @@ function addWaypoint(waypoint) {
     return pnt.latLng;
   });
   length = length.length;
+
+  // If both source and target are set, do not change existing markers by clicking on the map.
+  // Any marker should stay where it is unless explicitly removed by clicking directly on it.
+  if (length >= 2) {
+    return;
+  }
+
   if (!length) {
     lrmControl.spliceWaypoints(0, 1, waypoint);
   } else {
