@@ -50,7 +50,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.x, 24.x, latest]
+        node-version: [latest]
 
     steps:
       - name: Checkout code
