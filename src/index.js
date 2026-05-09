@@ -629,3 +629,6 @@ L.control.locate({
 // Zoom to z14 when the user's location is found, but only if no route is computed.
 var createLocationFoundHandler = require('./location_handler');
 map.on('locationfound', createLocationFoundHandler(map, lrmControl));
+
+// Mark successful startup so the runtime watchdog does not show the error overlay
+window.__osrm_app_loaded = true;
