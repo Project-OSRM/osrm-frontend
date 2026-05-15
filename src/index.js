@@ -138,20 +138,35 @@ var layersControl = L.control.layers(mapLayer, overlay, {
 
 // Detect user interactions on the layer control so persistence only happens for
 // manual (UI) changes and not when a URL sets the layer.
-var userInitiatedBaselayerChange = false;
+var lastUserInitiatedAt = 0;
+function markUserInitiated() {
+  lastUserInitiatedAt = Date.now();
+}
 if (typeof document !== 'undefined' && document.querySelector) {
   var layersControlElem = document.querySelector('.leaflet-control-layers');
   if (layersControlElem) {
+    // Listen in the capture phase to set the timestamp before Leaflet handles the event
+    layersControlElem.addEventListener('change', function(evt) {
+      var t = evt.target || evt.srcElement;
+      if (t && t.tagName && t.tagName.toUpperCase() === 'INPUT' && t.type === 'radio') {
+        markUserInitiated();
+      }
+    }, true);
     layersControlElem.addEventListener('click', function(evt) {
       var target = evt.target || evt.srcElement;
       if (!target) return;
-      // base layer inputs are radio buttons
-      if (target.tagName === 'INPUT' && target.type === 'radio') {
-        userInitiatedBaselayerChange = true;
-        // clear after a short delay in case the event doesn't immediately follow
-        setTimeout(function() { userInitiatedBaselayerChange = false; }, 1000);
+      var el = target;
+      while (el && el !== layersControlElem) {
+        if (el.tagName && el.tagName.toUpperCase() === 'LABEL') {
+          var input = el.querySelector('input');
+          if (input && input.type === 'radio') {
+            markUserInitiated();
+            break;
+          }
+        }
+        el = el.parentElement;
       }
-    }, false);
+    }, true);
   }
 }
 
@@ -164,10 +179,9 @@ var scaleControl = L.control.scale({
 /* Store User preferences */
 // store baselayer changes and update URL/state only when user did the change
 map.on('baselayerchange', function(e) {
-  var userInitiated = !!userInitiatedBaselayerChange;
+  var userInitiated = (Date.now() - (lastUserInitiatedAt || 0)) < 1500;
   layerUtils.handleBaselayerChange(e, ls, state, { userInitiated: userInitiated });
-  // reset flag after handling
-  userInitiatedBaselayerChange = false;
+  lastUserInitiatedAt = 0;
 });
 // store overlay add or remove
 map.on('overlayadd', function(e) {
