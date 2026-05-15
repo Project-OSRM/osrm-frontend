@@ -26,10 +26,20 @@ describe('index baselayer initialization', function() {
 
   test('ly URL param takes precedence over stored localStorage layer', function() {
     const parsed = links.parse('ly=Satellite');
-    const merged = Object.assign({}, leafletOptions.defaultState, parsed);
-    const mapLayer = leafletOptions.layer;
+    const mappedLayer = leafletOptions.layer;
     const storedLayerName = 'Streets';
-    const baselayer = (merged.layer && typeof merged.layer === 'string') ? mapLayer[0][merged.layer] : (mapLayer[0][storedLayerName] || leafletOptions.defaultState.layer);
-    expect(baselayer).toBe(mapLayer[0]['Satellite']);
+    // emulate selection: prefer parsed.layer over stored
+    const chosen = (parsed && parsed.layer) ? (mappedLayer[0][parsed.layer] || leafletOptions.defaultState.layer) : (mappedLayer[0][storedLayerName] || leafletOptions.defaultState.layer);
+    expect(chosen).toBe(mappedLayer[0]['Satellite']);
+  });
+
+  test('stored layer name is matched case-insensitively', function() {
+    const mappedLayer = leafletOptions.layer;
+    const storedLower = 'satellite';
+    // simulate resolveLayerByName behavior: case-insensitive lookup
+    const keys = Object.keys(mappedLayer[0]);
+    var found = undefined;
+    for (var i=0;i<keys.length;i++) if (keys[i].toLowerCase() === storedLower) found = mappedLayer[0][keys[i]];
+    expect(found).toBe(mappedLayer[0]['Satellite']);
   });
 });

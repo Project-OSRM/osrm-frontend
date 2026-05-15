@@ -66,16 +66,36 @@ var overlay = leafletOptions.overlay;
 // Track whether the Bike overlay was auto-enabled by profile selection
 var bikeOverlayOriginallyActive = false;
 var baselayer;
-if (mergedOptions.layer) {
-  if (typeof mergedOptions.layer === 'string' && mapLayer && mapLayer[0]) {
-    baselayer = mapLayer[0][mergedOptions.layer] || leafletOptions.defaultState.layer;
+// Helper to resolve a layer object by name (case-insensitive) from the mapLayer[0] map
+function resolveLayerByName(name) {
+  if (!name || !mapLayer || !mapLayer[0]) return undefined;
+  var map = mapLayer[0];
+  if (map[name]) return map[name];
+  var lower = String(name).toLowerCase();
+  var keys = Object.keys(map);
+  for (var i = 0; i < keys.length; i++) {
+    if (keys[i] && keys[i].toLowerCase() === lower) return map[keys[i]];
+  }
+  // fallback: check id in options if available
+  for (var j = 0; j < keys.length; j++) {
+    var val = map[keys[j]];
+    if (val && val.options && typeof val.options.id === 'string' && val.options.id === name) return val;
+  }
+  return undefined;
+}
+
+// Prefer the layer coming from the URL (parsedOptions.layer) over localStorage
+if (parsedOptions && parsedOptions.layer) {
+  var urlLayer = parsedOptions.layer;
+  if (typeof urlLayer === 'string' && mapLayer && mapLayer[0]) {
+    baselayer = resolveLayerByName(urlLayer) || leafletOptions.defaultState.layer;
   } else {
-    baselayer = mergedOptions.layer || leafletOptions.defaultState.layer;
+    baselayer = urlLayer || leafletOptions.defaultState.layer;
   }
 } else {
   var storedLayerName = ls.get('layer');
   if (storedLayerName) {
-    baselayer = mapLayer[0][storedLayerName] || leafletOptions.defaultState.layer;
+    baselayer = resolveLayerByName(storedLayerName) || leafletOptions.defaultState.layer;
   } else {
     baselayer = leafletOptions.defaultState.layer;
   }
@@ -112,9 +132,28 @@ mapLayer = mapLayer.reduce(function(title, layer) {
 });
 
 /* Leaflet Controls */
-L.control.layers(mapLayer, overlay, {
+var layersControl = L.control.layers(mapLayer, overlay, {
   position: 'bottomleft'
 }).addTo(map);
+
+// Detect user interactions on the layer control so persistence only happens for
+// manual (UI) changes and not when a URL sets the layer.
+var userInitiatedBaselayerChange = false;
+if (typeof document !== 'undefined' && document.querySelector) {
+  var layersControlElem = document.querySelector('.leaflet-control-layers');
+  if (layersControlElem) {
+    layersControlElem.addEventListener('click', function(evt) {
+      var target = evt.target || evt.srcElement;
+      if (!target) return;
+      // base layer inputs are radio buttons
+      if (target.tagName === 'INPUT' && target.type === 'radio') {
+        userInitiatedBaselayerChange = true;
+        // clear after a short delay in case the event doesn't immediately follow
+        setTimeout(function() { userInitiatedBaselayerChange = false; }, 1000);
+      }
+    }, false);
+  }
+}
 
 var scaleControl = L.control.scale({
   position: 'bottomright',
@@ -123,9 +162,12 @@ var scaleControl = L.control.scale({
 }).addTo(map);
 
 /* Store User preferences */
-// store baselayer changes and update URL/state
+// store baselayer changes and update URL/state only when user did the change
 map.on('baselayerchange', function(e) {
-  layerUtils.handleBaselayerChange(e, ls, state);
+  var userInitiated = !!userInitiatedBaselayerChange;
+  layerUtils.handleBaselayerChange(e, ls, state, { userInitiated: userInitiated });
+  // reset flag after handling
+  userInitiatedBaselayerChange = false;
 });
 // store overlay add or remove
 map.on('overlayadd', function(e) {

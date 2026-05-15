@@ -13,7 +13,7 @@ describe('handleBaselayerChange', function() {
     const state = { options: {}, update: jest.fn() };
     const evt = { name: 'Satellite' };
 
-    layerUtils.handleBaselayerChange(evt, ls, state);
+    layerUtils.handleBaselayerChange(evt, ls, state, { userInitiated: true });
 
     expect(ls.set).toHaveBeenCalledWith('layer', 'Satellite');
     expect(state.options.layer).toBe('Satellite');
@@ -25,7 +25,7 @@ describe('handleBaselayerChange', function() {
     const evt = { name: 'Streets' };
 
     expect(function() {
-      layerUtils.handleBaselayerChange(evt, ls, undefined);
+      layerUtils.handleBaselayerChange(evt, ls, undefined, { userInitiated: true });
     }).not.toThrow();
 
     expect(ls.set).toHaveBeenCalledWith('layer', 'Streets');
@@ -36,10 +36,22 @@ describe('handleBaselayerChange', function() {
     const evt = { name: 'Outdoors' };
 
     expect(function() {
-      layerUtils.handleBaselayerChange(evt, null, state);
+      layerUtils.handleBaselayerChange(evt, null, state, { userInitiated: true });
     }).not.toThrow();
 
     expect(state.options.layer).toBe('Outdoors');
     expect(state.update).toHaveBeenCalled();
+  });
+
+  test('does not persist when not user initiated', function() {
+    const ls = { set: jest.fn() };
+    const state = { options: {}, update: jest.fn() };
+    const evt = { name: 'Hiking' };
+
+    layerUtils.handleBaselayerChange(evt, ls, state, { userInitiated: false });
+
+    expect(ls.set).not.toHaveBeenCalled();
+    expect(state.options.layer).toBe('Hiking');
+    expect(state.update).not.toHaveBeenCalled();
   });
 });
