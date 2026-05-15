@@ -50,7 +50,11 @@ function wrapWaypoints(router) {
     var requestId = (router._lastRouteRequestId || 0) + 1;
     router._lastRouteRequestId = requestId;
     if (router._lastXhr && typeof router._lastXhr.abort === 'function') {
-      try { router._lastXhr.abort(); } catch (e) { /* ignore abort errors */ }
+      try {
+        router._lastXhr.abort();
+      } catch (e) {
+        /* ignore abort errors */
+      }
     }
 
     var wrappedCallback = function(err, routes) {
