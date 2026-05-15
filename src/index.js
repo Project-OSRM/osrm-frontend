@@ -427,6 +427,60 @@ if (urlState && urlState.listen) {
   urlState.listen(function(parsed) {
     try {
       var mergedState = L.extend({}, leafletOptions.defaultState, parsed);
+
+      // Apply language via tools control so the existing language handler runs
+      if (parsed && parsed.language) {
+        try {
+          if (toolsControl && typeof toolsControl.fire === 'function') {
+            toolsControl.fire('languagechanged', { language: parsed.language });
+          } else {
+            var newLocalization = localization.get(parsed.language);
+            if (toolsControl && typeof toolsControl.updateLocalization === 'function') toolsControl.updateLocalization(newLocalization);
+            if (modeSelector && modeSelector.updateLocalization) modeSelector.updateLocalization(newLocalization);
+            var plan = lrmControl && lrmControl.getPlan && lrmControl.getPlan();
+            if (plan && plan.options) plan.options.language = parsed.language;
+          }
+        } catch (e) {
+          console.error('Error applying language from history:', e);
+        }
+      }
+
+      // Apply units via tools control to reuse existing handler
+      if (parsed && parsed.units) {
+        try {
+          if (toolsControl && typeof toolsControl.fire === 'function') {
+            toolsControl.fire('unitschanged', { unit: parsed.units });
+          }
+        } catch (e) {
+          console.error('Error applying units from history:', e);
+        }
+      }
+
+      // Apply profile/service selection
+      if (parsed && parsed.profile !== undefined && parsed.profile !== null) {
+        var profileIndex = parseInt(parsed.profile, 10);
+        if (!isNaN(profileIndex)) {
+          try {
+            routerPatches.setActiveService(router, profileIndex, services);
+            ls.set('profile', profileIndex);
+            if (modeSelector && modeSelector.select) modeSelector.select.value = profileIndex;
+            state.options.profile = profileIndex;
+
+            // Trigger re-route with current waypoints if applicable
+            var waypoints = lrmControl && typeof lrmControl.getWaypoints === 'function' ? lrmControl.getWaypoints() : null;
+            var validWaypoints = (waypoints || []).filter(function(wp) {
+              return wp && wp.latLng;
+            });
+            if (validWaypoints.length >= 2 && lrmControl && typeof lrmControl.route === 'function') {
+              lrmControl.route();
+            }
+          } catch (e) {
+            console.error('Error applying profile from history:', e);
+          }
+        }
+      }
+
+      // Finally apply center/zoom/waypoints via state.set
       state.set(mergedState);
     } catch (err) {
       console.error('Error restoring state from popstate:', err);
