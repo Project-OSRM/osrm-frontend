@@ -33,7 +33,7 @@ var modeSelectorModule = require('./mode_selector');
 L.Control.Locate = L.Control.Locate || {};
 var locate = require('leaflet.locatecontrol');
 var options = require('./lrm_options');
-var links = require('./links');
+var urlState = require('./url_state');
 var leafletOptions = require('./leaflet_options');
 var ls = require('local-storage');
 var tools = require('./tools');
@@ -43,7 +43,7 @@ var initialLayers = require('./initial_layers');
 var layerUtils = require('./layer_utils');
 require('./polyfill');
 
-var parsedOptions = links.parse(window.location.search.slice(1));
+var parsedOptions = urlState.parse(window.location.search.slice(1));
 // Merge into a fresh object to avoid mutating leafletOptions.defaultState
 var mergedOptions = L.extend({}, leafletOptions.defaultState, parsedOptions);
 var language = mergedOptions.language;
@@ -422,6 +422,94 @@ var toolsControl = tools.control(localization.get(mergedOptions.language), local
 
 var state = state(map, lrmControl, toolsControl, modeSelector, mergedOptions);
 
+// Listen for browser navigation (back/forward) and restore app state
+if (urlState && urlState.listen) {
+  urlState.listen(function(parsed) {
+    // When applying a restored state we need to suppress emitting new history
+    // entries from the event handlers in State (waypoint/map changes etc.).
+    try {
+      var mergedState = L.extend({}, leafletOptions.defaultState, parsed);
+
+      // Temporarily suppress history writes while applying the restored state
+      try {
+        state.disableHistory();
+      } catch (e) {
+        // ignore if state is not yet ready
+      }
+
+      // Apply language via tools control so the existing language handler runs
+      if (parsed && parsed.language) {
+        try {
+          if (toolsControl && typeof toolsControl.fire === 'function') {
+            toolsControl.fire('languagechanged', { language: parsed.language });
+          } else {
+            var newLocalization = localization.get(parsed.language);
+            if (toolsControl && typeof toolsControl.updateLocalization === 'function') toolsControl.updateLocalization(newLocalization);
+            if (modeSelector && modeSelector.updateLocalization) modeSelector.updateLocalization(newLocalization);
+            var plan = lrmControl && lrmControl.getPlan && lrmControl.getPlan();
+            if (plan && plan.options) plan.options.language = parsed.language;
+          }
+        } catch (e) {
+          console.error('Error applying language from history:', e);
+        }
+      }
+
+      // Apply units via tools control to reuse existing handler
+      if (parsed && parsed.units) {
+        try {
+          if (toolsControl && typeof toolsControl.fire === 'function') {
+            toolsControl.fire('unitschanged', { unit: parsed.units });
+          }
+        } catch (e) {
+          console.error('Error applying units from history:', e);
+        }
+      }
+
+      // Apply profile/service selection
+      if (parsed && parsed.profile !== undefined && parsed.profile !== null) {
+        var profileIndex = parseInt(parsed.profile, 10);
+        if (!isNaN(profileIndex)) {
+          try {
+            routerPatches.setActiveService(router, profileIndex, services);
+            ls.set('profile', profileIndex);
+            if (modeSelector && modeSelector.select) modeSelector.select.value = profileIndex;
+            state.options.profile = profileIndex;
+
+            // Trigger re-route with current waypoints if applicable
+            var waypoints = lrmControl && typeof lrmControl.getWaypoints === 'function' ? lrmControl.getWaypoints() : null;
+            var validWaypoints = (waypoints || []).filter(function(wp) {
+              return wp && wp.latLng;
+            });
+            if (validWaypoints.length >= 2 && lrmControl && typeof lrmControl.route === 'function') {
+              lrmControl.route();
+            }
+          } catch (e) {
+            console.error('Error applying profile from history:', e);
+          }
+        }
+      }
+
+      // Finally apply center/zoom/waypoints via state.set
+      state.set(mergedState);
+
+      // Ensure the browser URL matches the restored state (and keep it as a replace)
+      try {
+        urlState.replace(mergedState);
+      } catch (e) {
+        // ignore replacement failures
+      }
+    } catch (err) {
+      console.error('Error restoring state from popstate:', err);
+    } finally {
+      try {
+        state.enableHistory();
+      } catch (e) {
+        // ignore
+      }
+    }
+  });
+}
+
 // Listen for unit changes from tools and update scale and routing control
 if (toolsControl && toolsControl.on) {
   toolsControl.on('unitschanged', function(e) {
@@ -482,10 +570,10 @@ if (toolsControl && toolsControl.on) {
       state.options.profile = profileIndex;
       
       // Update URL to include profile parameter - reparse current URL and update profile
-      var currentParams = links.parse(window.location.search.slice(1));
-      currentParams.profile = profileIndex;
-      var newUrl = '?' + links.format(currentParams);
-      window.history.replaceState({}, '', newUrl);
+      // Create a navigable history entry for profile changes
+      // Update the shared state and push a new history entry
+      state.options.profile = profileIndex;
+      state.update({ push: true });
       
       // Trigger re-route with current waypoints if they exist
       var waypoints = lrmControl.getWaypoints();
