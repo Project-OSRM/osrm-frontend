@@ -101,6 +101,48 @@ if (parsedOptions && parsedOptions.layer) {
   }
 }
 
+// Normalize mergedOptions.layer to a canonical layer name (string) when possible.
+// This prevents an unknown or invalid `ly` value from being preserved and later
+// written back into the URL/state. If no canonical name can be determined,
+// remove the layer option so it won't be serialized.
+function canonicalizeLayer(val) {
+  if (!mapLayer || !mapLayer[0]) return undefined;
+  var map = mapLayer[0];
+  var keys = Object.keys(map);
+  if (typeof val === 'string') {
+    var lower = String(val).toLowerCase();
+    for (var _i = 0; _i < keys.length; _i++) {
+      if (keys[_i] && keys[_i].toLowerCase() === lower) return keys[_i];
+    }
+    for (var _j = 0; _j < keys.length; _j++) {
+      var v = map[keys[_j]];
+      if (v && v.options && typeof v.options.id === 'string' && v.options.id === val) return keys[_j];
+    }
+    return undefined;
+  } else if (val && typeof val === 'object') {
+    for (var _k = 0; _k < keys.length; _k++) {
+      if (map[keys[_k]] === val) return keys[_k];
+    }
+    for (var _m = 0; _m < keys.length; _m++) {
+      var v2 = map[keys[_m]];
+      if (v2 && v2.options && val.options && v2.options.id === val.options.id) return keys[_m];
+    }
+    return undefined;
+  }
+  return undefined;
+}
+
+// If the URL supplied a layer, prefer it (but normalize it); otherwise use stored layer.
+var normalizedLayerName = canonicalizeLayer(baselayer) || canonicalizeLayer(parsedOptions && parsedOptions.layer);
+if (normalizedLayerName) {
+  mergedOptions.layer = normalizedLayerName;
+} else {
+  // Don't persist an unknown string into mergedOptions.layer — remove it so state.update won't serialize it.
+  if (mergedOptions && Object.prototype.hasOwnProperty.call(mergedOptions, 'layer')) {
+    delete mergedOptions.layer;
+  }
+}
+
 // Determine the initial profile so we can pick the right overlay
 var _urlProfile = parsedOptions.profile;
 var _savedProfile = ls.get('profile');

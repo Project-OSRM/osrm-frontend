@@ -1,10 +1,9 @@
-'use strict';
-
-// Ensure jsdom for history APIs
 /**
  * @jest-environment jsdom
  */
+'use strict';
 
+// Ensure jsdom for history APIs
 const layerUtils = require('../src/layer_utils');
 
 describe('handleBaselayerChange', function() {

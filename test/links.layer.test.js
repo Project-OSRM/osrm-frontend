@@ -46,13 +46,13 @@ describe('links.format — layer param (ly)', () => {
     expect(output).toContain('ly=Satellite');
   });
 
-  test('falls back to default layer name when layer missing', () => {
+  test('omits ly when layer not provided', () => {
     const output = links.format({
       zoom: 13,
       center: L.latLng(52.5, 13.4),
       waypoints: [],
       language: 'en'
     });
-    expect(output).toContain('ly=Streets');
+    expect(output).not.toContain('ly=');
   });
 });

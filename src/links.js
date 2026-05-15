@@ -38,15 +38,14 @@ function _parseInteger(intStr) {
 }
 
 function _formatLayer(layer) {
-  var DEFAULT_LAYER_NAME = 'Streets';
-  if (!layer) return DEFAULT_LAYER_NAME;
+  if (!layer) return undefined;
   if (typeof layer === 'string') return layer;
   if (typeof layer === 'object') {
     if (typeof layer.label === 'string') return layer.label;
     if (layer.options && typeof layer.options.id === 'string') return layer.options.id;
     if (typeof layer.name === 'string') return layer.name;
   }
-  return DEFAULT_LAYER_NAME;
+  return undefined;
 }
 
 function formatLink(options) {
