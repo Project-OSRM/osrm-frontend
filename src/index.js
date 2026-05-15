@@ -33,7 +33,7 @@ var modeSelectorModule = require('./mode_selector');
 L.Control.Locate = L.Control.Locate || {};
 var locate = require('leaflet.locatecontrol');
 var options = require('./lrm_options');
-var links = require('./links');
+var urlState = require('./url_state');
 var leafletOptions = require('./leaflet_options');
 var ls = require('local-storage');
 var tools = require('./tools');
@@ -43,7 +43,7 @@ var initialLayers = require('./initial_layers');
 var layerUtils = require('./layer_utils');
 require('./polyfill');
 
-var parsedOptions = links.parse(window.location.search.slice(1));
+var parsedOptions = urlState.parse(window.location.search.slice(1));
 // Merge into a fresh object to avoid mutating leafletOptions.defaultState
 var mergedOptions = L.extend({}, leafletOptions.defaultState, parsedOptions);
 var language = mergedOptions.language;
@@ -422,6 +422,18 @@ var toolsControl = tools.control(localization.get(mergedOptions.language), local
 
 var state = state(map, lrmControl, toolsControl, modeSelector, mergedOptions);
 
+// Listen for browser navigation (back/forward) and restore app state
+if (urlState && urlState.listen) {
+  urlState.listen(function(parsed) {
+    try {
+      var mergedState = L.extend({}, leafletOptions.defaultState, parsed);
+      state.set(mergedState);
+    } catch (err) {
+      console.error('Error restoring state from popstate:', err);
+    }
+  });
+}
+
 // Listen for unit changes from tools and update scale and routing control
 if (toolsControl && toolsControl.on) {
   toolsControl.on('unitschanged', function(e) {
@@ -482,10 +494,9 @@ if (toolsControl && toolsControl.on) {
       state.options.profile = profileIndex;
       
       // Update URL to include profile parameter - reparse current URL and update profile
-      var currentParams = links.parse(window.location.search.slice(1));
+      var currentParams = urlState.parse(window.location.search.slice(1));
       currentParams.profile = profileIndex;
-      var newUrl = '?' + links.format(currentParams);
-      window.history.replaceState({}, '', newUrl);
+      urlState.replace(currentParams);
       
       // Trigger re-route with current waypoints if they exist
       var waypoints = lrmControl.getWaypoints();

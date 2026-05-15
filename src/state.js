@@ -2,6 +2,7 @@
 
 var L = require('leaflet');
 var links = require('./links');
+var urlState = require('./url_state');
 
 var State = L.Class.extend({
   options: { },
@@ -112,11 +113,16 @@ var State = L.Class.extend({
 
   // Update browser url
   update: function() {
-    var baseURL = window.location.href.split('?')[0];
-    var newParms = links.format(this.options);
-    var newURL = baseURL.concat('?').concat(newParms);
-    window.location.hash = newParms;
-    history.replaceState({}, 'Project OSRM Demo', newURL);
+    // Update the browser URL without creating a new history entry
+    try {
+      urlState.replace(this.options);
+    } catch (e) {
+      // Fallback to previous behavior if urlState is unavailable
+      var baseURL = window.location.href.split('?')[0];
+      var newParms = links.format(this.options);
+      var newURL = baseURL + '?' + newParms;
+      history.replaceState({}, 'Project OSRM Demo', newURL);
+    }
   }
 });
 
