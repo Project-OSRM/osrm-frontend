@@ -49,7 +49,7 @@ describe('router_patches', () => {
 
     const xhr1 = router.route(wp1, cb1);
     // Second route should abort the first xhr synchronously within the wrapper
-    const xhr2 = router.route(wp2, cb2);
+    router.route(wp2, cb2);
 
     // xhr1 should expose an abort function
     expect(xhr1 && typeof xhr1.abort === 'function').toBe(true);

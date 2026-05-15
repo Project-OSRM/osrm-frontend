@@ -24,6 +24,10 @@ function leftOrRight(d) {
 // We re-offset the snapped latlngs back by the same ±n×360° that was applied
 // during wrapping, keeping markers in the correct viewport position.
 function wrapWaypoints(router) {
+  // Make this idempotent: avoid double-patching the same router instance.
+  if (router._wrapWaypointsPatched) return;
+  router._wrapWaypointsPatched = true;
+
   var origRoute = router.route.bind(router);
   // Track last request so we can abort or ignore out-of-order responses
   router._lastRouteRequestId = router._lastRouteRequestId || 0;
