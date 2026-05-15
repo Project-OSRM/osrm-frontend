@@ -25,6 +25,10 @@ function leftOrRight(d) {
 // during wrapping, keeping markers in the correct viewport position.
 function wrapWaypoints(router) {
   var origRoute = router.route.bind(router);
+  // Track last request so we can abort or ignore out-of-order responses
+  router._lastRouteRequestId = router._lastRouteRequestId || 0;
+  router._lastXhr = router._lastXhr || null;
+
   router.route = function(waypoints, callback, context, options) {
     var wrapped = (waypoints || []).map(function(wp) {
       if (!wp || !wp.latLng || typeof wp.latLng.wrap !== 'function') return wp;
@@ -41,7 +45,18 @@ function wrapWaypoints(router) {
       return acc !== 0 ? acc : o;
     }, 0);
 
+    // Bump request id and abort any previous in-flight request to avoid
+    // out-of-order responses interfering with the latest drag action.
+    var requestId = (router._lastRouteRequestId || 0) + 1;
+    router._lastRouteRequestId = requestId;
+    if (router._lastXhr && typeof router._lastXhr.abort === 'function') {
+      try { router._lastXhr.abort(); } catch (e) { /* ignore abort errors */ }
+    }
+
     var wrappedCallback = function(err, routes) {
+      // Ignore responses from older/aborted requests
+      if (router._lastRouteRequestId !== requestId) return;
+
       if (!err && routes) {
         routes.forEach(function(route) {
           if (route && route.waypoints) {
@@ -77,7 +92,9 @@ function wrapWaypoints(router) {
       if (typeof callback === 'function') callback.apply(context || callback, arguments);
     };
 
-    return origRoute(wrapped, wrappedCallback, context, options);
+    var xhr = origRoute(wrapped, wrappedCallback, context, options);
+    router._lastXhr = xhr;
+    return xhr;
   };
 }
 
