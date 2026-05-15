@@ -66,17 +66,19 @@ var overlay = leafletOptions.overlay;
 // Track whether the Bike overlay was auto-enabled by profile selection
 var bikeOverlayOriginallyActive = false;
 var baselayer;
-var storedLayerName = ls.get('layer');
-if (storedLayerName) {
-  baselayer = mapLayer[0][storedLayerName];
-} else if (mergedOptions.layer) {
+if (mergedOptions.layer) {
   if (typeof mergedOptions.layer === 'string' && mapLayer && mapLayer[0]) {
     baselayer = mapLayer[0][mergedOptions.layer] || leafletOptions.defaultState.layer;
   } else {
     baselayer = mergedOptions.layer || leafletOptions.defaultState.layer;
   }
 } else {
-  baselayer = leafletOptions.defaultState.layer;
+  var storedLayerName = ls.get('layer');
+  if (storedLayerName) {
+    baselayer = mapLayer[0][storedLayerName] || leafletOptions.defaultState.layer;
+  } else {
+    baselayer = leafletOptions.defaultState.layer;
+  }
 }
 
 // Determine the initial profile so we can pick the right overlay

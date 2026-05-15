@@ -23,4 +23,13 @@ describe('index baselayer initialization', function() {
     const baselayer = (merged.layer && typeof merged.layer === 'string') ? mapLayer[0][merged.layer] : leafletOptions.defaultState.layer;
     expect(baselayer).toBeDefined();
   });
+
+  test('ly URL param takes precedence over stored localStorage layer', function() {
+    const parsed = links.parse('ly=Satellite');
+    const merged = Object.assign({}, leafletOptions.defaultState, parsed);
+    const mapLayer = leafletOptions.layer;
+    const storedLayerName = 'Streets';
+    const baselayer = (merged.layer && typeof merged.layer === 'string') ? mapLayer[0][merged.layer] : (mapLayer[0][storedLayerName] || leafletOptions.defaultState.layer);
+    expect(baselayer).toBe(mapLayer[0]['Satellite']);
+  });
 });
