@@ -1,4 +1,4 @@
-name: Dependabot Updates
+name: Weekly dependency update
 
 on:
   schedule:
@@ -9,7 +9,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  dependabot:
+  weekly-deps-update:
     runs-on: ubuntu-latest
 
     steps:
