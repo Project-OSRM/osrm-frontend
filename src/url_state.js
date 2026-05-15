@@ -4,7 +4,8 @@ var links = require('./links');
 
 function parse(q) {
   // Accept either a query-string (without '?') or default to current location
-  if (!q && typeof window !== 'undefined') {
+  // Only default when q is omitted/nullish — but respect an explicit empty string
+  if ((q === undefined || q === null) && typeof window !== 'undefined') {
     q = window.location.search.slice(1);
   }
   var parsed = links.parse(q);

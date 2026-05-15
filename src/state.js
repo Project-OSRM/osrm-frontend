@@ -13,6 +13,9 @@ var State = L.Class.extend({
     this._tools = tools;
     this._modeSelector = modeSelector;
 
+    // When applying history/popstate we temporarily suppress emitting URL updates
+    this._suppressHistory = false;
+
     this.set(default_options);
 
     this._lrm.on('routeselected', function(e) {
@@ -20,7 +23,7 @@ var State = L.Class.extend({
     }, this);
 
     this._lrm.getPlan().on('waypointschanged', function() {
-      this.options.waypoints = this._lrm.getWaypoints(); this.update(); 
+      this.options.waypoints = this._lrm.getWaypoints(); this.update({ push: true });
     }.bind(this));
     this._map.on('zoomend', function() {
       this.options.zoom = this._map.getZoom();  this.update(); 
@@ -30,8 +33,8 @@ var State = L.Class.extend({
     }.bind(this));
     this._tools.on('languagechanged', function(e) {
       this.options.language = e.language;
-      // Update URL without reloading the page
-      this.update();
+      // Update URL without reloading the page (user action -> create history entry)
+      this.update({ push: true });
       // Update the tools localization and UI
       var localization = require('./localization');
       var newLocalization = localization.get(e.language);
@@ -73,7 +76,7 @@ var State = L.Class.extend({
     }.bind(this));
     this._tools.on('unitschanged', function(e) {
       this.options.units = e.unit;
-      this.update();
+      this.update({ push: true });
       // Update routing control units and re-render itinerary/directions
       if (this._lrm) {
         // Update control options
@@ -166,17 +169,40 @@ var State = L.Class.extend({
     window.location.reload();
   },
 
+  disableHistory: function() {
+    this._suppressHistory = true;
+  },
+
+  enableHistory: function() {
+    this._suppressHistory = false;
+  },
+
   // Update browser url
-  update: function() {
-    // Update the browser URL without creating a new history entry
+  update: function(opts) {
+    opts = opts || {};
+    // If suppressed (e.g., while applying popstate), do not modify history
+    if (this._suppressHistory) return;
+
     try {
-      urlState.replace(this.options);
+      if (opts.push) {
+        urlState.push(this.options);
+      } else {
+        urlState.replace(this.options);
+      }
     } catch (e) {
-      // Fallback to previous behavior if urlState is unavailable
+      // Fallback if urlState is unavailable
       var baseURL = window.location.href.split('?')[0];
       var newParms = links.format(this.options);
       var newURL = baseURL + '?' + newParms;
-      history.replaceState({}, 'Project OSRM Demo', newURL);
+      try {
+        if (opts.push) {
+          history.pushState({}, 'Project OSRM Demo', newURL);
+        } else {
+          history.replaceState({}, 'Project OSRM Demo', newURL);
+        }
+      } catch (err) {
+        // ignore fallback errors
+      }
     }
   }
 });

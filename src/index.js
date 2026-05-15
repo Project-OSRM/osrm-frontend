@@ -425,8 +425,17 @@ var state = state(map, lrmControl, toolsControl, modeSelector, mergedOptions);
 // Listen for browser navigation (back/forward) and restore app state
 if (urlState && urlState.listen) {
   urlState.listen(function(parsed) {
+    // When applying a restored state we need to suppress emitting new history
+    // entries from the event handlers in State (waypoint/map changes etc.).
     try {
       var mergedState = L.extend({}, leafletOptions.defaultState, parsed);
+
+      // Temporarily suppress history writes while applying the restored state
+      try {
+        state.disableHistory();
+      } catch (e) {
+        // ignore if state is not yet ready
+      }
 
       // Apply language via tools control so the existing language handler runs
       if (parsed && parsed.language) {
@@ -482,8 +491,21 @@ if (urlState && urlState.listen) {
 
       // Finally apply center/zoom/waypoints via state.set
       state.set(mergedState);
+
+      // Ensure the browser URL matches the restored state (and keep it as a replace)
+      try {
+        urlState.replace(mergedState);
+      } catch (e) {
+        // ignore replacement failures
+      }
     } catch (err) {
       console.error('Error restoring state from popstate:', err);
+    } finally {
+      try {
+        state.enableHistory();
+      } catch (e) {
+        // ignore
+      }
     }
   });
 }
@@ -548,9 +570,10 @@ if (toolsControl && toolsControl.on) {
       state.options.profile = profileIndex;
       
       // Update URL to include profile parameter - reparse current URL and update profile
-      var currentParams = urlState.parse(window.location.search.slice(1));
-      currentParams.profile = profileIndex;
-      urlState.replace(currentParams);
+      // Create a navigable history entry for profile changes
+      // Update the shared state and push a new history entry
+      state.options.profile = profileIndex;
+      state.update({ push: true });
       
       // Trigger re-route with current waypoints if they exist
       var waypoints = lrmControl.getWaypoints();
