@@ -87,10 +87,18 @@ function resolveLayerByName(name) {
 // Prefer the layer coming from the URL (parsedOptions.layer) over localStorage
 if (parsedOptions && parsedOptions.layer) {
   var urlLayer = parsedOptions.layer;
+  // qs may parse repeated params into arrays; accept only a string (or coerced first element)
+  if (Array.isArray(urlLayer)) {
+    urlLayer = urlLayer.length > 0 ? urlLayer[0] : undefined;
+  }
   if (typeof urlLayer === 'string' && mapLayer && mapLayer[0]) {
     baselayer = resolveLayerByName(urlLayer) || leafletOptions.defaultState.layer;
-  } else {
+  } else if (typeof urlLayer === 'string') {
+    // If it's a plain string but no mapLayer map is available, fall back safely
     baselayer = urlLayer || leafletOptions.defaultState.layer;
+  } else {
+    // Non-string or missing -> ignore URL layer and use default
+    baselayer = leafletOptions.defaultState.layer;
   }
 } else {
   var storedLayerName = ls.get('layer');
