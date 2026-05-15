@@ -40,6 +40,7 @@ var tools = require('./tools');
 var state = require('./state');
 var localization = require('./localization');
 var initialLayers = require('./initial_layers');
+var layerUtils = require('./layer_utils');
 require('./polyfill');
 
 var parsedOptions = links.parse(window.location.search.slice(1));
@@ -107,9 +108,9 @@ var scaleControl = L.control.scale({
 }).addTo(map);
 
 /* Store User preferences */
-// store baselayer changes
+// store baselayer changes and update URL/state
 map.on('baselayerchange', function(e) {
-  ls.set('layer', e.name);
+  layerUtils.handleBaselayerChange(e, ls, state);
 });
 // store overlay add or remove
 map.on('overlayadd', function(e) {
