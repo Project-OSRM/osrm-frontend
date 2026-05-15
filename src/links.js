@@ -37,6 +37,17 @@ function _parseInteger(intStr) {
   return integer;
 }
 
+function _formatLayer(layer) {
+  if (!layer) return undefined;
+  if (typeof layer === 'string') return layer;
+  if (typeof layer === 'object') {
+    if (typeof layer.label === 'string') return layer.label;
+    if (layer.options && typeof layer.options.id === 'string') return layer.options.id;
+    if (typeof layer.name === 'string') return layer.name;
+  }
+  return undefined;
+}
+
 function formatLink(options) {
   // Output all waypoints as loc parameters, using empty string for missing
   var locs = undefined;
@@ -52,6 +63,7 @@ function formatLink(options) {
     hl: options.language,
     alt: options.alternative,
     scale: options.units,
+    ly: _formatLayer(options.layer),
     srv: options.service,
     profile: options.profile
   }, {indices: false});

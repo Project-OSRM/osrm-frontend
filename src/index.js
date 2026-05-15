@@ -40,10 +40,12 @@ var tools = require('./tools');
 var state = require('./state');
 var localization = require('./localization');
 var initialLayers = require('./initial_layers');
+var layerUtils = require('./layer_utils');
 require('./polyfill');
 
 var parsedOptions = links.parse(window.location.search.slice(1));
-var mergedOptions = L.extend(leafletOptions.defaultState, parsedOptions);
+// Merge into a fresh object to avoid mutating leafletOptions.defaultState
+var mergedOptions = L.extend({}, leafletOptions.defaultState, parsedOptions);
 var language = mergedOptions.language;
 
 // Build and translate services early so modeSelector can use translated labels
@@ -63,7 +65,91 @@ var overlay = leafletOptions.overlay;
 
 // Track whether the Bike overlay was auto-enabled by profile selection
 var bikeOverlayOriginallyActive = false;
-var baselayer = ls.get('layer') ? mapLayer[0][ls.get('layer')] : leafletOptions.defaultState.layer;
+var baselayer;
+// Helper to resolve a layer object by name (case-insensitive) from the mapLayer[0] map
+function resolveLayerByName(name) {
+  if (!name || !mapLayer || !mapLayer[0]) return undefined;
+  var map = mapLayer[0];
+  if (map[name]) return map[name];
+  var lower = String(name).toLowerCase();
+  var keys = Object.keys(map);
+  for (var i = 0; i < keys.length; i++) {
+    if (keys[i] && keys[i].toLowerCase() === lower) return map[keys[i]];
+  }
+  // fallback: check id in options if available
+  for (var j = 0; j < keys.length; j++) {
+    var val = map[keys[j]];
+    if (val && val.options && typeof val.options.id === 'string' && val.options.id === name) return val;
+  }
+  return undefined;
+}
+
+// Prefer the layer coming from the URL (parsedOptions.layer) over localStorage
+if (parsedOptions && parsedOptions.layer) {
+  var urlLayer = parsedOptions.layer;
+  // qs may parse repeated params into arrays; accept only a string (or coerced first element)
+  if (Array.isArray(urlLayer)) {
+    urlLayer = urlLayer.length > 0 ? urlLayer[0] : undefined;
+  }
+  if (typeof urlLayer === 'string' && mapLayer && mapLayer[0]) {
+    baselayer = resolveLayerByName(urlLayer) || leafletOptions.defaultState.layer;
+  } else if (typeof urlLayer === 'string') {
+    // If it's a plain string but no mapLayer map is available, fall back safely
+    baselayer = urlLayer || leafletOptions.defaultState.layer;
+  } else {
+    // Non-string or missing -> ignore URL layer and use default
+    baselayer = leafletOptions.defaultState.layer;
+  }
+} else {
+  var storedLayerName = ls.get('layer');
+  if (storedLayerName) {
+    baselayer = resolveLayerByName(storedLayerName) || leafletOptions.defaultState.layer;
+  } else {
+    baselayer = leafletOptions.defaultState.layer;
+  }
+}
+
+// Normalize mergedOptions.layer to a canonical layer name (string) when possible.
+// This prevents an unknown or invalid `ly` value from being preserved and later
+// written back into the URL/state. If no canonical name can be determined,
+// remove the layer option so it won't be serialized.
+function canonicalizeLayer(val) {
+  if (!mapLayer || !mapLayer[0]) return undefined;
+  var map = mapLayer[0];
+  var keys = Object.keys(map);
+  if (typeof val === 'string') {
+    var lower = String(val).toLowerCase();
+    for (var _i = 0; _i < keys.length; _i++) {
+      if (keys[_i] && keys[_i].toLowerCase() === lower) return keys[_i];
+    }
+    for (var _j = 0; _j < keys.length; _j++) {
+      var v = map[keys[_j]];
+      if (v && v.options && typeof v.options.id === 'string' && v.options.id === val) return keys[_j];
+    }
+    return undefined;
+  } else if (val && typeof val === 'object') {
+    for (var _k = 0; _k < keys.length; _k++) {
+      if (map[keys[_k]] === val) return keys[_k];
+    }
+    for (var _m = 0; _m < keys.length; _m++) {
+      var v2 = map[keys[_m]];
+      if (v2 && v2.options && val.options && v2.options.id === val.options.id) return keys[_m];
+    }
+    return undefined;
+  }
+  return undefined;
+}
+
+// If the URL supplied a layer, prefer it (but normalize it); otherwise use stored layer.
+var normalizedLayerName = canonicalizeLayer(baselayer) || canonicalizeLayer(parsedOptions && parsedOptions.layer);
+if (normalizedLayerName) {
+  mergedOptions.layer = normalizedLayerName;
+} else {
+  // Don't persist an unknown string into mergedOptions.layer — remove it so state.update won't serialize it.
+  if (mergedOptions && Object.prototype.hasOwnProperty.call(mergedOptions, 'layer')) {
+    delete mergedOptions.layer;
+  }
+}
 
 // Determine the initial profile so we can pick the right overlay
 var _urlProfile = parsedOptions.profile;
@@ -96,9 +182,43 @@ mapLayer = mapLayer.reduce(function(title, layer) {
 });
 
 /* Leaflet Controls */
-L.control.layers(mapLayer, overlay, {
+var layersControl = L.control.layers(mapLayer, overlay, {
   position: 'bottomleft'
 }).addTo(map);
+
+// Detect user interactions on the layer control so persistence only happens for
+// manual (UI) changes and not when a URL sets the layer.
+var lastUserInitiatedAt = 0;
+function markUserInitiated() {
+  lastUserInitiatedAt = Date.now();
+}
+if (typeof document !== 'undefined' && document.querySelector) {
+  var layersControlElem = document.querySelector('.leaflet-control-layers');
+  if (layersControlElem) {
+    // Listen in the capture phase to set the timestamp before Leaflet handles the event
+    layersControlElem.addEventListener('change', function(evt) {
+      var t = evt.target || evt.srcElement;
+      if (t && t.tagName && t.tagName.toUpperCase() === 'INPUT' && t.type === 'radio') {
+        markUserInitiated();
+      }
+    }, true);
+    layersControlElem.addEventListener('click', function(evt) {
+      var target = evt.target || evt.srcElement;
+      if (!target) return;
+      var el = target;
+      while (el && el !== layersControlElem) {
+        if (el.tagName && el.tagName.toUpperCase() === 'LABEL') {
+          var input = el.querySelector('input');
+          if (input && input.type === 'radio') {
+            markUserInitiated();
+            break;
+          }
+        }
+        el = el.parentElement;
+      }
+    }, true);
+  }
+}
 
 var scaleControl = L.control.scale({
   position: 'bottomright',
@@ -107,9 +227,11 @@ var scaleControl = L.control.scale({
 }).addTo(map);
 
 /* Store User preferences */
-// store baselayer changes
+// store baselayer changes and update URL/state only when user did the change
 map.on('baselayerchange', function(e) {
-  ls.set('layer', e.name);
+  var userInitiated = (Date.now() - (lastUserInitiatedAt || 0)) < 1500;
+  layerUtils.handleBaselayerChange(e, ls, state, { userInitiated: userInitiated });
+  lastUserInitiatedAt = 0;
 });
 // store overlay add or remove
 map.on('overlayadd', function(e) {
