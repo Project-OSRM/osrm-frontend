@@ -44,7 +44,8 @@ var layerUtils = require('./layer_utils');
 require('./polyfill');
 
 var parsedOptions = links.parse(window.location.search.slice(1));
-var mergedOptions = L.extend(leafletOptions.defaultState, parsedOptions);
+// Merge into a fresh object to avoid mutating leafletOptions.defaultState
+var mergedOptions = L.extend({}, leafletOptions.defaultState, parsedOptions);
 var language = mergedOptions.language;
 
 // Build and translate services early so modeSelector can use translated labels
@@ -64,7 +65,19 @@ var overlay = leafletOptions.overlay;
 
 // Track whether the Bike overlay was auto-enabled by profile selection
 var bikeOverlayOriginallyActive = false;
-var baselayer = ls.get('layer') ? mapLayer[0][ls.get('layer')] : leafletOptions.defaultState.layer;
+var baselayer;
+var storedLayerName = ls.get('layer');
+if (storedLayerName) {
+  baselayer = mapLayer[0][storedLayerName];
+} else if (mergedOptions.layer) {
+  if (typeof mergedOptions.layer === 'string' && mapLayer && mapLayer[0]) {
+    baselayer = mapLayer[0][mergedOptions.layer] || leafletOptions.defaultState.layer;
+  } else {
+    baselayer = mergedOptions.layer || leafletOptions.defaultState.layer;
+  }
+} else {
+  baselayer = leafletOptions.defaultState.layer;
+}
 
 // Determine the initial profile so we can pick the right overlay
 var _urlProfile = parsedOptions.profile;
