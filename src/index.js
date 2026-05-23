@@ -734,9 +734,10 @@ lrmControl.on('alternateChosen', function(e) {
   }
 });
 
-// Route export
 lrmControl.on('routeselected', function(e) {
   var route = e.route || {};
+
+  // Route export: build GeoJSON and hand it to the tools control for GPX download
   var routeGeoJSON = {
     type: 'Feature',
     properties: {
@@ -753,19 +754,18 @@ lrmControl.on('routeselected', function(e) {
     },
     geometry: {
       type: 'LineString',
-      coordinates: (route.coordinates || []).map(function (coordinate) {
+      coordinates: (route.coordinates || []).map(function(coordinate) {
         return [coordinate.lng, coordinate.lat];
       })
     }
   };
   toolsControl.setRouteGeoJSON(routeGeoJSON);
-});
-lrmControl.on('routeselected', function(e) {
+
+  // Fit/pan: adjust the map view to the newly selected route
   if (!shouldFitRoute) return;
   shouldFitRoute = false;
 
-  var route = e.route;
-  if (!route || !route.coordinates || route.coordinates.length === 0) return;
+  if (!route.coordinates || route.coordinates.length === 0) return;
 
   var bounds = L.latLngBounds(route.coordinates);
 
