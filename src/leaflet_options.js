@@ -129,11 +129,13 @@ function parseModes() {
         // Keep freely named user-facing modes while assigning known internal routing profiles.
         return modes.map(function(mode, index) {
           var profileNames = ['driving', 'bike', 'foot'];
-          return {
+          var result = {
             name: mode.name || ('Mode ' + (index + 1)),
             url: mode.url || 'http://localhost:5000',
             profile: profileNames[index] || 'driving'  // Use standard profile for routing
           };
+          if (mode.path) result.path = mode.path;  // preserve explicit path (e.g. routed-bike/route/v1)
+          return result;
         });
       }
     } catch (e) {
@@ -162,9 +164,12 @@ function parseModes() {
     ];
   }
   
-  // Docker mode default: single "default" profile using localhost:5000
+  // Docker mode default: same three public profiles as non-Docker mode.
+  // Override via OSRM_MODES or OSRM_BACKEND env vars to point at a self-hosted server.
   return [
-    { name: 'default', url: 'http://localhost:5000', profile: 'driving' }
+    { name: 'driving', url: 'https://router.project-osrm.org', path: 'https://router.project-osrm.org/route/v1', profile: 'driving' },
+    { name: 'bike', url: 'https://routing.openstreetmap.de', path: 'https://routing.openstreetmap.de/routed-bike/route/v1', profile: 'bike' },
+    { name: 'foot', url: 'https://routing.openstreetmap.de', path: 'https://routing.openstreetmap.de/routed-foot/route/v1', profile: 'foot' }
   ];
 }
 
