@@ -41,6 +41,7 @@ var state = require('./state');
 var localization = require('./localization');
 var initialLayers = require('./initial_layers');
 var layerUtils = require('./layer_utils');
+var routeZoom = require('./route_zoom');
 require('./polyfill');
 
 var parsedOptions = urlState.parse(window.location.search.slice(1));
@@ -765,9 +766,10 @@ lrmControl.on('routeselected', function(e) {
   if (!shouldFitRoute) return;
   shouldFitRoute = false;
 
-  if (!route.coordinates || route.coordinates.length === 0) return;
+  var boundsCoordinates = routeZoom.getBoundsCoordinates(lrmControl && lrmControl._routes, route);
+  if (boundsCoordinates.length === 0) return;
 
-  var bounds = L.latLngBounds(route.coordinates);
+  var bounds = L.latLngBounds(boundsCoordinates);
 
   var container = document.querySelector('.leaflet-routing-container');
   var paneWidth = 0;
