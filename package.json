@@ -1,6 +1,6 @@
 {
   "name": "osrm-frontend",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "frontend interface for project osrm",
   "main": "src/index.js",
   "scripts": {
