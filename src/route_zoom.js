@@ -5,8 +5,11 @@ function getBoundsCoordinates(routes, fallbackRoute) {
   var coordinates = [];
 
   sourceRoutes.forEach(function(route) {
-    if (route && Array.isArray(route.coordinates) && route.coordinates.length) {
-      coordinates = coordinates.concat(route.coordinates);
+    var routeCoordinates = route && Array.isArray(route.coordinates) ? route.coordinates : null;
+    if (routeCoordinates && routeCoordinates.length) {
+      for (var i = 0; i < routeCoordinates.length; i++) {
+        coordinates.push(routeCoordinates[i]);
+      }
     }
   });
 
