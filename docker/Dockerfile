@@ -20,15 +20,16 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-# replace.js reads the ENV vars above and patches src/leaflet_options.js before webpack runs
+# replace.js reads the ENV vars above and patches src/leaflet_options.js before Vite runs
 RUN npm run build
 
 # Stage 2: serve
 FROM nginx:alpine
 
 # Set runtime environment defaults for entrypoint
-# Note: Default OSRM_BACKEND is localhost:5000 (as documented in README.md:19)
-# Override with -e OSRM_BACKEND='http://...' at runtime
+# Default OSRM_BACKEND is localhost:5000, which the entrypoint treats as "not specified"
+# and falls back to the three public OSRM profiles.
+# Override with -e OSRM_BACKEND='http://...' or -e OSRM_MODES='[...]' for a self-hosted server.
 ENV OSRM_ENVIRONMENT=docker \
     OSRM_BACKEND=http://localhost:5000 \
     OSRM_CENTER=38.8995,-77.0269 \
@@ -42,17 +43,8 @@ COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker/entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-# Webpack outputs bundle.js to the project root; copy all static assets
-COPY --from=build /app/index.html /usr/share/nginx/html/
-COPY --from=build /app/favicon.ico /usr/share/nginx/html/
-COPY --from=build /app/bundle.js /usr/share/nginx/html/
-COPY --from=build /app/bundle.js.LICENSE.txt /usr/share/nginx/html/
-COPY --from=build /app/bundle.js.map /usr/share/nginx/html/
-COPY --from=build /app/css /usr/share/nginx/html/css
-COPY --from=build /app/fonts /usr/share/nginx/html/fonts
-COPY --from=build /app/images /usr/share/nginx/html/images
-COPY --from=build /app/i18n /usr/share/nginx/html/i18n
-COPY --from=build /app/debug /usr/share/nginx/html/debug
+# Vite outputs dist/ with all static assets; copy to nginx web root
+COPY --from=build /app/dist/ /usr/share/nginx/html/
 
 EXPOSE 9966
 ENTRYPOINT ["/docker-entrypoint.sh"]

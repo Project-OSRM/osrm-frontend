@@ -8,10 +8,10 @@
     "test:lint": "eslint src/*.js i18n/*.js",
     "replace": "node ./scripts/replace.js",
     "clean": "rm -f bundle.raw.js",
-    "compile": "webpack --config webpack.config.js",
-    "build": "npm run clean && npm run replace && npm run compile && cp node_modules/leaflet/dist/leaflet.css css/leaflet.css",
-    "start": "npm run build && webpack serve --config webpack.config.js --mode development",
-    "start-prod": "npm run build && webpack serve --config webpack.config.js --mode production",
+    "compile": "vite build && cp dist/bundle.js bundle.js && cp dist/bundle.js.map bundle.js.map",
+    "build": "npm run clean && npm run replace && npm run compile && cp node_modules/leaflet/dist/leaflet.css css/leaflet.css && cp -r index.html favicon.ico css fonts images i18n debug dist/",
+    "start": "npm run build && vite preview",
+    "start-prod": "npm run build && vite preview",
     "prepub": "npm run build"
   },
   "repository": {
@@ -38,9 +38,7 @@
     "eslint": "^10.2.1",
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0",
-    "webpack": "^5.106.2",
-    "webpack-cli": "^7.0.2",
-    "webpack-dev-server": "^5.0.0"
+    "vite": "^8.0.14"
   },
   "dependencies": {
     "@mapbox/corslite": "^0.0.7",

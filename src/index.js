@@ -820,7 +820,7 @@ plan.on('waypointschanged', function(e) {
   }
 });
 
-L.control.locate({
+locate.locate({
   follow: false,
   setView: true,
   remainActive: false,

@@ -52,7 +52,7 @@ function generateConfig(envOverrides, options) {
 }
 
 describe('docker entrypoint runtime config', () => {
-  test('uses Docker localhost defaults when no routing env vars are provided', () => {
+  test('uses public profiles as Docker defaults when no routing env vars are provided', () => {
     const config = generateConfig({
       OSRM_BACKEND: 'http://localhost:5000',
       OSRM_ENVIRONMENT: 'docker'
@@ -60,7 +60,9 @@ describe('docker entrypoint runtime config', () => {
 
     expect(config.OSRM_ENVIRONMENT).toBe('docker');
     expect(config.OSRM_BACKEND).toBe('');
-    expect(config.OSRM_MODES).toBe('');
+    const modes = JSON.parse(config.OSRM_MODES);
+    expect(modes.length).toBe(3);
+    expect(modes[0].url).toBe('https://router.project-osrm.org');
   });
 
   test('keeps legacy single-backend config when only OSRM_BACKEND is set', () => {
