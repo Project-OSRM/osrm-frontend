@@ -696,7 +696,8 @@ map.on('click', function (e) {
 });
 function addWaypoint(evt) {
   var waypoint = evt && evt.latlng ? evt.latlng : evt;
-  var length = lrmControl.getWaypoints().filter(function(pnt) {
+  var waypoints = lrmControl.getWaypoints();
+  var length = waypoints.filter(function(pnt) {
     return pnt.latLng;
   });
   length = length.length;
@@ -715,11 +716,23 @@ function addWaypoint(evt) {
     return;
   }
 
-  if (!length) {
-    lrmControl.spliceWaypoints(0, 1, waypoint);
+  // Find the first empty waypoint slot.
+  // Counting filled waypoints and deriving the index from that breaks when
+  // only the destination is pre-filled via URL (?loc=&loc=<dest>): the single
+  // filled point sits at index 1, so the old code overwrote the destination
+  // instead of filling the empty start at index 0.
+  var emptyIndex = -1;
+  for (var i = 0; i < waypoints.length; i++) {
+    if (!waypoints[i].latLng) {
+      emptyIndex = i;
+      break;
+    }
+  }
+  if (emptyIndex !== -1) {
+    lrmControl.spliceWaypoints(emptyIndex, 1, waypoint);
   } else {
-    if (length === 1) length = length + 1;
-    lrmControl.spliceWaypoints(length - 1, 1, waypoint);
+    // All slots are filled: replace the last one.
+    lrmControl.spliceWaypoints(waypoints.length - 1, 1, waypoint);
   }
 }
 
