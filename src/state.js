@@ -18,10 +18,6 @@ var State = L.Class.extend({
 
     this.set(default_options);
 
-    this._lrm.on('routeselected', function(e) {
-      this.options.alternative = e.route.routesIndex;
-    }, this);
-
     this._lrm.getPlan().on('waypointschanged', function() {
       this.options.waypoints = this._lrm.getWaypoints(); this.update({ push: true });
     }.bind(this));

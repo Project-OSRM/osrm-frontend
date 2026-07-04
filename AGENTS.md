@@ -20,6 +20,10 @@ OSRM Frontend is the browser-based routing interface served at https://map.proje
 
 - All new functionality must have unit test coverage.
 
+### Naming
+
+- **Use descriptive, functional names for variables and functions.** Avoid cute, playful, or whimsical names (e.g. no `makeRoute`, `switchTo`, `handleIt`). Names should describe what the thing is or does, not how the author feels about it.
+
 ### Notes
 
 - Commit generated artifacts (`bundle.js`, `bundle.js.map`, `dist/`) only when necessary.
