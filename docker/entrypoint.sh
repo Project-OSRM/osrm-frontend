@@ -84,6 +84,14 @@ if [ -f /usr/share/nginx/html/index.html ]; then
     }
 
     if [ -f "$TMPFILE" ]; then
+      chmod 644 "$TMPFILE" || {
+        echo "Warning: chmod failed for $TMPFILE" >&2
+        rm -f "$TMPFILE"
+        trap - EXIT
+      }
+    fi
+
+    if [ -f "$TMPFILE" ]; then
       mv "$TMPFILE" /usr/share/nginx/html/index.html || {
         echo "Warning: failed to move $TMPFILE into place" >&2
         rm -f "$TMPFILE"
