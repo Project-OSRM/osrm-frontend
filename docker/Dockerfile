@@ -47,7 +47,7 @@ RUN chmod +x /docker-entrypoint.sh
 COPY --from=build /app/dist/ /usr/share/nginx/html/
 
 EXPOSE 9966
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=5s --timeout=3s --start-period=5s --retries=3 \
     CMD wget -q -O /dev/null http://localhost:9966/ || exit 1
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
