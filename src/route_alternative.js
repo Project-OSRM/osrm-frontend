@@ -25,6 +25,8 @@ module.exports = function resolveInitialAlternative(route, alternatives, desired
 
   return {
     route: allRoutes[index],
-    alternatives: allRoutes.filter(function(_, i) { return i !== index; })
+    alternatives: allRoutes.filter(function(_, i) {
+      return i !== index;
+    })
   };
 };
