@@ -83,6 +83,18 @@ describe('resolveInitialAlternative', function() {
       var result = resolveInitialAlternative(route, [makeRoute(1)], -1);
       expect(result).toBeNull();
     });
+
+    test('desiredAlt is a non-integer float (e.g. "1.5")', function() {
+      var route = makeRoute(0);
+      var result = resolveInitialAlternative(route, [makeRoute(1), makeRoute(2)], 1.5);
+      expect(result).toBeNull();
+    });
+
+    test('desiredAlt is a float string ("1.5")', function() {
+      var route = makeRoute(0);
+      var result = resolveInitialAlternative(route, [makeRoute(1), makeRoute(2)], '1.5');
+      expect(result).toBeNull();
+    });
   });
 
   describe('returns a switch payload when', function() {

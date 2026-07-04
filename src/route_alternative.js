@@ -17,7 +17,7 @@
  */
 module.exports = function resolveInitialAlternative(route, alternatives, desiredAlt) {
   var index = Number(desiredAlt);
-  if (!index || index < 0) return null;        // 0, NaN, undefined, null, "", negative
+  if (!index || index < 0 || index % 1 !== 0) return null;  // 0, NaN, undefined, null, "", negative, non-integer
   if (route.routesIndex === index) return null; // already on the desired route
 
   var allRoutes = [route].concat(alternatives || []);
