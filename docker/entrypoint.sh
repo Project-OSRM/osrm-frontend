@@ -14,9 +14,16 @@ case "$OSRM_ZOOM" in
   ''|*[!0-9-]*|-) OSRM_ZOOM=13 ;;
 esac
 
-# Escape JSON string values (handle quotes, newlines, backslashes)
+# Escape JSON string values (handles backslash, double-quote, and control chars)
+# Multi-line input is collapsed to a single line (newlines are stripped).
 escape_json() {
-  printf '%s\n' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/$/\\/' | tr -d '\n' | sed 's/\\$//'
+  printf '%s' "$1" | awk '{
+    gsub(/\\/, "\\\\")
+    gsub(/"/, "\\\"")
+    gsub(/\t/, "\\t")
+    gsub(/\r/, "\\r")
+    printf "%s", $0
+  }' | tr -d '\n'
 }
 
 # Load routing modes from the preferred OSRM_MODES config.
@@ -60,28 +67,31 @@ EOF
 
 # Inject OSRM_ENVIRONMENT into index.html meta tag to signal client to load config.json
 if [ -f /usr/share/nginx/html/index.html ]; then
-  TMPFILE=$(mktemp) || {
-    echo "Warning: failed to create temporary file for index.html patch" >&2
-    TMPFILE=""
-  }
+  TMPFILE=$(mktemp) || TMPFILE=""
   if [ -n "$TMPFILE" ]; then
-    if awk -v env="$OSRM_ENVIRONMENT" '{
+    # Clean up temp file on exit
+    trap 'rm -f "$TMPFILE"' EXIT
+
+    awk -v env="$OSRM_ENVIRONMENT" '{
       if ($0 ~ /<meta name="osrm-environment"/) {
         sub(/content="[^"]*"/, "content=\"" env "\"")
       }
       print
-    }' /usr/share/nginx/html/index.html > "$TMPFILE"; then
-      if ! chmod 644 "$TMPFILE"; then
-        echo "Warning: chmod failed for $TMPFILE" >&2
-        rm -f "$TMPFILE"
-      elif ! mv "$TMPFILE" /usr/share/nginx/html/index.html; then
-        echo "Warning: failed to move $TMPFILE into place" >&2
-        rm -f "$TMPFILE"
-      fi
-    else
+    }' /usr/share/nginx/html/index.html > "$TMPFILE" || {
       echo "Warning: failed to inject OSRM_ENVIRONMENT into index.html" >&2
       rm -f "$TMPFILE"
+      trap - EXIT
+    }
+
+    if [ -f "$TMPFILE" ]; then
+      mv "$TMPFILE" /usr/share/nginx/html/index.html || {
+        echo "Warning: failed to move $TMPFILE into place" >&2
+        rm -f "$TMPFILE"
+        trap - EXIT
+      }
     fi
+  else
+    echo "Warning: failed to create temporary file for index.html patch" >&2
   fi
 fi
 
