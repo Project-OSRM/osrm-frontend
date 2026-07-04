@@ -11,30 +11,30 @@ const leafletOptions = require('../src/leaflet_options');
 describe('leaflet_options — tileset migration', () => {
   describe('base layer URLs', () => {
     test('streets layer uses CartoDB Voyager (not Mapbox)', () => {
-      expect(leafletOptions.baselayer.one._url).toContain('cartocdn.com');
-      expect(leafletOptions.baselayer.one._url).toContain('voyager');
+      expect(leafletOptions.layer[0]['Streets']._url).toContain('cartocdn.com');
+      expect(leafletOptions.layer[0]['Streets']._url).toContain('voyager');
     });
 
     test('outdoors layer uses OpenTopoMap (not Mapbox)', () => {
-      expect(leafletOptions.baselayer.two._url).toContain('opentopomap.org');
+      expect(leafletOptions.layer[0]['Outdoors']._url).toContain('opentopomap.org');
     });
 
     test('satellite layer uses ESRI World Imagery (not Mapbox)', () => {
-      expect(leafletOptions.baselayer.three._url).toContain('arcgisonline.com');
-      expect(leafletOptions.baselayer.three._url).toContain('World_Imagery');
+      expect(leafletOptions.layer[0]['Satellite']._url).toContain('arcgisonline.com');
+      expect(leafletOptions.layer[0]['Satellite']._url).toContain('World_Imagery');
     });
 
     test('OSM layer uses openstreetmap.org', () => {
-      expect(leafletOptions.baselayer.four._url).toContain('tile.openstreetmap.org');
+      expect(leafletOptions.layer[0]['openstreetmap.org']._url).toContain('tile.openstreetmap.org');
     });
 
     test('OSM.de layer uses openstreetmap.de', () => {
-      expect(leafletOptions.baselayer.five._url).toContain('tile.openstreetmap.de');
+      expect(leafletOptions.layer[0]['openstreetmap.de']._url).toContain('tile.openstreetmap.de');
     });
   });
 
   describe('no Mapbox dependencies', () => {
-    const allLayerURLs = () => Object.values(leafletOptions.baselayer).map(l => l._url);
+    const allLayerURLs = () => Object.values(leafletOptions.layer[0]).map(l => l._url);
 
     test('no layer URL points to api.mapbox.com', () => {
       allLayerURLs().forEach(url => {

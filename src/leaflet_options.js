@@ -38,7 +38,15 @@ var streets = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager
   }),
   small_components = L.tileLayer('https://tools.geofabrik.de/osmi/tiles/routing/{z}/{x}/{y}.png', {});
 
-// Parse center coordinates from config with validation
+/**
+ * Parse center coordinates from the runtime config (`OSRM_CENTER` env var).
+ *
+ * Accepts a comma- or space-separated "lat,lng" string. Falls back to
+ * Washington, DC (38.8995, -77.0269) when the value is missing, malformed,
+ * or contains non-finite numbers.
+ *
+ * @returns {L.LatLng} The parsed or fallback center coordinate.
+ */
 function parseCenter() {
   var defaultCenterStr = '38.8995,-77.0269';
   var centerStr = config.OSRM_CENTER || defaultCenterStr;
@@ -62,15 +70,34 @@ function parseCenter() {
   return L.latLng(lat, lng);
 }
 
-// Get service label from config
+/**
+ * Get the routing service label from the runtime config (`OSRM_LABEL` env var).
+ *
+ * @returns {string} The label, defaulting to 'Car (fastest)'.
+ */
 function getLabel() {
   return config.OSRM_LABEL || 'Car (fastest)';
 }
 
-// Parse routing modes from runtime config.
-// OSRM_MODES is the preferred JSON-based format: [{ name, url }, ...].
-// OSRM_BACKEND is deprecated and only kept as a single-backend fallback.
-// Priority: OSRM_MODES > OSRM_BACKEND (with deprecation warning) > environment defaults.
+/**
+ * Parse routing modes from the runtime config.
+ *
+ * **Precedence (highest to lowest):**
+ * 1. `OSRM_MODES` — preferred JSON array of `{name, url, path?, profile?}` objects.
+ *    Also accepts a plain array of URL strings (auto-named "Mode 1", "Mode 2", …).
+ *    When `profile` is not specified it defaults by position: index 0 → `'driving'`,
+ *    index 1 → `'bike'`, index 2 → `'foot'`, index ≥ 3 → `'driving'`.
+ * 2. `OSRM_BACKEND` — **deprecated** single-backend string. Emits a console warning.
+ * 3. Environment defaults — three public profiles (driving, bike, foot) in dev mode;
+ *    same three profiles in Docker mode when neither env var is set.
+ *
+ * If both `OSRM_MODES` and `OSRM_BACKEND` are set, `OSRM_MODES` wins and a
+ * deprecation warning is emitted.
+ *
+ * @returns {Array<{name: string, url: string, path?: string, profile: string}>}
+ *   An array of mode objects, each with a display name, backend URL, optional
+ *   explicit routing path, and an internal routing profile (`driving`, `bike`, `foot`).
+ */
 function parseModes() {
   // Read config fresh from window each time, not the captured config variable
   var currentConfig = (typeof window !== 'undefined' ? window.osrmConfig : null) || {};
@@ -132,7 +159,7 @@ function parseModes() {
           var result = {
             name: mode.name || ('Mode ' + (index + 1)),
             url: mode.url || 'http://localhost:5000',
-            profile: profileNames[index] || 'driving'  // Use standard profile for routing
+            profile: mode.profile || profileNames[index] || 'driving'  // Honor explicit profile, fall back to positional
           };
           if (mode.path) result.path = mode.path;  // preserve explicit path (e.g. routed-bike/route/v1)
           return result;
@@ -173,9 +200,18 @@ function parseModes() {
   ];
 }
 
-// Get backend URL based on environment and profile
-// In Docker: use configured OSRM_BACKEND_* (defaults to OSRM_BACKEND)
-// In dev: use public OSRM services
+/**
+ * Get the backend URL for a specific routing profile.
+ *
+ * In Docker mode (`OSRM_ENVIRONMENT=docker`): uses `OSRM_BACKEND_<PROFILE>` or
+ * falls back to `OSRM_BACKEND`, then to `http://localhost:5000`.
+ *
+ * In dev mode: uses the explicit override if set, otherwise returns the
+ * well-known public OSRM service for the given profile.
+ *
+ * @param {string} profile — The routing profile name (e.g. 'driving', 'bike', 'foot').
+ * @returns {string} The backend base URL for the profile.
+ */
 function getBackendForProfile(profile) {
   var profileBackend = config['OSRM_BACKEND_' + profile.toUpperCase()];
   var backend = profileBackend || config.OSRM_BACKEND;
@@ -195,17 +231,25 @@ function getBackendForProfile(profile) {
   return 'https://routing.openstreetmap.de';
 }
 
-// Legacy functions for backward compatibility
-// Get backend URL based on environment
-// In Docker: use configured OSRM_BACKEND (defaults to localhost:5000)
-// In dev: use public routing.project-osrm.org service
+/**
+ * Legacy: get the backend URL for the default 'driving' profile.
+ *
+ * @deprecated Use `getBackendForProfile('driving')` instead.
+ * @returns {string} The driving backend URL.
+ */
 function getBackend() {
   return getBackendForProfile('driving');
 }
 
-// Get bike/foot backend URL based on environment
-// In Docker: use configured OSRM_BACKEND_BIKE/OSRM_BACKEND_FOOT
-// In local dev: use known public services (routing.openstreetmap.de)
+/**
+ * Legacy: get the backend URL for bike/foot profiles.
+ *
+ * In Docker mode: delegates to `getBackendForProfile('bike')`.
+ * In dev mode: returns `undefined` (caller uses known public services).
+ *
+ * @deprecated Use `getBackendForProfile(profile)` instead.
+ * @returns {string|undefined} The alternative backend URL, or undefined in dev mode.
+ */
 function getAlternativeBackend() {
   // In Docker: use bike backend
   if (config.OSRM_ENVIRONMENT === 'docker') {
@@ -215,7 +259,13 @@ function getAlternativeBackend() {
   return undefined;
 }
 
-// Get zoom level from config with validation
+/**
+ * Get the initial zoom level from the runtime config (`OSRM_ZOOM` env var).
+ *
+ * Accepts numeric strings. Falls back to 13 when missing or non-numeric.
+ *
+ * @returns {number} The zoom level (default 13).
+ */
 function getZoom() {
   var zoomValue = config.OSRM_ZOOM;
   var parsedZoom;
@@ -233,8 +283,20 @@ function getZoom() {
   return parsedZoom;
 }
 
-// Get language, prefer browser settings when available; fallback to 'en'.
-// Precedence (effective): URL param (handled in index.js) > browser language > 'en'
+/**
+ * Detect the UI language with the following precedence:
+ *
+ * 1. `OSRM_LANGUAGE` runtime config (env var) — explicit override.
+ * 2. Browser `navigator.languages` / `navigator.language` — best match against
+ *    the app's available translations (exact match → case-insensitive match →
+ *    primary subtag fallback, e.g. `en-US` → `en`).
+ * 3. `'en'` — English fallback.
+ *
+ * Note: URL param `hl` is handled separately in `index.js` and merged into
+ * `defaultState` after module load, so it takes highest effective precedence.
+ *
+ * @returns {string} A supported language code (e.g. 'en', 'de', 'fr', 'pt-BR').
+ */
 function getLanguage() {
   try {
     // Read runtime config each time (honor OSRM_LANGUAGE when set at runtime)
@@ -298,11 +360,26 @@ function getLanguage() {
 }
 
 
-// Get default layer from config
+/**
+ * Get the default base tile layer name from the runtime config (`OSRM_DEFAULT_LAYER` env var).
+ *
+ * Returns the configured value, or `'streets'` (CartoDB Voyager) when unset.
+ * Key validation (and fallback for unrecognized values) happens at the call
+ * site via `layerMap[getDefaultLayer()] || streets`.
+ *
+ * @returns {string} The default layer key (default `'streets'`).
+ */
 function getDefaultLayer() {
   return config.OSRM_DEFAULT_LAYER || 'streets';
 }
 
+/**
+ * Maps config-level layer name strings to the pre-created `L.tileLayer` instances.
+ * Used by `getDefaultLayer()` to resolve `OSRM_DEFAULT_LAYER` into an actual layer
+ * for `defaultState.layer`.
+ *
+ * @type {Object<string, L.TileLayer>}
+ */
 var layerMap = {
   streets: streets,
   outdoors: outdoors,
@@ -313,8 +390,16 @@ var layerMap = {
 
 var defaultLayer = layerMap[getDefaultLayer()] || streets;
 
-// Build services array from OSRM_MODES config
-// Each service has a name, URL prefix, and internal profile for routing
+/**
+ * Build the services array consumed by the routing control and mode selector.
+ *
+ * Each entry exposes a human-readable `label`, a `labelKey` for localization,
+ * the `path` used for routing requests (`/route/v1` appended to the backend URL
+ * by default), and an internal `profile` identifier (`driving`, `bike`, `foot`).
+ *
+ * @returns {Array<{label: string, labelKey: string, path: string, profile: string}>}
+ *   An array of service descriptors, one per configured routing mode.
+ */
 function buildServices() {
   var modes = parseModes();
   var defaultLabelMapping = {
@@ -336,7 +421,53 @@ function buildServices() {
   });
 }
 
+/**
+ * Central configuration for the OSRM frontend.
+ *
+ * This module is the single source of truth for map layers, routing services,
+ * geocoding, and default view state. Nearly every value can be overridden at
+ * runtime via environment variables (exposed as `window.osrmConfig`).
+ *
+ * ## Exported properties
+ *
+ * | Property       | Type     | Purpose |
+ * |----------------|----------|---------|
+ * | `defaultState` | `object` | Initial map center, zoom, language, units, and base layer. Merged with URL params at startup. |
+ * | `services`     | getter   | Routing mode list built from `OSRM_MODES` / `OSRM_BACKEND` env vars. Drives the mode-selector dropdown. |
+ * | `layer`        | `array`  | Base tile layers shown in the Leaflet layer control (first argument to `L.control.layers`). |
+ * | `overlay`      | `object` | Togglable overlay tile layers (second argument to `L.control.layers`). |
+ * | `nominatim`    | `object` | Geocoding endpoint configuration. |
+ *
+ * ## Runtime environment variables (via `window.osrmConfig`)
+ *
+ * | Variable               | Default                          | Description |
+ * |------------------------|----------------------------------|-------------|
+ * | `OSRM_MODES`           | (public OSRM services)           | JSON array of `{name, url, path?, profile?}` routing backends. `profile` defaults by position (driving → bike → foot). |
+ * | `OSRM_BACKEND`         | —                                | **Deprecated.** Single backend URL. Use `OSRM_MODES` instead. |
+ * | `OSRM_CENTER`          | `38.8995,-77.0269`               | Comma-separated "lat,lng" for the initial map center. |
+ * | `OSRM_ZOOM`            | `13`                             | Initial zoom level (0–18). |
+ * | `OSRM_LANGUAGE`        | (browser language → `'en'`)      | UI language override. |
+ * | `OSRM_DEFAULT_LAYER`   | `'streets'`                      | Default base layer key: `streets`, `outdoors`, `satellite`, `osm`, or `osm_de`. |
+ * | `OSRM_LABEL`           | `'Car (fastest)'`                | Label for the default routing service. |
+ * | `OSRM_ENVIRONMENT`     | —                                | Set to `'docker'` to use Docker-mode backend defaults. |
+ *
+ * @module leaflet_options
+ */
 var leafletOptions = {
+
+  /**
+   * Default map state applied at startup. Merged with URL query parameters
+   * (`?loc=…&hl=…&z=…&ly=…`) so URL values take precedence.
+   *
+   * @type {object}
+   * @property {L.LatLng}  center      — Initial map center (from `OSRM_CENTER` or Washington, DC).
+   * @property {number}    zoom        — Initial zoom level (from `OSRM_ZOOM`, default 13).
+   * @property {Array}     waypoints   — Empty at startup; populated by URL `loc` params or user clicks.
+   * @property {string}    language    — UI language code (from `OSRM_LANGUAGE`, browser, or `'en'`).
+   * @property {string}    units       — `'metric'` or `'imperial'`.
+   * @property {number}    alternative — Selected route alternative index (0 = best).
+   * @property {L.TileLayer} layer     — Resolved default base tile layer (from `OSRM_DEFAULT_LAYER`).
+   */
   defaultState: {
     center: parseCenter(),
     zoom: getZoom(),
@@ -346,9 +477,45 @@ var leafletOptions = {
     alternative: 0,
     layer: defaultLayer
   },
+  /**
+   * Routing services available in the mode-selector dropdown.
+   *
+   * This is a getter so it always reflects the current runtime config.
+   * Each entry has:
+   * - `label`      — human-readable display name (e.g. "Car (fastest)")
+   * - `labelKey`   — localization key (e.g. "Car", "Bike", "Foot")
+   * - `path`       — full routing endpoint (e.g. `https://…/route/v1`)
+   * - `profile`    — internal routing profile: `'driving'`, `'bike'`, or `'foot'`
+   *
+   * Built from `OSRM_MODES` (preferred) or `OSRM_BACKEND` (deprecated).
+   *
+   * @type {Array<{label: string, labelKey: string, path: string, profile: string}>}
+   */
   get services() {
     return buildServices();
   },
+
+  /**
+   * Base tile layers shown in the Leaflet layer-control radio buttons.
+   *
+   * Format: an array containing a single object that maps display names
+   * (shown in the UI) to `L.TileLayer` instances. This is the standard
+   * Leaflet format for the first argument to `L.control.layers()`.
+   *
+   * **Default base layers:**
+   * - **Streets** — CartoDB Voyager (raster tiles, max zoom 19)
+   * - **Outdoors** — OpenTopoMap (max zoom 17)
+   * - **Satellite** — ESRI World Imagery (max zoom 19)
+   * - **openstreetmap.org** — Standard OSM tile layer
+   * - **openstreetmap.de** — German OSM tile layer
+   *
+   * **Customizing:** To add or replace base layers, define a `L.tileLayer`
+   * and add an entry to this object. To change the *default* layer, set
+   * `OSRM_DEFAULT_LAYER` to one of the layer keys (`layerMap` in this file)
+   * or edit `defaultState.layer`.
+   *
+   * @type {Array<Object<string, L.TileLayer>>}
+   */
   layer: [{
     'Streets': streets,
     'Outdoors': outdoors,
@@ -356,18 +523,38 @@ var leafletOptions = {
     'openstreetmap.org': osm,
     'openstreetmap.de': osm_de
   }],
+  /**
+   * Togglable overlay tile layers shown in the Leaflet layer control.
+   *
+   * These are rendered *on top of* the selected base layer and can be
+   * independently shown or hidden by the user via checkboxes.
+   *
+   * **Built-in overlays:**
+   * - **Hiking** — Waymarked Trails hiking routes
+   *   ([waymarkedtrails.org](https://waymarkedtrails.org/), CC-BY-SA)
+   * - **Bike** — Waymarked Trails cycling routes
+   *   ([waymarkedtrails.org](https://waymarkedtrails.org/), CC-BY-SA).
+   *   *Auto-activated* when a bike-type profile is selected.
+   * - **Small Components** — GeoFabrik OSM Inspector routing debug tiles
+   *   ([tools.geofabrik.de](https://tools.geofabrik.de/osmi/tiles/routing/)).
+   *   Highlights small disconnected road segments. Stored overlay preference
+   *   is restored from localStorage on reload for non-bike profiles.
+   *
+   * @type {Object<string, L.TileLayer>}
+   */
   overlay: {
     'Hiking': hiking,
     'Bike': bike,
     'Small Components': small_components
   },
-  baselayer: {
-    one: streets,
-    two: outdoors,
-    three: satellite,
-    four: osm,
-    five: osm_de
-  },
+  /**
+   * Geocoding (address search) endpoint configuration.
+   *
+   * Uses the public Nominatim service at openstreetmap.org by default.
+   * Self-hosters may point this at a private Nominatim instance.
+   *
+   * @type {{path: string}}
+   */
   nominatim: {
     path: 'https://nominatim.openstreetmap.org/'
   }
