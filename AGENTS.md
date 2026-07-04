@@ -14,7 +14,9 @@ OSRM Frontend is the browser-based routing interface served at https://map.proje
 - **Strip all AI/harness advertising from commits.** Drop any `Co-Authored-By`, `Generated with`, or similar trailers — no ads, no co-author lines, no attribution footers in commit messages.
 - **Disclose AI assistance on the PR only.** Describe what the agent helped with in the PR body (not in commits).
 
-### Testing
+### Review Comments
+
+- **Respond to every review comment.** Explain how it was addressed, or politely push back with reasoning if you disagree. Always keep a friendly, respectful tone.
 
 - All new functionality must have unit test coverage.
 
