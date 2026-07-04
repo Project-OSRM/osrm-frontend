@@ -43,6 +43,7 @@ var localization = require('./localization');
 var initialLayers = require('./initial_layers');
 var layerUtils = require('./layer_utils');
 var routeZoom = require('./route_zoom');
+var resolveInitialAlternative = require('./route_alternative');
 require('./polyfill');
 
 var parsedOptions = urlState.parse(window.location.search.slice(1));
@@ -720,6 +721,23 @@ lrmControl.on('alternateChosen', function(e) {
 
 lrmControl.on('routeselected', function(e) {
   var route = e.route || {};
+
+  // On the initial route load, the LRM always selects route[0] first.
+  // If the URL requested a different alternative, switch to it now.
+  // Falls back to route[0] when the requested alternative no longer exists.
+  if (shouldFitRoute) {
+    var switchTo = resolveInitialAlternative(route, e.alternatives, state.options.alternative);
+    if (switchTo) {
+      // Re-fire on lrmControl so the LRM-internal listeners
+      // (_routeSelected, _selectAlt) also process the correct route.
+      lrmControl.fire('routeselected', switchTo);
+      return;
+    }
+  }
+
+  // Track selected alternative in URL state and persist to URL
+  state.options.alternative = route.routesIndex;
+  state.update();
 
   // Route export: build GeoJSON and hand it to the tools control for GPX download
   var routeGeoJSON = {
