@@ -85,6 +85,8 @@ function getLabel() {
  * **Precedence (highest to lowest):**
  * 1. `OSRM_MODES` — preferred JSON array of `{name, url, path?, profile?}` objects.
  *    Also accepts a plain array of URL strings (auto-named "Mode 1", "Mode 2", …).
+ *    When `profile` is not specified it defaults by position: index 0 → `'driving'`,
+ *    index 1 → `'bike'`, index 2 → `'foot'`, index ≥ 3 → `'driving'`.
  * 2. `OSRM_BACKEND` — **deprecated** single-backend string. Emits a console warning.
  * 3. Environment defaults — three public profiles (driving, bike, foot) in dev mode;
  *    same three profiles in Docker mode when neither env var is set.
@@ -157,7 +159,7 @@ function parseModes() {
           var result = {
             name: mode.name || ('Mode ' + (index + 1)),
             url: mode.url || 'http://localhost:5000',
-            profile: profileNames[index] || 'driving'  // Use standard profile for routing
+            profile: mode.profile || profileNames[index] || 'driving'  // Honor explicit profile, fall back to positional
           };
           if (mode.path) result.path = mode.path;  // preserve explicit path (e.g. routed-bike/route/v1)
           return result;
@@ -361,9 +363,9 @@ function getLanguage() {
 /**
  * Get the default base tile layer name from the runtime config (`OSRM_DEFAULT_LAYER` env var).
  *
- * Valid values are keys in `layerMap`: `'streets'`, `'outdoors'`, `'satellite'`,
- * `'osm'`, `'osm_de'`. Falls back to `'streets'` (CartoDB Voyager) when unset
- * or unrecognized.
+ * Returns the configured value, or `'streets'` (CartoDB Voyager) when unset.
+ * Key validation (and fallback for unrecognized values) happens at the call
+ * site via `layerMap[getDefaultLayer()] || streets`.
  *
  * @returns {string} The default layer key (default `'streets'`).
  */
@@ -440,7 +442,7 @@ function buildServices() {
  *
  * | Variable               | Default                          | Description |
  * |------------------------|----------------------------------|-------------|
- * | `OSRM_MODES`           | (public OSRM services)           | JSON array of `{name, url, path?, profile?}` routing backends. |
+ * | `OSRM_MODES`           | (public OSRM services)           | JSON array of `{name, url, path?, profile?}` routing backends. `profile` defaults by position (driving → bike → foot). |
  * | `OSRM_BACKEND`         | —                                | **Deprecated.** Single backend URL. Use `OSRM_MODES` instead. |
  * | `OSRM_CENTER`          | `38.8995,-77.0269`               | Comma-separated "lat,lng" for the initial map center. |
  * | `OSRM_ZOOM`            | `13`                             | Initial zoom level (0–18). |
