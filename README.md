@@ -81,15 +81,72 @@ npm run start-index
 
 ## Changing Backends
 
-For Docker deployments, prefer runtime configuration via `OSRM_MODES` instead of editing source files.
+For Docker deployments, prefer runtime configuration via `OSRM_MODES` (see [above](#recommended-multiple-profiles-with-osrm_modes))
+instead of editing source files. If you need source-level customization, edit the
+`parseModes()` and `buildServices()` functions in `src/leaflet_options.js`.
 
-For source-level customization, adjust `src/leaflet_options.js`:
+## Customizing Tile Layers and Overlays
 
+### Base layers (`layer`)
+
+The `layer` property in `src/leaflet_options.js` defines the base tile layers
+shown as radio buttons in the map's layer control (bottom-left corner).
+
+**Default base layers:**
+
+| Label | Source | Max zoom |
+|-------|--------|----------|
+| Streets | [CartoDB Voyager](https://carto.com/) | 19 |
+| Outdoors | [OpenTopoMap](https://opentopomap.org/) | 17 |
+| Satellite | [ESRI World Imagery](https://www.esri.com/) | 19 |
+| openstreetmap.org | [OSM](https://openstreetmap.org/) | 19 |
+| openstreetmap.de | [OSM.de](https://openstreetmap.de/) | 19 |
+
+**Changing the default layer for Docker deployments:**
+Set `OSRM_DEFAULT_LAYER` to one of: `streets`, `outdoors`, `satellite`, `osm`, `osm_de`.
+```bash
+docker run -p 9966:9966 -e OSRM_DEFAULT_LAYER=satellite ghcr.io/project-osrm/osrm-frontend:latest
 ```
-services: [{
-  label: 'Car (fastest)',
-  path: 'http://localhost:5000/route/v1'
-}],
+
+**Adding or replacing base layers (source builds):**
+Define a new `L.tileLayer` and add it to the `layer` array in `src/leaflet_options.js`:
+```js
+var myTiles = L.tileLayer('https://example.com/tiles/{z}/{x}/{y}.png', {
+    attribution: '© My Tile Provider',
+    maxZoom: 18
+});
+
+// In the leafletOptions object:
+layer: [{
+    'My Custom Map': myTiles,
+    'Streets': streets,
+    'Outdoors': outdoors,
+    // ... other layers
+}]
+```
+
+### Overlays (`overlay`)
+
+Overlays are toggleable tile layers rendered on top of the base layer. They
+appear as checkboxes in the layer control.
+
+| Overlay | Source | Description |
+|---------|--------|-------------|
+| Hiking | [Waymarked Trails](https://waymarkedtrails.org/) | Hiking routes overlay (CC-BY-SA) |
+| Bike | [Waymarked Trails](https://waymarkedtrails.org/) | Cycling routes overlay (CC-BY-SA). **Auto-activated** when a bike profile is selected. |
+| Small Components | [GeoFabrik OSM Inspector](https://tools.geofabrik.de/osmi/tiles/routing/) | Debug overlay highlighting small disconnected road segments. Useful for checking OSM data quality. |
+
+The user's overlay preference is saved in localStorage and restored on reload.
+
+**Adding custom overlays:** Define a `L.tileLayer` and add an entry to the
+`overlay` object in `src/leaflet_options.js`:
+```js
+overlay: {
+    'Hiking': hiking,
+    'Bike': bike,
+    'Small Components': small_components,
+    'My Overlay': L.tileLayer('https://example.com/overlay/{z}/{x}/{y}.png', {})
+}
 ```
 
 For debug tiles showing speeds and small components available at `/debug` adjust in `debug/index.html`
