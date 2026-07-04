@@ -1,5 +1,5 @@
 # Stage 1: build
-FROM node:24-alpine AS build
+FROM node:24.18-alpine AS build
 
 # Build-time configuration — override with --build-arg
 ARG OSRM_BACKEND=https://router.project-osrm.org
@@ -24,7 +24,7 @@ COPY . .
 RUN npm run build
 
 # Stage 2: serve
-FROM nginx:alpine
+FROM nginx:1.31.2-alpine
 
 # Set runtime environment defaults for entrypoint
 # Default OSRM_BACKEND is localhost:5000, which the entrypoint treats as "not specified"
@@ -47,5 +47,7 @@ RUN chmod +x /docker-entrypoint.sh
 COPY --from=build /app/dist/ /usr/share/nginx/html/
 
 EXPOSE 9966
+HEALTHCHECK --interval=5s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget -q -O /dev/null http://127.0.0.1:9966/ || exit 1
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
