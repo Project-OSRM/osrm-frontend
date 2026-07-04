@@ -10,7 +10,7 @@ OSRM Frontend is the browser-based routing interface served at https://map.proje
 
 - **Conventional Commits** for commit messages and PR titles. Format: `type(scope): description`. Allowed types: `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style`, `test`.
 - **Never commit directly to `gh-pages` (the default branch).** All changes go through a pull request.
-- **Tests must pass (`npm test`) before creating a PR.** CI enforces this too.
+- **All CI checks must pass before creating a PR.** CI runs lint (`npm run test:lint`), build (`npm run build`), and tests (`npm test`) — run all three locally first.
 - **Strip all AI/harness advertising from commits.** Drop any `Co-Authored-By`, `Generated with`, or similar trailers — no ads, no co-author lines, no attribution footers in commit messages.
 - **Disclose AI assistance on the PR only.** Describe what the agent helped with in the PR body (not in commits).
 
