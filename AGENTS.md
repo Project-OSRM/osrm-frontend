@@ -1,0 +1,25 @@
+# AGENTS
+
+## Purpose
+
+OSRM Frontend is the browser-based routing interface served at https://map.project-osrm.org. Built on [Leaflet Routing Machine](https://github.com/perliedman/leaflet-routing-machine) with Leaflet for map rendering.
+
+## Conventions
+
+### Commits & PRs
+
+- **Conventional Commits** for commit messages and PR titles. Format: `type(scope): description`. Allowed types: `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style`, `test`.
+- **Never commit directly to `gh-pages` (the default branch).** All changes go through a pull request.
+- **Tests must pass (`npm test`) before creating a PR.** CI enforces this too.
+- **No `Co-Authored-By` trailers in commits.** Do not add co-author lines.
+- **Disclose AI assistance on the PR only**, not in commit messages. Describe what the agent helped with in the PR body.
+
+### Testing
+
+- All new functionality must have unit test coverage.
+
+### Notes
+
+- Commit generated artifacts (`bundle.js`, `bundle.js.map`, `dist/`) only when necessary.
+- When adding routing backends, prefer `OSRM_MODES` env var over editing `src/leaflet_options.js`.
+- The debug tile viewer at `/debug` has its own `index.html` — keep it in sync if tile sources change.
