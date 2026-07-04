@@ -7,6 +7,7 @@ require('leaflet-control-geocoder');
 var geocoderPatches = require('./geocoder_patches');
 geocoderPatches();
 var LRM = require('leaflet-routing-machine');
+var resolveWaypointSlot = require('./waypoint_placement').resolveWaypointSlot;
 
 // Register app languages that LRM does not have built-in so LRM does not throw
 // "No localization for language" when they are selected. We reuse English
@@ -697,42 +698,11 @@ map.on('click', function (e) {
 function addWaypoint(evt) {
   var waypoint = evt && evt.latlng ? evt.latlng : evt;
   var waypoints = lrmControl.getWaypoints();
-  var length = waypoints.filter(function(pnt) {
-    return pnt.latLng;
-  });
-  length = length.length;
-
-  // If both source and target are set, do not change existing markers by clicking on the map.
-  // Any marker should stay where it is unless explicitly removed by clicking directly on it.
-  // Allow adding a via-point when Ctrl (or Meta on macOS) is held during the click.
   var modifierPressed = evt && evt.originalEvent && (evt.originalEvent.ctrlKey || evt.originalEvent.metaKey);
-  if (length >= 2 && !modifierPressed) {
-    return;
-  }
 
-  if (length >= 2 && modifierPressed) {
-    // Insert a via-point before the last waypoint (the target)
-    lrmControl.spliceWaypoints(length - 1, 0, waypoint);
-    return;
-  }
-
-  // Find the first empty waypoint slot.
-  // Counting filled waypoints and deriving the index from that breaks when
-  // only the destination is pre-filled via URL (?loc=&loc=<dest>): the single
-  // filled point sits at index 1, so the old code overwrote the destination
-  // instead of filling the empty start at index 0.
-  var emptyIndex = -1;
-  for (var i = 0; i < waypoints.length; i++) {
-    if (!waypoints[i].latLng) {
-      emptyIndex = i;
-      break;
-    }
-  }
-  if (emptyIndex !== -1) {
-    lrmControl.spliceWaypoints(emptyIndex, 1, waypoint);
-  } else {
-    // All slots are filled: replace the last one.
-    lrmControl.spliceWaypoints(waypoints.length - 1, 1, waypoint);
+  var action = resolveWaypointSlot(waypoints, modifierPressed);
+  if (action) {
+    lrmControl.spliceWaypoints(action.index, action.deleteCount, waypoint);
   }
 }
 
