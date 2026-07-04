@@ -50,6 +50,34 @@ test('docker image serves a page (index.html)', async () => {
     }
 
     expect(ok).toBe(true);
+
+    // Verify the HEALTHCHECK eventually reports healthy.
+    // Healthcheck config: start-period=5s, interval=30s, timeout=3s, retries=3.
+    // The first check runs after start-period, so "healthy" should appear
+    // within ~6s. We give it 45s to be safe.
+    let healthy = false;
+    const healthMaxAttempts = 15; // ~45s with 3s delay
+    for (let i = 0; i < healthMaxAttempts; i++) {
+      try {
+        const { stdout: healthStatus } = await exec(
+          `docker inspect --format='{{.State.Health.Status}}' ${containerId}`
+        );
+        const status = (healthStatus || '').trim();
+        if (status === 'healthy') {
+          healthy = true;
+          break;
+        }
+        if (status === 'unhealthy') {
+          // Don't keep waiting if it's already failed
+          break;
+        }
+      } catch (e) {
+        // ignore and retry
+      }
+      await new Promise(r => setTimeout(r, 3000));
+    }
+
+    expect(healthy).toBe(true);
   } finally {
     // Cleanup container and image
     try { await exec(`docker rm -f ${containerId}`); } catch (e) {}
