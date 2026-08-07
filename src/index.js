@@ -638,19 +638,34 @@ if (routingContainer) {
   routingContainer.classList.add('leaflet-routing-container-hide');
 }
 
+// Decides whether the next route or geocode result may move the map view
+var routeFitTracker = routeZoom.createRouteFitTracker();
+
 // Show pane when route is computed
-var shouldFitRoute = false;
 lrmControl.on('routesfound', function(e) {
   var container = document.querySelector('.leaflet-routing-container');
   if (container) {
     container.classList.remove('leaflet-routing-container-hide');
   }
-  shouldFitRoute = true;
+  routeFitTracker.routesFound();
+});
+
+// Dragging a marker (or the route line) recomputes the route in place;
+// the view must stay where the user put it.
+plan.on('waypointdragstart', function() {
+  routeFitTracker.waypointDragStarted();
+});
+
+lrmControl.on('routingerror', function() {
+  routeFitTracker.routingFailed();
 });
 
 plan.on('waypointgeocoded', function(e) {
+  // A drag ends with a reverse geocode of the dropped marker; recentering on it
+  // would fight the pan the user just made.
+  if (!routeFitTracker.waypointGeocoded()) return;
   if (plan._waypoints.filter(function(wp) {
-    return !!wp.latLng; 
+    return !!wp.latLng;
   }).length < 2) {
     map.panTo(e.waypoint.latLng);
   }
@@ -703,6 +718,7 @@ function addWaypoint(evt) {
 
   var action = resolveWaypointSlot(waypoints, modifierPressed);
   if (action) {
+    routeFitTracker.waypointPlaced();
     lrmControl.spliceWaypoints(action.index, action.deleteCount, waypoint);
   }
 }
@@ -725,7 +741,7 @@ lrmControl.on('routeselected', function(e) {
   // On the initial route load, the LRM always selects route[0] first.
   // If the URL requested a different alternative, switch to it now.
   // Falls back to route[0] when the requested alternative no longer exists.
-  if (shouldFitRoute) {
+  if (routeFitTracker.isFitPending()) {
     var switchTo = resolveInitialAlternative(route, e.alternatives, state.options.alternative);
     if (switchTo) {
       // Re-fire on lrmControl so the LRM-internal listeners
@@ -764,19 +780,30 @@ lrmControl.on('routeselected', function(e) {
   toolsControl.setRouteGeoJSON(routeGeoJSON);
 
   // Fit/pan: adjust the map view to the newly selected route
-  if (!shouldFitRoute) return;
-  shouldFitRoute = false;
-
   var boundsCoordinates = routeZoom.getBoundsCoordinates(lrmControl && lrmControl._routes, route);
-  if (boundsCoordinates.length === 0) return;
-
-  var bounds = L.latLngBounds(boundsCoordinates);
+  if (boundsCoordinates.length === 0) {
+    // Nothing to fit to: drop the request instead of carrying it into a later route.
+    routeFitTracker.clearFitPending();
+    return;
+  }
 
   var container = document.querySelector('.leaflet-routing-container');
   var paneWidth = 0;
   if (container && !container.classList.contains('leaflet-routing-container-hide')) {
     paneWidth = container.offsetWidth;
   }
+
+  if (!routeFitTracker.isFitPending()) {
+    // A drag leaves the view alone, unless it pushed the route into the
+    // directions pane — the route must never run underneath it.
+    var containerPoints = boundsCoordinates.map(function(coordinate) {
+      return map.latLngToContainerPoint(coordinate);
+    });
+    if (!routeZoom.isRouteUnderPane(containerPoints, map.getSize(), paneWidth)) return;
+  }
+  routeFitTracker.clearFitPending();
+
+  var bounds = L.latLngBounds(boundsCoordinates);
 
   var currentZoom = map.getZoom();
   var fitPadding = 20;
