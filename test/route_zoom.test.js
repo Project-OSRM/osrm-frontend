@@ -67,6 +67,18 @@ describe('route running under the directions pane', function() {
     expect(routeZoom.isRouteUnderPane(pastPaneOffScreen, mapSize, paneWidth)).toBe(false);
   });
 
+  test('ignores points that lie off screen to the right of the pane', function() {
+    var pastRightEdge = [{x: 1200, y: 300}, {x: 4000, y: 100}];
+
+    expect(routeZoom.isRouteUnderPane(pastRightEdge, mapSize, paneWidth)).toBe(false);
+  });
+
+  test('reports covered for a route that leaves the viewport through the pane', function() {
+    var acrossPaneAndOut = [{x: 400, y: 300}, {x: 850, y: 300}, {x: 1200, y: 300}];
+
+    expect(routeZoom.isRouteUnderPane(acrossPaneAndOut, mapSize, paneWidth)).toBe(true);
+  });
+
   test('reports covered when the pane covers the whole map', function() {
     var anywhere = [{x: 100, y: 100}];
 

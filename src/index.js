@@ -779,7 +779,11 @@ lrmControl.on('routeselected', function(e) {
 
   // Fit/pan: adjust the map view to the newly selected route
   var boundsCoordinates = routeZoom.getBoundsCoordinates(lrmControl && lrmControl._routes, route);
-  if (boundsCoordinates.length === 0) return;
+  if (boundsCoordinates.length === 0) {
+    // Nothing to fit to: drop the request instead of carrying it into a later route.
+    routeFitTracker.clearFitPending();
+    return;
+  }
 
   var container = document.querySelector('.leaflet-routing-container');
   var paneWidth = 0;

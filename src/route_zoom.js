@@ -23,7 +23,10 @@ function getBoundsCoordinates(routes, fallbackRoute) {
 // containerPoints are the route coordinates projected to container pixels,
 // mapSize is the map's pixel size, paneWidth the width of the directions pane
 // on the right edge (0 when the pane is hidden). A point counts as covered when
-// it lies right of the pane's left edge and within the viewport vertically.
+// it falls inside the pane's rectangle: right of the pane's left edge and still
+// within the viewport. Points beyond the viewport are out of sight rather than
+// covered, and a route that reaches them crosses the pane's rectangle on its way
+// out, so it is caught by the points in between.
 function isRouteUnderPane(containerPoints, mapSize, paneWidth) {
   if (!containerPoints || !containerPoints.length) return false;
   if (!mapSize || !paneWidth || paneWidth <= 0) return false;
@@ -33,7 +36,7 @@ function isRouteUnderPane(containerPoints, mapSize, paneWidth) {
   for (var i = 0; i < containerPoints.length; i++) {
     var point = containerPoints[i];
     if (!point) continue;
-    if (point.x > paneLeft && point.y >= 0 && point.y <= mapSize.y) {
+    if (point.x > paneLeft && point.x <= mapSize.x && point.y >= 0 && point.y <= mapSize.y) {
       return true;
     }
   }
