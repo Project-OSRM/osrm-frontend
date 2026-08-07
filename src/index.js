@@ -638,8 +638,10 @@ if (routingContainer) {
   routingContainer.classList.add('leaflet-routing-container-hide');
 }
 
-// Show pane when route is computed
+// Decides whether the next route or geocode result may move the map view
 var routeFitTracker = routeZoom.createRouteFitTracker();
+
+// Show pane when route is computed
 lrmControl.on('routesfound', function(e) {
   var container = document.querySelector('.leaflet-routing-container');
   if (container) {
