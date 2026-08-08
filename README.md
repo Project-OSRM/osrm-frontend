@@ -44,6 +44,38 @@ docker run -p 9966:9966 \
 2. If only `OSRM_MODES` is set, the frontend parses the JSON and configures the listed modes.
 3. If both are set, `OSRM_MODES` wins and the frontend emits a deprecation warning for `OSRM_BACKEND`.
 
+### Backends behind HTTP authentication
+
+The frontend has no configuration option for backend credentials, and embedding them in the
+backend URL (`https://user:password@example.com`) does not work: browsers refuse to send
+credentials embedded in subresource URLs, so the request either fails with `401` or never
+completes. This is browser policy and cannot be worked around from the page. Credentials placed
+in `OSRM_MODES` would also end up in `config.json`, readable by everyone who loads the frontend.
+
+The supported approach is to keep the credentials on the server side, behind a reverse proxy that
+serves the frontend and the routing endpoint from the same origin. With nginx:
+
+```nginx
+location /osrm/ {
+    proxy_pass https://osrm.internal.example.com/;
+    proxy_set_header Authorization "Basic <base64 of user:password>";
+}
+```
+
+Then point a mode at the proxied path instead of at the backend directly. Relative URLs are
+supported and produce same-origin requests:
+
+```bash
+docker run -p 9966:9966 \
+  -e 'OSRM_MODES=[{"name":"car","url":"/osrm"}]' \
+  ghcr.io/project-osrm/osrm-frontend:latest
+```
+
+If the proxy has to live on a different origin than the frontend, it must answer the CORS
+preflight (`OPTIONS`) request *without* requiring authentication, and include
+`Access-Control-Allow-Headers: authorization` in the response. Otherwise the browser rejects the
+routing request before it is ever sent.
+
 In case Docker complains about not being able to connect to the Docker daemon make sure you are in the `docker` group.
 
 ```
