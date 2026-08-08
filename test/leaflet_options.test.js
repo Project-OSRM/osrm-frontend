@@ -351,6 +351,23 @@ describe('leaflet_options — runtime configuration overrides', () => {
       delete global.window;
     });
 
+    test('supports a relative backend URL for same-origin reverse proxies', () => {
+      // Deployments that put an authenticating proxy in front of the backend point
+      // a mode at a path on the frontend's own origin (see README).
+      const modesJSON = JSON.stringify([
+        { name: 'car', url: '/osrm' }
+      ]);
+      global.window = {
+        osrmConfig: {
+          OSRM_ENVIRONMENT: 'docker',
+          OSRM_MODES: modesJSON
+        }
+      };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.services[0].path).toBe('/osrm/route/v1');
+      delete global.window;
+    });
+
     test('defaults to three public profiles in dev mode', () => {
       global.window = { osrmConfig: { OSRM_ENVIRONMENT: undefined } };
       const leafletOptions = require('../src/leaflet_options');
