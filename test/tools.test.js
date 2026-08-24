@@ -138,6 +138,40 @@ describe('tools debug map link', () => {
     );
   });
 
+  test('uses a configured debug map URL for the active routing mode', () => {
+    window.history.replaceState({}, '', '/?z=13');
+
+    control.setDebugUrl('https://debug.example.com/bike/');
+    control._openDebug();
+
+    expect(openSpy).toHaveBeenCalledWith(
+      'https://debug.example.com/bike/#13/38.899500/-77.026900'
+    );
+  });
+
+  test('resolves a relative debug map URL against the frontend origin', () => {
+    window.history.replaceState({}, '', '/osrm-frontend/index.html?z=13');
+
+    control.setDebugUrl('debug-bike/');
+    control._openDebug();
+
+    expect(openSpy).toHaveBeenCalledWith(
+      'http://localhost/osrm-frontend/debug-bike/#13/38.899500/-77.026900'
+    );
+  });
+
+  test('falls back to the bundled debug map when a mode has no debug URL', () => {
+    window.history.replaceState({}, '', '/?z=13');
+
+    control.setDebugUrl('https://debug.example.com/bike/');
+    control.setDebugUrl(undefined);
+    control._openDebug();
+
+    expect(openSpy).toHaveBeenCalledWith(
+      'http://localhost/debug/#13/38.899500/-77.026900'
+    );
+  });
+
   test('keeps the Leaflet event API on the control', () => {
     var handler = jest.fn();
 
