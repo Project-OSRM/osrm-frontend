@@ -29,3 +29,4 @@ OSRM Frontend is the browser-based routing interface served at https://map.proje
 - Commit generated artifacts (`bundle.js`, `bundle.js.map`, `dist/`) only when necessary.
 - When adding routing backends, prefer `OSRM_MODES` env var over editing `src/leaflet_options.js`.
 - The debug tile viewer at `/debug` has its own `index.html` — keep it in sync if tile sources change.
+- The "Open in Debug Map" link is per routing mode (`debugUrl` in `OSRM_MODES`), applied via `toolsControl.setDebugUrl()` on every profile change.

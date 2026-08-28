@@ -30,6 +30,9 @@ var Control = L.Control.extend({
     editorButtonClass: "",
     josmButtonClass: "",
     debugButtonClass: "",
+    // Debug map link. Relative URLs resolve against the frontend origin.
+    // Overridden per routing mode via the mode's `debugUrl` property.
+    debugUrl: "debug/",
     mapillaryButtonClass: "",
     shareButtonClass: "",
     gpxButtonClass: "",
@@ -116,11 +119,27 @@ var Control = L.Control.extend({
     window.open(url);
   },
 
+  /**
+   * Point the debug map button at a different debug map, e.g. when the active
+   * routing mode carries its own `debugUrl`. Falsy values restore the default.
+   *
+   * @param {string} url — Absolute or frontend-relative debug map URL.
+   */
+  setDebugUrl: function(url) {
+    this.options.debugUrl = url || 'debug/';
+  },
+
   _openDebug: function() {
     var position = this._map.getCenter(),
       zoom = this._map.getZoom(),
       prec = 6,
+      debugUrl;
+    try {
+      debugUrl = new URL(this.options.debugUrl || 'debug/', window.location.href);
+    } catch (e) {
+      console.warn('Invalid debug map URL, falling back to the bundled debug map:', e);
       debugUrl = new URL('debug/', window.location.href);
+    }
     debugUrl.hash = zoom + "/" + position.lat.toFixed(prec) + "/" + position.lng.toFixed(prec);
     window.open(debugUrl.href);
   },

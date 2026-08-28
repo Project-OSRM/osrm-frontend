@@ -20,7 +20,16 @@ By default Docker uses a single routing profile named `default` and sends reques
 
 ### Recommended: multiple profiles with `OSRM_MODES`
 
-`OSRM_MODES` is the current Docker runtime configuration interface. It accepts a JSON array of objects with `name` and `url` fields.
+`OSRM_MODES` is the current Docker runtime configuration interface. It accepts a JSON array of objects
+with the following fields:
+
+| Field      | Required | Purpose |
+|------------|----------|---------|
+| `name`     | yes      | Label shown in the mode selector. |
+| `url`      | yes      | Backend base URL. `/route/v1` is appended unless `path` is set. |
+| `path`     | no       | Explicit routing path, e.g. `https://routing.openstreetmap.de/routed-bike/route/v1`. |
+| `profile`  | no       | Internal profile (`driving`, `bike`, `foot`). Defaults by position: 0 → driving, 1 → bike, 2 → foot. |
+| `debugUrl` | no       | Debug map opened by the "Open in Debug Map" tool button while this mode is active. Defaults to the bundled `debug/`. |
 
 ```bash
 docker run -p 9966:9966 \
@@ -189,3 +198,21 @@ For debug tiles showing speeds and small components available at `/debug` adjust
   "tiles" : ["http://localhost:5000/tile/v1/car/tile({x},{y},{z}).mvt"]
 }
 ```
+
+The bundled debug map serves a single tile source, so it can only ever match one profile. Since each
+routing mode usually needs its own debug view, the link behind the "Open in Debug Map" button is
+configurable per mode via `debugUrl`. Deploy one debug map per profile and point each mode at its own:
+
+```bash
+docker run -p 9966:9966 \
+  -e 'OSRM_MODES=[
+        {"name":"car","url":"http://localhost:5000","debugUrl":"debug-car/"},
+        {"name":"bike","url":"http://localhost:5001","debugUrl":"https://debug.example.com/bike/"}
+      ]' \
+  ghcr.io/project-osrm/osrm-frontend:latest
+```
+
+Relative URLs resolve against the frontend origin (so `debug-car/` under a `/osrm-frontend/` deployment
+becomes `/osrm-frontend/debug-car/`); absolute URLs are used as-is. In both cases the current map
+position is appended as a `#zoom/lat/lng` hash, exactly as with the bundled debug map. A mode without
+`debugUrl` keeps opening the bundled `debug/`.

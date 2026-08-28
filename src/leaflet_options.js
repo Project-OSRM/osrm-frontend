@@ -83,7 +83,7 @@ function getLabel() {
  * Parse routing modes from the runtime config.
  *
  * **Precedence (highest to lowest):**
- * 1. `OSRM_MODES` — preferred JSON array of `{name, url, path?, profile?}` objects.
+ * 1. `OSRM_MODES` — preferred JSON array of `{name, url, path?, profile?, debugUrl?}` objects.
  *    Also accepts a plain array of URL strings (auto-named "Mode 1", "Mode 2", …).
  *    When `profile` is not specified it defaults by position: index 0 → `'driving'`,
  *    index 1 → `'bike'`, index 2 → `'foot'`, index ≥ 3 → `'driving'`.
@@ -94,9 +94,10 @@ function getLabel() {
  * If both `OSRM_MODES` and `OSRM_BACKEND` are set, `OSRM_MODES` wins and a
  * deprecation warning is emitted.
  *
- * @returns {Array<{name: string, url: string, path?: string, profile: string}>}
+ * @returns {Array<{name: string, url: string, path?: string, profile: string, debugUrl?: string}>}
  *   An array of mode objects, each with a display name, backend URL, optional
- *   explicit routing path, and an internal routing profile (`driving`, `bike`, `foot`).
+ *   explicit routing path, an internal routing profile (`driving`, `bike`, `foot`),
+ *   and an optional debug map URL for the “Open in Debug Map” tool button.
  */
 function parseModes() {
   // Read config fresh from window each time, not the captured config variable
@@ -162,6 +163,7 @@ function parseModes() {
             profile: mode.profile || profileNames[index] || 'driving'  // Honor explicit profile, fall back to positional
           };
           if (mode.path) result.path = mode.path;  // preserve explicit path (e.g. routed-bike/route/v1)
+          if (mode.debugUrl) result.debugUrl = mode.debugUrl;  // preserve per-mode debug map link
           return result;
         });
       }
@@ -395,9 +397,10 @@ var defaultLayer = layerMap[getDefaultLayer()] || streets;
  *
  * Each entry exposes a human-readable `label`, a `labelKey` for localization,
  * the `path` used for routing requests (`/route/v1` appended to the backend URL
- * by default), and an internal `profile` identifier (`driving`, `bike`, `foot`).
+ * by default), an internal `profile` identifier (`driving`, `bike`, `foot`), and
+ * an optional `debugUrl` pointing at the debug map for that mode.
  *
- * @returns {Array<{label: string, labelKey: string, path: string, profile: string}>}
+ * @returns {Array<{label: string, labelKey: string, path: string, profile: string, debugUrl?: string}>}
  *   An array of service descriptors, one per configured routing mode.
  */
 function buildServices() {
@@ -412,12 +415,14 @@ function buildServices() {
     var name = mode.name;
     var label = mode.label || name;
     var labelKey = mode.labelKey || defaultLabelMapping[name] || label;
-    return {
+    var service = {
       label: label,
       labelKey: labelKey,
       path: mode.path || (mode.url + '/route/v1'),
       profile: mode.profile
     };
+    if (mode.debugUrl) service.debugUrl = mode.debugUrl;
+    return service;
   });
 }
 
@@ -442,7 +447,7 @@ function buildServices() {
  *
  * | Variable               | Default                          | Description |
  * |------------------------|----------------------------------|-------------|
- * | `OSRM_MODES`           | (public OSRM services)           | JSON array of `{name, url, path?, profile?}` routing backends. `profile` defaults by position (driving → bike → foot). |
+ * | `OSRM_MODES`           | (public OSRM services)           | JSON array of `{name, url, path?, profile?, debugUrl?}` routing backends. `profile` defaults by position (driving → bike → foot). `debugUrl` overrides the debug map link for that mode. |
  * | `OSRM_BACKEND`         | —                                | **Deprecated.** Single backend URL. Use `OSRM_MODES` instead. |
  * | `OSRM_CENTER`          | `38.8995,-77.0269`               | Comma-separated "lat,lng" for the initial map center. |
  * | `OSRM_ZOOM`            | `13`                             | Initial zoom level (0–18). |

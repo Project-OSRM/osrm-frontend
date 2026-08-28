@@ -332,6 +332,22 @@ describe('leaflet_options — runtime configuration overrides', () => {
       delete global.window;
     });
 
+    test('preserves a per-mode debugUrl from OSRM_MODES', () => {
+      const modesJSON = JSON.stringify([
+        { name: 'Car', url: 'http://localhost:5000', debugUrl: 'https://debug.example.com/car/' },
+        { name: 'Bike', url: 'http://localhost:5001' }
+      ]);
+      global.window = {
+        osrmConfig: {
+          OSRM_MODES: modesJSON
+        }
+      };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.services[0].debugUrl).toBe('https://debug.example.com/car/');
+      expect(leafletOptions.services[1].debugUrl).toBeUndefined();
+      delete global.window;
+    });
+
     test('preserves explicit path from OSRM_MODES (e.g. routed-bike subdirectory)', () => {
       const modesJSON = JSON.stringify([
         { name: 'driving', url: 'https://router.project-osrm.org', path: 'https://router.project-osrm.org/route/v1' },

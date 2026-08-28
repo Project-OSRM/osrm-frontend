@@ -423,6 +423,21 @@ if (L && L.DomEvent && typeof L.DomEvent.disableScrollPropagation === 'function'
 
 var toolsControl = tools.control(localization.get(mergedOptions.language), localization.getLanguages(), Object.assign({}, options.tools, { initialUnits: mergedOptions.units })).addTo(map);
 
+/**
+ * Point the tools control's debug map button at the debug map configured for a
+ * routing mode. Modes without an explicit `debugUrl` fall back to the bundled
+ * debug map at `debug/`.
+ *
+ * @param {number} profileIndex — Index into `services`.
+ */
+function applyDebugUrlForProfile(profileIndex) {
+  var service = services[profileIndex];
+  if (!toolsControl || typeof toolsControl.setDebugUrl !== 'function') return;
+  toolsControl.setDebugUrl(service && service.debugUrl);
+}
+
+applyDebugUrlForProfile(activeProfileIndex);
+
 var state = state(map, lrmControl, toolsControl, modeSelector, mergedOptions);
 
 // Listen for browser navigation (back/forward) and restore app state
@@ -474,6 +489,7 @@ if (urlState && urlState.listen) {
         if (!isNaN(profileIndex)) {
           try {
             routerPatches.setActiveService(router, profileIndex, services);
+            applyDebugUrlForProfile(profileIndex);
             ls.set('profile', profileIndex);
             if (modeSelector && modeSelector.select) modeSelector.select.value = profileIndex;
             state.options.profile = profileIndex;
@@ -567,6 +583,7 @@ if (toolsControl && toolsControl.on) {
       var profileIndex = parseInt(event.target.value, 10);
       clearProfileSelectorSelection(event.target);
       routerPatches.setActiveService(router, profileIndex, services);
+      applyDebugUrlForProfile(profileIndex);
       ls.set('profile', profileIndex);
       
       // Also update the state object so profile is preserved on language change
