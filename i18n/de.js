@@ -16,5 +16,12 @@ module.exports = {
   'Bike': 'Fahrrad',
   'Car': 'Auto',
   'Foot': 'Fussgänger',
+  'Main entrance': 'Haupteingang',
+  'Entrance': 'Eingang',
+  'Centre of place': 'Ortsmitte',
+  'main entrance': 'Haupteingang',
+  'entrance': 'Eingang',
+  'Exit': 'Ausgang',
+  'exit': 'Ausgang',
   'Build': 'Build: '
 };
