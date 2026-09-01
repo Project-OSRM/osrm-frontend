@@ -6,12 +6,30 @@ var L = require('leaflet');
 // In Node/test environments, window won't exist, so use empty config
 var config = (typeof window !== 'undefined' ? window.osrmConfig : null) || {};
 
+/**
+ * The CARTO Voyager raster tile URL, keyed when a key is configured.
+ *
+ * Unkeyed tiles still render, but CARTO stamps them with an "API KEY REQUIRED"
+ * watermark, so a deployment without a key of its own is degraded rather than
+ * broken. The key is necessarily public — it travels in every tile request the
+ * browser makes — so it is deployment configuration rather than a secret, and
+ * lives with the rest of it in `window.osrmConfig`.
+ *
+ * @returns {string} a Leaflet tile URL template
+ */
+function cartoVoyagerUrl() {
+  var base = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+  var key = config.OSRM_CARTO_KEY;
+  if (typeof key !== 'string' || !key.trim()) return base;
+  return base + '?key=' + encodeURIComponent(key.trim());
+}
+
 var osmAttribution = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   cartoAttribution = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attribution">CARTO</a>',
   esriAttribution = 'Tiles © <a href="https://www.esri.com/">Esri</a> — Source: Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community',
   waymarkedtrailsAttribution = '© <a href="https://waymarkedtrails.org/">Sarah Hoffmann</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)';
 
-var streets = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+var streets = L.tileLayer(cartoVoyagerUrl(), {
     attribution: cartoAttribution,
     subdomains: 'abcd',
     maxZoom: 19
@@ -455,6 +473,7 @@ function buildServices() {
  * | `OSRM_DEFAULT_LAYER`   | `'streets'`                      | Default base layer key: `streets`, `outdoors`, `satellite`, `osm`, or `osm_de`. |
  * | `OSRM_LABEL`           | `'Car (fastest)'`                | Label for the default routing service. |
  * | `OSRM_ENVIRONMENT`     | —                                | Set to `'docker'` to use Docker-mode backend defaults. |
+ * | `OSRM_CARTO_KEY`       | — (bundled key on project-osrm.org) | CARTO Basemaps key for the Streets layer. Without one CARTO watermarks the tiles; they still render. |
  *
  * @module leaflet_options
  */
