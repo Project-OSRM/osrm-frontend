@@ -19,6 +19,7 @@ module.exports = {
   'Main entrance': 'Haupteingang',
   'Entrance': 'Eingang',
   'Wheelchair accessible': 'Rollstuhlgerecht',
+  'Parking entrance': 'Parkhauseinfahrt',
   'main entrance': 'Haupteingang',
   'entrance': 'Eingang',
   'Exit': 'Ausgang',

@@ -228,6 +228,20 @@ describe('the travel mode', () => {
     expect(picker.shown[1].entrances).toEqual([MAIN]);
   });
 
+  test('is handed to the picker, which marks doors differently per mode', () => {
+    // The picker cannot derive it: the filtering happens here, and the marks it
+    // draws have to agree with the mode that filtering used.
+    let mode = 'foot';
+    const { wiring, picker } = build({ options: { mode: () => mode } });
+
+    wiring.onGeocodeResult(geocodeEvent([MAIN]));
+    expect(picker.shown[0].mode).toBe('foot');
+
+    mode = 'driving';
+    wiring.refresh();
+    expect(picker.shown[1].mode).toBe('driving');
+  });
+
   test('refresh re-applies the rules to the place already on screen', () => {
     let mode = 'foot';
     const { wiring, picker } = build({ options: { mode: () => mode } });

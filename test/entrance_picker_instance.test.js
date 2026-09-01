@@ -664,74 +664,116 @@ describe('label placement', () => {
   });
 });
 
-describe('wheelchair mark', () => {
+describe('mode-dependent marks', () => {
   const labelBoxes = require('./__label_boxes');
   const box = (l, t, r, b) => ({ left: l, top: t, right: r, bottom: b });
-  // The mark is part of the label's rendered text, so the test harness — which
-  // keys measured boxes by that text — sees it in the key too.
-  const MARK = '\u267F';
+  // A mark is part of the label's rendered text, so the harness — which keys
+  // measured boxes by that text — sees it in the key too.
+  const WC = '\u267F';
+  const PK = '\uD83C\uDD7F';
 
-  const ACCESSIBLE = { osmId: 1, type: 'main', center: { lat: 52.5209, lng: 13.3965 },
+  const STEP_FREE = { osmId: 1, type: 'main', center: { lat: 52.5209, lng: 13.3965 },
     tags: { name: 'Nord', wheelchair: 'yes' } };
   const STEPPED = { osmId: 2, type: 'yes', center: { lat: 52.5208, lng: 13.3970 },
     tags: { name: 'Ost', wheelchair: 'no' } };
   const UNKNOWN = { osmId: 3, type: 'yes', center: { lat: 52.5207, lng: 13.3975 },
     tags: { name: 'Sued' } };
+  const GARAGE = { osmId: 4, type: 'yes', center: { lat: 52.5206, lng: 13.3980 },
+    tags: { name: 'Tiefgarage', amenity: 'parking_entrance', parking: 'underground' } };
 
   afterEach(() => labelBoxes.clear());
 
-  function open(entrances, boxes) {
+  function open(entrances, boxes, mode) {
     labelBoxes.set(boxes);
     const map = makeMap();
-    entrancePicker.createEntrancePicker(map, {}).show({
-      waypointIndex: 1, placeCenter: CENTRE, entrances: entrances
-    });
-    return map;
+    const picker = entrancePicker.createEntrancePicker(map, {});
+    picker.show({ waypointIndex: 1, placeCenter: CENTRE, entrances: entrances, mode: mode });
+    return { map, picker };
   }
 
-  const APART = {
-    ['Nord' + MARK]: box(0, 0, 44, 16),
-    Ost: box(100, 0, 140, 16),
-    Sued: box(200, 0, 240, 16)
-  };
+  const html = (map) => labels(map).map((m) => m.options.icon.options.html);
 
-  test('only the accessible door is marked', () => {
-    const html = labels(open([ACCESSIBLE, STEPPED, UNKNOWN], APART))
-      .map((m) => m.options.icon.options.html);
-    expect(html[0]).toContain('osrm-entrance-wheelchair');
-    expect(html[1]).not.toContain('osrm-entrance-wheelchair');
-    expect(html[2]).not.toContain('osrm-entrance-wheelchair');
+  test('on foot, only the step-free door is marked', () => {
+    const { map } = open([STEP_FREE, STEPPED, UNKNOWN], {
+      ['Nord' + WC]: box(0, 0, 44, 16), Ost: box(100, 0, 140, 16), Sued: box(200, 0, 240, 16)
+    }, 'foot');
+    expect(html(map)[0]).toContain('osrm-entrance-mark-wheelchair');
+    expect(html(map)[1]).not.toContain('osrm-entrance-mark');
+    expect(html(map)[2]).not.toContain('osrm-entrance-mark');
+  });
+
+  test('when driving, the parking entrance is marked and the step-free door is not', () => {
+    const { map } = open([STEP_FREE, GARAGE], {
+      Nord: box(0, 0, 40, 16), ['Tiefgarage' + PK]: box(100, 0, 180, 16)
+    }, 'car');
+    expect(html(map)[0]).not.toContain('osrm-entrance-mark');
+    expect(html(map)[1]).toContain('osrm-entrance-mark-parking');
+  });
+
+  test('cycling marks nothing', () => {
+    const { map } = open([STEP_FREE, GARAGE], {
+      Nord: box(0, 0, 40, 16), Tiefgarage: box(100, 0, 180, 16)
+    }, 'bike');
+    expect(html(map).join('')).not.toContain('osrm-entrance-mark');
+  });
+
+  test('changing mode re-marks the labels already on screen', () => {
+    // refresh() re-shows an open picker when the profile changes, so the marks
+    // have to follow rather than keep describing the mode the user has left.
+    labelBoxes.set({
+      ['Nord' + WC]: box(0, 0, 44, 16), Nord: box(0, 0, 40, 16),
+      ['Tiefgarage' + PK]: box(100, 0, 180, 16), Tiefgarage: box(100, 0, 180, 16)
+    });
+    const map = makeMap();
+    const picker = entrancePicker.createEntrancePicker(map, {});
+    const show = (mode) => picker.show({
+      waypointIndex: 1, placeCenter: CENTRE, entrances: [STEP_FREE, GARAGE], mode: mode
+    });
+
+    show('foot');
+    expect(html(map)[0]).toContain('osrm-entrance-mark-wheelchair');
+    expect(html(map)[1]).not.toContain('osrm-entrance-mark');
+
+    show('car');
+    expect(html(map)[0]).not.toContain('osrm-entrance-mark');
+    expect(html(map)[1]).toContain('osrm-entrance-mark-parking');
+
+    show('bike');
+    expect(html(map).join('')).not.toContain('osrm-entrance-mark');
   });
 
   test('the mark is hidden from assistive tech, which reads the dot instead', () => {
-    const map = open([ACCESSIBLE], { ['Nord' + MARK]: box(0, 0, 44, 16) });
-    expect(labels(map)[0].options.icon.options.html).toContain('aria-hidden="true"');
+    const { map } = open([STEP_FREE], { ['Nord' + WC]: box(0, 0, 44, 16) }, 'foot');
+    expect(html(map)[0]).toContain('aria-hidden="true"');
     expect(dots(map)[0].options.alt).toBe('Nord (Wheelchair accessible)');
   });
 
+  test('the driving alt text names the parking entrance', () => {
+    const { map } = open([GARAGE], { ['Tiefgarage' + PK]: box(0, 0, 80, 16) }, 'car');
+    expect(dots(map)[0].options.alt).toBe('Tiefgarage (Parking entrance)');
+  });
+
   test('an unmarked door says only its name', () => {
-    const map = open([UNKNOWN], { Sued: box(0, 0, 40, 16) });
+    const { map } = open([UNKNOWN], { Sued: box(0, 0, 40, 16) }, 'foot');
     expect(dots(map)[0].options.alt).toBe('Sued');
   });
 
   test('a merged label marks only the doors that earned it', () => {
     // Nord and Ost collide and merge; the mark must stay on Nord's line alone.
-    const map = open([ACCESSIBLE, STEPPED, UNKNOWN], {
-      ['Nord' + MARK]: box(0, 0, 44, 16),
-      Ost: box(20, 0, 60, 16),
-      Sued: box(200, 0, 240, 16)
-    });
-    const merged = labels(map)[0].options.icon.options.html;
-    expect(merged.match(/osrm-entrance-wheelchair/g)).toHaveLength(1);
+    const { map } = open([STEP_FREE, STEPPED, UNKNOWN], {
+      ['Nord' + WC]: box(0, 0, 44, 16), Ost: box(20, 0, 60, 16), Sued: box(200, 0, 240, 16)
+    }, 'foot');
+    const merged = html(map)[0];
+    expect(merged.match(/osrm-entrance-mark/g)).toHaveLength(2);   // base class + modifier
     expect(labelTexts(map)[0]).toContain('Nord');
     expect(labelTexts(map)[0]).toContain('Ost');
   });
 
   test('the mark survives selecting the door it belongs to', () => {
-    const map = open([ACCESSIBLE, STEPPED],
-      { ['Nord' + MARK]: box(0, 0, 44, 16), Ost: box(100, 0, 140, 16) });
+    const { map } = open([STEP_FREE, STEPPED],
+      { ['Nord' + WC]: box(0, 0, 44, 16), Ost: box(100, 0, 140, 16) }, 'foot');
     dots(map)[0].fire('click', {});
-    expect(labels(map)[0].options.icon.options.html).toContain('osrm-entrance-wheelchair');
+    expect(html(map)[0]).toContain('osrm-entrance-mark-wheelchair');
   });
 });
 
