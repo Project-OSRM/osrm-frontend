@@ -24,8 +24,13 @@
         OSRM_ZOOM: 13,
         OSRM_DEFAULT_LAYER: 'streets',
         // CARTO basemap key for project-osrm.org. Public by necessity: it is
-        // sent with every tile request. Without it CARTO watermarks the tiles.
-        // A fork serving its own domain should use its own key here.
+        // sent with every tile request. Without it CARTO watermarks the tiles,
+        // which still render.
+        //
+        // A fork serving its own domain wants its own key. Editing it here
+        // covers a static deployment; in Docker this whole object is replaced
+        // by config.json, so set the OSRM_CARTO_KEY environment variable
+        // instead and the entrypoint will pass it through.
         OSRM_CARTO_KEY: 'cb1_2qvg_1_8e87c8903d178ccf6f862d52'
         // OSRM_BACKEND and OSRM_MODES will be set by config.json if available
       };

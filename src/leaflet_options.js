@@ -468,6 +468,7 @@ function buildServices() {
  * | `OSRM_DEFAULT_LAYER`   | `'streets'`                      | Default base layer key: `streets`, `outdoors`, `satellite`, `osm`, or `osm_de`. |
  * | `OSRM_LABEL`           | `'Car (fastest)'`                | Label for the default routing service. |
  * | `OSRM_ENVIRONMENT`     | —                                | Set to `'docker'` to use Docker-mode backend defaults. |
+ * | `OSRM_CARTO_KEY`       | — (bundled key on project-osrm.org) | CARTO Basemaps key for the Streets layer. Without one CARTO watermarks the tiles; they still render. |
  *
  * @module leaflet_options
  */
