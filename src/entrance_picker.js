@@ -165,19 +165,64 @@ function entranceName(entrance) {
 // promising step-free access there would be worse than no mark at all.
 var WHEELCHAIR_ACCESSIBLE = {yes: true, designated: true};
 
+// What is worth pointing out about a door depends entirely on how the traveller
+// is arriving, so each mark belongs to one travel mode and appears in no other.
+// Step-free access matters to someone on foot and says nothing to a driver;
+// which door swallows cars matters to a driver and is noise to everyone else.
+//
+// There is deliberately no mark for cycling. Its natural candidate, `bicycle`
+// on an entrance node, does not reach even 0.05% of them globally — far below
+// `wheelchair` at 4.7% — so a cycling mark would be an icon nobody ever sees.
+var MARKS = {
+  wheelchair: {
+    className: 'osrm-entrance-mark-wheelchair',
+    // U+267F. Written as a surrogate pair rather than an escape this file's
+    // ES5 syntax cannot express.
+    glyph: '\u267F',
+    label: 'Wheelchair accessible',
+    applies: function(tags) {
+      var value = tags.wheelchair;
+      if (typeof value !== 'string') return false;
+      return WHEELCHAIR_ACCESSIBLE[value.trim().toLowerCase()] === true;
+    }
+  },
+  parking: {
+    className: 'osrm-entrance-mark-parking',
+    // U+1F17F, negative squared latin capital letter P.
+    glyph: '\uD83C\uDD7F',
+    label: 'Parking entrance',
+    applies: function(tags) {
+      return tags.amenity === 'parking_entrance';
+    }
+  }
+};
+
+// Keyed by the same profile names as MODE_ACCESS_KEYS, so both tables agree on
+// what a mode is called.
+var MODE_MARK = {
+  foot: 'wheelchair',
+  driving: 'parking',
+  car: 'parking'
+};
+
 /**
- * Whether a door is tagged wheelchair accessible in OSM.
+ * The mark a door earns for one travel mode, or null.
  *
- * Only about an eighth of entrance nodes carry the tag at all, so its absence
- * means nobody surveyed the door, not that the door has a step. This therefore
- * only ever adds a mark to a door; it never filters one out, and
- * `routableEntrances` stays untouched by it.
+ * A mark never filters. Roughly seven in eight entrance nodes carry no
+ * wheelchair tag and far fewer carry parking tags, so an absent value means
+ * nobody surveyed the door rather than that the door lacks the property, and
+ * `routableEntrances` stays untouched by any of this.
+ *
+ * @param {object} entrance
+ * @param {string} [mode] — the routing profile. A mode with no mark of its own,
+ *   or none at all, marks nothing.
+ * @returns {?{className: string, glyph: string, label: string}}
  */
-function isWheelchairAccessible(entrance) {
+function entranceMark(entrance, mode) {
+  var mark = MARKS[MODE_MARK[mode]];
   var tags = entrance && entrance.tags;
-  var value = tags && tags.wheelchair;
-  if (typeof value !== 'string') return false;
-  return WHEELCHAIR_ACCESSIBLE[value.trim().toLowerCase()] === true;
+  if (!mark || !tags) return null;
+  return mark.applies(tags) ? mark : null;
 }
 
 // Two label boxes touching edge-to-edge are not overlapping; only real overlap
@@ -396,7 +441,7 @@ function createEntrancePicker(map, options) {
 
     state.choices.forEach(function(choice) {
       var text = label(choice);
-      var accessible = isWheelchairAccessible(choice.entrance);
+      var mark = entranceMark(choice.entrance, state.mode);
       var chosen = choice.id === state.selectedId;
       var className = 'osrm-entrance-marker osrm-entrance-marker-' + choice.kind +
         (chosen ? ' osrm-entrance-marker-selected' : '');
@@ -405,14 +450,14 @@ function createEntrancePicker(map, options) {
         // The label shows this as an icon; the alt spells it out, because the
         // icon is marked aria-hidden and would otherwise be announced as
         // nothing at all.
-        alt: accessible ? text + ' (' + translate('Wheelchair accessible') + ')' : text,
+        alt: mark ? text + ' (' + translate(mark.label) + ')' : text,
         keyboard: true,
         zIndexOffset: chosen ? 500 : 400
       });
       // The name travels with the dot; layoutLabels turns it into a label the
       // user can read without hovering.
       marker.__entranceLabel = text;
-      marker.__entranceWheelchair = accessible;
+      marker.__entranceMark = mark;
       marker.on('click', function(e) {
         // Without this the click also lands on the map, which would drop a new
         // waypoint on top of the place being chosen for.
@@ -467,7 +512,7 @@ function createEntrancePicker(map, options) {
   // anchor is the door itself; the inner element does the drawing and is what
   // gets measured.
   function labelEntry(marker) {
-    return {text: marker.__entranceLabel, wheelchair: !!marker.__entranceWheelchair};
+    return {text: marker.__entranceLabel, mark: marker.__entranceMark || null};
   }
 
   function addLabel(latLng, entries, merged) {
@@ -493,11 +538,11 @@ function createEntrancePicker(map, options) {
   function labelLine(entry) {
     var div = document.createElement('div');
     div.textContent = entry.text;
-    // Hidden from assistive tech on purpose: the dot's alt already says
-    // "wheelchair accessible" in words, and announcing the symbol too would
-    // repeat it.
-    var mark = entry.wheelchair
-      ? '<span class="osrm-entrance-wheelchair" aria-hidden="true">\u267F</span>'
+    // Hidden from assistive tech on purpose: the dot's alt already says what the
+    // mark means in words, and announcing the symbol too would repeat it.
+    var mark = entry.mark
+      ? '<span class="osrm-entrance-mark ' + entry.mark.className +
+        '" aria-hidden="true">' + entry.mark.glyph + '</span>'
       : '';
     return '<div>' + div.innerHTML + mark + '</div>';
   }
@@ -650,6 +695,9 @@ function createEntrancePicker(map, options) {
       placeName: opts.placeName,
       placeCenter: opts.placeCenter || null,
       choices: choices,
+      // Which mark a door earns depends on it, and refresh() re-shows the
+      // picker with a new one whenever the travel mode changes.
+      mode: opts.mode || null,
       selectedId: opts.selectedId || null,
       placeBounds: opts.placeBounds || null
     };
@@ -710,7 +758,7 @@ module.exports = {
   routableEntrances: routableEntrances,
   allowsMode: allowsMode,
   entranceName: entranceName,
-  isWheelchairAccessible: isWheelchairAccessible,
+  entranceMark: entranceMark,
   boxesOverlap: boxesOverlap,
   clusterOverlappingLabels: clusterOverlappingLabels,
   waypointRole: waypointRole,

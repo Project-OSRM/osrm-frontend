@@ -156,6 +156,9 @@ function createEntranceWaypoints(options) {
 
     return picker.show({
       waypointIndex: e.waypointIndex,
+      // The picker marks doors differently per mode, so it needs the same value
+      // the filtering above used.
+      mode: mode(),
       placeName: result.name,
       placeCenter: result.center,
       placeBounds: result.bbox,

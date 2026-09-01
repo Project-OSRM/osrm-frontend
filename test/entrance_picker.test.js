@@ -421,43 +421,68 @@ describe('shouldZoomToExtent', () => {
   });
 });
 
-describe('isWheelchairAccessible', () => {
+describe('entranceMark', () => {
   const door = (tags) => ({ osmId: 1, type: 'yes', tags: tags });
+  const mark = (tags, mode) => entrancePicker.entranceMark(door(tags), mode);
 
-  test('a door tagged yes or designated is accessible', () => {
-    expect(entrancePicker.isWheelchairAccessible(door({ wheelchair: 'yes' }))).toBe(true);
-    expect(entrancePicker.isWheelchairAccessible(door({ wheelchair: 'designated' }))).toBe(true);
+  test('a step-free door is marked on foot', () => {
+    expect(mark({ wheelchair: 'yes' }, 'foot').label).toBe('Wheelchair accessible');
+    expect(mark({ wheelchair: 'designated' }, 'foot').label).toBe('Wheelchair accessible');
   });
 
   test('OSM values are matched regardless of case and stray whitespace', () => {
-    expect(entrancePicker.isWheelchairAccessible(door({ wheelchair: ' YES ' }))).toBe(true);
-    expect(entrancePicker.isWheelchairAccessible(door({ wheelchair: 'Designated' }))).toBe(true);
+    expect(mark({ wheelchair: ' YES ' }, 'foot')).not.toBeNull();
+    expect(mark({ wheelchair: 'Designated' }, 'foot')).not.toBeNull();
   });
 
   test('limited does not count: it promises step-free access it cannot deliver', () => {
-    expect(entrancePicker.isWheelchairAccessible(door({ wheelchair: 'limited' }))).toBe(false);
+    expect(mark({ wheelchair: 'limited' }, 'foot')).toBeNull();
   });
 
-  test('no is not accessible', () => {
-    expect(entrancePicker.isWheelchairAccessible(door({ wheelchair: 'no' }))).toBe(false);
+  test('no is not accessible, and an untagged door is unknown rather than either', () => {
+    // Roughly nineteen in twenty entrance nodes carry no wheelchair tag, so this
+    // is the common case and must never read as a promise in either direction.
+    expect(mark({ wheelchair: 'no' }, 'foot')).toBeNull();
+    expect(mark({ name: 'Nord' }, 'foot')).toBeNull();
+    expect(mark(undefined, 'foot')).toBeNull();
+    expect(entrancePicker.entranceMark(undefined, 'foot')).toBeNull();
+    expect(entrancePicker.entranceMark(null, 'foot')).toBeNull();
   });
 
-  test('an untagged door is unknown, not accessible', () => {
-    // Roughly seven in eight entrance nodes carry no wheelchair tag, so this is
-    // the common case and must never be read as a promise either way.
-    expect(entrancePicker.isWheelchairAccessible(door({ name: 'Nord' }))).toBe(false);
-    expect(entrancePicker.isWheelchairAccessible(door(undefined))).toBe(false);
-    expect(entrancePicker.isWheelchairAccessible(undefined)).toBe(false);
-    expect(entrancePicker.isWheelchairAccessible(null)).toBe(false);
+  test('a non-string wheelchair value is ignored rather than coerced', () => {
+    expect(mark({ wheelchair: true }, 'foot')).toBeNull();
   });
 
-  test('a non-string value is ignored rather than coerced', () => {
-    expect(entrancePicker.isWheelchairAccessible(door({ wheelchair: true }))).toBe(false);
+  test('a parking entrance is marked when driving', () => {
+    const m = mark({ amenity: 'parking_entrance', parking: 'multi-storey' }, 'car');
+    expect(m.label).toBe('Parking entrance');
+    expect(entrancePicker.entranceMark(
+      door({ amenity: 'parking_entrance' }), 'driving').label).toBe('Parking entrance');
   });
 
-  test('accessibility never removes a door from the offer', () => {
-    // The mark is advisory. Filtering on it would drop every unsurveyed door,
-    // which is most of them.
+  test('each mark belongs to one mode and appears in no other', () => {
+    // Step-free access says nothing to a driver, and which door swallows cars is
+    // noise to everyone else.
+    expect(mark({ wheelchair: 'yes' }, 'car')).toBeNull();
+    expect(mark({ wheelchair: 'yes' }, 'driving')).toBeNull();
+    expect(mark({ amenity: 'parking_entrance' }, 'foot')).toBeNull();
+  });
+
+  test('cycling has no mark of its own', () => {
+    // `bicycle` on an entrance node does not reach 0.05% of them globally, so a
+    // cycling mark would be an icon nobody ever sees.
+    expect(mark({ wheelchair: 'yes' }, 'bike')).toBeNull();
+    expect(mark({ amenity: 'parking_entrance' }, 'bike')).toBeNull();
+    expect(mark({ bicycle: 'designated' }, 'bicycle')).toBeNull();
+  });
+
+  test('an unknown or absent mode marks nothing', () => {
+    expect(mark({ wheelchair: 'yes' }, 'hovercraft')).toBeNull();
+    expect(mark({ wheelchair: 'yes' }, undefined)).toBeNull();
+  });
+
+  test('a mark never removes a door from the offer', () => {
+    // Filtering on it would drop every unsurveyed door, which is most of them.
     const doors = [
       { osmId: 1, type: 'main', center: {}, tags: { wheelchair: 'no' } },
       { osmId: 2, type: 'yes', center: {}, tags: { wheelchair: 'yes' } },
