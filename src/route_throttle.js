@@ -24,8 +24,13 @@
 // deliberate drag recovers its preview without the user wondering why.
 var COOLOFF_MS = 4000;
 var MAX_COOLOFF_MS = 30000;
-// One failure is a hiccup — a dropped connection, an aborted request. Two in a
-// row while dragging is the service saying no.
+// One failure is a hiccup — a dropped connection, a transient 5xx. Two in a row
+// is the service saying no.
+//
+// Only failures of drag previews count. A one-off route that fails for its own
+// reasons — no route between the waypoints, a malformed request — says nothing
+// about the request rate, and letting it feed the counter would throttle a drag
+// that had not yet been refused anything.
 var FAILURES_BEFORE_BACKOFF = 2;
 
 /**
@@ -72,14 +77,18 @@ function throttleOnRateLimit(router, options) {
     // already has, because the callback it would clear it from never runs.
     if (preview && now() < quietUntil) return undefined;
 
-    return original.call(router, waypoints, function(err, routes) {
+    return original.call(router, waypoints, function(err) {
       // An abort is LRM superseding its own request, not the service refusing.
       if (err && err.type !== 'abort') {
-        failed();
+        if (preview) failed();
       } else if (!err) {
+        // Any success shows the service is answering again, whoever asked.
         succeeded();
       }
-      if (typeof callback === 'function') callback.call(context, err, routes);
+      // `context || callback` is what the OSRM router itself passes, and the
+      // wrapper is meant to be invisible; arguments are forwarded whole so a
+      // router with more to say than (err, routes) keeps saying it.
+      if (typeof callback === 'function') callback.apply(context || callback, arguments);
     }, context, routeOptions);
   };
 
