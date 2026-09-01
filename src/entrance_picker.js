@@ -154,6 +154,28 @@ function entranceName(entrance) {
   return name.length ? name : null;
 }
 
+// OSM's wheelchair values that mean a door can actually be used. `designated`
+// marks one provided specifically for wheelchair users, so it qualifies at
+// least as much as `yes`. `limited` deliberately does not: it means passable
+// only with help, or under conditions the tag does not spell out, and a mark
+// promising step-free access there would be worse than no mark at all.
+var WHEELCHAIR_ACCESSIBLE = {yes: true, designated: true};
+
+/**
+ * Whether a door is tagged wheelchair accessible in OSM.
+ *
+ * Only about an eighth of entrance nodes carry the tag at all, so its absence
+ * means nobody surveyed the door, not that the door has a step. This therefore
+ * only ever adds a mark to a door; it never filters one out, and
+ * `routableEntrances` stays untouched by it.
+ */
+function isWheelchairAccessible(entrance) {
+  var tags = entrance && entrance.tags;
+  var value = tags && tags.wheelchair;
+  if (typeof value !== 'string') return false;
+  return WHEELCHAIR_ACCESSIBLE[value.trim().toLowerCase()] === true;
+}
+
 // Two label boxes touching edge-to-edge are not overlapping; only real overlap
 // counts, so labels may sit flush against each other.
 function boxesOverlap(a, b) {
@@ -370,18 +392,23 @@ function createEntrancePicker(map, options) {
 
     state.choices.forEach(function(choice) {
       var text = label(choice);
+      var accessible = isWheelchairAccessible(choice.entrance);
       var chosen = choice.id === state.selectedId;
       var className = 'osrm-entrance-marker osrm-entrance-marker-' + choice.kind +
         (chosen ? ' osrm-entrance-marker-selected' : '');
       var marker = L.marker(choice.center, {
         icon: L.divIcon({className: className, iconSize: [18, 18], iconAnchor: [9, 9], html: ''}),
-        alt: text,
+        // The label shows this as an icon; the alt spells it out, because the
+        // icon is marked aria-hidden and would otherwise be announced as
+        // nothing at all.
+        alt: accessible ? text + ' (' + translate('Wheelchair accessible') + ')' : text,
         keyboard: true,
         zIndexOffset: chosen ? 500 : 400
       });
       // The name travels with the dot; layoutLabels turns it into a label the
       // user can read without hovering.
       marker.__entranceLabel = text;
+      marker.__entranceWheelchair = accessible;
       marker.on('click', function(e) {
         // Without this the click also lands on the map, which would drop a new
         // waypoint on top of the place being chosen for.
@@ -435,13 +462,17 @@ function createEntrancePicker(map, options) {
   // A label sits above the door it names, anchored on it. Zero-sized so the
   // anchor is the door itself; the inner element does the drawing and is what
   // gets measured.
-  function addLabel(latLng, names, merged) {
+  function labelEntry(marker) {
+    return {text: marker.__entranceLabel, wheelchair: !!marker.__entranceWheelchair};
+  }
+
+  function addLabel(latLng, entries, merged) {
     var options = {
       icon: L.divIcon({
         className: 'osrm-entrance-label' + (merged ? ' osrm-entrance-label-merged' : ''),
         iconSize: null,
         html: '<span class="osrm-entrance-label-inner">' +
-          names.map(labelLine).join('') + '</span>'
+          entries.map(labelLine).join('') + '</span>'
       }),
       // Never in the way of a click on a door, and always drawn beneath one.
       interactive: false,
@@ -455,10 +486,16 @@ function createEntrancePicker(map, options) {
   }
 
   // These names come from OSM and would otherwise be read as markup.
-  function labelLine(name) {
+  function labelLine(entry) {
     var div = document.createElement('div');
-    div.textContent = name;
-    return '<div>' + div.innerHTML + '</div>';
+    div.textContent = entry.text;
+    // Hidden from assistive tech on purpose: the dot's alt already says
+    // "wheelchair accessible" in words, and announcing the symbol too would
+    // repeat it.
+    var mark = entry.wheelchair
+      ? '<span class="osrm-entrance-wheelchair" aria-hidden="true">\u267F</span>'
+      : '';
+    return '<div>' + div.innerHTML + mark + '</div>';
   }
 
   function labelBox(marker) {
@@ -485,7 +522,7 @@ function createEntrancePicker(map, options) {
     // decided from.
     labelLayer.clearLayers();
     var labels = markers.map(function(marker) {
-      return addLabel(markerLatLng(marker), [marker.__entranceLabel], false);
+      return addLabel(markerLatLng(marker), [labelEntry(marker)], false);
     });
 
     var boxes = labels.map(labelBox);
@@ -504,7 +541,7 @@ function createEntrancePicker(map, options) {
     groups.forEach(function(group) {
       addLabel(markerLatLng(markers[group[0]]),
         group.map(function(i) {
-          return markers[i].__entranceLabel;
+          return labelEntry(markers[i]);
         }),
         group.length > 1);
     });
@@ -661,6 +698,7 @@ module.exports = {
   routableEntrances: routableEntrances,
   allowsMode: allowsMode,
   entranceName: entranceName,
+  isWheelchairAccessible: isWheelchairAccessible,
   boxesOverlap: boxesOverlap,
   clusterOverlappingLabels: clusterOverlappingLabels,
   waypointRole: waypointRole,

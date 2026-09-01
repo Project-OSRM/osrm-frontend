@@ -663,3 +663,74 @@ describe('label placement', () => {
     expect(() => map.fire('zoomend')).not.toThrow();
   });
 });
+
+describe('wheelchair mark', () => {
+  const labelBoxes = require('./__label_boxes');
+  const box = (l, t, r, b) => ({ left: l, top: t, right: r, bottom: b });
+  // The mark is part of the label's rendered text, so the test harness — which
+  // keys measured boxes by that text — sees it in the key too.
+  const MARK = '\u267F';
+
+  const ACCESSIBLE = { osmId: 1, type: 'main', center: { lat: 52.5209, lng: 13.3965 },
+    tags: { name: 'Nord', wheelchair: 'yes' } };
+  const STEPPED = { osmId: 2, type: 'yes', center: { lat: 52.5208, lng: 13.3970 },
+    tags: { name: 'Ost', wheelchair: 'no' } };
+  const UNKNOWN = { osmId: 3, type: 'yes', center: { lat: 52.5207, lng: 13.3975 },
+    tags: { name: 'Sued' } };
+
+  afterEach(() => labelBoxes.clear());
+
+  function open(entrances, boxes) {
+    labelBoxes.set(boxes);
+    const map = makeMap();
+    entrancePicker.createEntrancePicker(map, {}).show({
+      waypointIndex: 1, placeCenter: CENTRE, entrances: entrances
+    });
+    return map;
+  }
+
+  const APART = {
+    ['Nord' + MARK]: box(0, 0, 44, 16),
+    Ost: box(100, 0, 140, 16),
+    Sued: box(200, 0, 240, 16)
+  };
+
+  test('only the accessible door is marked', () => {
+    const html = labels(open([ACCESSIBLE, STEPPED, UNKNOWN], APART))
+      .map((m) => m.options.icon.options.html);
+    expect(html[0]).toContain('osrm-entrance-wheelchair');
+    expect(html[1]).not.toContain('osrm-entrance-wheelchair');
+    expect(html[2]).not.toContain('osrm-entrance-wheelchair');
+  });
+
+  test('the mark is hidden from assistive tech, which reads the dot instead', () => {
+    const map = open([ACCESSIBLE], { ['Nord' + MARK]: box(0, 0, 44, 16) });
+    expect(labels(map)[0].options.icon.options.html).toContain('aria-hidden="true"');
+    expect(dots(map)[0].options.alt).toBe('Nord (Wheelchair accessible)');
+  });
+
+  test('an unmarked door says only its name', () => {
+    const map = open([UNKNOWN], { Sued: box(0, 0, 40, 16) });
+    expect(dots(map)[0].options.alt).toBe('Sued');
+  });
+
+  test('a merged label marks only the doors that earned it', () => {
+    // Nord and Ost collide and merge; the mark must stay on Nord's line alone.
+    const map = open([ACCESSIBLE, STEPPED, UNKNOWN], {
+      ['Nord' + MARK]: box(0, 0, 44, 16),
+      Ost: box(20, 0, 60, 16),
+      Sued: box(200, 0, 240, 16)
+    });
+    const merged = labels(map)[0].options.icon.options.html;
+    expect(merged.match(/osrm-entrance-wheelchair/g)).toHaveLength(1);
+    expect(labelTexts(map)[0]).toContain('Nord');
+    expect(labelTexts(map)[0]).toContain('Ost');
+  });
+
+  test('the mark survives selecting the door it belongs to', () => {
+    const map = open([ACCESSIBLE, STEPPED],
+      { ['Nord' + MARK]: box(0, 0, 44, 16), Ost: box(100, 0, 140, 16) });
+    dots(map)[0].fire('click', {});
+    expect(labels(map)[0].options.icon.options.html).toContain('osrm-entrance-wheelchair');
+  });
+});

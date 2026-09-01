@@ -411,3 +411,49 @@ describe('shouldZoomToExtent', () => {
     expect(entrancePicker.shouldZoomToExtent(fills(0.8), { width: 0, height: 0 }, true)).toBe(true);
   });
 });
+
+describe('isWheelchairAccessible', () => {
+  const door = (tags) => ({ osmId: 1, type: 'yes', tags: tags });
+
+  test('a door tagged yes or designated is accessible', () => {
+    expect(entrancePicker.isWheelchairAccessible(door({ wheelchair: 'yes' }))).toBe(true);
+    expect(entrancePicker.isWheelchairAccessible(door({ wheelchair: 'designated' }))).toBe(true);
+  });
+
+  test('OSM values are matched regardless of case and stray whitespace', () => {
+    expect(entrancePicker.isWheelchairAccessible(door({ wheelchair: ' YES ' }))).toBe(true);
+    expect(entrancePicker.isWheelchairAccessible(door({ wheelchair: 'Designated' }))).toBe(true);
+  });
+
+  test('limited does not count: it promises step-free access it cannot deliver', () => {
+    expect(entrancePicker.isWheelchairAccessible(door({ wheelchair: 'limited' }))).toBe(false);
+  });
+
+  test('no is not accessible', () => {
+    expect(entrancePicker.isWheelchairAccessible(door({ wheelchair: 'no' }))).toBe(false);
+  });
+
+  test('an untagged door is unknown, not accessible', () => {
+    // Roughly seven in eight entrance nodes carry no wheelchair tag, so this is
+    // the common case and must never be read as a promise either way.
+    expect(entrancePicker.isWheelchairAccessible(door({ name: 'Nord' }))).toBe(false);
+    expect(entrancePicker.isWheelchairAccessible(door(undefined))).toBe(false);
+    expect(entrancePicker.isWheelchairAccessible(undefined)).toBe(false);
+    expect(entrancePicker.isWheelchairAccessible(null)).toBe(false);
+  });
+
+  test('a non-string value is ignored rather than coerced', () => {
+    expect(entrancePicker.isWheelchairAccessible(door({ wheelchair: true }))).toBe(false);
+  });
+
+  test('accessibility never removes a door from the offer', () => {
+    // The mark is advisory. Filtering on it would drop every unsurveyed door,
+    // which is most of them.
+    const doors = [
+      { osmId: 1, type: 'main', center: {}, tags: { wheelchair: 'no' } },
+      { osmId: 2, type: 'yes', center: {}, tags: { wheelchair: 'yes' } },
+      { osmId: 3, type: 'yes', center: {} }
+    ];
+    expect(entrancePicker.routableEntrances(doors, 'destination', 'foot')).toHaveLength(3);
+  });
+});
