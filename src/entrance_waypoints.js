@@ -61,6 +61,98 @@ function entranceWaypointName(placeName, entrance, translate) {
   return placeName + ' (' + suffix + ')';
 }
 
+// LRM's own default for maxGeocoderTolerance, in metres. Beyond it LRM labels
+// the waypoint with bare coordinates instead of the place it found.
+var MAX_GEOCODER_TOLERANCE = 200;
+
+/**
+ * Wraps the geocoder handed to LRM's plan so a reverse-geocoded waypoint still
+ * reaches the picker.
+ *
+ * LRM fires `geocoded` only when the user picks from the autocomplete. A
+ * waypoint that arrives with coordinates and no name — restored from a shared
+ * URL, dropped by a click on the map, dragged somewhere new — is named by
+ * GeocoderElement.update() calling `geocoder.reverse` directly, and that result
+ * is discarded once the name has been taken out of it. The entrance list goes
+ * with it, so a place whose doors were on offer a moment ago has none after a
+ * reload, even though the answer is sitting in the cache.
+ *
+ * A reverse result has the same shape as a search result, so it is re-fired as
+ * `waypointgeocoderesult` against whichever waypoint the coordinates belong to.
+ *
+ * No guard against reopening the picker unbidden is needed: `update()` only
+ * reverse-geocodes when the waypoint has no name, and LRM's one forced call
+ * clears the name first, so every reverse arriving here is a waypoint being
+ * named for the first time.
+ *
+ * @param {object} options
+ * @param {object} options.geocoder — the geocoder LRM would otherwise be given
+ * @param {function} options.getPlan — () => the plan, read late because the plan
+ *   is built from the geocoder and cannot exist yet
+ * @param {number} [options.tolerance] — metres; beyond this LRM discards the
+ *   name, and offering that place's doors would offer doors of somewhere the
+ *   user did not pick
+ * @returns {object} a geocoder to hand to the plan
+ */
+function createReverseNotifier(options) {
+  options = options || {};
+  var geocoder = options.geocoder;
+  var getPlan = options.getPlan;
+  if (!geocoder || typeof geocoder.reverse !== 'function') return geocoder;
+  var tolerance = typeof options.tolerance === 'number'
+    ? options.tolerance : MAX_GEOCODER_TOLERANCE;
+
+  // Bound rather than copied, so the original keeps its own `this` whatever it
+  // closes over.
+  var wrapped = {};
+  for (var key in geocoder) {
+    wrapped[key] = typeof geocoder[key] === 'function'
+      ? geocoder[key].bind(geocoder) : geocoder[key];
+  }
+
+  function waypointIndexAt(latLng) {
+    var plan = typeof getPlan === 'function' ? getPlan() : null;
+    var waypoints = plan && plan._waypoints;
+    if (!waypoints || !latLng) return -1;
+    for (var i = 0; i < waypoints.length; i++) {
+      var wp = waypoints[i];
+      var at = wp && wp.latLng;
+      if (!at) continue;
+      if (at === latLng) return i;
+      if (at.lat === latLng.lat && at.lng === latLng.lng) return i;
+    }
+    return -1;
+  }
+
+  function notify(latLng, results) {
+    var result = results && results.length ? results[0] : null;
+    if (!result || !result.center) return;
+    if (typeof result.center.distanceTo === 'function' &&
+        result.center.distanceTo(latLng) >= tolerance) return;
+    var index = waypointIndexAt(latLng);
+    if (index === -1) return;
+    var plan = getPlan();
+    plan.fire('waypointgeocoderesult', {
+      waypointIndex: index,
+      waypoint: plan._waypoints[index],
+      value: result
+    });
+  }
+
+  wrapped.reverse = function(latLng, scale, cb, context) {
+    return geocoder.reverse(latLng, scale, function(results) {
+      // LRM's callback first: it sets the waypoint's name, and the picker's
+      // offer is built against a waypoint that has already been named.
+      if (typeof cb === 'function') cb.call(context, results);
+      try {
+        notify(latLng, results);
+      } catch (e) {}
+    }, context);
+  };
+
+  return wrapped;
+}
+
 /**
  * @param {object} options
  * @param {L.Map} options.map
@@ -86,9 +178,11 @@ function createEntranceWaypoints(options) {
   var mode = typeof options.mode === 'function' ? options.mode : function() {
     return null;
   };
-  // The result the picker is currently showing, kept so a change of travel mode
-  // can re-apply the access rules without a fresh geocode.
-  var lastEvent = null;
+  // The last geocoding result seen for each waypoint, kept so a change of travel
+  // mode can re-apply the access rules to everything on screen without a fresh
+  // geocode. Keyed by waypoint index, because several waypoints can be showing
+  // their doors at once.
+  var lastEvents = {};
 
   // Points one waypoint at a new location without going through
   // spliceWaypoints, which recreates the geocoder inputs and would steal the
@@ -138,7 +232,7 @@ function createEntranceWaypoints(options) {
 
   function onGeocodeResult(e) {
     var result = e && e.value;
-    lastEvent = e;
+    lastEvents[e.waypointIndex] = e;
     // Two independent filters. Which end of the route this waypoint is decides
     // the direction a door must work in — an entrance=exit can only be left
     // through, an entrance=entrance only entered. The travel mode then decides
@@ -150,7 +244,10 @@ function createEntranceWaypoints(options) {
       ? entrancePicker.routableEntrances(result.entrances, role, mode())
       : [];
     if (!entrances.length) {
-      picker.hide();
+      // Only this waypoint's dots go. Naming a start with no doors of its own
+      // must not withdraw the destination's — that is the whole reason offers
+      // are per-waypoint.
+      picker.hideWaypoint(e.waypointIndex);
       return false;
     }
 
@@ -167,12 +264,17 @@ function createEntranceWaypoints(options) {
     });
   }
 
-  // Re-applies the filters to the place already on screen. Switching from foot
-  // to car can forbid the very door the waypoint sits on, so the offer has to be
+  // Re-applies the filters to every place on screen. Switching from foot to car
+  // can forbid the very door a waypoint sits on, so each open offer is
   // recomputed rather than left stale.
   function refresh() {
-    if (!lastEvent || !picker.isOpen()) return false;
-    return onGeocodeResult(lastEvent);
+    if (!picker.isOpen()) return false;
+    var any = false;
+    Object.keys(lastEvents).forEach(function(key) {
+      if (!picker.isOpenFor(Number(key))) return;
+      if (onGeocodeResult(lastEvents[key])) any = true;
+    });
+    return any;
   }
 
   return {
@@ -180,7 +282,7 @@ function createEntranceWaypoints(options) {
     applySelection: applySelection,
     refresh: refresh,
     hide: function() {
-      lastEvent = null;
+      lastEvents = {};
       picker.hide();
     },
     isOpen: function() {
@@ -197,6 +299,7 @@ function createEntranceWaypoints(options) {
 
 module.exports = {
   waypointMarkerLatLng: waypointMarkerLatLng,
+  createReverseNotifier: createReverseNotifier,
   entranceWaypointName: entranceWaypointName,
   createEntranceWaypoints: createEntranceWaypoints
 };

@@ -415,9 +415,33 @@ function createEntrancePicker(map, options) {
   var labelLayer = L.layerGroup();
   var markerLayer = L.layerGroup();
   var layer = L.layerGroup([outlineLayer, linkLayer, labelLayer, markerLayer]);
-  var state = null;
+  // One offer per waypoint. More than one waypoint can be showing its doors at
+  // once: naming a start must not withdraw the destination's, which is what a
+  // single shared state did.
+  var offers = [];
+  // The offer the view frames and Escape acts on — the one shown most recently,
+  // which is the one the user is looking at.
+  var activeWaypointIndex = null;
+  // Every dot currently drawn, across all offers, in draw order. Label layout
+  // groups purely by overlap and does not care which waypoint a dot belongs to.
+  var renderedMarkers = [];
+  // Whether the layer and the map/document listeners are in place. Tracked
+  // rather than inferred from `offers`, because the last offer is removed from
+  // that list before the teardown runs.
+  var attached = false;
   // Guards against a slow outline arriving after the user has moved on.
   var outlineToken = 0;
+
+  function offerAt(waypointIndex) {
+    for (var i = 0; i < offers.length; i++) {
+      if (offers[i].waypointIndex === waypointIndex) return offers[i];
+    }
+    return null;
+  }
+
+  function activeOffer() {
+    return activeWaypointIndex === null ? null : offerAt(activeWaypointIndex);
+  }
 
   function label(choice) {
     // A door that names itself needs no description from us.
@@ -441,63 +465,72 @@ function createEntrancePicker(map, options) {
   function render() {
     markerLayer.clearLayers();
     linkLayer.clearLayers();
-    if (!state) return;
-    var drawn = [];
+    outlineLayer.clearLayers();
+    renderedMarkers = [];
 
-    state.choices.forEach(function(choice) {
-      var text = label(choice);
-      var mark = entranceMark(choice.entrance, state.mode);
-      var chosen = choice.id === state.selectedId;
-      var className = 'osrm-entrance-marker osrm-entrance-marker-' + choice.kind +
+    offers.forEach(function(offer) {
+      // Redrawn from the geometry each time rather than left in place, so one
+      // waypoint's outline can be removed without disturbing another's.
+      if (offer.outline) {
+        outlineLayer.addLayer(L.geoJSON(offer.outline, {style: OUTLINE_STYLE}));
+      }
+      offer.choices.forEach(function(choice) {
+        var text = label(choice);
+        var mark = entranceMark(choice.entrance, offer.mode);
+        var chosen = choice.id === offer.selectedId;
+        var className = 'osrm-entrance-marker osrm-entrance-marker-' + choice.kind +
         (chosen ? ' osrm-entrance-marker-selected' : '');
-      var marker = L.marker(choice.center, {
-        icon: L.divIcon({className: className, iconSize: [18, 18], iconAnchor: [9, 9], html: ''}),
-        // The label shows this as an icon; the alt spells it out, because the
-        // icon is marked aria-hidden and would otherwise be announced as
-        // nothing at all.
-        alt: mark ? text + ' (' + translate(mark.label) + ')' : text,
-        keyboard: true,
-        zIndexOffset: chosen ? 500 : 400
-      });
-      // The name travels with the dot; layoutLabels turns it into a label the
-      // user can read without hovering.
-      marker.__entranceLabel = text;
-      marker.__entranceMark = mark;
-      marker.on('click', function(e) {
+        var marker = L.marker(choice.center, {
+          icon: L.divIcon({className: className, iconSize: [18, 18], iconAnchor: [9, 9], html: ''}),
+          // The label shows this as an icon; the alt spells it out, because the
+          // icon is marked aria-hidden and would otherwise be announced as
+          // nothing at all.
+          alt: mark ? text + ' (' + translate(mark.label) + ')' : text,
+          keyboard: true,
+          zIndexOffset: chosen ? 500 : 400
+        });
+        // The name travels with the dot; layoutLabels turns it into a label the
+        // user can read without hovering.
+        marker.__entranceLabel = text;
+        marker.__entranceMark = mark;
+        marker.on('click', function(e) {
         // Without this the click also lands on the map, which would drop a new
         // waypoint on top of the place being chosen for.
-        L.DomEvent.stopPropagation(e);
-        select(choice);
-      });
-      markerLayer.addLayer(marker);
-      drawn.push(marker);
+          L.DomEvent.stopPropagation(e);
+          select(offer, choice);
+        });
+        markerLayer.addLayer(marker);
+        renderedMarkers.push(marker);
 
-      // The pin stays on the place, so the chosen door is tied back to it with a
-      // dashed line: the route runs to the door, and this is the last bit on
-      // foot that no router can describe.
-      if (chosen && state.placeCenter) {
-        linkLayer.addLayer(L.polyline([choice.center, state.placeCenter], ENTRANCE_LINK_STYLE));
-      }
+        // The pin stays on the place, so the chosen door is tied back to it with a
+        // dashed line: the route runs to the door, and this is the last bit on
+        // foot that no router can describe.
+        if (chosen && offer.placeCenter) {
+          linkLayer.addLayer(L.polyline([choice.center, offer.placeCenter], ENTRANCE_LINK_STYLE));
+        }
+      });
     });
 
-    state.markers = drawn;
     layoutLabels();
   }
 
   // Clicking the chosen door again releases it, which is how the route goes back
   // to the place itself. There is no separate dot for that: the pin is already
   // sitting on it.
-  function select(choice) {
-    if (!state) return;
-    var release = choice.id === state.selectedId;
-    state.selectedId = release ? null : choice.id;
+  function select(offer, choice) {
+    // The dot's handler closes over its offer, so a click arriving after that
+    // offer was withdrawn — hidden, or replaced by a newer one for the same
+    // waypoint — must do nothing.
+    if (!offer || offerAt(offer.waypointIndex) !== offer) return;
+    var release = choice.id === offer.selectedId;
+    offer.selectedId = release ? null : choice.id;
     render();
     onSelect({
-      waypointIndex: state.waypointIndex,
-      placeName: state.placeName,
+      waypointIndex: offer.waypointIndex,
+      placeName: offer.placeName,
       // Where the route should run to; the pin does not follow it.
-      latLng: release ? state.placeCenter : choice.center,
-      markerLatLng: state.placeCenter,
+      latLng: release ? offer.placeCenter : choice.center,
+      markerLatLng: offer.placeCenter,
       entrance: release ? null : choice.entrance
     });
   }
@@ -569,8 +602,8 @@ function createEntrancePicker(map, options) {
   // colliding run is replaced by one label listing every door in it, anchored on
   // the first. Zooming in separates them and they come back individually.
   function layoutLabels() {
-    if (!state || !state.markers) return null;
-    var markers = state.markers;
+    if (!offers.length) return null;
+    var markers = renderedMarkers;
 
     // One label per door first, because their boxes are what the grouping is
     // decided from.
@@ -607,14 +640,14 @@ function createEntrancePicker(map, options) {
   // enough apart to aim at. BER's five entrances sit ~36 m apart on a 5 km site,
   // which is about 3 px at the zoom its bbox implies, so there the entrances win
   // and the site outline simply runs off the edges.
-  function framingBounds(padRight) {
-    var area = state.placeBounds;
-    var doors = entranceCenters(state.choices);
+  function framingBounds(padRight, offer) {
+    var area = offer.placeBounds;
+    var doors = entranceCenters(offer.choices);
 
     if (!area || !area.isValid()) {
       // The pin stays on the centre, so it belongs in the frame alongside the
       // doors unless the doors alone already span enough to aim at.
-      var points = doors.length > 1 ? doors : choicePoints(state.choices, state.placeCenter);
+      var points = doors.length > 1 ? doors : choicePoints(offer.choices, offer.placeCenter);
       return points.length > 1 ? L.latLngBounds(points) : null;
     }
     if (doors.length < 2) return area;
@@ -634,9 +667,12 @@ function createEntrancePicker(map, options) {
   // pane does not cover, rather than merely centring it, so the pane never sits
   // over the thing being picked from.
   function focusView() {
-    if (!state) return false;
+    // The newest offer is framed: it is the one the user just asked for. The
+    // others stay on the map, they simply do not pull the view around.
+    var offer = activeOffer();
+    if (!offer) return false;
     var padRight = paneWidth();
-    var bounds = framingBounds(padRight);
+    var bounds = framingBounds(padRight, offer);
     if (!bounds || !bounds.isValid()) return false;
 
     var sw = map.latLngToContainerPoint(bounds.getSouthWest());
@@ -663,7 +699,7 @@ function createEntrancePicker(map, options) {
   // to settle before re-framing, with a timer as the backstop for the case where
   // nothing moved and no moveend ever arrives.
   function focusViewWhenSettled() {
-    if (!state) return;
+    if (!activeOffer()) return;
     var timer = null;
     function run() {
       map.off('moveend', run);
@@ -677,13 +713,17 @@ function createEntrancePicker(map, options) {
 
   // The outline is best-effort context: a failed or absent one simply means the
   // picker shows dots without a site boundary.
-  function loadOutline(place) {
+  function loadOutline(offer, place) {
     var token = ++outlineToken;
-    outlineLayer.clearLayers();
+    offer.outline = null;
     if (!fetchOutline || !place) return;
     fetchOutline(place).then(function(geometry) {
-      if (token !== outlineToken || !state || !geometry) return;
-      outlineLayer.addLayer(L.geoJSON(geometry, {style: OUTLINE_STYLE}));
+      // The offer may have been withdrawn, or replaced by a later one for the
+      // same waypoint, while the request was in flight.
+      if (token !== outlineToken || !geometry) return;
+      if (offerAt(offer.waypointIndex) !== offer) return;
+      offer.outline = geometry;
+      render();
     });
   }
 
@@ -692,10 +732,12 @@ function createEntrancePicker(map, options) {
     // One door is still worth offering now that the centre is not a dot: the
     // pin marks it already.
     if (choices.length < 1) {
-      hide();
+      // Only this waypoint's offer goes. A place with no doors of its own says
+      // nothing about the doors another waypoint is showing.
+      hideWaypoint(opts.waypointIndex);
       return false;
     }
-    state = {
+    var offer = {
       waypointIndex: opts.waypointIndex,
       placeName: opts.placeName,
       placeCenter: opts.placeCenter || null,
@@ -704,10 +746,21 @@ function createEntrancePicker(map, options) {
       // picker with a new one whenever the travel mode changes.
       mode: opts.mode || null,
       selectedId: opts.selectedId || null,
-      placeBounds: opts.placeBounds || null
+      placeBounds: opts.placeBounds || null,
+      outline: null
     };
+    var existing = offerAt(opts.waypointIndex);
+    if (existing) {
+      // Re-showing the same waypoint replaces its offer in place, so the order
+      // dots were drawn in does not jump around on a mode change.
+      offers[offers.indexOf(existing)] = offer;
+    } else {
+      offers.push(offer);
+    }
+    activeWaypointIndex = offer.waypointIndex;
+    attached = true;
     if (!map.hasLayer(layer)) layer.addTo(map);
-    loadOutline(opts.place);
+    loadOutline(offer, opts.place);
     focusViewWhenSettled();
     render();
     // Which labels fit is a question of zoom, so the layout is redone after
@@ -727,9 +780,30 @@ function createEntrancePicker(map, options) {
     return true;
   }
 
+  // Withdraws one waypoint's offer, leaving every other one on the map.
+  function hideWaypoint(waypointIndex) {
+    var offer = offerAt(waypointIndex);
+    if (!offer) return;
+    offers.splice(offers.indexOf(offer), 1);
+    if (activeWaypointIndex === waypointIndex) {
+      // Frame whatever is left, newest first, so the view still follows
+      // something the user can see.
+      activeWaypointIndex = offers.length
+        ? offers[offers.length - 1].waypointIndex : null;
+    }
+    if (!offers.length) {
+      hide();
+      return;
+    }
+    render();
+  }
+
   function hide() {
-    if (!state) return;
-    state = null;
+    if (!attached) return;
+    attached = false;
+    offers = [];
+    activeWaypointIndex = null;
+    renderedMarkers = [];
     map.off('zoomend', layoutLabels);
     outlineToken++;
     outlineLayer.clearLayers();
@@ -745,16 +819,23 @@ function createEntrancePicker(map, options) {
   return {
     show: show,
     hide: hide,
+    hideWaypoint: hideWaypoint,
     focusView: focusViewWhenSettled,
     layoutLabels: layoutLabels,
     isOpen: function() {
-      return !!state;
+      return offers.length > 0;
+    },
+    isOpenFor: function(waypointIndex) {
+      return !!offerAt(waypointIndex);
     },
     getWaypointIndex: function() {
-      return state ? state.waypointIndex : null;
+      var offer = activeOffer();
+      return offer ? offer.waypointIndex : null;
     },
-    getSelectedId: function() {
-      return state ? state.selectedId : null;
+    getSelectedId: function(waypointIndex) {
+      var offer = arguments.length
+        ? offerAt(waypointIndex) : activeOffer();
+      return offer ? offer.selectedId : null;
     }
   };
 }

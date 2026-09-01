@@ -17,7 +17,8 @@ jest.mock('leaflet', () => ({
   DomEvent: { stopPropagation() {} }
 }));
 
-const { createEntranceWaypoints, entranceWaypointName, waypointMarkerLatLng } =
+const { createEntranceWaypoints, entranceWaypointName, waypointMarkerLatLng,
+  createReverseNotifier } =
   require('../src/entrance_waypoints');
 
 const MAIN = { osmId: 1, type: 'main', center: { lat: 52.5209566, lng: 13.3965227 } };
@@ -51,12 +52,31 @@ function makeFakePicker() {
   const picker = {
     shown: [],
     hidden: 0,
+    // Waypoint indices withdrawn one at a time, in order.
+    hiddenWaypoints: [],
+    // Which waypoints currently have an offer, as the real picker tracks.
+    openFor: new Set(),
     open: false,
     onSelect: null,
     options: null,
-    show: jest.fn(function(opts) { picker.shown.push(opts); picker.open = true; return true; }),
-    hide: jest.fn(function() { picker.hidden++; picker.open = false; }),
+    show: jest.fn(function(opts) {
+      picker.shown.push(opts);
+      picker.openFor.add(opts.waypointIndex);
+      picker.open = true;
+      return true;
+    }),
+    hide: jest.fn(function() {
+      picker.hidden++;
+      picker.openFor.clear();
+      picker.open = false;
+    }),
+    hideWaypoint: jest.fn(function(waypointIndex) {
+      picker.hiddenWaypoints.push(waypointIndex);
+      picker.openFor.delete(waypointIndex);
+      picker.open = picker.openFor.size > 0;
+    }),
     isOpen: jest.fn(() => picker.open),
+    isOpenFor: jest.fn((waypointIndex) => picker.openFor.has(waypointIndex)),
     focusView: jest.fn()
   };
   return picker;
@@ -167,24 +187,49 @@ describe('a geocoding result', () => {
     expect(picker.shown[0].placeBounds).toBe(e.value.bbox);
   });
 
-  test('closes the picker for a place with no entrances', () => {
+  test('withdraws only that waypoint for a place with no entrances', () => {
     const { wiring, picker } = build();
     expect(wiring.onGeocodeResult(geocodeEvent(undefined))).toBe(false);
-    expect(picker.hide).toHaveBeenCalled();
+    expect(picker.hiddenWaypoints).toEqual([1]);
+    expect(picker.hide).not.toHaveBeenCalled();
     expect(picker.show).not.toHaveBeenCalled();
+  });
+
+  test("a doorless start leaves the destination's doors alone", () => {
+    // The reported bug: naming a start wiped the dots the destination was
+    // already showing, because one shared offer served every waypoint.
+    const plan = makePlan(2);
+    const { wiring, picker } = build({ plan });
+    wiring.onGeocodeResult(geocodeEvent([MAIN], { waypointIndex: 1 }));
+    expect(picker.isOpenFor(1)).toBe(true);
+
+    wiring.onGeocodeResult(geocodeEvent(undefined, { waypointIndex: 0 }));
+    expect(picker.hiddenWaypoints).toEqual([0]);
+    expect(picker.hide).not.toHaveBeenCalled();
+    expect(picker.isOpenFor(1)).toBe(true);
+  });
+
+  test('two waypoints can offer their doors at the same time', () => {
+    const plan = makePlan(2);
+    const { wiring, picker } = build({ plan });
+    wiring.onGeocodeResult(geocodeEvent([MAIN], { waypointIndex: 1 }));
+    wiring.onGeocodeResult(geocodeEvent([MAIN], { waypointIndex: 0 }));
+    expect(picker.isOpenFor(0)).toBe(true);
+    expect(picker.isOpenFor(1)).toBe(true);
+    expect(picker.hide).not.toHaveBeenCalled();
   });
 
   test('closes the picker when the result itself is missing', () => {
     const { wiring, picker } = build();
     expect(wiring.onGeocodeResult({ waypointIndex: 0, value: null })).toBe(false);
-    expect(picker.hide).toHaveBeenCalled();
+    expect(picker.hiddenWaypoints).toEqual([0]);
   });
 
   test('closes the picker when every entrance is unusable', () => {
     const service = { osmId: 9, type: 'service', center: { lat: 1, lng: 1 } };
     const { wiring, picker } = build();
     expect(wiring.onGeocodeResult(geocodeEvent([service]))).toBe(false);
-    expect(picker.hide).toHaveBeenCalled();
+    expect(picker.hiddenWaypoints).toEqual([1]);
   });
 
   // The direction a door has to work in comes from which end of the route the
@@ -260,7 +305,7 @@ describe('the travel mode', () => {
 
     mode = 'driving';
     expect(wiring.refresh()).toBe(false);
-    expect(picker.hide).toHaveBeenCalled();
+    expect(picker.hiddenWaypoints).toEqual([1]);
     expect(picker.isOpen()).toBe(false);
   });
 
@@ -410,5 +455,175 @@ describe('waypointName', () => {
     const { wiring } = build({ options: { translate: de } });
     expect(wiring.waypointName('Alexa', MAIN)).toBe('Alexa (Haupteingang)');
     expect(wiring.waypointName('Alexa', null)).toBe('Alexa');
+  });
+});
+
+describe('createReverseNotifier', () => {
+  // A reverse result: same shape a search returns, entrances included.
+  const at = (lat, lng, extra) => Object.assign({
+    lat: lat, lng: lng,
+    distanceTo(other) {
+      // Metres, near enough for a test: ~111km per degree.
+      return Math.hypot(this.lat - other.lat, this.lng - other.lng) * 111000;
+    }
+  }, extra);
+
+  function build(overrides) {
+    const fired = [];
+    const waypoints = (overrides && overrides.waypoints) || [
+      { latLng: at(52.5, 13.4), name: '' }
+    ];
+    const plan = { _waypoints: waypoints, fire: (name, e) => fired.push({ name, e }) };
+    const calls = [];
+    const geocoder = {
+      geocode: function() { return 'geocode'; },
+      suggest: function() { return 'suggest'; },
+      fetchOutline: function() { return 'outline'; },
+      reverse: function(latLng, scale, cb, context) {
+        calls.push({ latLng, scale });
+        const results = (overrides && overrides.results !== undefined)
+          ? overrides.results
+          : [{ name: 'Somewhere', center: at(52.5, 13.4), entrances: [{ osmId: 1 }] }];
+        cb.call(context, results);
+        return 'promise';
+      }
+    };
+    const wrapped = createReverseNotifier({
+      geocoder: geocoder,
+      getPlan: () => plan,
+      tolerance: overrides && overrides.tolerance
+    });
+    return { wrapped, fired, calls, plan, geocoder };
+  }
+
+  test('re-fires the reverse result at the waypoint it belongs to', () => {
+    // This is the whole point: LRM names a restored waypoint by reverse
+    // geocoding and never fires `geocoded`, so the entrance list is lost.
+    const { wrapped, fired } = build();
+    wrapped.reverse(at(52.5, 13.4), 100, () => {});
+    expect(fired).toHaveLength(1);
+    expect(fired[0].name).toBe('waypointgeocoderesult');
+    expect(fired[0].e.waypointIndex).toBe(0);
+    expect(fired[0].e.value.entrances).toEqual([{ osmId: 1 }]);
+  });
+
+  test('finds the right waypoint among several', () => {
+    const { wrapped, fired } = build({
+      waypoints: [
+        { latLng: at(1, 1), name: '' },
+        { latLng: at(52.5, 13.4), name: '' },
+        { latLng: at(2, 2), name: '' }
+      ]
+    });
+    wrapped.reverse(at(52.5, 13.4), 100, () => {});
+    expect(fired[0].e.waypointIndex).toBe(1);
+    expect(fired[0].e.waypoint).toBe(fired[0].e.waypoint);
+  });
+
+  test("calls LRM's own callback first, so the waypoint is named before the offer", () => {
+    const { wrapped, fired } = build();
+    const order = [];
+    wrapped.reverse(at(52.5, 13.4), 100, function() { order.push('lrm'); });
+    order.push('fired:' + fired.length);
+    expect(order).toEqual(['lrm', 'fired:1']);
+  });
+
+  test('honours the callback context and returns what the geocoder returned', () => {
+    const { wrapped } = build();
+    const ctx = { seen: null };
+    const out = wrapped.reverse(at(52.5, 13.4), 100, function(r) { this.seen = r; }, ctx);
+    expect(ctx.seen[0].name).toBe('Somewhere');
+    expect(out).toBe('promise');
+  });
+
+  test('stays silent when the nearest place is beyond LRM tolerance', () => {
+    // LRM labels the waypoint with bare coordinates there, so offering that
+    // place's doors would offer doors of somewhere the user did not pick.
+    const { wrapped, fired } = build({
+      results: [{ name: 'Far away', center: at(52.6, 13.4), entrances: [{ osmId: 1 }] }]
+    });
+    wrapped.reverse(at(52.5, 13.4), 100, () => {});
+    expect(fired).toHaveLength(0);
+  });
+
+  test('respects a tolerance supplied by the caller', () => {
+    const far = [{ name: 'Down the road', center: at(52.5009, 13.4), entrances: [] }];
+    expect(build({ results: far, tolerance: 50 }).wrapped
+      .reverse(at(52.5, 13.4), 100, () => {}) && build({ results: far, tolerance: 50 }).fired)
+      .toHaveLength(0);
+
+    const near = build({ results: far, tolerance: 1000 });
+    near.wrapped.reverse(at(52.5, 13.4), 100, () => {});
+    expect(near.fired).toHaveLength(1);
+  });
+
+  test('matches the waypoint by identity, not only by coordinates', () => {
+    // LRM passes wp.latLng straight through, so the common case is the very
+    // same object; equality by value is the fallback for a rebuilt one.
+    const same = at(52.5, 13.4);
+    const { wrapped, fired } = build({ waypoints: [{ latLng: same, name: '' }] });
+    wrapped.reverse(same, 100, () => {});
+    expect(fired[0].e.waypointIndex).toBe(0);
+  });
+
+  test('skips a waypoint that has no position yet', () => {
+    const { wrapped, fired } = build({
+      waypoints: [{ latLng: null, name: '' }, { latLng: at(52.5, 13.4), name: '' }]
+    });
+    wrapped.reverse(at(52.5, 13.4), 100, () => {});
+    expect(fired[0].e.waypointIndex).toBe(1);
+  });
+
+  test('stays silent for coordinates that are not a waypoint', () => {
+    // A close-enough result, so the tolerance check passes and the lookup
+    // itself is what rejects it.
+    const { wrapped, fired } = build({
+      results: [{ name: 'Elsewhere', center: at(10, 10), entrances: [{ osmId: 9 }] }],
+      waypoints: [{ latLng: at(52.5, 13.4), name: '' }]
+    });
+    wrapped.reverse(at(10, 10), 100, () => {});
+    expect(fired).toHaveLength(0);
+  });
+
+  test('stays silent when reverse finds nothing', () => {
+    const { wrapped, fired } = build({ results: [] });
+    wrapped.reverse(at(52.5, 13.4), 100, () => {});
+    expect(fired).toHaveLength(0);
+  });
+
+  test('a result without a centre cannot be matched, and is skipped', () => {
+    const { wrapped, fired } = build({ results: [{ name: 'No centre' }] });
+    wrapped.reverse(at(52.5, 13.4), 100, () => {});
+    expect(fired).toHaveLength(0);
+  });
+
+  test('the rest of the geocoder is passed through untouched', () => {
+    const { wrapped } = build();
+    expect(wrapped.geocode()).toBe('geocode');
+    expect(wrapped.suggest()).toBe('suggest');
+    expect(wrapped.fetchOutline()).toBe('outline');
+  });
+
+  test('a geocoder that cannot reverse is returned as it is', () => {
+    const bare = { geocode: () => 'x' };
+    expect(createReverseNotifier({ geocoder: bare })).toBe(bare);
+    expect(createReverseNotifier({})).toBeUndefined();
+  });
+
+  test('a plan that is not ready yet is not an error', () => {
+    const { wrapped, fired } = (() => {
+      const geocoder = {
+        reverse: (latLng, scale, cb, context) => {
+          cb.call(context, [{ name: 'X', center: at(52.5, 13.4) }]);
+        }
+      };
+      const fired = [];
+      const wrapped = createReverseNotifier({
+        geocoder, getPlan: () => undefined
+      });
+      return { wrapped, fired };
+    })();
+    expect(() => wrapped.reverse(at(52.5, 13.4), 100, () => {})).not.toThrow();
+    expect(fired).toHaveLength(0);
   });
 });

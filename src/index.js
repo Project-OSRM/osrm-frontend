@@ -307,8 +307,22 @@ function makeIcon(i, n) {
 
 var routingGeocoder = createGeocoder.coordPreserving(leafletOptions.nominatim && leafletOptions.nominatim.path);
 
-var plan = new ReversablePlan([], {
+// Declared before the geocoder wrapper below, which reads it back late: the
+// plan is built from that geocoder and so cannot exist yet when it is made.
+var plan;
+
+// A waypoint restored from a URL, dropped by a map click or dragged is named by
+// LRM through a reverse geocode that never fires `geocoded`, so its entrance
+// list would be thrown away with the result. This re-fires it at the plan.
+var planGeocoder = entranceWaypointsModule.createReverseNotifier({
   geocoder: routingGeocoder,
+  getPlan: function() {
+    return plan;
+  }
+});
+
+plan = new ReversablePlan([], {
+  geocoder: planGeocoder,
   waypointNameFallback: createGeocoder.wrappedWaypointNameFallback,
   language: mergedOptions.language,
   routeWhileDragging: true,

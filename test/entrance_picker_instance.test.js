@@ -810,3 +810,96 @@ describe('re-showing while already open', () => {
     expect(dots(map)).toHaveLength(0);
   });
 });
+
+describe('offers for several waypoints at once', () => {
+  const labelBoxes = require('./__label_boxes');
+  const box = (l, t, r, b) => ({ left: l, top: t, right: r, bottom: b });
+
+  const DEST = [
+    { osmId: 1, type: 'main', center: { lat: 52.5209, lng: 13.3965 }, tags: { name: 'Nord' } },
+    { osmId: 2, type: 'yes', center: { lat: 52.5208, lng: 13.3970 }, tags: { name: 'Ost' } }
+  ];
+  const START = [
+    { osmId: 3, type: 'main', center: { lat: 52.5300, lng: 13.4000 }, tags: { name: 'Werk' } }
+  ];
+
+  afterEach(() => labelBoxes.clear());
+
+  function open() {
+    labelBoxes.set({
+      Nord: box(0, 0, 40, 16), Ost: box(100, 0, 140, 16), Werk: box(300, 0, 340, 16)
+    });
+    const map = makeMap();
+    const picker = entrancePicker.createEntrancePicker(map, {});
+    picker.show({ waypointIndex: 1, placeCenter: CENTRE, entrances: DEST });
+    return { map, picker };
+  }
+
+  test("naming a start leaves the destination's doors on the map", () => {
+    // The reported bug: a second waypoint's offer replaced the first one's.
+    const { map, picker } = open();
+    expect(dots(map)).toHaveLength(2);
+
+    picker.show({ waypointIndex: 0, placeCenter: CENTRE, entrances: START });
+    expect(dots(map)).toHaveLength(3);
+    expect(labelTexts(map).sort()).toEqual(['Nord', 'Ost', 'Werk']);
+  });
+
+  test('a start with no doors withdraws only its own offer', () => {
+    const { map, picker } = open();
+    expect(picker.show({ waypointIndex: 0, placeCenter: CENTRE, entrances: [] })).toBe(false);
+    expect(dots(map)).toHaveLength(2);
+    expect(picker.isOpen()).toBe(true);
+    expect(picker.isOpenFor(1)).toBe(true);
+    expect(picker.isOpenFor(0)).toBe(false);
+  });
+
+  test('withdrawing the last offer tears the picker down', () => {
+    const { map, picker } = open();
+    picker.hideWaypoint(1);
+    expect(picker.isOpen()).toBe(false);
+    expect(dots(map)).toHaveLength(0);
+    expect(map._handlers.zoomend).toHaveLength(0);
+  });
+
+  test('each waypoint keeps its own selection', () => {
+    const { map, picker } = open();
+    picker.show({ waypointIndex: 0, placeCenter: CENTRE, entrances: START });
+
+    dots(map)[0].fire('click', {});   // a destination door
+    expect(picker.getSelectedId(1)).toBe('osm:1');
+    expect(picker.getSelectedId(0)).toBeNull();
+
+    dots(map)[2].fire('click', {});   // the start's door
+    expect(picker.getSelectedId(1)).toBe('osm:1');
+    expect(picker.getSelectedId(0)).toBe('osm:3');
+  });
+
+  test('re-showing one waypoint replaces its offer without touching the other', () => {
+    const { map, picker } = open();
+    picker.show({ waypointIndex: 0, placeCenter: CENTRE, entrances: START });
+    picker.show({ waypointIndex: 1, placeCenter: CENTRE, entrances: [DEST[0]] });
+    expect(dots(map)).toHaveLength(2);
+    expect(labelTexts(map).sort()).toEqual(['Nord', 'Werk']);
+  });
+
+  test('a click on a dot whose offer has been withdrawn does nothing', () => {
+    const selected = [];
+    labelBoxes.set({ Nord: box(0, 0, 40, 16), Ost: box(100, 0, 140, 16) });
+    const map = makeMap();
+    const picker = entrancePicker.createEntrancePicker(map, { onSelect: (c) => selected.push(c) });
+    picker.show({ waypointIndex: 1, placeCenter: CENTRE, entrances: DEST });
+    const stale = dots(map)[0];
+    picker.hideWaypoint(1);
+    stale.fire('click', {});
+    expect(selected).toHaveLength(0);
+  });
+
+  test('the view frames the newest offer, and falls back when it is withdrawn', () => {
+    const { map, picker } = open();
+    picker.show({ waypointIndex: 0, placeCenter: CENTRE, entrances: START });
+    expect(picker.getWaypointIndex()).toBe(0);
+    picker.hideWaypoint(0);
+    expect(picker.getWaypointIndex()).toBe(1);
+  });
+});
