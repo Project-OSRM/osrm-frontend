@@ -669,8 +669,8 @@ describe('mode-dependent marks', () => {
   const box = (l, t, r, b) => ({ left: l, top: t, right: r, bottom: b });
   // A mark is part of the label's rendered text, so the harness — which keys
   // measured boxes by that text — sees it in the key too.
-  const WC = '\u267F';
-  const PK = '\uD83C\uDD7F';
+  const WC = '\u267F\uFE0F';
+  const PK = '\uD83C\uDD7F\uFE0F';
 
   const STEP_FREE = { osmId: 1, type: 'main', center: { lat: 52.5209, lng: 13.3965 },
     tags: { name: 'Nord', wheelchair: 'yes' } };
