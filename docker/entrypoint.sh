@@ -8,6 +8,9 @@ OSRM_ZOOM="${OSRM_ZOOM:-13}"
 OSRM_LANGUAGE="${OSRM_LANGUAGE:-en}"
 OSRM_DEFAULT_LAYER="${OSRM_DEFAULT_LAYER:-streets}"
 OSRM_ENVIRONMENT="${OSRM_ENVIRONMENT:-docker}"
+# Empty by default: a self-hosted deployment gets watermarked CARTO tiles until
+# it supplies a key of its own.
+OSRM_CARTO_KEY="${OSRM_CARTO_KEY:-}"
 
 # Validate OSRM_ZOOM is numeric (for valid JSON output)
 case "$OSRM_ZOOM" in
@@ -61,6 +64,7 @@ cat > /usr/share/nginx/html/config.json << EOF
   "OSRM_LANGUAGE": "$(escape_json "$OSRM_LANGUAGE")",
   "OSRM_DEFAULT_LAYER": "$(escape_json "$OSRM_DEFAULT_LAYER")",
   "OSRM_ENVIRONMENT": "$(escape_json "$OSRM_ENVIRONMENT")",
+  "OSRM_CARTO_KEY": "$(escape_json "$OSRM_CARTO_KEY")",
   "OSRM_MODES": "$(escape_json "$MODES_JSON")"
 }
 EOF

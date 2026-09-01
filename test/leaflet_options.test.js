@@ -10,6 +10,39 @@ const leafletOptions = require('../src/leaflet_options');
 
 describe('leaflet_options — tileset migration', () => {
   describe('base layer URLs', () => {
+    test('the streets layer carries the configured CARTO key', () => {
+      // Unkeyed tiles render but CARTO watermarks them, so the key is what
+      // makes the default basemap presentable.
+      jest.resetModules();
+      global.window = { osrmConfig: { OSRM_CARTO_KEY: 'test_key_123' } };
+      const keyed = require('../src/leaflet_options');
+      expect(keyed.layer[0]['Streets']._url).toContain('?key=test_key_123');
+      delete global.window;
+      jest.resetModules();
+    });
+
+    test('an absent, blank or non-string key leaves the URL unkeyed', () => {
+      // A fork with no key of its own gets watermarked tiles rather than a
+      // broken URL with an empty key parameter in it.
+      [undefined, '', '   ', 42].forEach((value) => {
+        jest.resetModules();
+        global.window = { osrmConfig: { OSRM_CARTO_KEY: value } };
+        const opts = require('../src/leaflet_options');
+        expect(opts.layer[0]['Streets']._url).not.toContain('key=');
+        delete global.window;
+      });
+      jest.resetModules();
+    });
+
+    test('a key with URL-significant characters is escaped', () => {
+      jest.resetModules();
+      global.window = { osrmConfig: { OSRM_CARTO_KEY: 'a b&c' } };
+      const opts = require('../src/leaflet_options');
+      expect(opts.layer[0]['Streets']._url).toContain('?key=a%20b%26c');
+      delete global.window;
+      jest.resetModules();
+    });
+
     test('streets layer uses CartoDB Voyager (not Mapbox)', () => {
       expect(leafletOptions.layer[0]['Streets']._url).toContain('cartocdn.com');
       expect(leafletOptions.layer[0]['Streets']._url).toContain('voyager');
