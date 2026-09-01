@@ -31,7 +31,10 @@ module.exports = {
     createGeocoder: createGeocoder,
     showAlternatives: true,
     useZoomParameter: false,
-    routeDragInterval: 200,
+    // 200ms is five requests a second per drag, which the public demo servers
+    // rate-limit. Slower still feels live, and route_throttle backs off further
+    // if the service starts refusing anyway.
+    routeDragInterval: 500,
     collapsible: true
   },
   popup: {

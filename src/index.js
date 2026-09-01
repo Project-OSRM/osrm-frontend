@@ -2,6 +2,7 @@
 
 var L = require('leaflet');
 var routerPatches = require('./router_patches');
+var routeThrottle = require('./route_throttle');
 var createGeocoder = require('./geocoder');
 require('leaflet-control-geocoder');
 var geocoderPatches = require('./geocoder_patches');
@@ -376,6 +377,15 @@ controlOptions.profile = services[activeProfileIndex].profile;
 
 var router = (new L.Routing.OSRMv1(controlOptions));
 routerPatches.applyPatches(router);
+// Dragging routes continuously, and the public demo servers answer a burst of
+// that with 429s that LRM turns into a cleared route line. Back off the live
+// preview when the service starts refusing; the route on drag end still runs.
+routeThrottle.throttleOnRateLimit(router, {
+  onBackoff: function(coolOffMs) {
+    console.warn('Routing service is refusing requests; pausing the drag preview for ' +
+      Math.round(coolOffMs / 1000) + 's');
+  }
+});
 
 router._convertRouteOriginal = router._convertRoute;
 router._convertRoute = function(responseRoute) {
