@@ -19,7 +19,6 @@ module.exports = {
   'Main entrance': 'Main entrance',
   'Entrance': 'Entrance',
   'Wheelchair accessible': 'Wheelchair accessible',
-  'Centre of place': 'Centre of place',
   'main entrance': 'main entrance',
   'entrance': 'entrance',
   'Exit': 'Exit',

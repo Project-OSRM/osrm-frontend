@@ -54,15 +54,24 @@ describe('routableEntrances', () => {
   const ids = (role) => entrancePicker.routableEntrances(ALL, role).map((e) => e.osmId);
 
   test('a destination takes the two-way doors and the entrance-only one', () => {
-    expect(ids('destination')).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(ids('destination')).toEqual([1, 2, 3, 4, 5, 6, 10]);
   });
 
   test('an origin takes the two-way doors and the exit-only one', () => {
-    expect(ids('origin')).toEqual([1, 2, 3, 4, 5, 7]);
+    expect(ids('origin')).toEqual([1, 2, 3, 4, 5, 7, 10]);
   });
 
   test('a via point is arrived at and left, so only two-way doors qualify', () => {
-    expect(ids('via')).toEqual([1, 2, 3, 4, 5]);
+    expect(ids('via')).toEqual([1, 2, 3, 4, 5, 10]);
+  });
+
+  test('a staircase door is a way in, like a home door', () => {
+    // The wiki calls it "Door to staircase": the door of a stairwell, which is
+    // how residents and visitors of an apartment building get in. It differs
+    // from entrance=home only in what lies immediately behind it.
+    ['origin', 'destination', 'via'].forEach((role) => {
+      expect(ids(role)).toContain(10);
+    });
   });
 
   test('an exit is never offered as a destination, an entrance never as an origin', () => {
@@ -71,9 +80,9 @@ describe('routableEntrances', () => {
   });
 
   test('doors that are nobody’s route endpoint are always dropped', () => {
-    // service, emergency, staircase, garage, and no — the last of which the wiki
-    // defines as looking like a door but not being usable at all.
-    [8, 9, 10, 11, 12].forEach((id) => {
+    // service, emergency, garage, and no — the last of which the wiki defines as
+    // looking like a door but not being usable at all.
+    [8, 9, 11, 12].forEach((id) => {
       ['origin', 'destination', 'via'].forEach((role) => {
         expect(ids(role)).not.toContain(id);
       });

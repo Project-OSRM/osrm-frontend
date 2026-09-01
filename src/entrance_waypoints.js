@@ -181,10 +181,10 @@ function createEntranceWaypoints(options) {
       picker.hide();
     },
     isOpen: function() {
-      return picker.isOpen(); 
+      return picker.isOpen();
     },
     focusView: function() {
-      picker.focusView(); 
+      picker.focusView();
     },
     waypointName: function(placeName, entrance) {
       return entranceWaypointName(placeName, entrance, translate);

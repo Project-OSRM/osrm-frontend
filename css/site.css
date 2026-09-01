@@ -1149,12 +1149,6 @@ td.distance {
     background-color: #7fb2e5;
 }
 
-/* The centroid the geocoder originally returned, kept as a choice so a waypoint
-   moved to an entrance can always be moved back. */
-.osrm-entrance-marker-centre {
-    background-color: #8b8b8b;
-}
-
 /* The door the route currently runs to. Filled dark and ringed, so it reads as
    chosen while every other door stays on the map and one click away. */
 .osrm-entrance-marker-selected {
