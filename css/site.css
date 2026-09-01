@@ -1191,6 +1191,16 @@ td.distance {
 }
 
 /* A merged label lists one door per line, so it cannot stay on one. */
+/* Marks a door tagged wheelchair=yes or wheelchair=designated in OSM. A mark
+   only, never a filter: most doors carry no wheelchair tag at all, so its
+   absence says nothing about the door. */
+.osrm-entrance-wheelchair {
+    margin-left: 5px;
+    font-size: 11px;
+    line-height: 1;
+    vertical-align: baseline;
+}
+
 .osrm-entrance-label-merged .osrm-entrance-label-inner div + div {
     border-top: 1px solid rgba(20, 36, 63, 0.12);
     margin-top: 2px;
