@@ -734,3 +734,37 @@ describe('wheelchair mark', () => {
     expect(labels(map)[0].options.icon.options.html).toContain('osrm-entrance-wheelchair');
   });
 });
+
+describe('re-showing while already open', () => {
+  // refresh() re-shows the picker when the travel mode changes, so show() runs
+  // again on an open picker. Real Leaflet happens to ignore a repeat
+  // registration of the same handler, but the picker detaches first rather than
+  // depending on that — so this holds for any map object, including the fake
+  // here, which does not de-duplicate.
+  test('does not stack zoomend listeners', () => {
+    const map = makeMap();
+    const picker = entrancePicker.createEntrancePicker(map, {});
+    const show = () => picker.show({
+      waypointIndex: 1, placeCenter: CENTRE, entrances: [MAIN, SIDE]
+    });
+
+    show();
+    const after1 = map._handlers.zoomend.length;
+    show();
+    show();
+
+    expect(after1).toBe(1);
+    expect(map._handlers.zoomend).toHaveLength(after1);
+  });
+
+  test('one hide still tears the picker down completely', () => {
+    const map = makeMap();
+    const picker = entrancePicker.createEntrancePicker(map, {});
+    picker.show({ waypointIndex: 1, placeCenter: CENTRE, entrances: [MAIN, SIDE] });
+    picker.show({ waypointIndex: 1, placeCenter: CENTRE, entrances: [MAIN, SIDE] });
+    picker.hide();
+    expect(picker.isOpen()).toBe(false);
+    expect(map._handlers.zoomend).toHaveLength(0);
+    expect(dots(map)).toHaveLength(0);
+  });
+});

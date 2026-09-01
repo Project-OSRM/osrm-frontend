@@ -9,16 +9,20 @@ var L = require('leaflet');
 //   entrance=entrance  "it is an entrance only, a one-way in"
 //
 // so an exit is a legitimate place to *start* a route and a useless place to end
-// one, and vice versa. Values absent from this table are never offered:
-// `service` (staff and deliveries), `emergency` (fire escape), `staircase` and
-// `garage` (interior doors), and `no` — which the wiki defines as looking like a
-// door but not being usable at all.
+// one, and vice versa. `staircase` — "Door to staircase" — belongs with `home`
+// rather than with the interior doors: it is the door of a stairwell, which is
+// how residents and visitors of an apartment building get in, and it is the
+// third most common value on entrance nodes after `yes` and `main`. Values
+// absent from this table are never offered: `service` (staff and deliveries),
+// `emergency` (fire escape), `garage` (an interior door), and `no` — which the
+// wiki defines as looking like a door but not being usable at all.
 var ENTRANCE_USE = {
   main:      {enter: true, leave: true},
   yes:       {enter: true, leave: true},
   secondary: {enter: true, leave: true},
   shop:      {enter: true, leave: true},
   home:      {enter: true, leave: true},
+  staircase: {enter: true, leave: true},
   entrance:  {enter: true, leave: false},
   exit:      {enter: false, leave: true}
 };
@@ -197,7 +201,7 @@ function clusterOverlappingLabels(boxes) {
   if (!Array.isArray(boxes) || boxes.length === 0) return [];
   // Union-find over the boxes.
   var parent = boxes.map(function(_, i) {
-    return i; 
+    return i;
   });
   function find(i) {
     while (parent[i] !== i) {
@@ -337,7 +341,7 @@ function minPairSeparation(points) {
 function createEntrancePicker(map, options) {
   options = options || {};
   var translate = typeof options.translate === 'function' ? options.translate : function(key) {
-    return key; 
+    return key;
   };
   var onSelect = typeof options.onSelect === 'function' ? options.onSelect : function() {};
   var fetchOutline = typeof options.fetchOutline === 'function' ? options.fetchOutline : null;
@@ -655,8 +659,16 @@ function createEntrancePicker(map, options) {
     render();
     // Which labels fit is a question of zoom, so the layout is redone after
     // every one.
+    //
+    // Detached first because show() runs again on an already-open picker when
+    // the travel mode changes. Leaflet and the DOM both ignore a repeat
+    // registration of the same handler, but relying on that makes correctness
+    // here depend on someone else's de-duplication; removing first makes it
+    // ours.
+    map.off('zoomend', layoutLabels);
     map.on('zoomend', layoutLabels);
     if (typeof document !== 'undefined') {
+      document.removeEventListener('keydown', onKeyDown);
       document.addEventListener('keydown', onKeyDown);
     }
     return true;
@@ -683,10 +695,10 @@ function createEntrancePicker(map, options) {
     focusView: focusViewWhenSettled,
     layoutLabels: layoutLabels,
     isOpen: function() {
-      return !!state; 
+      return !!state;
     },
     getWaypointIndex: function() {
-      return state ? state.waypointIndex : null; 
+      return state ? state.waypointIndex : null;
     },
     getSelectedId: function() {
       return state ? state.selectedId : null;
