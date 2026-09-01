@@ -176,9 +176,13 @@ var WHEELCHAIR_ACCESSIBLE = {yes: true, designated: true};
 var MARKS = {
   wheelchair: {
     className: 'osrm-entrance-mark-wheelchair',
-    // U+267F. Written as a surrogate pair rather than an escape this file's
-    // ES5 syntax cannot express.
-    glyph: '\u267F',
+    // U+267F, then U+FE0F. Both glyphs ask for the emoji form explicitly rather
+    // than relying on the font's default, because the two characters default
+    // differently: U+267F is Emoji_Presentation=Yes and renders in colour on its
+    // own, while U+1F17F below is No and falls back to a plain black-and-white
+    // glyph without the selector — which is how one mark ends up coloured and
+    // the other not.
+    glyph: '\u267F\uFE0F',
     label: 'Wheelchair accessible',
     applies: function(tags) {
       var value = tags.wheelchair;
@@ -188,8 +192,9 @@ var MARKS = {
   },
   parking: {
     className: 'osrm-entrance-mark-parking',
-    // U+1F17F, negative squared latin capital letter P.
-    glyph: '\uD83C\uDD7F',
+    // U+1F17F as a surrogate pair — an escape this file's ES5 syntax cannot
+    // write directly — then U+FE0F. See the note above.
+    glyph: '\uD83C\uDD7F\uFE0F',
     label: 'Parking entrance',
     applies: function(tags) {
       return tags.amenity === 'parking_entrance';
