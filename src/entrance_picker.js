@@ -342,7 +342,7 @@ function choicePoints(choices, placeCenter) {
   return points;
 }
 
-// The door positions, which is all the choices now are.
+// The door positions: every choice is a door.
 function entranceCenters(choices) {
   return choices.map(function(choice) {
     return choice.center;
@@ -400,9 +400,9 @@ function createEntrancePicker(map, options) {
   var paneWidth = typeof options.paneWidth === 'function' ? options.paneWidth : function() {
     return 0;
   };
-  // Two groups so redrawing the dots on every selection does not discard an
-  // outline that took a network round-trip to get. Markers sit in Leaflet's
-  // marker pane and paths in the overlay pane, so the dots stay on top.
+  // Four groups, so each can be cleared without disturbing the others. Markers
+  // sit in Leaflet's marker pane and paths in the overlay pane, so the dots and
+  // labels stay above the outline and the dashed link whatever the draw order.
   var outlineLayer = L.layerGroup();
   // The dashed link from the chosen door back to the pin, which never moves.
   var linkLayer = L.layerGroup();
@@ -419,8 +419,8 @@ function createEntrancePicker(map, options) {
   // once: naming a start must not withdraw the destination's, which is what a
   // single shared state did.
   var offers = [];
-  // The offer the view frames and Escape acts on — the one shown most recently,
-  // which is the one the user is looking at.
+  // The offer the view frames: the one shown most recently, which is the one the
+  // user is looking at. Escape is not scoped to it — that clears every offer.
   var activeWaypointIndex = null;
   // Every dot currently drawn, across all offers, in draw order. Label layout
   // groups purely by overlap and does not care which waypoint a dot belongs to.
@@ -429,8 +429,6 @@ function createEntrancePicker(map, options) {
   // rather than inferred from `offers`, because the last offer is removed from
   // that list before the teardown runs.
   var attached = false;
-  // Guards against a slow outline arriving after the user has moved on.
-  var outlineToken = 0;
 
   function offerAt(waypointIndex) {
     for (var i = 0; i < offers.length; i++) {
@@ -479,7 +477,7 @@ function createEntrancePicker(map, options) {
         var mark = entranceMark(choice.entrance, offer.mode);
         var chosen = choice.id === offer.selectedId;
         var className = 'osrm-entrance-marker osrm-entrance-marker-' + choice.kind +
-        (chosen ? ' osrm-entrance-marker-selected' : '');
+          (chosen ? ' osrm-entrance-marker-selected' : '');
         var marker = L.marker(choice.center, {
           icon: L.divIcon({className: className, iconSize: [18, 18], iconAnchor: [9, 9], html: ''}),
           // The label shows this as an icon; the alt spells it out, because the
@@ -494,8 +492,8 @@ function createEntrancePicker(map, options) {
         marker.__entranceLabel = text;
         marker.__entranceMark = mark;
         marker.on('click', function(e) {
-        // Without this the click also lands on the map, which would drop a new
-        // waypoint on top of the place being chosen for.
+          // Without this the click also lands on the map, which would drop a
+          // new waypoint on top of the place being chosen for.
           L.DomEvent.stopPropagation(e);
           select(offer, choice);
         });
@@ -714,14 +712,14 @@ function createEntrancePicker(map, options) {
   // The outline is best-effort context: a failed or absent one simply means the
   // picker shows dots without a site boundary.
   function loadOutline(offer, place) {
-    var token = ++outlineToken;
     offer.outline = null;
     if (!fetchOutline || !place) return;
     fetchOutline(place).then(function(geometry) {
-      // The offer may have been withdrawn, or replaced by a later one for the
-      // same waypoint, while the request was in flight.
-      if (token !== outlineToken || !geometry) return;
-      if (offerAt(offer.waypointIndex) !== offer) return;
+      // Guarded by the offer's own identity rather than a shared counter: the
+      // offer may have been withdrawn, or replaced by a later one for the same
+      // waypoint, while the request was in flight — but another waypoint being
+      // shown meanwhile must not cancel this one.
+      if (!geometry || offerAt(offer.waypointIndex) !== offer) return;
       offer.outline = geometry;
       render();
     });
@@ -729,8 +727,8 @@ function createEntrancePicker(map, options) {
 
   function show(opts) {
     var choices = buildChoices(opts.placeCenter, opts.entrances);
-    // One door is still worth offering now that the centre is not a dot: the
-    // pin marks it already.
+    // A single door is still worth offering: the pin already marks the place,
+    // so one dot is a real choice rather than a foregone one.
     if (choices.length < 1) {
       // Only this waypoint's offer goes. A place with no doors of its own says
       // nothing about the doors another waypoint is showing.
@@ -805,7 +803,6 @@ function createEntrancePicker(map, options) {
     activeWaypointIndex = null;
     renderedMarkers = [];
     map.off('zoomend', layoutLabels);
-    outlineToken++;
     outlineLayer.clearLayers();
     linkLayer.clearLayers();
     labelLayer.clearLayers();
@@ -852,8 +849,6 @@ module.exports = {
   shouldZoomToExtent: shouldZoomToExtent,
   isExtentClear: isExtentClear,
   choicePoints: choicePoints,
-  entranceCenters: entranceCenters,
-  minPairSeparation: minPairSeparation,
   MIN_DOT_SEPARATION_PX: MIN_DOT_SEPARATION_PX,
   createEntrancePicker: createEntrancePicker,
   MIN_EXTENT_FILL: MIN_EXTENT_FILL
