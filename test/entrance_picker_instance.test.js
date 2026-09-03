@@ -132,7 +132,7 @@ function openPicker(extra, showOpts) {
   return { map, picker, onSelect, opened };
 }
 
-// The picker's own layer group holds [outlineLayer, markerLayer], in that order.
+// The picker's own layer group; its members are indexed by the helpers below.
 function pickerGroup(map) {
   return map._layers[0];
 }
@@ -421,6 +421,23 @@ describe('site outline', () => {
     pending[1](GEOMETRY);
     await Promise.resolve();
     expect(hasOutline(map)).toBe(true);
+  });
+
+  test('showing another waypoint does not cancel an outline already in flight', () => {
+    // Offers are per waypoint, so a second waypoint being named while the
+    // first one's outline is still loading must leave that request alone. A
+    // shared cancellation counter got this wrong: the newer show() invalidated
+    // an outline the older, still-visible offer was waiting for.
+    const pending = [];
+    const fetchOutline = jest.fn(() => new Promise((r) => pending.push(r)));
+    const { map, picker } = openPicker({ options: { fetchOutline } }, { place: { osmId: 1 } });
+
+    picker.show({ waypointIndex: 0, placeCenter: CENTRE, entrances: [MAIN], place: { osmId: 2 } });
+    pending[0](GEOMETRY);
+
+    return Promise.resolve().then(() => {
+      expect(hasOutline(map)).toBe(true);
+    });
   });
 });
 
