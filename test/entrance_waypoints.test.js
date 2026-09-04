@@ -24,6 +24,8 @@ const { createEntranceWaypoints, entranceWaypointName, waypointMarkerLatLng,
 const MAIN = { osmId: 1, type: 'main', center: { lat: 52.5209566, lng: 13.3965227 } };
 const SIDE = { osmId: 2, type: 'yes', center: { lat: 52.5207240, lng: 13.3974377 } };
 const EXIT = { osmId: 3, type: 'exit', center: { lat: 52.5206, lng: 13.3980 } };
+// entrance=entrance is one-way in: usable at a destination, never at an origin.
+const WAY_IN = { osmId: 4, type: 'entrance', center: { lat: 52.5205, lng: 13.3985 } };
 const CENTRE = { lat: 52.5209336, lng: 13.3956302 };
 
 // A plan with the two internals the module reaches into, recorded so the tests
@@ -674,6 +676,70 @@ describe('splicing the waypoint list', () => {
     wiring.onGeocodeResult(geocodeEvent([MAIN], { waypointIndex: 1 }));
 
     wiring.spliceWaypoints({ index: 1, nRemoved: 1, added: [] });
+    expect(wiring.refresh()).toBe(false);
+    expect(picker.shown).toHaveLength(1);
+  });
+
+  test('reversing the route re-offers the doors the new roles allow', () => {
+    // The reported bug. An entrance=exit can be left through but not entered,
+    // so it is right to offer nothing while the place is the destination — and
+    // wrong to keep offering nothing once it becomes the start. LRM's reverse
+    // button replaces the whole list, so this arrives as a splice of everything.
+    const plan = makePlan(2);
+    const [first, second] = plan._waypoints;
+    const { wiring, picker } = build({ plan });
+
+    wiring.onGeocodeResult(geocodeEvent([EXIT], { waypointIndex: 1, waypoint: second }));
+    expect(picker.isOpenFor(1)).toBe(false);
+
+    plan._waypoints.reverse();
+    wiring.spliceWaypoints({ index: 0, nRemoved: 2, added: [second, first] });
+
+    expect(picker.isOpenFor(0)).toBe(true);
+    const offer = picker.shown[picker.shown.length - 1];
+    expect(offer.waypointIndex).toBe(0);
+    expect(offer.entrances).toEqual([EXIT]);
+  });
+
+  test('a door that only works at the end is withdrawn when it becomes a via', () => {
+    // The mirror of the same gap: entrance=entrance is one-way in, so it is no
+    // use at a stop that must also be left again.
+    const plan = makePlan(2);
+    const { wiring, picker } = build({ plan });
+    wiring.onGeocodeResult(geocodeEvent([WAY_IN], { waypointIndex: 1, waypoint: plan._waypoints[1] }));
+    expect(picker.isOpenFor(1)).toBe(true);
+
+    // A third waypoint appended after it: index 1 is now a via.
+    plan._waypoints.push({ latLng: null, name: '' });
+    wiring.spliceWaypoints({ index: 2, nRemoved: 0, added: [plan._waypoints[2]] });
+
+    expect(picker.isOpenFor(1)).toBe(false);
+    expect(picker.hiddenWaypoints).toContain(1);
+  });
+
+  test('a splice that leaves the roles alone does not re-offer anything', () => {
+    const plan = makePlan(3);
+    const { wiring, picker } = build({ plan });
+    wiring.onGeocodeResult(geocodeEvent([MAIN], { waypointIndex: 0, waypoint: plan._waypoints[0] }));
+    const before = picker.shown.length;
+
+    // A waypoint appended at the end: index 0 is the origin either way.
+    plan._waypoints.push({ latLng: null, name: '' });
+    wiring.spliceWaypoints({ index: 3, nRemoved: 0, added: [plan._waypoints[3]] });
+
+    expect(picker.shown).toHaveLength(before);
+    expect(picker.isOpenFor(0)).toBe(true);
+  });
+
+  test('a waypoint replaced by a different one does not inherit its doors', () => {
+    // Identity, not position, is what says a waypoint survived a splice.
+    const plan = makePlan(2);
+    const { wiring, picker } = build({ plan });
+    wiring.onGeocodeResult(geocodeEvent([MAIN], { waypointIndex: 1, waypoint: plan._waypoints[1] }));
+
+    plan._waypoints[1] = { latLng: null, name: '' };
+    wiring.spliceWaypoints({ index: 1, nRemoved: 1, added: [plan._waypoints[1]] });
+
     expect(wiring.refresh()).toBe(false);
     expect(picker.shown).toHaveLength(1);
   });
