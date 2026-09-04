@@ -980,6 +980,20 @@ describe('following a splice of the waypoint list', () => {
     expect(dots(map)).toHaveLength(2);
   });
 
+  test('removing the framed offer hands the view to a surviving one', () => {
+    labelBoxes.set({ Nord: box(0, 0, 40, 16), Werk: box(200, 0, 240, 16) });
+    const map = makeMap();
+    const picker = entrancePicker.createEntrancePicker(map, {});
+    picker.show({ waypointIndex: 0, placeCenter: CENTRE, entrances: START });
+    picker.show({ waypointIndex: 1, placeCenter: CENTRE, entrances: OTHER });
+    expect(picker.getWaypointIndex()).toBe(1);
+
+    picker.spliceOffers(1, 1, 0);   // the framed offer's waypoint is deleted
+    expect(picker.getWaypointIndex()).toBe(0);
+    expect(picker.isOpenFor(0)).toBe(true);
+    expect(dots(map)).toHaveLength(1);
+  });
+
   test('a splice that changes nothing leaves the offers alone', () => {
     const { map, picker } = open(0, START);
     const before = dots(map)[0];
