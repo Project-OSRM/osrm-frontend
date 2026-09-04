@@ -277,8 +277,40 @@ function createEntranceWaypoints(options) {
     return any;
   }
 
+  // Keeps the remembered results lined up with the waypoints they belong to.
+  // Without this a refresh after a splice would re-offer a place against the
+  // wrong waypoint.
+  function spliceWaypoints(e) {
+    var index = e && typeof e.index === 'number' ? e.index : 0;
+    var removed = e && typeof e.nRemoved === 'number' ? e.nRemoved : 0;
+    var added = e && e.added ? e.added.length : 0;
+    var delta = added - removed;
+    var moved = {};
+    Object.keys(lastEvents).forEach(function(key) {
+      var at = Number(key);
+      if (at < index) {
+        moved[at] = lastEvents[key];
+        return;
+      }
+      if (at < index + removed) return;
+      var to = at + delta;
+      var event = lastEvents[key];
+      // The event carries the index the picker is keyed by, so it has to move
+      // with it.
+      if (event && typeof event === 'object') event.waypointIndex = to;
+      moved[to] = event;
+    });
+    lastEvents = moved;
+    picker.spliceOffers(index, removed, added);
+  }
+
   return {
     onGeocodeResult: onGeocodeResult,
+    spliceWaypoints: spliceWaypoints,
+    hideWaypoint: function(waypointIndex) {
+      delete lastEvents[waypointIndex];
+      picker.hideWaypoint(waypointIndex);
+    },
     applySelection: applySelection,
     refresh: refresh,
     hide: function() {

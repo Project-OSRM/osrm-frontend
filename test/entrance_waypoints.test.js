@@ -75,6 +75,18 @@ function makeFakePicker() {
       picker.openFor.delete(waypointIndex);
       picker.open = picker.openFor.size > 0;
     }),
+    // Mirrors the real picker: offers are renumbered by a splice, not dropped.
+    spliceOffers: jest.fn(function(index, nRemoved, nAdded) {
+      const delta = (nAdded || 0) - (nRemoved || 0);
+      const next = new Set();
+      picker.openFor.forEach((at) => {
+        if (at < index) { next.add(at); return; }
+        if (at < index + (nRemoved || 0)) return;
+        next.add(at + delta);
+      });
+      picker.openFor = next;
+      picker.open = picker.openFor.size > 0;
+    }),
     isOpen: jest.fn(() => picker.open),
     isOpenFor: jest.fn((waypointIndex) => picker.openFor.has(waypointIndex)),
     focusView: jest.fn()
@@ -625,5 +637,56 @@ describe('createReverseNotifier', () => {
     })();
     expect(() => wrapped.reverse(at(52.5, 13.4), 100, () => {})).not.toThrow();
     expect(fired).toHaveLength(0);
+  });
+});
+
+describe('splicing the waypoint list', () => {
+  test("a destination placed by clicking the map keeps the start's offer", () => {
+    // The reported bug, at the wiring level: the splice handler used to hide
+    // every offer.
+    const plan = makePlan(2);
+    const { wiring, picker } = build({ plan });
+    wiring.onGeocodeResult(geocodeEvent([MAIN], { waypointIndex: 0 }));
+    expect(picker.isOpenFor(0)).toBe(true);
+
+    wiring.spliceWaypoints({ index: 1, nRemoved: 0, added: [{}] });
+    expect(picker.hide).not.toHaveBeenCalled();
+    expect(picker.isOpenFor(0)).toBe(true);
+  });
+
+  test('a remembered result moves with its waypoint, so refresh stays correct', () => {
+    let mode = 'foot';
+    const plan = makePlan(3);
+    const { wiring, picker } = build({ plan, options: { mode: () => mode } });
+    wiring.onGeocodeResult(geocodeEvent([MAIN], { waypointIndex: 1 }));
+
+    wiring.spliceWaypoints({ index: 0, nRemoved: 0, added: [{}] });
+    mode = 'driving';
+    wiring.refresh();
+
+    // Re-offered against the index the waypoint now has, not the old one.
+    expect(picker.shown[picker.shown.length - 1].waypointIndex).toBe(2);
+  });
+
+  test('a removed waypoint takes its remembered result with it', () => {
+    const plan = makePlan(2);
+    const { wiring, picker } = build({ plan });
+    wiring.onGeocodeResult(geocodeEvent([MAIN], { waypointIndex: 1 }));
+
+    wiring.spliceWaypoints({ index: 1, nRemoved: 1, added: [] });
+    expect(wiring.refresh()).toBe(false);
+    expect(picker.shown).toHaveLength(1);
+  });
+
+  test('dragging a waypoint withdraws only its own offer', () => {
+    const plan = makePlan(2);
+    const { wiring, picker } = build({ plan });
+    wiring.onGeocodeResult(geocodeEvent([MAIN], { waypointIndex: 0 }));
+    wiring.onGeocodeResult(geocodeEvent([MAIN], { waypointIndex: 1 }));
+
+    wiring.hideWaypoint(1);
+    expect(picker.hiddenWaypoints).toEqual([1]);
+    expect(picker.hide).not.toHaveBeenCalled();
+    expect(picker.isOpenFor(0)).toBe(true);
   });
 });
