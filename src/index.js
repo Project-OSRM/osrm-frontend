@@ -9,6 +9,8 @@ var geocoderPatches = require('./geocoder_patches');
 geocoderPatches();
 var LRM = require('leaflet-routing-machine');
 var resolveWaypointSlot = require('./waypoint_placement').resolveWaypointSlot;
+var entranceWaypointsModule = require('./entrance_waypoints');
+var createEntranceWaypoints = entranceWaypointsModule.createEntranceWaypoints;
 
 // Register app languages that LRM does not have built-in so LRM does not throw
 // "No localization for language" when they are selected. We reuse English
@@ -247,6 +249,21 @@ map.on('overlayremove', function(e) {
 
 /* OSRM setup */
 var ReversablePlan = L.Routing.Plan.extend({
+  // LRM's own `waypointgeocoded` event carries only the waypoint, dropping the
+  // geocoding result and with it the entrance list Nominatim returned. Re-fire
+  // it with the result attached.
+  _createGeocoder: function(i) {
+    var geocoderElem = L.Routing.Plan.prototype._createGeocoder.call(this, i);
+    geocoderElem.on('geocoded', function(e) {
+      this.fire('waypointgeocoderesult', {
+        waypointIndex: i,
+        waypoint: e.waypoint,
+        value: e.value
+      });
+    }, this);
+    return geocoderElem;
+  },
+
   createGeocoders: function() {
     var container = L.Routing.Plan.prototype.createGeocoders.call(this);
     // Inject mode selector after geocoders are created
@@ -288,8 +305,24 @@ function makeIcon(i, n) {
   }
 }
 
-var plan = new ReversablePlan([], {
-  geocoder: createGeocoder.coordPreserving(leafletOptions.nominatim && leafletOptions.nominatim.path),
+var routingGeocoder = createGeocoder.coordPreserving(leafletOptions.nominatim && leafletOptions.nominatim.path);
+
+// Declared before the geocoder wrapper below, which reads it back late: the
+// plan is built from that geocoder and so cannot exist yet when it is made.
+var plan;
+
+// A waypoint restored from a URL, dropped by a map click or dragged is named by
+// LRM through a reverse geocode that never fires `geocoded`, so its entrance
+// list would be thrown away with the result. This re-fires it at the plan.
+var planGeocoder = entranceWaypointsModule.createReverseNotifier({
+  geocoder: routingGeocoder,
+  getPlan: function() {
+    return plan;
+  }
+});
+
+plan = new ReversablePlan([], {
+  geocoder: planGeocoder,
   waypointNameFallback: createGeocoder.wrappedWaypointNameFallback,
   language: mergedOptions.language,
   routeWhileDragging: true,
@@ -298,7 +331,10 @@ var plan = new ReversablePlan([], {
       draggable: this.draggableWaypoints,
       icon: makeIcon(i, n)
     };
-    var marker = L.marker(wp.latLng, options);
+    // Choosing an entrance routes to the door but leaves the pin on the place
+    // that was searched for, so the pin is drawn where the place is, not where
+    // the route ends.
+    var marker = L.marker(entranceWaypointsModule.waypointMarkerLatLng(wp), options);
     marker.on('click', function() {
       plan.spliceWaypoints(i, 1);
     });
@@ -705,6 +741,57 @@ plan.on('waypointgeocoded', function(e) {
   }
 });
 
+/* Entrance picker — see src/entrance_waypoints.js for what it does and why. */
+
+function directionsPaneWidth() {
+  var pane = document.querySelector('.leaflet-routing-container');
+  if (!pane || pane.classList.contains('leaflet-routing-container-hide')) return 0;
+  return pane.offsetWidth;
+}
+
+var entranceWaypoints = createEntranceWaypoints({
+  map: map,
+  plan: plan,
+  routeFitTracker: routeFitTracker,
+  translate: function(key) {
+    return localization.t(mergedOptions.language, key);
+  },
+  fetchOutline: routingGeocoder.fetchOutline,
+  paneWidth: directionsPaneWidth,
+  // Read live: a door forbidden to cars may be fine on foot, so the offer has to
+  // follow whatever profile is selected right now.
+  mode: function() {
+    var index = typeof state.options.profile === 'number'
+      ? state.options.profile : activeProfileIndex;
+    return services[index] && services[index].profile;
+  }
+});
+
+plan.on('waypointgeocoderesult', entranceWaypoints.onGeocodeResult);
+
+// The doors on offer depend on the travel mode, so an open picker is recomputed
+// rather than left showing ones the new profile forbids. Registered here rather
+// than alongside the other profile-change handlers so it runs after the wiring
+// above exists.
+if (modeSelector && modeSelector.select) {
+  L.DomEvent.on(modeSelector.select, 'change', function() {
+    entranceWaypoints.refresh();
+  });
+}
+
+// Adding, removing or reordering waypoints invalidates the index the picker is
+// pinned to; dragging the pin means the user has already chosen a spot.
+// Adding or removing a waypoint renumbers the ones after it, and each waypoint
+// keeps its own offer — so the offers are renumbered too rather than thrown
+// away. Dropping them all meant placing a destination by clicking the map took
+// the start's doors off the screen with it.
+plan.on('waypointsspliced', entranceWaypoints.spliceWaypoints);
+// Only the dragged waypoint's doors go: it is being moved off the place they
+// belong to, and no other waypoint is affected.
+plan.on('waypointdragstart', function(e) {
+  entranceWaypoints.hideWaypoint(e && e.index);
+});
+
 // If dst/src address params were passed and no loc= waypoints exist, geocode them now.
 (function applyAddressParams() {
   var hasLocWaypoints = mergedOptions.waypoints && mergedOptions.waypoints.some(function(wp) {
@@ -827,6 +914,15 @@ lrmControl.on('routeselected', function(e) {
     paneWidth = container.offsetWidth;
   }
 
+  // An open picker is a question waiting on the user, so the view belongs to it:
+  // the area being chosen from stays framed clear of the directions pane, and
+  // the route fit stands down until the picker closes.
+  if (entranceWaypoints.isOpen()) {
+    routeFitTracker.clearFitPending();
+    entranceWaypoints.focusView();
+    return;
+  }
+
   if (!routeFitTracker.isFitPending()) {
     // A drag leaves the view alone, unless it pushed the route into the
     // directions pane — the route must never run underneath it.
@@ -869,6 +965,7 @@ lrmControl.on('routeselected', function(e) {
   } else {
     map.fitBounds(bounds, paddingOpts);
   }
+
 });
 
 plan.on('waypointschanged', function(e) {

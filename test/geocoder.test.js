@@ -30,7 +30,11 @@ describe('geocoder.coordPreserving', () => {
     const L = require('leaflet');
 
     const g = geocoder.coordPreserving('https://nominatim.example/');
-    expect(L.Control.Geocoder.nominatim).toHaveBeenCalledWith({ serviceUrl: 'https://nominatim.example/' });
+    expect(L.Control.Geocoder.nominatim).toHaveBeenCalledWith({
+      serviceUrl: 'https://nominatim.example/',
+      geocodingQueryParams: { entrances: 1 },
+      reverseQueryParams: { entrances: 1 }
+    });
 
     const results = await g.geocode('34.129382,-118.141254');
     expect(results).toHaveLength(1);
@@ -61,7 +65,12 @@ describe('geocoder.coordPreserving', () => {
     // Call without argument to ensure default nominatim factory is used
     geocoder.coordPreserving();
     expect(L.Control.Geocoder.nominatim).toHaveBeenCalled();
-    expect(L.Control.Geocoder.nominatim.mock.calls[0].length).toBe(0);
+    // No serviceUrl, so leaflet-control-geocoder keeps its own default endpoint;
+    // the entrance parameters are still requested.
+    expect(L.Control.Geocoder.nominatim).toHaveBeenCalledWith({
+      geocodingQueryParams: { entrances: 1 },
+      reverseQueryParams: { entrances: 1 }
+    });
   });
 
   // Tests for reverse-geocode coordinate wrapping (issues #206, #307).
@@ -248,5 +257,216 @@ describe('geocoder.wrappedWaypointNameFallback', () => {
     const latLng = { lat: -33.9, lng: -70.6, wrap: () => ({ lat: -33.9, lng: -70.6 }) };
     const result = geocoder.wrappedWaypointNameFallback(latLng);
     expect(result).toBe('S33.9, W70.6');
+  });
+});
+
+// Nominatim 5.2+ returns a place's entrance nodes when asked for them. These
+// must survive every path a result can take to the UI, or the entrance picker
+// has nothing to offer.
+describe('geocoder entrance handling', () => {
+  const BER_ENTRANCES = [
+    { osm_id: 9942967218, type: 'main', lat: '52.3636100', lon: '13.5100542' },
+    { osm_id: 9959231437, type: 'main', lat: '52.3641971', lon: '13.5096892' }
+  ];
+
+  function mockLeaflet() {
+    jest.doMock('leaflet', () => ({
+      Control: { Geocoder: { nominatim: jest.fn(() => ({})) } },
+      CRS: { EPSG3857: { scale: () => 1 } },
+      latLng: (lat, lng) => {
+        const obj = { lat: +lat, lng: +lng, toBounds: () => ({}) };
+        obj.wrap = () => obj;
+        return obj;
+      },
+      latLngBounds: (sw, ne) => ({ sw, ne }),
+      extend: Object.assign
+    }));
+  }
+
+  beforeEach(() => {
+    jest.resetModules();
+    global.localStorage = {
+      getItem: () => null,
+      setItem: () => {}
+    };
+  });
+
+  afterEach(() => {
+    delete global.localStorage;
+    delete global.fetch;
+  });
+
+  test('requests entrances and parses them off the search response', async () => {
+    mockLeaflet();
+    let requestedUrl = null;
+    global.fetch = jest.fn((url) => {
+      requestedUrl = url;
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve([{
+          display_name: 'Flughafen Berlin Brandenburg',
+          lat: '52.3657974',
+          lon: '13.4888906',
+          entrances: BER_ENTRANCES
+        }])
+      });
+    });
+
+    const geocoder = require('../src/geocoder');
+    const results = await geocoder.coordPreserving('https://nominatim.example/').geocode('BER');
+
+    expect(requestedUrl).toContain('entrances=1');
+    expect(results[0].entrances).toEqual([
+      { osmId: 9942967218, type: 'main', center: expect.objectContaining({ lat: 52.36361, lng: 13.5100542 }) },
+      { osmId: 9959231437, type: 'main', center: expect.objectContaining({ lat: 52.3641971, lng: 13.5096892 }) }
+    ]);
+  });
+
+  test('lifts entrances off the raw payload leaflet-control-geocoder preserves', async () => {
+    jest.doMock('leaflet', () => ({
+      Control: {
+        Geocoder: {
+          nominatim: jest.fn(() => ({
+            geocode: () => Promise.resolve([{
+              name: 'Flughafen Berlin Brandenburg',
+              center: { lat: 52.3657974, lng: 13.4888906 },
+              properties: { entrances: BER_ENTRANCES }
+            }])
+          }))
+        }
+      },
+      CRS: { EPSG3857: { scale: () => 1 } },
+      latLng: (lat, lng) => ({ lat: +lat, lng: +lng }),
+      latLngBounds: (sw, ne) => ({ sw, ne }),
+      extend: Object.assign
+    }));
+
+    const geocoder = require('../src/geocoder');
+    const results = await geocoder.coordPreserving('https://nominatim.example/').geocode('BER');
+
+    expect(results[0].entrances).toHaveLength(2);
+    expect(results[0].entrances[0].type).toBe('main');
+  });
+
+  test('a typed coordinate keeps its exact position and is offered no entrances', async () => {
+    jest.doMock('leaflet', () => ({
+      Control: {
+        Geocoder: {
+          nominatim: jest.fn(() => ({
+            reverse: () => Promise.resolve([{
+              name: 'Flughafen Berlin Brandenburg',
+              center: { lat: 52.3657974, lng: 13.4888906 },
+              properties: { entrances: BER_ENTRANCES }
+            }])
+          }))
+        }
+      },
+      CRS: { EPSG3857: { scale: () => 1 } },
+      latLng: (lat, lng) => {
+        const obj = { lat: +lat, lng: +lng, toBounds: () => ({}) };
+        obj.wrap = () => obj;
+        return obj;
+      },
+      latLngBounds: (sw, ne) => ({ sw, ne }),
+      extend: Object.assign
+    }));
+
+    const geocoder = require('../src/geocoder');
+    const results = await geocoder.coordPreserving('https://nominatim.example/')
+      .geocode('52.3657974,13.4888906');
+
+    expect(results[0].center.lat).toBeCloseTo(52.3657974);
+    expect(results[0].entrances).toBeUndefined();
+  });
+});
+
+// Entrance nodes carry no geometry of their own, so the site they belong to is
+// outlined instead. Its polygon is fetched separately, never as part of search.
+describe('geocoder.fetchOutline', () => {
+  function mockLeaflet() {
+    jest.doMock('leaflet', () => ({
+      Control: { Geocoder: { nominatim: jest.fn(() => ({})) } },
+      CRS: { EPSG3857: { scale: () => 1 } },
+      latLng: (lat, lng) => ({ lat: +lat, lng: +lng }),
+      latLngBounds: (sw, ne) => ({ sw, ne }),
+      extend: Object.assign
+    }));
+  }
+
+  const POLYGON = { type: 'Polygon', coordinates: [[[13.45, 52.34], [13.53, 52.34], [13.53, 52.39], [13.45, 52.34]]] };
+
+  beforeEach(() => {
+    jest.resetModules();
+    global.localStorage = { getItem: () => null, setItem: () => {} };
+  });
+
+  afterEach(() => {
+    delete global.localStorage;
+    delete global.fetch;
+  });
+
+  function respondWith(body) {
+    global.fetch = jest.fn(() => Promise.resolve({
+      ok: true, status: 200, json: () => Promise.resolve(body)
+    }));
+  }
+
+  test('looks the place up by OSM id and returns its polygon', async () => {
+    mockLeaflet();
+    respondWith([{ geojson: POLYGON }]);
+    const geocoder = require('../src/geocoder');
+
+    const outline = await geocoder.coordPreserving('https://nominatim.example/')
+      .fetchOutline({ osmType: 'way', osmId: 859790021 });
+
+    expect(outline).toEqual(POLYGON);
+    const url = global.fetch.mock.calls[0][0];
+    expect(url).toContain('lookup?');
+    expect(url).toContain('osm_ids=W859790021');
+    expect(url).toContain('polygon_geojson=1');
+    // No polygon_threshold: its tolerance is absolute degrees, so a value that
+    // usefully thins an airport flattens a building into a few stray corners.
+    expect(url).not.toContain('polygon_threshold');
+  });
+
+  test('caches by place so reopening the picker costs no request', async () => {
+    mockLeaflet();
+    respondWith([{ geojson: POLYGON }]);
+    const geocoder = require('../src/geocoder');
+    const g = geocoder.coordPreserving('https://nominatim.example/');
+
+    await g.fetchOutline({ osmType: 'way', osmId: 1 });
+    await g.fetchOutline({ osmType: 'way', osmId: 1 });
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  test('returns null for a place with no area', async () => {
+    mockLeaflet();
+    respondWith([{ geojson: { type: 'Point', coordinates: [13.5, 52.3] } }]);
+    const geocoder = require('../src/geocoder');
+
+    expect(await geocoder.coordPreserving('https://nominatim.example/')
+      .fetchOutline({ osmType: 'node', osmId: 42 })).toBeNull();
+  });
+
+  test('returns null without requesting anything when the result has no OSM id', async () => {
+    mockLeaflet();
+    respondWith([{ geojson: POLYGON }]);
+    const geocoder = require('../src/geocoder');
+
+    expect(await geocoder.coordPreserving('https://nominatim.example/')
+      .fetchOutline({ name: 'somewhere' })).toBeNull();
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  test('a failed lookup is not fatal — the picker just shows no outline', async () => {
+    mockLeaflet();
+    global.fetch = jest.fn(() => Promise.reject(new Error('offline')));
+    const geocoder = require('../src/geocoder');
+
+    expect(await geocoder.coordPreserving('https://nominatim.example/')
+      .fetchOutline({ osmType: 'relation', osmId: 7 })).toBeNull();
   });
 });

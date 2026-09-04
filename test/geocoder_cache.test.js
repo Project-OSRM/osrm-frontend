@@ -75,10 +75,10 @@ describe('geocoder cache', function() {
     expect(ctx.input.style.backgroundColor).toBe('white');
 
     // persisted cache should contain the search URL key
-    var raw = localStorage.getItem('osrm_nominatim_cache_v1');
+    var raw = localStorage.getItem('osrm_nominatim_cache_v2');
     expect(raw).toBeTruthy();
     var entries = JSON.parse(raw);
-    var expectedUrl = 'https://nominatim.example/search?format=json&addressdetails=1&limit=5&q=' + encodeURIComponent('Somewhere');
+    var expectedUrl = 'https://nominatim.example/search?format=json&addressdetails=1&entrances=1&limit=5&q=' + encodeURIComponent('Somewhere');
     var found = entries.find(function(e) { return e[0] === expectedUrl; });
     expect(found).toBeDefined();
   });
@@ -107,10 +107,10 @@ describe('geocoder cache', function() {
   test('expires old entries on load (TTL)', async function() {
     // create an expired entry in localStorage before the cache is created
     var q = 'OldPlace';
-    var url = 'https://nominatim.example/search?format=json&addressdetails=1&limit=5&q=' + encodeURIComponent(q);
+    var url = 'https://nominatim.example/search?format=json&addressdetails=1&entrances=1&limit=5&q=' + encodeURIComponent(q);
     var oldTs = Date.now() - (24 * 60 * 60 * 1000) - 1000; // older than 24h
     var stored = [[url, { value: [{ name: 'Old', center: { lat: 11, lng: 22 } }], ts: oldTs }]];
-    localStorage.setItem('osrm_nominatim_cache_v1', JSON.stringify(stored));
+    localStorage.setItem('osrm_nominatim_cache_v2', JSON.stringify(stored));
 
     jest.resetModules();
     jest.doMock('leaflet', function() {
@@ -138,10 +138,10 @@ describe('geocoder cache', function() {
     // Seed a cache entry that is 23h old (within 24h TTL)
     var q = 'SlidingPlace';
     var service = 'https://nominatim.example/';
-    var url = service + 'search?format=json&addressdetails=1&limit=5&q=' + encodeURIComponent(q);
+    var url = service + 'search?format=json&addressdetails=1&entrances=1&limit=5&q=' + encodeURIComponent(q);
     var almostExpiredTs = Date.now() - (23 * 60 * 60 * 1000); // 23h ago
     var stored = [[url, { value: [{ name: 'Sliding', center: { lat: 1, lng: 2 } }], ts: almostExpiredTs }]];
-    localStorage.setItem('osrm_nominatim_cache_v1', JSON.stringify(stored));
+    localStorage.setItem('osrm_nominatim_cache_v2', JSON.stringify(stored));
 
     jest.resetModules();
     // Use fake timers to make timestamp assertions deterministic
@@ -169,7 +169,7 @@ describe('geocoder cache', function() {
     jest.advanceTimersByTime(1000);
 
     // The timestamp in localStorage should now be refreshed to the fake 'now'
-    var raw = JSON.parse(localStorage.getItem('osrm_nominatim_cache_v1'));
+    var raw = JSON.parse(localStorage.getItem('osrm_nominatim_cache_v2'));
     var entry = raw.find(function(e) { return e[0] === url; });
     expect(entry).toBeDefined();
     var refreshedTs = entry[1].ts;
@@ -185,10 +185,10 @@ describe('geocoder cache', function() {
     var now = Date.now();
     var entries = [];
     for (var i = 0; i < 128; i++) {
-      var u = service + 'search?format=json&addressdetails=1&limit=5&q=' + encodeURIComponent('q' + i);
+      var u = service + 'search?format=json&addressdetails=1&entrances=1&limit=5&q=' + encodeURIComponent('q' + i);
       entries.push([u, { value: [{ name: 'P' + i, center: { lat: i, lng: i } }], ts: now }]);
     }
-    localStorage.setItem('osrm_nominatim_cache_v1', JSON.stringify(entries));
+    localStorage.setItem('osrm_nominatim_cache_v2', JSON.stringify(entries));
 
     jest.resetModules();
     jest.doMock('leaflet', function() { return makeLeafletMock(); });
@@ -204,14 +204,14 @@ describe('geocoder cache', function() {
 
     var res = await g.geocode('NewPlace', undefined, ctx);
 
-    var raw = localStorage.getItem('osrm_nominatim_cache_v1');
+    var raw = localStorage.getItem('osrm_nominatim_cache_v2');
     expect(raw).toBeTruthy();
     var arr = JSON.parse(raw);
     // ensure size capped at 128 and oldest (q0) removed while NewPlace present
     expect(arr.length).toBeLessThanOrEqual(128);
-    var firstExpected = service + 'search?format=json&addressdetails=1&limit=5&q=' + encodeURIComponent('q0');
+    var firstExpected = service + 'search?format=json&addressdetails=1&entrances=1&limit=5&q=' + encodeURIComponent('q0');
     expect(arr.find(function(e) { return e[0] === firstExpected; })).toBeUndefined();
-    var newUrl = service + 'search?format=json&addressdetails=1&limit=5&q=' + encodeURIComponent('NewPlace');
+    var newUrl = service + 'search?format=json&addressdetails=1&entrances=1&limit=5&q=' + encodeURIComponent('NewPlace');
     expect(arr.find(function(e) { return e[0] === newUrl; })).toBeDefined();
   });
 
@@ -269,10 +269,10 @@ describe('geocoder cache', function() {
     var now = Date.now();
     var entries = [];
     for (var i = 0; i < 3; i++) {
-      var u = service + 'search?format=json&addressdetails=1&limit=5&q=' + encodeURIComponent('q' + i);
+      var u = service + 'search?format=json&addressdetails=1&entrances=1&limit=5&q=' + encodeURIComponent('q' + i);
       entries.push([u, { value: [{ name: 'P' + i, center: { lat: i, lng: i } }], ts: now }]);
     }
-    localStorage.setItem('osrm_nominatim_cache_v1', JSON.stringify(entries));
+    localStorage.setItem('osrm_nominatim_cache_v2', JSON.stringify(entries));
 
     jest.resetModules();
     jest.doMock('leaflet', function() {
@@ -290,12 +290,12 @@ describe('geocoder cache', function() {
     await g.geocode('q0', undefined, ctx);
 
     // Check that localStorage now has q0 last (MRU)
-    var raw = JSON.parse(localStorage.getItem('osrm_nominatim_cache_v1'));
+    var raw = JSON.parse(localStorage.getItem('osrm_nominatim_cache_v2'));
     var keys = raw.map(function(e) { return e[0]; });
-    var q0Url = service + 'search?format=json&addressdetails=1&limit=5&q=' + encodeURIComponent('q0');
+    var q0Url = service + 'search?format=json&addressdetails=1&entrances=1&limit=5&q=' + encodeURIComponent('q0');
     expect(keys[keys.length - 1]).toBe(q0Url);
     // q1 should now be the first (LRU) entry
-    var q1Url = service + 'search?format=json&addressdetails=1&limit=5&q=' + encodeURIComponent('q1');
+    var q1Url = service + 'search?format=json&addressdetails=1&entrances=1&limit=5&q=' + encodeURIComponent('q1');
     expect(keys[0]).toBe(q1Url);
   });
 
@@ -305,10 +305,10 @@ describe('geocoder cache', function() {
     var now = Date.now();
     var entries = [];
     for (var i = 0; i < 140; i++) {
-      var u = service + 'search?format=json&addressdetails=1&limit=5&q=' + encodeURIComponent('over' + i);
+      var u = service + 'search?format=json&addressdetails=1&entrances=1&limit=5&q=' + encodeURIComponent('over' + i);
       entries.push([u, { value: [{ name: 'P' + i, center: { lat: i, lng: i } }], ts: now }]);
     }
-    localStorage.setItem('osrm_nominatim_cache_v1', JSON.stringify(entries));
+    localStorage.setItem('osrm_nominatim_cache_v2', JSON.stringify(entries));
 
     jest.resetModules();
     jest.doMock('leaflet', function() {
@@ -327,10 +327,10 @@ describe('geocoder cache', function() {
     var ctx = { input: { style: {} } };
     await g.geocode('over139', undefined, ctx);
 
-    var raw = JSON.parse(localStorage.getItem('osrm_nominatim_cache_v1'));
+    var raw = JSON.parse(localStorage.getItem('osrm_nominatim_cache_v2'));
     expect(raw.length).toBeLessThanOrEqual(128);
     // The oldest entries (over0..over11) should have been evicted
-    var firstUrl = service + 'search?format=json&addressdetails=1&limit=5&q=' + encodeURIComponent('over0');
+    var firstUrl = service + 'search?format=json&addressdetails=1&entrances=1&limit=5&q=' + encodeURIComponent('over0');
     expect(raw.find(function(e) { return e[0] === firstUrl; })).toBeUndefined();
   });
 
@@ -364,7 +364,7 @@ describe('geocoder cache', function() {
 
     await g.geocode('BboxPlace', undefined, ctx);
 
-    var raw = JSON.parse(localStorage.getItem('osrm_nominatim_cache_v1'));
+    var raw = JSON.parse(localStorage.getItem('osrm_nominatim_cache_v2'));
     expect(raw.length).toBe(1);
     var cached = raw[0][1].value[0];
     // bbox should be stored as canonical [south, north, west, east] array

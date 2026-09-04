@@ -1118,3 +1118,87 @@ td.distance {
     pointer-events: none;
     z-index: 1000;
 }
+
+/* Entrance picker — alternative positions offered for a geocoded place.
+   Nominatim gives entrance nodes no name or ref, so the dot's position on the
+   map is the only thing that tells one apart from another. They are deliberately
+   smaller and flatter than the A/B waypoint pins: the pin shows where the route
+   actually starts, these only show where it could be moved to. */
+.osrm-entrance-marker {
+    box-sizing: border-box;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+    transition: transform 0.1s ease-out;
+}
+
+.osrm-entrance-marker:hover {
+    transform: scale(1.35);
+}
+
+/* A door tagged entrance=main — the one most travellers are looking for. */
+.osrm-entrance-marker-main {
+    background-color: #2b7ac9;
+}
+
+/* Any other public entrance. */
+.osrm-entrance-marker-other {
+    background-color: #7fb2e5;
+}
+
+/* The door the route currently runs to. Filled dark and ringed, so it reads as
+   chosen while every other door stays on the map and one click away. */
+.osrm-entrance-marker-selected {
+    background-color: #022bb1;
+    border-color: #fff;
+    box-shadow: 0 0 0 3px rgba(2, 43, 177, 0.35), 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* Entrance labels. Permanent, so every door names itself without being
+   hovered. Owned by the picker rather than drawn as Leaflet tooltips: the
+   tooltip pane sits above the marker pane, which would put a label over the dot
+   it names. As markers they share the pane with the dots, and a lower
+   zIndexOffset keeps every dot on top. */
+.osrm-entrance-label {
+    /* Zero-sized, so the anchor is the door itself. */
+    width: 0;
+    height: 0;
+}
+
+.osrm-entrance-label-inner {
+    position: absolute;
+    left: 0;
+    bottom: 14px;
+    transform: translateX(-50%);
+    background-color: rgba(255, 255, 255, 0.94);
+    border-radius: 3px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    color: #14243f;
+    font-size: 12px;
+    line-height: 1.35;
+    padding: 3px 7px;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+/* A merged label lists one door per line, so it cannot stay on one. */
+/* Marks something about a door worth knowing in the current travel mode:
+   step-free access on foot, a way in for a car when driving. A mark only, never
+   a filter — most doors carry neither tag, so an absent one says nothing about
+   the door. The per-mark classes carry no styling of their own yet; they exist
+   so a mark can be restyled without touching the others. */
+.osrm-entrance-mark {
+    margin-left: 5px;
+    font-size: 11px;
+    line-height: 1;
+    vertical-align: baseline;
+}
+
+.osrm-entrance-label-merged .osrm-entrance-label-inner div + div {
+    border-top: 1px solid rgba(20, 36, 63, 0.12);
+    margin-top: 2px;
+    padding-top: 2px;
+}

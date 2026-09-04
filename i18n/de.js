@@ -16,5 +16,13 @@ module.exports = {
   'Bike': 'Fahrrad',
   'Car': 'Auto',
   'Foot': 'Fussgänger',
+  'Main entrance': 'Haupteingang',
+  'Entrance': 'Eingang',
+  'Wheelchair accessible': 'Rollstuhlgerecht',
+  'Parking entrance': 'Parkhauseinfahrt',
+  'main entrance': 'Haupteingang',
+  'entrance': 'Eingang',
+  'Exit': 'Ausgang',
+  'exit': 'Ausgang',
   'Build': 'Build: '
 };
