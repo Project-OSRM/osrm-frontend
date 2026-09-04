@@ -343,6 +343,13 @@ var controlOptions = {
   units: mergedOptions.units,
   serviceUrl: services[0].path,
   useHints: false,
+  // Left to itself OSRM will u-turn at a via point rather than take a slightly
+  // longer way round, so the route is drawn back over the leg it just arrived
+  // on. Asking it to keep going straight leaves the stop by a different way:
+  // measured on a via off Hardenbergstraße, 1180 m round the block instead of
+  // 1150 m doubled back. It is a no-op on a route without via points, and OSRM
+  // relaxes the constraint rather than failing when a reversal is unavoidable.
+  requestParameters: {continue_straight: true},
   services: services,
   useZoomParameter: options.lrm.useZoomParameter,
   routeDragInterval: options.lrm.routeDragInterval,
