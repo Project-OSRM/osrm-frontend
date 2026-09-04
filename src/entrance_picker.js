@@ -778,6 +778,49 @@ function createEntrancePicker(map, options) {
     return true;
   }
 
+  /**
+   * Follows a splice of the waypoint list.
+   *
+   * Offers are keyed by waypoint index, so inserting or removing a waypoint
+   * renumbers the ones after it. Dropping every offer instead — which is what
+   * this used to do — meant that placing a destination by clicking the map took
+   * away the doors the start was already showing.
+   *
+   * @param {number} index — where the splice happened
+   * @param {number} nRemoved — waypoints deleted there
+   * @param {number} nAdded — waypoints inserted there
+   */
+  function spliceOffers(index, nRemoved, nAdded) {
+    var removed = nRemoved || 0;
+    var delta = (nAdded || 0) - removed;
+    var kept = [];
+    offers.forEach(function(offer) {
+      // Untouched: it sits before the splice.
+      if (offer.waypointIndex < index) {
+        kept.push(offer);
+        return;
+      }
+      // Its waypoint is gone, and so is the place it belonged to.
+      if (offer.waypointIndex < index + removed) {
+        if (activeWaypointIndex === offer.waypointIndex) activeWaypointIndex = null;
+        return;
+      }
+      if (activeWaypointIndex === offer.waypointIndex) activeWaypointIndex += delta;
+      offer.waypointIndex += delta;
+      kept.push(offer);
+    });
+    if (kept.length === offers.length && !delta) return;
+    offers = kept;
+    if (!offers.length) {
+      hide();
+      return;
+    }
+    if (activeWaypointIndex === null) {
+      activeWaypointIndex = offers[offers.length - 1].waypointIndex;
+    }
+    render();
+  }
+
   // Withdraws one waypoint's offer, leaving every other one on the map.
   function hideWaypoint(waypointIndex) {
     var offer = offerAt(waypointIndex);
@@ -817,6 +860,7 @@ function createEntrancePicker(map, options) {
     show: show,
     hide: hide,
     hideWaypoint: hideWaypoint,
+    spliceOffers: spliceOffers,
     focusView: focusViewWhenSettled,
     layoutLabels: layoutLabels,
     isOpen: function() {

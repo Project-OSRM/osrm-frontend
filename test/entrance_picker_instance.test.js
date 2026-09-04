@@ -920,3 +920,70 @@ describe('offers for several waypoints at once', () => {
     expect(picker.getWaypointIndex()).toBe(1);
   });
 });
+
+describe('following a splice of the waypoint list', () => {
+  const labelBoxes = require('./__label_boxes');
+  const box = (l, t, r, b) => ({ left: l, top: t, right: r, bottom: b });
+  const START = [{ osmId: 1, type: 'main', center: { lat: 52.5209, lng: 13.3965 },
+    tags: { name: 'Nord' } }];
+  const OTHER = [{ osmId: 2, type: 'main', center: { lat: 52.5300, lng: 13.4000 },
+    tags: { name: 'Werk' } }];
+
+  afterEach(() => labelBoxes.clear());
+
+  function open(index, entrances) {
+    labelBoxes.set({ Nord: box(0, 0, 40, 16), Werk: box(200, 0, 240, 16) });
+    const map = makeMap();
+    const picker = entrancePicker.createEntrancePicker(map, {});
+    picker.show({ waypointIndex: index, placeCenter: CENTRE, entrances: entrances });
+    return { map, picker };
+  }
+
+  test("placing a destination keeps the start's doors on the map", () => {
+    // The reported bug: searching a start, then clicking the map to drop a
+    // destination, took the start's entrance dots away. A map click splices the
+    // waypoint list, and every offer was being dropped with it.
+    const { map, picker } = open(0, START);
+    expect(dots(map)).toHaveLength(1);
+
+    picker.spliceOffers(1, 0, 1);   // a destination appended after the start
+    expect(picker.isOpenFor(0)).toBe(true);
+    expect(dots(map)).toHaveLength(1);
+  });
+
+  test('an offer after the splice is renumbered, not dropped', () => {
+    const { picker } = open(1, START);
+    picker.spliceOffers(0, 0, 1);   // a waypoint inserted before it
+    expect(picker.isOpenFor(2)).toBe(true);
+    expect(picker.isOpenFor(1)).toBe(false);
+    expect(picker.getWaypointIndex()).toBe(2);
+  });
+
+  test('removing the waypoint an offer belongs to withdraws that offer', () => {
+    const { map, picker } = open(1, START);
+    picker.spliceOffers(1, 1, 0);
+    expect(picker.isOpen()).toBe(false);
+    expect(dots(map)).toHaveLength(0);
+  });
+
+  test('a removal keeps the offers that survive it, renumbered', () => {
+    labelBoxes.set({ Nord: box(0, 0, 40, 16), Werk: box(200, 0, 240, 16) });
+    const map = makeMap();
+    const picker = entrancePicker.createEntrancePicker(map, {});
+    picker.show({ waypointIndex: 0, placeCenter: CENTRE, entrances: START });
+    picker.show({ waypointIndex: 2, placeCenter: CENTRE, entrances: OTHER });
+
+    picker.spliceOffers(1, 1, 0);   // the middle waypoint goes
+    expect(picker.isOpenFor(0)).toBe(true);
+    expect(picker.isOpenFor(1)).toBe(true);   // was 2, shifted down
+    expect(picker.isOpenFor(2)).toBe(false);
+    expect(dots(map)).toHaveLength(2);
+  });
+
+  test('a splice that changes nothing leaves the offers alone', () => {
+    const { map, picker } = open(0, START);
+    const before = dots(map)[0];
+    picker.spliceOffers(3, 0, 0);
+    expect(dots(map)[0]).toBe(before);
+  });
+});
