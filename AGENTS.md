@@ -11,8 +11,11 @@ OSRM Frontend is the browser-based routing interface served at https://map.proje
 - **Conventional Commits** for commit messages and PR titles. Format: `type(scope): description`. Allowed types: `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style`, `test`.
 - **Never commit directly to `gh-pages` (the default branch).** All changes go through a pull request.
 - **All CI checks must pass before creating a PR.** CI runs lint (`npm run test:lint`), build (`npm run build`), and tests (`npm test`) — run all three locally first.
-- **Strip all AI/harness advertising from commits.** Drop any `Co-Authored-By`, `Generated with`, or similar trailers — no ads, no co-author lines, no attribution footers in commit messages.
-- **Disclose AI assistance on the PR only.** Describe what the agent helped with in the PR body (not in commits).
+- **No AI attribution in commit messages.** Drop any `Co-Authored-By`, `Generated with`, or similar trailers — no ads, no co-author lines, no attribution footers.
+- **Disclose AI participation in the PR description only**, matching the convention in [osrm-backend](https://github.com/Project-OSRM/osrm-backend/blob/master/AGENTS.md): state only the harness name and the model, prefixed with a robot emoji — for example `🤖 Claude Code, Claude Opus 5`.
+- **Do not advertise the tool.** No marketing links, no "Generated with …" banners, no vendor URLs. The disclosure is a statement of fact, not a credit.
+- **Never publish session identifiers or session-log links** (e.g. `Claude-Session:` trailers, `claude.ai/code/session_…` URLs) in commits, PR descriptions, or comments. These repositories are public and git history is permanent.
+- Beyond the disclosure line, describe in the PR body what the agent actually helped with.
 
 ### Review Comments
 
