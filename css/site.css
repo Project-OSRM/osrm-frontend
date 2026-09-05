@@ -770,6 +770,18 @@ td.distance {
 .leaflet-routing-icon-merge-right      { background-position: -403px 0px; }
 .leaflet-routing-icon-end              { background-position: -429px 0px; }
 
+/* The sprite draws the U-turn swinging to the right, which is how it is driven
+   where traffic keeps left. Everywhere else a U-turn swings to the left, so
+   the arrow is mirrored unless the row's maneuver is in left-hand traffic. */
+.leaflet-routing-icon-u-turn {
+    -webkit-transform: scaleX(-1);
+    transform: scaleX(-1);
+}
+.osrm-left-hand-traffic .leaflet-routing-icon-u-turn {
+    -webkit-transform: none;
+    transform: none;
+}
+
 /* Lane indications */
 .osrm-lane-icon {
   background-image: url('../images/osrm.lanes.icons.svg');
@@ -793,7 +805,8 @@ td.distance {
 .osrm-lane-icon.sharp-left    { background-position: -40px 0px; }
 .osrm-lane-icon.slight-left   { background-position: -60px 0px; }
 .osrm-lane-icon.uturn         { background-position: -80px 0px; }
-.osrm-lane-icon.uturn-right   { background-position: -100px 0px; }
+.osrm-lane-icon.uturn-right,
+.osrm-left-hand-traffic .osrm-lane-icon.uturn { background-position: -100px 0px; }
 .osrm-lane-icon.slight-right  { background-position: -120px 0px; }
 .osrm-lane-icon.sharp-right   { background-position: -140px 0px; }
 .osrm-lane-icon.right         { background-position: -160px 0px; }

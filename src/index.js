@@ -45,6 +45,8 @@ var initialLayers = require('./initial_layers');
 var layerUtils = require('./layer_utils');
 var routeZoom = require('./route_zoom');
 var resolveInitialAlternative = require('./route_alternative');
+var drivingSide = require('./driving_side');
+var gauche = require('gauche-rs');
 require('./polyfill');
 
 var parsedOptions = urlState.parse(window.location.search.slice(1));
@@ -61,8 +63,12 @@ for (var i = 0, len = services.length; i < len; i++) {
 }
 var modeSelector = modeSelectorModule.createModeSelector(localization.get(language), services);
 
+// Left-hand traffic detection for U-turn icons, backed by gauche-rs.
+var drivingSideClassifier = drivingSide.createDrivingSideClassifier(gauche);
+
 // load only after language was chosen
-var ItineraryBuilder = require('./itinerary_builder')(mergedOptions.language);
+var ItineraryBuilder = require('./itinerary_builder')(mergedOptions.language, drivingSideClassifier);
+var itineraryBuilder = new ItineraryBuilder();
 
 var mapLayer = leafletOptions.layer;
 var overlay = leafletOptions.overlay;
@@ -354,7 +360,7 @@ var controlOptions = {
   useZoomParameter: options.lrm.useZoomParameter,
   routeDragInterval: options.lrm.routeDragInterval,
   collapsible: options.lrm.collapsible,
-  itineraryBuilder: new ItineraryBuilder()
+  itineraryBuilder: itineraryBuilder
 };
 // profile labels already translated earlier
 
@@ -425,6 +431,16 @@ router._convertRoute = function(responseRoute) {
 var lrmControl = L.Routing.control(Object.assign(controlOptions, {
   router: router
 })).addTo(map);
+
+// The build puts gauche-rs' WebAssembly module next to bundle.js. It is
+// 1.7 MB, so a route requested from the URL is usually drawn before it has
+// loaded; those rows fall back to the backend's driving_side and are
+// classified again here. Without the module the fallback simply stays.
+drivingSideClassifier.load('gauche_rs.wasm').then(function() {
+  itineraryBuilder.refreshDrivingSide(lrmControl.getContainer());
+}, function(err) {
+  console.warn('Left-hand traffic detection unavailable, using the routing service\'s driving side', err);
+});
 
 // Workaround: Leaflet Routing Machine's itinerary adds a 'mousewheel' handler
 // that stops propagation in some browsers, which can prevent the directions pane

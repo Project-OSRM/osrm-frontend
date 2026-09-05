@@ -1,8 +1,35 @@
 'use strict';
 
 var L = require('leaflet');
+var drivingSide = require('./driving_side');
 
-module.exports = function (language) {
+// Rows whose step keeps left carry this class; the stylesheet turns the
+// U-turn arrow and lane glyph the way the maneuver is driven off it.
+var LEFT_HAND_TRAFFIC_CLASS = 'osrm-left-hand-traffic';
+// Set on rows that show a U-turn, so they can be classified again once the
+// driving-side module has loaded.
+var MANEUVER_LOCATION_ATTRIBUTE = 'data-maneuver-location';
+
+function stepShowsUturn(step, icon) {
+  if (icon === 'u-turn') return true;
+  var lanes = step && step.intersections && step.intersections[0] && step.intersections[0].lanes;
+  if (!lanes) return false;
+  return lanes.some(function(lane) {
+    return lane.indications.indexOf('uturn') !== -1;
+  });
+}
+
+function applyDrivingSide(row, side) {
+  if (side === drivingSide.LEFT) {
+    L.DomUtil.addClass(row, LEFT_HAND_TRAFFIC_CLASS);
+  } else {
+    L.DomUtil.removeClass(row, LEFT_HAND_TRAFFIC_CLASS);
+  }
+}
+
+// drivingSideClassifier is the gauche-rs backed classifier from driving_side.js;
+// without one the backend's driving_side is all the itinerary has to go on.
+module.exports = function (language, drivingSideClassifier) {
   var osrmTextInstructions = require('osrm-text-instructions')('v5');
   var supportedCodes = require('osrm-text-instructions/languages').supportedCodes;
   // Fall back to English for directions text when the chosen language has no
@@ -63,10 +90,10 @@ module.exports = function (language) {
         }
         // transform lane indication into icon class
         var icon;
+        // A U-turn lane in left-hand traffic gets its glyph from the row's
+        // driving-side class, see markDrivingSide.
         if (indication === 'none' || indication === '')
           icon = 'straight'
-        else if (indication === 'uturn' && step.driving_side === 'left') // use u-turn icon for left driving side
-          icon = 'uturn-right';
         else
           icon = indication.replace(' ', '-');
         // calcuate offset to draw each next icons in the same lane on the same place
@@ -85,6 +112,14 @@ module.exports = function (language) {
         offset = indicationOffset;
       return spans;
     });
+  }
+
+  function markDrivingSide(row, step) {
+    var location = step.maneuver && step.maneuver.location;
+    if (location && location.length >= 2) {
+      row.setAttribute(MANEUVER_LOCATION_ATTRIBUTE, location[1] + ',' + location[0]);
+    }
+    applyDrivingSide(row, drivingSide.stepDrivingSide(step, drivingSideClassifier));
   }
 
   return L.Class.extend({
@@ -121,6 +156,10 @@ module.exports = function (language) {
       span = L.DomUtil.create('span', 'leaflet-routing-icon leaflet-routing-icon-' + icon, td);
       td.appendChild(span);
 
+      if (stepShowsUturn(text, icon)) {
+        markDrivingSide(row, text);
+      }
+
       // text instruction
       td = L.DomUtil.create('td', '', row);
       // keep HTML tags instead:
@@ -146,6 +185,19 @@ module.exports = function (language) {
       }
 
       return row;
+    },
+
+    // Classifies the U-turn rows under container again. Routes drawn before
+    // the driving-side module finished loading fell back to the backend's
+    // driving_side, or to nothing; this brings them in line with gauche-rs.
+    refreshDrivingSide: function(container) {
+      if (!drivingSideClassifier || !drivingSideClassifier.isReady()) return;
+      var rows = (container || document).querySelectorAll('tr[' + MANEUVER_LOCATION_ATTRIBUTE + ']');
+      for (var i = 0; i < rows.length; i++) {
+        var latLng = rows[i].getAttribute(MANEUVER_LOCATION_ATTRIBUTE).split(',');
+        var side = drivingSideClassifier.classifyPoint(parseFloat(latLng[0]), parseFloat(latLng[1]));
+        if (side) applyDrivingSide(rows[i], side);
+      }
     }
   });
 };

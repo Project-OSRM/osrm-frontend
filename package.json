@@ -7,9 +7,9 @@
     "test": "node --no-warnings node_modules/.bin/jest",
     "test:lint": "eslint src/*.js i18n/*.js",
     "replace": "node ./scripts/replace.js",
-    "clean": "rm -f bundle.raw.js",
-    "compile": "vite build && cp dist/bundle.js bundle.js && cp dist/bundle.js.map bundle.js.map",
-    "build": "npm run clean && npm run replace && npm run compile && cp node_modules/leaflet/dist/leaflet.css css/leaflet.css && cp -r index.html favicon.ico css fonts images i18n debug dist/",
+    "clean": "rm -f bundle.raw.js gauche_rs.wasm",
+    "compile": "vite build && cp dist/bundle.js bundle.js && cp dist/bundle.js.map bundle.js.map && cp node_modules/gauche-rs/gauche_rs.wasm gauche_rs.wasm",
+    "build": "npm run clean && npm run replace && npm run compile && cp node_modules/leaflet/dist/leaflet.css css/leaflet.css && cp -r index.html favicon.ico css fonts images i18n debug gauche_rs.wasm dist/",
     "start": "npm run build && vite preview",
     "start-prod": "npm run build && vite preview",
     "prepub": "npm run build"
@@ -46,6 +46,7 @@
   "dependencies": {
     "@mapbox/corslite": "^0.0.7",
     "file-saver": "^2.0.5",
+    "gauche-rs": "^0.1.0",
     "jsonp": "^0.2.1",
     "leaflet": "~1.9.4",
     "leaflet-control-geocoder": "^4.0.0",
