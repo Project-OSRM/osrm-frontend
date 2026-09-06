@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import { wasmFileName } from './scripts/asset_hash.mjs';
+import { buildTimestamp } from './scripts/build_stamp.mjs';
 
 // Content-hashed so nginx can cache it for a year; see scripts/asset_hash.mjs.
 const GAUCHE_WASM = wasmFileName();
@@ -41,7 +42,7 @@ export default defineConfig({
   },
   define: {
     global: 'globalThis',
-    __BUILD_TIMESTAMP__: JSON.stringify(new Date().toISOString()),
+    __BUILD_TIMESTAMP__: JSON.stringify(buildTimestamp()),
     __GAUCHE_WASM_URL__: JSON.stringify(GAUCHE_WASM),
   },
   preview: {
