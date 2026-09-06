@@ -471,7 +471,7 @@ function applyDebugUrlForProfile(profileIndex) {
 
 applyDebugUrlForProfile(activeProfileIndex);
 
-var state = state(map, lrmControl, toolsControl, modeSelector, mergedOptions);
+var state = state(map, lrmControl, toolsControl, modeSelector, mergedOptions, drivingSideClassifier);
 
 // Listen for browser navigation (back/forward) and restore app state
 if (urlState && urlState.listen) {

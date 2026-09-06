@@ -7,11 +7,15 @@ var urlState = require('./url_state');
 var State = L.Class.extend({
   options: { },
 
-  initialize: function(map, lrm_control, tools, modeSelector, default_options) {
+  // drivingSideClassifier is the gauche-rs backed classifier from driving_side.js.
+  // It has to be kept because a language change rebuilds the itinerary builder,
+  // and a builder without it falls back to the backend's driving_side.
+  initialize: function(map, lrm_control, tools, modeSelector, default_options, drivingSideClassifier) {
     this._lrm = lrm_control;
     this._map = map;
     this._tools = tools;
     this._modeSelector = modeSelector;
+    this._drivingSideClassifier = drivingSideClassifier;
 
     // When applying history/popstate we temporarily suppress emitting URL updates
     this._suppressHistory = false;
@@ -61,7 +65,7 @@ var State = L.Class.extend({
       // _routes, and setAlternatives are properties of lrmControl itself.
       if (this._lrm && this._lrm._routes && this._lrm._routes.length > 0) {
         try {
-          var ItineraryBuilderClass = require('./itinerary_builder')(e.language);
+          var ItineraryBuilderClass = require('./itinerary_builder')(e.language, this._drivingSideClassifier);
           var newItineraryBuilder = new ItineraryBuilderClass();
           this._lrm._itineraryBuilder = newItineraryBuilder;
           this._lrm.setAlternatives(this._lrm._routes);
@@ -203,6 +207,6 @@ var State = L.Class.extend({
   }
 });
 
-module.exports = function(map, lrm_control, tools, modeSelector, default_options) {
-  return new State(map, lrm_control, tools, modeSelector, default_options);
+module.exports = function(map, lrm_control, tools, modeSelector, default_options, drivingSideClassifier) {
+  return new State(map, lrm_control, tools, modeSelector, default_options, drivingSideClassifier);
 };
