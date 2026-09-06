@@ -112,10 +112,16 @@ Then compile assets and start the local server with
 npm start
 ```
 
-The build copies `gauche_rs.wasm` from the [gauche-rs](https://www.npmjs.com/package/gauche-rs) package next to
-`bundle.js`. The app loads it at startup to tell left-hand from right-hand traffic, so U-turn icons in the
-directions swing the way the maneuver is driven. Deployments must serve that file alongside `bundle.js`; without
+The build copies the WebAssembly module from the [gauche-rs](https://www.npmjs.com/package/gauche-rs) package
+next to the bundle. The app loads it at startup to tell left-hand from right-hand traffic, so U-turn icons in the
+directions swing the way the maneuver is driven. Deployments must serve that file alongside the bundle; without
 it the app falls back to the `driving_side` reported by the routing service.
+
+Both are written into `dist/` under content-hashed names (`bundle.<hash>.js`, `gauche_rs.<hash>.wasm`), and the
+copy of `index.html` in `dist/` is rewritten to load the hashed bundle. The name changes whenever the bytes do,
+so the two can be served with a long `immutable` cache while `index.html` itself stays uncached — that is what
+the Docker image's nginx does. Deploy the contents of `dist/`; the `index.html` in the repository keeps the
+unhashed name and is the template the build rewrites.
 
 On Windows with no Unix tools installed (`bash` and `cp`) the server could be started with two other commands
 executed by `npm start` internally:

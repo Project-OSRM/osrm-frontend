@@ -7,9 +7,9 @@
     "test": "node --no-warnings node_modules/.bin/jest",
     "test:lint": "eslint src/*.js i18n/*.js",
     "replace": "node ./scripts/replace.js",
-    "clean": "rm -f bundle.raw.js gauche_rs.wasm",
-    "compile": "vite build && cp dist/bundle.js bundle.js && cp dist/bundle.js.map bundle.js.map && cp node_modules/gauche-rs/gauche_rs.wasm gauche_rs.wasm",
-    "build": "npm run clean && npm run replace && npm run compile && cp node_modules/leaflet/dist/leaflet.css css/leaflet.css && cp -r index.html favicon.ico css fonts images i18n debug gauche_rs.wasm dist/",
+    "clean": "rm -f bundle.raw.js bundle.js bundle.js.map gauche_rs.wasm",
+    "compile": "vite build",
+    "build": "npm run clean && npm run replace && npm run compile && cp node_modules/leaflet/dist/leaflet.css css/leaflet.css && cp -r index.html favicon.ico css fonts images i18n debug dist/ && node scripts/hash_assets.mjs",
     "start": "npm run build && vite preview",
     "start-prod": "npm run build && vite preview",
     "prepub": "npm run build"

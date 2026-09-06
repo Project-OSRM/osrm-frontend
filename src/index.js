@@ -432,11 +432,13 @@ var lrmControl = L.Routing.control(Object.assign(controlOptions, {
   router: router
 })).addTo(map);
 
-// The build puts gauche-rs' WebAssembly module next to bundle.js. It is
-// 1.7 MB, so a route requested from the URL is usually drawn before it has
-// loaded; those rows fall back to the backend's driving_side and are
-// classified again here. Without the module the fallback simply stays.
-drivingSideClassifier.load('gauche_rs.wasm').then(function() {
+// The build puts gauche-rs' WebAssembly module next to bundle.js under a
+// content-hashed name, which it supplies here. It is 1.7 MB, so a route
+// requested from the URL is usually drawn before it has loaded; those rows
+// fall back to the backend's driving_side and are classified again here.
+// Without the module the fallback simply stays.
+var gaucheWasmUrl = typeof __GAUCHE_WASM_URL__ !== 'undefined' ? __GAUCHE_WASM_URL__ : 'gauche_rs.wasm';
+drivingSideClassifier.load(gaucheWasmUrl).then(function() {
   itineraryBuilder.refreshDrivingSide(lrmControl.getContainer());
 }, function(err) {
   console.warn('Left-hand traffic detection unavailable, using the routing service\'s driving side', err);
