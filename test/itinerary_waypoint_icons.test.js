@@ -9,9 +9,15 @@
 const marker = require('../src/waypoint_marker');
 const ItineraryBuilder = require('../src/itinerary_builder')('en');
 
+const SVG_URI_PREFIX = 'data:image/svg+xml,';
+
+function svgOf(dataUri) {
+  return decodeURIComponent(dataUri.slice(SVG_URI_PREFIX.length));
+}
+
 function decode(backgroundImage) {
   const match = /url\("(data:image\/svg\+xml,[^"]+)"\)/.exec(backgroundImage || '');
-  return match ? decodeURIComponent(match[1].slice('data:image/svg+xml,'.length)) : null;
+  return match ? svgOf(match[1]) : null;
 }
 
 function glyphOf(svg) {
@@ -71,9 +77,9 @@ describe('itinerary waypoint icons', () => {
 
   test('the row icon is the same drawing the map uses for that waypoint', () => {
     // start, via 1, end of a three-waypoint route
-    const mapStart = decodeURIComponent(marker.waypointIconOptions(0, 3).iconUrl.slice(19));
-    const mapVia = decodeURIComponent(marker.waypointIconOptions(1, 3).iconUrl.slice(19));
-    const mapEnd = decodeURIComponent(marker.waypointIconOptions(2, 3).iconUrl.slice(19));
+    const mapStart = svgOf(marker.waypointIconOptions(0, 3).iconUrl);
+    const mapVia = svgOf(marker.waypointIconOptions(1, 3).iconUrl);
+    const mapEnd = svgOf(marker.waypointIconOptions(2, 3).iconUrl);
     const rows = ['depart', 'via', 'arrive'];
     const builder = new ItineraryBuilder();
     const body = builder.createStepsContainer();
