@@ -171,6 +171,16 @@ describe('dragging a grip', () => {
     expect(rows(container).map(r => r.style.transform)).toEqual(['', '', '', '']);
   });
 
+  test('the row cannot be dragged past either end of the list', () => {
+    pointer(handle(container, 0), 'pointerdown', centreOf(0));
+    pointer(document, 'pointermove', centreOf(0) - 100);
+    expect(rows(container)[0].style.transform).toBe('translateY(0px)');
+    pointer(document, 'pointermove', centreOf(0) + 1000);
+    expect(rows(container)[0].style.transform).toBe('translateY(' + 3 * ROW_HEIGHT + 'px)');
+    pointer(document, 'pointerup', centreOf(0) + 1000);
+    expect(moves).toEqual([[0, 3, false]]);
+  });
+
   test('a press that barely moves is a click, not a drag', () => {
     pointer(handle(container, 1), 'pointerdown', centreOf(1));
     pointer(document, 'pointermove', centreOf(1) + reorder.DRAG_THRESHOLD_PX - 1);

@@ -78,13 +78,23 @@ function handleOf(row) {
   return row.querySelector('.' + HANDLE_CLASS);
 }
 
-// The row the dragged one would land on: how many of the other rows have
-// their middle above the dragged row's current middle.
-function dropIndexFor(rects, from, draggedCentreY) {
-  var index = 0;
-  for (var i = 0; i < rects.length; i++) {
-    if (i === from) continue;
-    if (rects[i].top + rects[i].height / 2 < draggedCentreY) index++;
+// The row the dragged one would land on. Moving down, it passes a row once
+// its bottom edge is past that row's middle; moving up, once its top edge
+// is. So a neighbour swaps after half a row of travel, and the end rows are
+// reachable with the row pinned to the list's ends.
+function dropIndexFor(rects, from, dy) {
+  var top = rects[from].top + dy;
+  var bottom = top + rects[from].height;
+  var index = from;
+  var i;
+  if (dy > 0) {
+    for (i = from + 1; i < rects.length; i++) {
+      if (rects[i].top + rects[i].height / 2 < bottom) index = i;
+    }
+  } else {
+    for (i = from - 1; i >= 0; i--) {
+      if (rects[i].top + rects[i].height / 2 > top) index = i;
+    }
   }
   return index;
 }
@@ -122,7 +132,11 @@ function wirePointerDrag(container, row, from, onMove) {
     // pen, must not steer or drop the row this one lifted.
     var pointerId = e.pointerId;
     var startY = e.clientY;
-    var centreY = rects[from].top + rects[from].height / 2;
+    // The row stays within the list: past its ends there is nowhere to drop,
+    // and the list clips (or scrolls) whatever leaves it.
+    var last = rects[rects.length - 1];
+    var minDy = rects[0].top - rects[from].top;
+    var maxDy = (last.top + last.height) - (rects[from].top + rects[from].height);
     var dragging = false;
     var to = from;
 
@@ -139,8 +153,9 @@ function wirePointerDrag(container, row, from, onMove) {
         L.DomUtil.addClass(row, DRAGGING_ROW_CLASS);
         L.DomUtil.addClass(container, DRAGGING_LIST_CLASS);
       }
+      dy = Math.max(minDy, Math.min(maxDy, dy));
       row.style.transform = 'translateY(' + dy + 'px)';
-      to = dropIndexFor(rects, from, centreY + dy);
+      to = dropIndexFor(rects, from, dy);
       shiftRows(rows, from, to, rects[from].height);
     }
 
@@ -180,8 +195,10 @@ function wirePointerDrag(container, row, from, onMove) {
     // map. Stopping propagation keeps Leaflet's own handlers out of it.
     L.DomEvent.stop(e);
     // preventDefault also stops the press giving the grip focus, which it
-    // needs so the arrow keys work after a click.
-    handle.focus();
+    // needs so the arrow keys work after a click. preventScroll: focusing
+    // must not scroll the list, or the row positions measured above are
+    // wrong for the whole drag.
+    handle.focus({preventScroll: true});
     if (handle.setPointerCapture) {
       try {
         handle.setPointerCapture(pointerId);

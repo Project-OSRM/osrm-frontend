@@ -286,9 +286,15 @@
 .leaflet-routing-waypoint-handle {
   display: inline-block;
   vertical-align: middle;
-  width: 12px;
-  height: 18px;
-  margin-top: 6px;
+  box-sizing: border-box;
+  /* The dots are 12x18; the padding round them makes the target 24x30,
+     which is what a finger or a quick mouse needs. background-clip keeps
+     the dots inside the content box. */
+  width: 24px;
+  height: 30px;
+  padding: 6px;
+  margin-top: 0;
+  background-clip: content-box;
   cursor: grab;
   touch-action: none;
   -webkit-user-select: none;
@@ -328,7 +334,9 @@
   cursor: grabbing;
 }
 
-.leaflet-routing-geocoder-dragging {
+/* Same specificity as the transition rule above and later in the file, so
+   the lifted row follows the pointer at once rather than easing after it. */
+.leaflet-routing-geocoders .leaflet-routing-geocoder-dragging {
   transition: none;
   position: relative;
   z-index: 1;
