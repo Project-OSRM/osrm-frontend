@@ -37,9 +37,12 @@ function order(container) {
 }
 
 // jsdom has no PointerEvent; the handlers only read clientY, button and
-// pointerId, which MouseEvent carries.
+// pointerId, so a MouseEvent carrying a pointerId stands in for one.
 function pointer(target, type, clientY, extra) {
-  target.dispatchEvent(new window.MouseEvent(type, Object.assign({ bubbles: true, clientY: clientY, button: 0 }, extra)));
+  const init = Object.assign({ bubbles: true, clientY: clientY, button: 0, pointerId: 1 }, extra);
+  const event = new window.MouseEvent(type, init);
+  Object.defineProperty(event, 'pointerId', { value: init.pointerId });
+  target.dispatchEvent(event);
 }
 
 function key(target, keyName) {
@@ -201,6 +204,20 @@ describe('dragging a grip', () => {
     pointer(document, 'pointerup', centreOf(2));
     expect(moves).toEqual([]);
     expect(rows(container).map(r => r.style.transform)).toEqual(['', '', '', '']);
+  });
+
+  test('another pointer cannot steer or drop the row this one lifted', () => {
+    pointer(handle(container, 0), 'pointerdown', centreOf(0), { pointerId: 1 });
+    pointer(document, 'pointermove', centreOf(2) + 1, { pointerId: 2 });
+    expect(rows(container)[0].style.transform).toBe('');
+    pointer(document, 'pointerup', centreOf(2) + 1, { pointerId: 2 });
+    expect(moves).toEqual([]);
+    pointer(document, 'pointercancel', centreOf(2) + 1, { pointerId: 2 });
+
+    // The drag is still live for the pointer that started it.
+    pointer(document, 'pointermove', centreOf(2) + 1, { pointerId: 1 });
+    pointer(document, 'pointerup', centreOf(2) + 1, { pointerId: 1 });
+    expect(moves).toEqual([[0, 2, false]]);
   });
 
   test('only the primary button starts a drag', () => {

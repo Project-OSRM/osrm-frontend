@@ -118,12 +118,20 @@ function wirePointerDrag(container, row, from, onMove) {
     var rects = rows.map(function(r) {
       return r.getBoundingClientRect();
     });
+    // Every pointer has its own id; a second finger, or a mouse alongside a
+    // pen, must not steer or drop the row this one lifted.
+    var pointerId = e.pointerId;
     var startY = e.clientY;
     var centreY = rects[from].top + rects[from].height / 2;
     var dragging = false;
     var to = from;
 
+    function isThisPointer(e) {
+      return e.pointerId === undefined || e.pointerId === pointerId;
+    }
+
     function move(e) {
+      if (!isThisPointer(e)) return;
       var dy = e.clientY - startY;
       if (!dragging) {
         if (Math.abs(dy) < DRAG_THRESHOLD_PX) return;
@@ -143,7 +151,7 @@ function wirePointerDrag(container, row, from, onMove) {
       document.removeEventListener('keydown', escape);
       if (handle.releasePointerCapture) {
         try {
-          handle.releasePointerCapture(e.pointerId);
+          handle.releasePointerCapture(pointerId);
         } catch (err) {}
       }
       clearShifts(rows);
@@ -151,18 +159,20 @@ function wirePointerDrag(container, row, from, onMove) {
       L.DomUtil.removeClass(container, DRAGGING_LIST_CLASS);
     }
 
-    function drop() {
+    function drop(e) {
+      if (!isThisPointer(e)) return;
       var moved = dragging && to !== from;
       finish();
       if (moved) onMove(from, to, false);
     }
 
-    function cancel() {
+    function cancel(e) {
+      if (e && !isThisPointer(e)) return;
       finish();
     }
 
     function escape(e) {
-      if (e.key === 'Escape' || e.key === 'Esc') cancel();
+      if (e.key === 'Escape' || e.key === 'Esc') finish();
     }
 
     // preventDefault stops the press selecting text and, on a touch screen,
@@ -174,7 +184,7 @@ function wirePointerDrag(container, row, from, onMove) {
     handle.focus();
     if (handle.setPointerCapture) {
       try {
-        handle.setPointerCapture(e.pointerId);
+        handle.setPointerCapture(pointerId);
       } catch (err) {}
     }
     document.addEventListener('pointermove', move);

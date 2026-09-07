@@ -307,9 +307,16 @@
   background-image: radial-gradient(circle, rgba(37,72,127, 1) 1.5px, transparent 2px);
 }
 
-.leaflet-routing-waypoint-handle:focus-visible {
+/* The ring shows for keyboard focus only. A browser without :focus-visible
+   drops the second rule, and so shows the ring for every focus, which is the
+   safe way round. */
+.leaflet-routing-waypoint-handle:focus {
   outline: 2px solid #0072b2;
   outline-offset: 2px;
+}
+
+.leaflet-routing-waypoint-handle:focus:not(:focus-visible) {
+  outline: none;
 }
 
 .leaflet-routing-geocoders .leaflet-routing-geocoder {
@@ -1037,10 +1044,6 @@ td.distance {
 .osrm-directions-summary h3 {
   font-size: 12px;
   margin-left: -25px;
-}
-
-.osrm-directions-inputs input {
-  width: 70%;
 }
 
 .osrm-directions-inputs {
