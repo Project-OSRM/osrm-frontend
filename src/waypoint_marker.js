@@ -40,6 +40,14 @@ var ICON_SIZE = [20, 56];
 var ICON_ANCHOR = [10, 28];
 var PIN_HEIGHT = 28;
 
+// Where the glyph sits. The pin's widest point is y=10, the centre of the
+// circle the teardrop opens into, but the shape carries on below it before it
+// tapers, so a glyph centred there reads high: the filled area's centroid is
+// y=12.6 and the part of the pin at least 60% as wide as its widest row spans
+// y=3.2 to y=20.1, with its middle at 11.65. y=11 is the whole pixel nearest
+// that middle; y=12 crowds the flag against the taper.
+var GLYPH_CENTRE_Y = 11;
+
 // Teardrop: the tip at the bottom centre, opening into a circle of radius 8.5
 // centred on (10, 10), which leaves an 11px well for the glyph.
 var PIN_PATH = 'M10 27.5C10 27.5 1.5 17.5 1.5 10a8.5 8.5 0 1 1 17 0c0 7.5-8.5 17.5-8.5 17.5z';
@@ -61,7 +69,7 @@ function svg(body, colour, height) {
 // A filled disc for the start. Its radius puts every edge on a whole pixel,
 // which keeps it crisp where the device draws one image pixel per CSS pixel.
 function startGlyph() {
-  return '<circle cx="10" cy="10" r="4" fill="' + GLYPH_COLOUR + '"/>';
+  return '<circle cx="10" cy="' + GLYPH_CENTRE_Y + '" r="4" fill="' + GLYPH_COLOUR + '"/>';
 }
 
 // A ring, for a via too far along the route to number. It has to be a shape of
@@ -69,7 +77,7 @@ function startGlyph() {
 // the via and the start identical once colour is taken away, which is the
 // failure this module exists to fix. Radius and width keep the edges whole.
 function unnumberedViaGlyph() {
-  return '<circle cx="10" cy="10" r="4" fill="none" stroke="' + GLYPH_COLOUR + '" stroke-width="2"/>';
+  return '<circle cx="10" cy="' + GLYPH_CENTRE_Y + '" r="4" fill="none" stroke="' + GLYPH_COLOUR + '" stroke-width="2"/>';
 }
 
 // The waypoint's position in the route, so a route through several vias tells
@@ -77,7 +85,7 @@ function unnumberedViaGlyph() {
 // and it gives way to the ring rather than being shrunk past reading.
 function viaGlyph(position) {
   if (!(position >= 1 && position <= 9)) return unnumberedViaGlyph();
-  return '<text x="10" y="10" fill="' + GLYPH_COLOUR + '" font-size="11" font-weight="700" ' +
+  return '<text x="10" y="' + GLYPH_CENTRE_Y + '" fill="' + GLYPH_COLOUR + '" font-size="11" font-weight="700" ' +
     'font-family="Helvetica,Arial,sans-serif" text-anchor="middle" dominant-baseline="central">' +
     position + '</text>';
 }
@@ -96,17 +104,18 @@ var FLAG_CELL = 2;
 var FLAG_CELLS = 5;
 var FLAG_FIELD = FLAG_CELL * FLAG_CELLS;
 var FLAG_ORIGIN = 10 - FLAG_FIELD / 2;
+var FLAG_ORIGIN_Y = GLYPH_CENTRE_Y - FLAG_FIELD / 2;
 
 function endGlyph(colour) {
   var cells = '';
   for (var row = 0; row < FLAG_CELLS; row++) {
     for (var column = 0; column < FLAG_CELLS; column++) {
       if ((row + column) % 2 === 0) continue;
-      cells += '<rect x="' + (FLAG_ORIGIN + column * FLAG_CELL) + '" y="' + (FLAG_ORIGIN + row * FLAG_CELL) +
+      cells += '<rect x="' + (FLAG_ORIGIN + column * FLAG_CELL) + '" y="' + (FLAG_ORIGIN_Y + row * FLAG_CELL) +
         '" width="' + FLAG_CELL + '" height="' + FLAG_CELL + '" fill="' + colour + '"/>';
     }
   }
-  return '<rect x="' + FLAG_ORIGIN + '" y="' + FLAG_ORIGIN + '" width="' + FLAG_FIELD + '" height="' + FLAG_FIELD +
+  return '<rect x="' + FLAG_ORIGIN + '" y="' + FLAG_ORIGIN_Y + '" width="' + FLAG_FIELD + '" height="' + FLAG_FIELD +
     '" fill="' + GLYPH_COLOUR + '"/>' + cells;
 }
 
@@ -158,6 +167,8 @@ module.exports = {
   FLAG_CELL: FLAG_CELL,
   FLAG_FIELD: FLAG_FIELD,
   FLAG_ORIGIN: FLAG_ORIGIN,
+  FLAG_ORIGIN_Y: FLAG_ORIGIN_Y,
+  GLYPH_CENTRE_Y: GLYPH_CENTRE_Y,
   ICON_SIZE: ICON_SIZE,
   ICON_ANCHOR: ICON_ANCHOR,
   PIN_HEIGHT: PIN_HEIGHT

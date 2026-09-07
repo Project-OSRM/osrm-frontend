@@ -67,8 +67,23 @@ describe('waypoint pins differ by glyph, not only colour', () => {
     // Off-centre is visible at this size, and a half-pixel edge is resampled
     // into greys wherever one image pixel is drawn per CSS pixel.
     expect(marker.FLAG_ORIGIN + marker.FLAG_FIELD / 2).toBe(10);
+    expect(marker.FLAG_ORIGIN_Y + marker.FLAG_FIELD / 2).toBe(marker.GLYPH_CENTRE_Y);
     expect(Number.isInteger(marker.FLAG_ORIGIN)).toBe(true);
+    expect(Number.isInteger(marker.FLAG_ORIGIN_Y)).toBe(true);
     expect(Number.isInteger(marker.FLAG_CELL)).toBe(true);
+  });
+
+  test('every glyph sits on the same line, below the circle centre', () => {
+    // The pin carries on below its widest row before tapering, so a glyph on
+    // the circle centre reads high. All four must agree, or the pins look
+    // unrelated to each other.
+    expect(marker.GLYPH_CENTRE_Y).toBeGreaterThan(10);
+    expect(Number.isInteger(marker.GLYPH_CENTRE_Y)).toBe(true);
+    const cy = `cy="${marker.GLYPH_CENTRE_Y}"`;
+    expect(markup(0, 3)).toContain(cy);                       // disc
+    expect(markup(10, 20)).toContain(cy);                     // ring
+    expect(markup(1, 5)).toContain(`y="${marker.GLYPH_CENTRE_Y}"`);  // number
+    expect(markup(2, 3)).toContain(`y="${marker.FLAG_ORIGIN_Y}"`);   // flag field
   });
 
   test('the start pin is a plain disc, with no flag and no number', () => {
