@@ -45,6 +45,7 @@ var initialLayers = require('./initial_layers');
 var layerUtils = require('./layer_utils');
 var routeZoom = require('./route_zoom');
 var resolveInitialAlternative = require('./route_alternative');
+var waypointMarker = require('./waypoint_marker');
 require('./polyfill');
 
 var parsedOptions = urlState.parse(window.location.search.slice(1));
@@ -264,28 +265,7 @@ var ReversablePlan = L.Routing.Plan.extend({
 
 /* Setup markers */
 function makeIcon(i, n) {
-  var url = 'images/marker-via-icon-2x.png';
-  var markerList = ['images/marker-start-icon-2x.png', 'images/marker-end-icon-2x.png'];
-  if (i === 0) {
-    return L.icon({
-      iconUrl: markerList[0],
-      iconSize: [20, 56],
-      iconAnchor: [10, 28]
-    });
-  }
-  if (i === n - 1) {
-    return L.icon({
-      iconUrl: markerList[1],
-      iconSize: [20, 56],
-      iconAnchor: [10, 28]
-    });
-  } else {
-    return L.icon({
-      iconUrl: url,
-      iconSize: [20, 56],
-      iconAnchor: [10, 28]
-    });
-  }
+  return L.icon(waypointMarker.waypointIconOptions(i, n));
 }
 
 var plan = new ReversablePlan([], {

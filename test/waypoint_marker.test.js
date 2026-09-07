@@ -1,0 +1,154 @@
+'use strict';
+
+// Start, via and end pins have to differ by more than colour, so that someone
+// who cannot tell the green from the red can still read the route (issue #361).
+// These tests are about the glyphs, not the palette.
+
+const marker = require('../src/waypoint_marker');
+
+// The flag's white field, as the markup writes it.
+const FLAG_FIELD = `width="${marker.FLAG_FIELD}" height="${marker.FLAG_FIELD}"`;
+
+// The icons are SVG data URIs; decode one back to markup to inspect it.
+function markup(i, n) {
+  const options = marker.waypointIconOptions(i, n);
+  expect(options.iconUrl.startsWith('data:image/svg+xml,')).toBe(true);
+  return decodeURIComponent(options.iconUrl.slice('data:image/svg+xml,'.length));
+}
+
+describe('waypoint pin geometry', () => {
+  test('every pin keeps the size and anchor of the bitmaps it replaces', () => {
+    // The anchor is the tip of the pin, so changing these moves every marker
+    // off its waypoint.
+    for (const [i, n] of [[0, 2], [1, 2], [1, 3], [0, 5], [4, 5]]) {
+      const options = marker.waypointIconOptions(i, n);
+      expect(options.iconSize).toEqual([20, 56]);
+      expect(options.iconAnchor).toEqual([10, 28]);
+    }
+  });
+
+  test('the returned arrays are copies, so a caller cannot reshape later pins', () => {
+    const first = marker.waypointIconOptions(0, 2);
+    first.iconSize[0] = 999;
+    expect(marker.waypointIconOptions(0, 2).iconSize).toEqual([20, 56]);
+  });
+});
+
+describe('waypoint pins differ by glyph, not only colour', () => {
+  test('start, via and end are three different images', () => {
+    const start = marker.waypointIconOptions(0, 3).iconUrl;
+    const via = marker.waypointIconOptions(1, 3).iconUrl;
+    const end = marker.waypointIconOptions(2, 3).iconUrl;
+    expect(new Set([start, via, end]).size).toBe(3);
+  });
+
+  test('they still differ once colour is taken away', () => {
+    // Strip every fill: what is left is shape alone, which is what a
+    // colourblind user is reading.
+    const shapeOf = (i, n) => markup(i, n).replace(/fill="[^"]*"/g, '');
+    const start = shapeOf(0, 3);
+    const via = shapeOf(1, 3);
+    const end = shapeOf(2, 3);
+    expect(start).not.toBe(via);
+    expect(via).not.toBe(end);
+    expect(start).not.toBe(end);
+  });
+
+  test('the end pin carries a chequered flag', () => {
+    const end = markup(2, 3);
+    const squares = end.match(new RegExp(`<rect [^>]*width="${marker.FLAG_CELL}"`, 'g')) || [];
+    // Alternating cells over a white field: half the board, rounded down.
+    const cells = marker.FLAG_FIELD / marker.FLAG_CELL;
+    expect(squares.length).toBe(Math.floor((cells * cells) / 2));
+    expect(end).toContain(FLAG_FIELD);
+  });
+
+  test('the flag is centred on the pin and lands on whole pixels', () => {
+    // Off-centre is visible at this size, and a half-pixel edge is resampled
+    // into greys wherever one image pixel is drawn per CSS pixel.
+    expect(marker.FLAG_ORIGIN + marker.FLAG_FIELD / 2).toBe(10);
+    expect(marker.FLAG_ORIGIN_Y + marker.FLAG_FIELD / 2).toBe(marker.GLYPH_CENTRE_Y);
+    expect(Number.isInteger(marker.FLAG_ORIGIN)).toBe(true);
+    expect(Number.isInteger(marker.FLAG_ORIGIN_Y)).toBe(true);
+    expect(Number.isInteger(marker.FLAG_CELL)).toBe(true);
+  });
+
+  test('every glyph sits on the same line, below the circle centre', () => {
+    // The pin carries on below its widest row before tapering, so a glyph on
+    // the circle centre reads high. All four must agree, or the pins look
+    // unrelated to each other.
+    expect(marker.GLYPH_CENTRE_Y).toBeGreaterThan(10);
+    expect(Number.isInteger(marker.GLYPH_CENTRE_Y)).toBe(true);
+    const cy = `cy="${marker.GLYPH_CENTRE_Y}"`;
+    expect(markup(0, 3)).toContain(cy);                       // disc
+    expect(markup(10, 20)).toContain(cy);                     // ring
+    expect(markup(1, 5)).toContain(`y="${marker.GLYPH_CENTRE_Y}"`);  // number
+    expect(markup(2, 3)).toContain(`y="${marker.FLAG_ORIGIN_Y}"`);   // flag field
+  });
+
+  test('the start pin is a plain disc, with no flag and no number', () => {
+    const start = markup(0, 3);
+    expect(start).toContain('<circle');
+    expect(start).not.toContain('<text');
+    expect(start).not.toContain(FLAG_FIELD);
+  });
+});
+
+describe('via pins are numbered by position', () => {
+  test('each via shows its own number', () => {
+    // start, via 1, via 2, via 3, end
+    expect(markup(1, 5)).toContain('>1</text>');
+    expect(markup(2, 5)).toContain('>2</text>');
+    expect(markup(3, 5)).toContain('>3</text>');
+  });
+
+  test('a route with no via has only a start and an end', () => {
+    expect(markup(0, 2)).toContain('<circle');
+    expect(markup(1, 2)).toContain(FLAG_FIELD);
+  });
+
+  test('past nine vias the number gives way to a ring, not to the start disc', () => {
+    // Falling back to the start's glyph would make a via identical to the
+    // start once colour is gone, reintroducing the bug this module fixes.
+    const tenth = markup(10, 20);
+    expect(tenth).not.toContain('<text');
+    expect(tenth).toContain('stroke-width="2"');
+    expect(tenth).toContain('fill="none"');
+  });
+
+  test('an unnumbered via is still distinguishable from the start without colour', () => {
+    const shapeOf = (i, n) => markup(i, n).replace(/fill="[^"]*"/g, '');
+    expect(shapeOf(10, 20)).not.toBe(shapeOf(0, 20));
+  });
+
+  test('the last waypoint is the end even when it could be a via', () => {
+    // i === n - 1 wins over the via branch.
+    expect(markup(4, 5)).toContain(FLAG_FIELD);
+    expect(markup(4, 5)).not.toContain('<text');
+  });
+});
+
+describe('the markup is a usable SVG', () => {
+  test('it declares the SVG namespace and the viewBox the anchor assumes', () => {
+    const svg = markup(0, 2);
+    expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
+    expect(svg).toContain('viewBox="0 0 20 56"');
+  });
+
+  test('the data URI is encoded, so a # in a colour cannot truncate it', () => {
+    // An unencoded '#' would end the URL at the first fill colour and the pin
+    // would silently render as nothing.
+    const url = marker.waypointIconOptions(0, 2).iconUrl;
+    expect(url).not.toContain('#');
+    expect(url).toContain('%23');
+  });
+
+  test('the URI has no bare parenthesis, which would end a CSS url() early', () => {
+    // The itinerary sets these as a background-image, where a ')' inside the
+    // value truncates it; encodeURIComponent does not escape parentheses.
+    for (const [i, n] of [[0, 4], [1, 4], [2, 4], [3, 4], [10, 20]]) {
+      expect(marker.waypointIconOptions(i, n).iconUrl).not.toMatch(/[()]/);
+    }
+    expect(marker.panelIconUrl(marker.VIA, 2)).not.toMatch(/[()]/);
+  });
+});
