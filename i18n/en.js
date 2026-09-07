@@ -13,6 +13,7 @@ module.exports = {
   'Start - press enter to drop marker': 'Start - press enter to drop marker',
   'End - press enter to drop marker': 'End - press enter to drop marker',
   'Via point - press enter to drop marker': 'Via point - press enter to drop marker',
+  'Drag to reorder': 'Drag to reorder, or press the up and down arrow keys',
   'Bike': 'Bike',
   'Car': 'Car',
   'Foot': 'Foot',

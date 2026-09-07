@@ -13,6 +13,7 @@ module.exports = {
   'Start - press enter to drop marker': 'Start - drücken um einen Marker zu plazieren',
   'End - press enter to drop marker': 'Ende - drücken um einen Marker zu plazieren',
   'Via point - press enter to drop marker': 'Zwischenstop - drücken um einen Marker zu plazieren',
+  'Drag to reorder': 'Zum Umsortieren ziehen oder die Pfeiltasten hoch/runter drücken',
   'Bike': 'Fahrrad',
   'Car': 'Auto',
   'Foot': 'Fussgänger',

@@ -281,6 +281,54 @@
   transition: background-color 0.2s ease;
 }
 
+/* Waypoint reorder grip: a six-dot handle between the input and the remove
+   button. Dragging it moves the row; it also takes focus for the arrow keys. */
+.leaflet-routing-waypoint-handle {
+  display: inline-block;
+  vertical-align: middle;
+  width: 12px;
+  height: 18px;
+  margin-top: 6px;
+  cursor: grab;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  /* A 2x3 grid of dots drawn with gradients rather than a glyph, so it does
+     not depend on which fonts the device has. */
+  background-image: radial-gradient(circle, rgba(37,72,127, 0.6) 1.5px, transparent 2px);
+  background-size: 6px 6px;
+  background-position: 0 0;
+  background-repeat: repeat;
+}
+
+.leaflet-routing-waypoint-handle:hover,
+.leaflet-routing-waypoint-handle:focus {
+  background-image: radial-gradient(circle, rgba(37,72,127, 1) 1.5px, transparent 2px);
+}
+
+.leaflet-routing-waypoint-handle:focus-visible {
+  outline: 2px solid #0072b2;
+  outline-offset: 2px;
+}
+
+.leaflet-routing-geocoders .leaflet-routing-geocoder {
+  transition: transform 0.15s ease;
+}
+
+.leaflet-routing-geocoders-dragging,
+.leaflet-routing-geocoders-dragging * {
+  cursor: grabbing;
+}
+
+.leaflet-routing-geocoder-dragging {
+  transition: none;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  background-color: white;
+}
+
 .leaflet-routing-alternatives-container {
   position: fixed;
   right: 0px;
@@ -535,7 +583,7 @@
 
 .osrm-directions-inputs input {
   font-size: 12px;
-  width: 90%;
+  width: calc(100% - 55px);
   background-color: transparent;
   color: rgba(0, 0, 0, 0.5);
   height: 30px;
