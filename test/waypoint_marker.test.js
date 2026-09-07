@@ -115,4 +115,13 @@ describe('the markup is a usable SVG', () => {
     expect(url).not.toContain('#');
     expect(url).toContain('%23');
   });
+
+  test('the URI has no bare parenthesis, which would end a CSS url() early', () => {
+    // The itinerary sets these as a background-image, where a ')' inside the
+    // value truncates it; encodeURIComponent does not escape parentheses.
+    for (const [i, n] of [[0, 4], [1, 4], [2, 4], [3, 4], [10, 20]]) {
+      expect(marker.waypointIconOptions(i, n).iconUrl).not.toMatch(/[()]/);
+    }
+    expect(marker.panelIconUrl(marker.VIA, 2)).not.toMatch(/[()]/);
+  });
 });

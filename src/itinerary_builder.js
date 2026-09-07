@@ -1,6 +1,35 @@
 'use strict';
 
 var L = require('leaflet');
+var waypointMarker = require('./waypoint_marker');
+
+// The itinerary's own icon for a waypoint row, so the list shows the pin that
+// is standing on the map rather than a second symbol for the same thing. The
+// sprite still supplies every turn icon.
+var WAYPOINT_ICONS = {
+  depart: waypointMarker.START,
+  via: waypointMarker.VIA,
+  arrive: waypointMarker.END
+};
+
+// Vias are numbered on the map, so the row has to know which via it is. The
+// count lives on the tbody, which Leaflet Routing Machine creates once per
+// rendered itinerary, so it resets whenever the route is redrawn.
+function nextViaPosition(steps) {
+  steps.osrmViaCount = (steps.osrmViaCount || 0) + 1;
+  return steps.osrmViaCount;
+}
+
+function paintWaypointIcon(span, icon, steps) {
+  var kind = WAYPOINT_ICONS[icon];
+  if (!kind) return;
+  var position = kind === waypointMarker.VIA ? nextViaPosition(steps) : 0;
+  // Set over the sprite: background-position and size come from the
+  // stylesheet's sprite rule and would crop the pin if left alone.
+  span.style.backgroundImage = 'url("' + waypointMarker.panelIconUrl(kind, position) + '")';
+  span.style.backgroundSize = 'contain';
+  span.style.backgroundPosition = 'center';
+}
 
 module.exports = function (language) {
   var osrmTextInstructions = require('osrm-text-instructions')('v5');
@@ -119,6 +148,7 @@ module.exports = function (language) {
       // icon
       td = L.DomUtil.create('td', '', row);
       span = L.DomUtil.create('span', 'leaflet-routing-icon leaflet-routing-icon-' + icon, td);
+      paintWaypointIcon(span, icon, steps);
       td.appendChild(span);
 
       // text instruction

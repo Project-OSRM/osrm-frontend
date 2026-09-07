@@ -28,6 +28,11 @@ var VIA_COLOUR = '#595959';
 
 var GLYPH_COLOUR = '#ffffff';
 
+// What a waypoint is, independent of its index.
+var START = 'start';
+var VIA = 'via';
+var END = 'end';
+
 // The pin is drawn in the top 28px and the canvas is 28px taller than that,
 // as the bitmaps were. ICON_ANCHOR is the tip, which is what sits on the
 // waypoint, so keeping these three numbers keeps every pin where it was.
@@ -39,10 +44,16 @@ var PIN_HEIGHT = 28;
 // centred on (10, 10), which leaves an 11px well for the glyph.
 var PIN_PATH = 'M10 27.5C10 27.5 1.5 17.5 1.5 10a8.5 8.5 0 1 1 17 0c0 7.5-8.5 17.5-8.5 17.5z';
 
-function svg(body, colour) {
-  return '<svg xmlns="http://www.w3.org/2000/svg" width="' + ICON_SIZE[0] + '" height="' + ICON_SIZE[1] + '" ' +
-    'viewBox="0 0 ' + ICON_SIZE[0] + ' ' + ICON_SIZE[1] + '">' +
-    '<path d="' + PIN_PATH + '" fill="' + colour + '" stroke="rgba(0,0,0,.25)" stroke-width="1"/>' +
+// height is the canvas the pin is drawn on. The map pin keeps the bitmaps'
+// 56px canvas because its anchor is measured against it; the itinerary draws
+// the same pin on a 28px canvas, which is the pin itself with the empty half
+// below it trimmed away so it fills the row's icon slot.
+function svg(body, colour, height) {
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="' + ICON_SIZE[0] + '" height="' + height + '" ' +
+    'viewBox="0 0 ' + ICON_SIZE[0] + ' ' + height + '">' +
+    // stroke-opacity rather than rgba(): encodeURIComponent leaves parentheses
+    // alone, and a bare ')' inside a CSS url() ends the value early.
+    '<path d="' + PIN_PATH + '" fill="' + colour + '" stroke="#000000" stroke-opacity=".25" stroke-width="1"/>' +
     body +
     '</svg>';
 }
@@ -101,26 +112,44 @@ function dataUri(markup) {
   return 'data:image/svg+xml,' + encodeURIComponent(markup);
 }
 
+// One pin, by what the waypoint is rather than where it sits in a list, so
+// the map and the itinerary can ask for the same drawing. position numbers a
+// via and is ignored otherwise.
+function pinMarkup(kind, position, height) {
+  if (kind === START) return svg(startGlyph(), START_COLOUR, height);
+  if (kind === END) return svg(endGlyph(END_COLOUR), END_COLOUR, height);
+  return svg(viaGlyph(position), VIA_COLOUR, height);
+}
+
+function kindOf(i, n) {
+  if (i === 0) return START;
+  if (i === n - 1) return END;
+  return VIA;
+}
+
 // The Leaflet icon options for waypoint i of n, matching L.Routing's
 // createMarker signature. Kept free of Leaflet so it can be tested directly.
 function waypointIconOptions(i, n) {
-  var markup;
-  if (i === 0) {
-    markup = svg(startGlyph(), START_COLOUR);
-  } else if (i === n - 1) {
-    markup = svg(endGlyph(END_COLOUR), END_COLOUR);
-  } else {
-    markup = svg(viaGlyph(i), VIA_COLOUR);
-  }
   return {
-    iconUrl: dataUri(markup),
+    iconUrl: dataUri(pinMarkup(kindOf(i, n), i, ICON_SIZE[1])),
     iconSize: ICON_SIZE.slice(),
     iconAnchor: ICON_ANCHOR.slice()
   };
 }
 
+// The same pin for an itinerary row, trimmed to the pin itself. The row knows
+// what the waypoint is and, for a via, which one; it does not know how many
+// waypoints the route has, so it says so directly rather than as i of n.
+function panelIconUrl(kind, position) {
+  return dataUri(pinMarkup(kind, position, PIN_HEIGHT));
+}
+
 module.exports = {
   waypointIconOptions: waypointIconOptions,
+  panelIconUrl: panelIconUrl,
+  START: START,
+  VIA: VIA,
+  END: END,
   START_COLOUR: START_COLOUR,
   END_COLOUR: END_COLOUR,
   VIA_COLOUR: VIA_COLOUR,
