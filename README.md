@@ -117,11 +117,18 @@ next to the bundle. The app loads it at startup to tell left-hand from right-han
 directions swing the way the maneuver is driven. Deployments must serve that file alongside the bundle; without
 it the app falls back to the `driving_side` reported by the routing service.
 
-Both are written into `dist/` under content-hashed names (`bundle.<hash>.js`, `gauche_rs.<hash>.wasm`), and the
-copy of `index.html` in `dist/` is rewritten to load the hashed bundle. The name changes whenever the bytes do,
-so the two can be served with a long `immutable` cache while `index.html` itself stays uncached — that is what
-the Docker image's nginx does. Deploy the contents of `dist/`; the `index.html` in the repository keeps the
-unhashed name and is the template the build rewrites.
+In `dist/` both are written under content-hashed names (`bundle.<hash>.js`, `gauche_rs.<hash>.wasm`), and the
+copy of `index.html` there is rewritten to load the hashed bundle. The name changes whenever the bytes do, so
+the two can be served with a long `immutable` cache while `index.html` itself stays uncached — that is what the
+Docker image's nginx does, and `dist/` is the directory to deploy.
+
+The build also leaves `bundle.js` at the repository root, under its plain name, for deployments that serve the
+checkout directly; the `index.html` in the repository is the committed template and still asks for that name.
+The module sits beside it under its hashed name, because that is the name compiled into the bundle. Serving the
+root works, but only `dist/` carries the hashed names that make the long cache safe.
+
+For the bundle name to stay put across rebuilds the build has to be reproducible, so the timestamp shown in the
+UI comes from the current commit rather than the clock. Set `SOURCE_DATE_EPOCH` to pin it without a checkout.
 
 On Windows with no Unix tools installed (`bash` and `cp`) the server could be started with two other commands
 executed by `npm start` internally:

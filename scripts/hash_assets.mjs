@@ -54,4 +54,18 @@ if (html.indexOf(reference) === -1) {
 }
 writeFileSync(indexPath, html.replace(reference, "script.src = '" + jsName + "';"));
 
-console.log('hash_assets: ' + jsName + ', ' + mapName + ', ' + wasmName);
+// The repository root is also served directly by some deployments, and the
+// index.html there is the committed template, still asking for 'bundle.js'.
+// Keep that name working: the same code under the unhashed name, next to the
+// module under the hashed name the bundle actually requests. Only dist/ gets
+// the immutable caching, which is what the hashed names are for.
+writeFileSync(path.join(ROOT, 'bundle.js'), body + '\n//# sourceMappingURL=bundle.js.map\n');
+if (existsSync(path.join(dist, mapName))) {
+  var rootMap = JSON.parse(readFileSync(path.join(dist, mapName), 'utf8'));
+  rootMap.file = 'bundle.js';
+  writeFileSync(path.join(ROOT, 'bundle.js.map'), JSON.stringify(rootMap));
+}
+copyFileSync(WASM_SOURCE, path.join(ROOT, wasmName));
+
+console.log('hash_assets: dist/' + jsName + ', dist/' + mapName + ', ' + wasmName +
+  ' (root: bundle.js, ' + wasmName + ')');
