@@ -17,7 +17,7 @@ function decode(backgroundImage) {
 function glyphOf(svg) {
   if (!svg) return null;
   if (svg.indexOf('<text') !== -1) return 'n' + /<text[^>]*>(\d)<\/text>/.exec(svg)[1];
-  if (svg.indexOf('width="9" height="9"') !== -1) return 'flag';
+  if (svg.indexOf('width="' + marker.FLAG_FIELD + '" height="' + marker.FLAG_FIELD + '"') !== -1) return 'flag';
   if (svg.indexOf('fill="none"') !== -1) return 'ring';
   if (svg.indexOf('<circle') !== -1) return 'disc';
   return '?';

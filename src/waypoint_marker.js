@@ -82,17 +82,20 @@ function viaGlyph(position) {
     position + '</text>';
 }
 
-// A chequered flag, as suggested on the issue: a 3x3 board of 3px squares in a
-// white field. Finer boards were tried and lose the pattern at the size the
-// pin is actually drawn — 2px squares speckle, and a 2x2 board reads as two
-// separate blocks rather than a chequer.
-// The origin is a whole number rather than the 5.5 that would centre a 9px
-// board on the pin: half-pixel edges are resampled wherever the device draws
-// one image pixel per CSS pixel, which smeared 41% of the flag into greys and
-// cost more than the half-pixel of centring buys.
-var FLAG_CELL = 3;
-var FLAG_CELLS = 3;
-var FLAG_ORIGIN = 5;
+// A chequered flag, as suggested on the issue: a 5x5 board of 2px squares in
+// a white field.
+//
+// The board has to be centred on the pin and land on whole pixels. Half-pixel
+// edges are resampled wherever the device draws one image pixel per CSS pixel,
+// which smears about 40% of the flag into greys, so an even-sided board is the
+// only way to have both: an odd one cannot be centred on x=10 without a half
+// pixel. A 10px board of 2px squares reads as a chequer at the size the pin is
+// drawn; 8px is sparser, and a board of 2 or 3 squares a side reads as a few
+// blocks rather than a pattern.
+var FLAG_CELL = 2;
+var FLAG_CELLS = 5;
+var FLAG_FIELD = FLAG_CELL * FLAG_CELLS;
+var FLAG_ORIGIN = 10 - FLAG_FIELD / 2;
 
 function endGlyph(colour) {
   var cells = '';
@@ -103,8 +106,7 @@ function endGlyph(colour) {
         '" width="' + FLAG_CELL + '" height="' + FLAG_CELL + '" fill="' + colour + '"/>';
     }
   }
-  var side = FLAG_CELL * FLAG_CELLS;
-  return '<rect x="' + FLAG_ORIGIN + '" y="' + FLAG_ORIGIN + '" width="' + side + '" height="' + side +
+  return '<rect x="' + FLAG_ORIGIN + '" y="' + FLAG_ORIGIN + '" width="' + FLAG_FIELD + '" height="' + FLAG_FIELD +
     '" fill="' + GLYPH_COLOUR + '"/>' + cells;
 }
 
@@ -153,6 +155,9 @@ module.exports = {
   START_COLOUR: START_COLOUR,
   END_COLOUR: END_COLOUR,
   VIA_COLOUR: VIA_COLOUR,
+  FLAG_CELL: FLAG_CELL,
+  FLAG_FIELD: FLAG_FIELD,
+  FLAG_ORIGIN: FLAG_ORIGIN,
   ICON_SIZE: ICON_SIZE,
   ICON_ANCHOR: ICON_ANCHOR,
   PIN_HEIGHT: PIN_HEIGHT

@@ -6,6 +6,9 @@
 
 const marker = require('../src/waypoint_marker');
 
+// The flag's white field, as the markup writes it.
+const FLAG_FIELD = `width="${marker.FLAG_FIELD}" height="${marker.FLAG_FIELD}"`;
+
 // The icons are SVG data URIs; decode one back to markup to inspect it.
 function markup(i, n) {
   const options = marker.waypointIconOptions(i, n);
@@ -53,17 +56,26 @@ describe('waypoint pins differ by glyph, not only colour', () => {
 
   test('the end pin carries a chequered flag', () => {
     const end = markup(2, 3);
-    // A 3x3 board alternating from a white field: four squares are drawn over it.
-    const squares = end.match(/<rect [^>]*width="3"/g) || [];
-    expect(squares.length).toBe(4);
-    expect(end).toContain('width="9" height="9"');
+    const squares = end.match(new RegExp(`<rect [^>]*width="${marker.FLAG_CELL}"`, 'g')) || [];
+    // Alternating cells over a white field: half the board, rounded down.
+    const cells = marker.FLAG_FIELD / marker.FLAG_CELL;
+    expect(squares.length).toBe(Math.floor((cells * cells) / 2));
+    expect(end).toContain(FLAG_FIELD);
+  });
+
+  test('the flag is centred on the pin and lands on whole pixels', () => {
+    // Off-centre is visible at this size, and a half-pixel edge is resampled
+    // into greys wherever one image pixel is drawn per CSS pixel.
+    expect(marker.FLAG_ORIGIN + marker.FLAG_FIELD / 2).toBe(10);
+    expect(Number.isInteger(marker.FLAG_ORIGIN)).toBe(true);
+    expect(Number.isInteger(marker.FLAG_CELL)).toBe(true);
   });
 
   test('the start pin is a plain disc, with no flag and no number', () => {
     const start = markup(0, 3);
     expect(start).toContain('<circle');
     expect(start).not.toContain('<text');
-    expect(start).not.toContain('width="3"');
+    expect(start).not.toContain(FLAG_FIELD);
   });
 });
 
@@ -77,7 +89,7 @@ describe('via pins are numbered by position', () => {
 
   test('a route with no via has only a start and an end', () => {
     expect(markup(0, 2)).toContain('<circle');
-    expect(markup(1, 2)).toContain('width="9" height="9"');
+    expect(markup(1, 2)).toContain(FLAG_FIELD);
   });
 
   test('past nine vias the number gives way to a ring, not to the start disc', () => {
@@ -96,7 +108,7 @@ describe('via pins are numbered by position', () => {
 
   test('the last waypoint is the end even when it could be a via', () => {
     // i === n - 1 wins over the via branch.
-    expect(markup(4, 5)).toContain('width="9" height="9"');
+    expect(markup(4, 5)).toContain(FLAG_FIELD);
     expect(markup(4, 5)).not.toContain('<text');
   });
 });
