@@ -510,7 +510,8 @@
   border-right: 0px;
   border-bottom: 0px;
   height: 100%;
-  border-left-color: lime;
+  /* Okabe-Ito, matching the map pins; see src/waypoint_marker.js for why. */
+  border-left-color: #0072b2;
   border-left-width: thick;
 }
 
@@ -519,7 +520,7 @@
   border-right: 0px;
   border-bottom: 0px;
   height: 100%;
-  border-left-color: red;
+  border-left-color: #d55e00;
   border-left-width: thick;
 }
 
@@ -528,7 +529,7 @@
   border-right: 0px;
   border-bottom: 0px;
   height: 100%;
-  border-left-color: white;
+  border-left-color: #595959;
   border-left-width: thick;
 }
 

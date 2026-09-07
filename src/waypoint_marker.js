@@ -12,10 +12,19 @@
 // sharp at any zoom or pixel density; the bitmaps they replace were 20x56 with
 // no high-resolution variant despite their -2x names.
 
-// Measured from the bitmaps these replace, so the pins keep their colours.
-var START_COLOUR = '#0cb00c';
-var END_COLOUR = '#e03e3e';
-var VIA_COLOUR = '#717171';
+// From the Okabe-Ito palette, which is designed to stay separable under
+// colour vision deficiency. The green and red these replace were the textbook
+// confusable pair: simulating deuteranopia and protanopia over the old colours
+// leaves the red pin and the grey via only 18.3 apart in CIE76, and the green
+// and red themselves 27.3. Blue against vermillion holds a worst case of 32.8
+// across normal, deuteranope, protanope and tritanope vision.
+//
+// Contrast against the white glyph is comfortable for all three: the via
+// carries a number, which is text, and clears WCAG AA at 7.0:1; the disc and
+// the flag are graphics and clear the 3:1 they need at 5.2:1 and 3.9:1.
+var START_COLOUR = '#0072b2';
+var END_COLOUR = '#d55e00';
+var VIA_COLOUR = '#595959';
 
 var GLYPH_COLOUR = '#ffffff';
 
