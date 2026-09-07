@@ -47,18 +47,25 @@ function svg(body, colour) {
     '</svg>';
 }
 
-// A plain disc. The start needs no symbol of its own — it is the pin the other
-// two are read against — but it must not be an empty circle, which is what the
-// via would look like without its number.
+// A filled disc for the start. Its radius puts every edge on a whole pixel,
+// which keeps it crisp where the device draws one image pixel per CSS pixel.
 function startGlyph() {
   return '<circle cx="10" cy="10" r="4" fill="' + GLYPH_COLOUR + '"/>';
 }
 
+// A ring, for a via too far along the route to number. It has to be a shape of
+// its own rather than the start's disc: falling back to the disc would leave
+// the via and the start identical once colour is taken away, which is the
+// failure this module exists to fix. Radius and width keep the edges whole.
+function unnumberedViaGlyph() {
+  return '<circle cx="10" cy="10" r="4" fill="none" stroke="' + GLYPH_COLOUR + '" stroke-width="2"/>';
+}
+
 // The waypoint's position in the route, so a route through several vias tells
-// you which is which. Past single digits the pin has no room, and the number
-// is dropped rather than shrunk to something unreadable.
+// you which is which. Past single digits the pin has no room for the number,
+// and it gives way to the ring rather than being shrunk past reading.
 function viaGlyph(position) {
-  if (!(position >= 1 && position <= 9)) return startGlyph();
+  if (!(position >= 1 && position <= 9)) return unnumberedViaGlyph();
   return '<text x="10" y="10" fill="' + GLYPH_COLOUR + '" font-size="11" font-weight="700" ' +
     'font-family="Helvetica,Arial,sans-serif" text-anchor="middle" dominant-baseline="central">' +
     position + '</text>';
@@ -68,9 +75,13 @@ function viaGlyph(position) {
 // white field. Finer boards were tried and lose the pattern at the size the
 // pin is actually drawn — 2px squares speckle, and a 2x2 board reads as two
 // separate blocks rather than a chequer.
+// The origin is a whole number rather than the 5.5 that would centre a 9px
+// board on the pin: half-pixel edges are resampled wherever the device draws
+// one image pixel per CSS pixel, which smeared 41% of the flag into greys and
+// cost more than the half-pixel of centring buys.
 var FLAG_CELL = 3;
 var FLAG_CELLS = 3;
-var FLAG_ORIGIN = 10 - (FLAG_CELL * FLAG_CELLS) / 2;
+var FLAG_ORIGIN = 5;
 
 function endGlyph(colour) {
   var cells = '';

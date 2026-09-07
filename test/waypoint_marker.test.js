@@ -80,10 +80,18 @@ describe('via pins are numbered by position', () => {
     expect(markup(1, 2)).toContain('width="9" height="9"');
   });
 
-  test('past nine vias the number is dropped rather than drawn unreadably', () => {
+  test('past nine vias the number gives way to a ring, not to the start disc', () => {
+    // Falling back to the start's glyph would make a via identical to the
+    // start once colour is gone, reintroducing the bug this module fixes.
     const tenth = markup(10, 20);
     expect(tenth).not.toContain('<text');
-    expect(tenth).toContain('<circle');
+    expect(tenth).toContain('stroke-width="2"');
+    expect(tenth).toContain('fill="none"');
+  });
+
+  test('an unnumbered via is still distinguishable from the start without colour', () => {
+    const shapeOf = (i, n) => markup(i, n).replace(/fill="[^"]*"/g, '');
+    expect(shapeOf(10, 20)).not.toBe(shapeOf(0, 20));
   });
 
   test('the last waypoint is the end even when it could be a via', () => {
