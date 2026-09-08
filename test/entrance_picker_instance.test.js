@@ -909,6 +909,34 @@ describe('the site outline', () => {
     expect(outlines(map)[0].options.style.interactive).toBe(false);
   });
 
+  // Sharing the overlay pane with the route would order the two by whichever
+  // was added last, and the outline arrives when its request resolves.
+  test('is drawn in a pane below the route line', async () => {
+    const { map, resolveOutline } = openWithOutline();
+    await resolveOutline(GEOMETRY);
+    expect(outlines(map)[0].options.pane).toBe('osrmEntranceOutline');
+    expect(Number(map._panes.osrmEntranceOutline.style.zIndex)).toBeLessThan(400);
+    // And above the tiles.
+    expect(Number(map._panes.osrmEntranceOutline.style.zIndex)).toBeGreaterThan(200);
+    // Still below the labels, which are below the dots.
+    expect(Number(map._panes.osrmEntranceOutline.style.zIndex))
+      .toBeLessThan(Number(map._panes.osrmEntranceLabels.style.zIndex));
+  });
+
+  test('a map that cannot make panes still draws the outline', async () => {
+    let settleOutline;
+    const fetchOutline = jest.fn(() => new Promise((r) => { settleOutline = r; }));
+    const map = makeMap();
+    map.createPane = () => null;
+    const picker = entrancePicker.createEntrancePicker(map, { fetchOutline });
+    picker.show({ waypointIndex: 1, placeCenter: CENTRE, entrances: [MAIN, SIDE],
+      place: { osmId: 1 } });
+    settleOutline(GEOMETRY);
+    await Promise.resolve();
+    expect(outlines(map)).toHaveLength(1);
+    expect(outlines(map)[0].options.pane).toBeUndefined();
+  });
+
   test('a place with no outline simply has none', async () => {
     const { map, resolveOutline } = openWithOutline();
     await resolveOutline(null);

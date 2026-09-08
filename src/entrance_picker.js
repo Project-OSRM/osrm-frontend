@@ -45,6 +45,14 @@ var FIT_PADDING = 24;
 // Long enough to outlast Leaflet's default 250 ms pan/zoom animation.
 var SETTLE_TIMEOUT_MS = 450;
 
+// The outline sits in its own pane between Leaflet's tiles (200) and its
+// overlay pane (400), where the route line is drawn. Sharing the overlay pane
+// would leave the two ordered by whichever was added last, and the outline
+// arrives when its request resolves — usually after the route — so it would
+// land on top of the very thing it must not obscure.
+var OUTLINE_PANE = 'osrmEntranceOutline';
+var OUTLINE_PANE_Z_INDEX = 350;
+
 // The site the entrances belong to. Muted and non-interactive: it is context
 // for the dots, not a thing to click, and it must never obscure the route line.
 var OUTLINE_STYLE = {
@@ -486,7 +494,10 @@ function createEntrancePicker(map, options) {
       // Redrawn from the geometry each time rather than left in place, so one
       // waypoint's outline can be removed without disturbing another's.
       if (offer.outline) {
-        outlineLayer.addLayer(L.geoJSON(offer.outline, {style: OUTLINE_STYLE}));
+        var outlineOptions = {style: OUTLINE_STYLE};
+        var outlinePane = ensurePane(OUTLINE_PANE, OUTLINE_PANE_Z_INDEX);
+        if (outlinePane) outlineOptions.pane = outlinePane;
+        outlineLayer.addLayer(L.geoJSON(offer.outline, outlineOptions));
       }
       offer.choices.forEach(function(choice) {
         var chosen = choice.id === offer.selectedId;
@@ -536,15 +547,15 @@ function createEntrancePicker(map, options) {
 
   // Created lazily, because the picker may be built before the map has panes.
   // Answers with the pane's name only once there really is a pane: naming one
-  // that does not exist would leave the label unplaced.
-  function ensureLabelPane() {
+  // that does not exist would leave the layer unplaced.
+  function ensurePane(name, zIndex) {
     if (typeof map.createPane !== 'function' || typeof map.getPane !== 'function') return null;
-    var pane = map.getPane(LABEL_PANE);
+    var pane = map.getPane(name);
     if (!pane) {
-      pane = map.createPane(LABEL_PANE);
-      if (pane && pane.style) pane.style.zIndex = LABEL_PANE_Z_INDEX;
+      pane = map.createPane(name);
+      if (pane && pane.style) pane.style.zIndex = zIndex;
     }
-    return pane ? LABEL_PANE : null;
+    return pane ? name : null;
   }
 
   // Which line of a label a click landed on, from the element under the
@@ -602,7 +613,7 @@ function createEntrancePicker(map, options) {
       keyboard: false,
       zIndexOffset: 100
     };
-    var pane = ensureLabelPane();
+    var pane = ensurePane(LABEL_PANE, LABEL_PANE_Z_INDEX);
     if (pane) options.pane = pane;
     var marker = L.marker(latLng, options);
     marker.on('click', function(e) {
