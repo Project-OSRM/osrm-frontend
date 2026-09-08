@@ -241,8 +241,10 @@ describe('access by travel mode', () => {
     expect(picker.allowsMode(tagged({ access: 'seasonal' }), 'foot')).toBe(true);
   });
 
-  test('the case of the value does not matter', () => {
+  test('the case of the value, and stray whitespace around it, do not matter', () => {
     expect(picker.allowsMode(tagged({ access: 'No' }), 'foot')).toBe(false);
+    expect(picker.allowsMode(tagged({ access: ' no ' }), 'foot')).toBe(false);
+    expect(picker.allowsMode(tagged({ motor_vehicle: 'no\n' }), 'driving')).toBe(false);
   });
 
   // OSM's own hierarchy: the most specific key present wins outright.

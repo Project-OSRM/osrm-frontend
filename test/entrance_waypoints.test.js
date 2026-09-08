@@ -296,6 +296,20 @@ describe('travel mode', () => {
     expect(wiring.claimView()).toBe(false);
   });
 
+  // The mirror of the case below: a mode switch can make a door usable that was
+  // not, and the place is still the one on screen.
+  test('a refresh reopens an offer the previous mode had emptied', () => {
+    let mode = 'driving';
+    const { wiring, picker } = build({ options: { mode: () => mode } });
+    expect(wiring.onGeocodeResult(geocodeEvent([NO_CARS]))).toBe(false);
+    expect(picker.open).toBe(false);
+
+    mode = 'foot';
+    expect(wiring.refresh()).toBe(true);
+    expect(picker.open).toBe(true);
+    expect(picker.shown[0].entrances).toEqual([NO_CARS]);
+  });
+
   test('a refresh that leaves no usable door closes the picker', () => {
     let mode = 'foot';
     const { wiring, picker } = build({ options: { mode: () => mode } });
@@ -312,6 +326,7 @@ describe('travel mode', () => {
     expect(picker.show).not.toHaveBeenCalled();
   });
 
+  // hide() is the deliberate dismissal, and it ends the offer for good.
   test('refresh forgets the place once the picker has been hidden', () => {
     const { wiring } = build({ options: { mode: () => 'foot' } });
     wiring.onGeocodeResult(geocodeEvent([MAIN]));
