@@ -156,9 +156,10 @@ function panelIconUrl(kind, position) {
 }
 
 // The same panel pin for waypoint i of n, for a row that does know how many
-// waypoints there are: the input rows.
+// waypoints there are: the input rows. Only a via has a position.
 function panelIconUrlFor(i, n) {
-  return panelIconUrl(kindOf(i, n), i);
+  var kind = kindOf(i, n);
+  return panelIconUrl(kind, kind === VIA ? i : 0);
 }
 
 module.exports = {

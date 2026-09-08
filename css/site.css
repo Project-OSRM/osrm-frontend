@@ -288,6 +288,7 @@
 .leaflet-routing-waypoint-handle {
   display: inline-block;
   vertical-align: middle;
+  flex: none;
   box-sizing: border-box;
   /* The dots are 12x18; the padding round them makes the target 24x30,
      which is what a finger or a quick mouse needs. background-clip keeps
@@ -563,9 +564,41 @@
   max-height: 75%;
 }
 
+/* A row is pin, input, grip, remove button in a line; the input takes what
+   the other three leave. */
+.leaflet-routing-geocoders.osrm-directions-inputs .leaflet-routing-geocoder {
+  display: flex;
+  align-items: center;
+}
+
 .leaflet-routing-geocoders.osrm-directions-inputs .leaflet-routing-geocoder input {
   border: 0px;
   height: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.leaflet-routing-geocoders.osrm-directions-inputs .leaflet-routing-remove-waypoint {
+  /* The button is an empty span whose cross is drawn by :after. Inline
+     layout gave it a line box to hang from and the input's fixed width left
+     it room; in the flex row it needs a box of its own, and none of the
+     nudge. */
+  flex: none;
+  width: 24px;
+  height: 30px;
+  padding-left: 0;
+  margin-top: 0;
+}
+
+.leaflet-routing-geocoders.osrm-directions-inputs .leaflet-routing-remove-waypoint:after {
+  /* Centred in that box rather than hung off its bottom edge. */
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  line-height: 30px;
+  text-align: center;
 }
 
 /* The waypoint's pin, as the map and the directions pane draw it, so the row
@@ -573,6 +606,7 @@
 .leaflet-routing-waypoint-pin {
   display: inline-block;
   vertical-align: middle;
+  flex: none;
   width: 20px;
   height: 28px;
   margin-left: 4px;
@@ -583,8 +617,7 @@
 
 .osrm-directions-inputs input {
   font-size: 12px;
-  /* The pin and the grip and remove button either side of it. */
-  width: calc(100% - 79px);
+  width: auto;
   background-color: transparent;
   color: rgba(0, 0, 0, 0.5);
   height: 30px;
@@ -1042,10 +1075,6 @@ td.distance {
 
 .osrm-directions-inputs {
   min-width: 175px;
-}
-
-.leaflet-routing-remove-waypoint:after {
-  margin-left: 19px;
 }
 
 .leaflet-routing-container.dark {

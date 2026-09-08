@@ -129,7 +129,8 @@ describe('createGeocoder', () => {
     const marker = require('../src/waypoint_marker');
     const pinOf = (i, n) => reorder.createGeocoder(i, n, { addWaypoints: true, language: 'en' })
       .container.querySelector('.' + reorder.PIN_CLASS);
-    const urlOf = (i, n) => /url\("([^"]+)"\)/.exec(pinOf(i, n).style.backgroundImage)[1];
+    // Quoting of the url() differs between engines.
+    const urlOf = (i, n) => /url\(["']?([^"')]+)["']?\)/.exec(pinOf(i, n).style.backgroundImage)[1];
     expect(urlOf(0, 4)).toBe(marker.panelIconUrl(marker.START, 0));
     expect(urlOf(1, 4)).toBe(marker.panelIconUrl(marker.VIA, 1));
     expect(urlOf(2, 4)).toBe(marker.panelIconUrl(marker.VIA, 2));
