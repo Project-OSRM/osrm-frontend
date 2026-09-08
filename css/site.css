@@ -187,6 +187,8 @@
 
 .leaflet-routing-geocoders .leaflet-routing-geocoder {
   padding: 4px 0px 4px 0px;
+  /* Rows slide aside while another is dragged past them. */
+  transition: transform 0.15s ease;
 }
 
 .leaflet-routing-geocoder {
@@ -293,7 +295,6 @@
   width: 24px;
   height: 30px;
   padding: 6px;
-  margin-top: 0;
   background-clip: content-box;
   cursor: grab;
   touch-action: none;
@@ -304,8 +305,6 @@
      not depend on which fonts the device has. */
   background-image: radial-gradient(circle, rgba(37,72,127, 0.6) 1.5px, transparent 2px);
   background-size: 6px 6px;
-  background-position: 0 0;
-  background-repeat: repeat;
 }
 
 .leaflet-routing-waypoint-handle:hover,
@@ -325,17 +324,13 @@
   outline: none;
 }
 
-.leaflet-routing-geocoders .leaflet-routing-geocoder {
-  transition: transform 0.15s ease;
-}
-
 .leaflet-routing-geocoders-dragging,
 .leaflet-routing-geocoders-dragging * {
   cursor: grabbing;
 }
 
-/* Same specificity as the transition rule above and later in the file, so
-   the lifted row follows the pointer at once rather than easing after it. */
+/* Same specificity as the row's transition rule, so the lifted row follows
+   the pointer at once rather than easing after it. */
 .leaflet-routing-geocoders .leaflet-routing-geocoder-dragging {
   transition: none;
   position: relative;

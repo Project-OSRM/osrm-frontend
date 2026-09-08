@@ -24,26 +24,16 @@ var DRAGGING_LIST_CLASS = 'leaflet-routing-geocoders-dragging';
 // drag rather than a click, so focusing the grip does not twitch the row.
 var DRAG_THRESHOLD_PX = 3;
 
-var LABEL_KEY = 'Drag to reorder';
-
-// Returns a copy of `list` with the item at `from` moved to `to`. Indexes
-// outside the list are clamped, so the callers need not check.
+// Returns a copy of `list` with the item at `from` moved to `to`.
 function moveWaypoint(list, from, to) {
-  var last = list.length - 1;
-  from = Math.max(0, Math.min(last, from));
-  to = Math.max(0, Math.min(last, to));
   var moved = list.slice();
   var item = moved.splice(from, 1)[0];
   moved.splice(to, 0, item);
   return moved;
 }
 
-function handleLabel(language) {
-  return localization.t(language, LABEL_KEY);
-}
-
 function setHandleLabel(handle, language) {
-  var label = handleLabel(language);
+  var label = localization.t(language, 'Drag to reorder');
   handle.setAttribute('title', label);
   handle.setAttribute('aria-label', label);
 }
@@ -141,7 +131,7 @@ function wirePointerDrag(container, row, from, onMove) {
     var to = from;
 
     function isThisPointer(e) {
-      return e.pointerId === undefined || e.pointerId === pointerId;
+      return e.pointerId === pointerId;
     }
 
     function move(e) {
@@ -163,7 +153,7 @@ function wirePointerDrag(container, row, from, onMove) {
       document.removeEventListener('pointermove', move);
       document.removeEventListener('pointerup', drop);
       document.removeEventListener('pointercancel', cancel);
-      document.removeEventListener('keydown', escape);
+      document.removeEventListener('keydown', onEscape);
       if (handle.releasePointerCapture) {
         try {
           handle.releasePointerCapture(pointerId);
@@ -182,12 +172,11 @@ function wirePointerDrag(container, row, from, onMove) {
     }
 
     function cancel(e) {
-      if (e && !isThisPointer(e)) return;
-      finish();
+      if (isThisPointer(e)) finish();
     }
 
-    function escape(e) {
-      if (e.key === 'Escape' || e.key === 'Esc') finish();
+    function onEscape(e) {
+      if (e.key === 'Escape') finish();
     }
 
     // preventDefault stops the press selecting text and, on a touch screen,
@@ -207,16 +196,16 @@ function wirePointerDrag(container, row, from, onMove) {
     document.addEventListener('pointermove', move);
     document.addEventListener('pointerup', drop);
     document.addEventListener('pointercancel', cancel);
-    document.addEventListener('keydown', escape);
+    document.addEventListener('keydown', onEscape);
   });
 }
 
 function wireKeyboard(row, from, count, onMove) {
   L.DomEvent.on(handleOf(row), 'keydown', function(e) {
     var to;
-    if (e.key === 'ArrowUp' || e.key === 'Up') {
+    if (e.key === 'ArrowUp') {
       to = from - 1;
-    } else if (e.key === 'ArrowDown' || e.key === 'Down') {
+    } else if (e.key === 'ArrowDown') {
       to = from + 1;
     } else {
       return;
@@ -274,7 +263,6 @@ module.exports = {
   createGeocoder: createGeocoder,
   attach: attach,
   attachToPlan: attachToPlan,
-  focusHandle: focusHandle,
   updateLabels: updateLabels,
   HANDLE_CLASS: HANDLE_CLASS,
   DRAGGING_ROW_CLASS: DRAGGING_ROW_CLASS,

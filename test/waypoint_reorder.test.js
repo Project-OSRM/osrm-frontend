@@ -12,11 +12,11 @@ const ROW_HEIGHT = 40;
 
 // Builds the rows the plan would build for `count` waypoints and lays them
 // out as a column, since jsdom does not do layout.
-function buildRows(count, options) {
+function buildRows(count) {
   const container = document.createElement('div');
   document.body.appendChild(container);
   for (let i = 0; i < count; i++) {
-    const row = reorder.createGeocoder(i, count, options || { addWaypoints: true, language: 'en' }).container;
+    const row = reorder.createGeocoder(i, count, { addWaypoints: true, language: 'en' }).container;
     row.querySelector('input').value = 'wp' + i;
     row.getBoundingClientRect = () => ({ top: i * ROW_HEIGHT, height: ROW_HEIGHT, bottom: (i + 1) * ROW_HEIGHT });
     container.appendChild(row);
@@ -96,11 +96,6 @@ describe('moveWaypoint', () => {
 
   test('a move onto itself is a copy', () => {
     expect(reorder.moveWaypoint(['a', 'b'], 1, 1)).toEqual(['a', 'b']);
-  });
-
-  test('clamps indexes to the list', () => {
-    expect(reorder.moveWaypoint(['a', 'b', 'c'], 0, 99)).toEqual(['b', 'c', 'a']);
-    expect(reorder.moveWaypoint(['a', 'b', 'c'], -5, 1)).toEqual(['b', 'a', 'c']);
   });
 });
 
