@@ -678,6 +678,12 @@ plan.on('waypointdragstart', function() {
   routeFitTracker.waypointDragStarted();
 });
 
+// Reordering from the panel rearranges places already on the map; the view
+// stays where it is.
+plan.on('waypointsreorder', function() {
+  routeFitTracker.waypointsReordered();
+});
+
 lrmControl.on('routingerror', function() {
   routeFitTracker.routingFailed();
 });

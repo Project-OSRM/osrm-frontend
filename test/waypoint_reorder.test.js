@@ -58,6 +58,10 @@ function centreOf(i) {
 function fakePlan(count) {
   const plan = {
     _waypoints: Array.from({ length: count }, (_, i) => ({ name: 'wp' + i })),
+    events: [],
+    fire(type, data) {
+      this.events.push({ type, data, order: this._waypoints.map(wp => wp.name) });
+    },
     getWaypoints() {
       return this._waypoints.slice();
     },
@@ -321,6 +325,14 @@ describe('attachToPlan', () => {
     pointer(document, 'pointermove', centreOf(0));
     pointer(document, 'pointerup', centreOf(0));
     expect(plan.getWaypoints().map(wp => wp.name)).toEqual(['wp2', 'wp1', 'wp0']);
+  });
+
+  test('announces the reorder on the plan before changing the waypoints', () => {
+    const plan = fakePlan(3);
+    key(handle(plan._geocoderContainer, 0), 'ArrowDown');
+    expect(plan.events).toEqual([
+      { type: 'waypointsreorder', data: { from: 0, to: 1 }, order: ['wp0', 'wp1', 'wp2'] }
+    ]);
   });
 
   test('a plan without rows yet is left alone', () => {

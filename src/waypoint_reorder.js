@@ -251,6 +251,9 @@ function attachToPlan(plan) {
   var container = plan._geocoderContainer;
   if (!container) return;
   attach(container, function(from, to, viaKeyboard) {
+    // Fired before the change so a listener can decide how to treat the
+    // waypointschanged and route that follow.
+    plan.fire('waypointsreorder', {from: from, to: to});
     plan.setWaypoints(moveWaypoint(plan.getWaypoints(), from, to));
     if (viaKeyboard) focusHandle(plan._geocoderContainer, to);
   });
