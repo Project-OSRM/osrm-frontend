@@ -288,6 +288,7 @@
 .leaflet-routing-waypoint-handle {
   display: inline-block;
   vertical-align: middle;
+  flex: none;
   box-sizing: border-box;
   /* The dots are 12x18; the padding round them makes the target 24x30,
      which is what a finger or a quick mouse needs. background-clip keeps
@@ -563,41 +564,64 @@
   max-height: 75%;
 }
 
-.leaflet-routing-geocoders.osrm-directions-inputs .leaflet-routing-geocoder:first-child input {
-  border-top: 0px;
-  border-right: 0px;
-  border-bottom: 0px;
-  height: 100%;
-  /* Okabe-Ito, matching the map pins; see src/waypoint_marker.js for why. */
-  border-left-color: #0072b2;
-  border-left-width: thick;
-}
-
-.leaflet-routing-geocoders.osrm-directions-inputs .leaflet-routing-geocoder:last-of-type input {
-  border-top: 0px;
-  border-right: 0px;
-  border-bottom: 0px;
-  height: 100%;
-  border-left-color: #d55e00;
-  border-left-width: thick;
+/* A row is pin, input, grip, remove button in a line; the input takes what
+   the other three leave. */
+.leaflet-routing-geocoders.osrm-directions-inputs .leaflet-routing-geocoder {
+  display: flex;
+  align-items: center;
 }
 
 .leaflet-routing-geocoders.osrm-directions-inputs .leaflet-routing-geocoder input {
-  border-top: 0px;
-  border-right: 0px;
-  border-bottom: 0px;
+  border: 0px;
   height: 100%;
-  border-left-color: #595959;
-  border-left-width: thick;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.leaflet-routing-geocoders.osrm-directions-inputs .leaflet-routing-remove-waypoint {
+  /* The button is an empty span whose cross is drawn by :after. Inline
+     layout gave it a line box to hang from and the input's fixed width left
+     it room; in the flex row it needs a box of its own, and none of the
+     nudge. */
+  flex: none;
+  width: 24px;
+  height: 30px;
+  padding-left: 0;
+  margin-top: 0;
+}
+
+.leaflet-routing-geocoders.osrm-directions-inputs .leaflet-routing-remove-waypoint:after {
+  /* Centred in that box rather than hung off its bottom edge. */
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  line-height: 30px;
+  text-align: center;
+}
+
+/* The waypoint's pin, as the map and the directions pane draw it, so the row
+   can be matched to its marker. The image is set on the element. */
+.leaflet-routing-waypoint-pin {
+  display: inline-block;
+  vertical-align: middle;
+  flex: none;
+  width: 20px;
+  height: 28px;
+  margin-left: 4px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
 }
 
 .osrm-directions-inputs input {
   font-size: 12px;
-  width: calc(100% - 55px);
+  width: auto;
   background-color: transparent;
   color: rgba(0, 0, 0, 0.5);
   height: 30px;
-  padding: 10px 10px 10px 20px;
+  padding: 10px 10px 10px 8px;
 }
 
 .osrm-directions-route-summary {
@@ -1051,10 +1075,6 @@ td.distance {
 
 .osrm-directions-inputs {
   min-width: 175px;
-}
-
-.leaflet-routing-remove-waypoint:after {
-  margin-left: 19px;
 }
 
 .leaflet-routing-container.dark {

@@ -152,3 +152,20 @@ describe('the markup is a usable SVG', () => {
     expect(marker.panelIconUrl(marker.VIA, 2)).not.toMatch(/[()]/);
   });
 });
+
+describe('panel pin for row i of n', () => {
+  test('is the start, the numbered via, or the end, on the panel canvas', () => {
+    expect(marker.panelIconUrlFor(0, 4)).toBe(marker.panelIconUrl(marker.START, 0));
+    expect(marker.panelIconUrlFor(1, 4)).toBe(marker.panelIconUrl(marker.VIA, 1));
+    expect(marker.panelIconUrlFor(2, 4)).toBe(marker.panelIconUrl(marker.VIA, 2));
+    expect(marker.panelIconUrlFor(3, 4)).toBe(marker.panelIconUrl(marker.END, 0));
+  });
+
+  test('numbers a via by its position among all waypoints, matching the map', () => {
+    // The map pin for waypoint 2 of 4 shows a 2; the row for it must too.
+    const mapMarkup = markup(2, 4);
+    const rowMarkup = decodeURIComponent(marker.panelIconUrlFor(2, 4).slice('data:image/svg+xml,'.length));
+    expect(/<text[^>]*>(\d)<\/text>/.exec(mapMarkup)[1]).toBe('2');
+    expect(/<text[^>]*>(\d)<\/text>/.exec(rowMarkup)[1]).toBe('2');
+  });
+});

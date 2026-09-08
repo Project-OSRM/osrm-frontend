@@ -14,9 +14,11 @@
 
 var L = require('leaflet');
 var localization = require('./localization');
+var waypointMarker = require('./waypoint_marker');
 
 var ROW_CLASS = 'leaflet-routing-geocoder';
 var HANDLE_CLASS = 'leaflet-routing-waypoint-handle';
+var PIN_CLASS = 'leaflet-routing-waypoint-pin';
 var DRAGGING_ROW_CLASS = 'leaflet-routing-geocoder-dragging';
 var DRAGGING_LIST_CLASS = 'leaflet-routing-geocoders-dragging';
 
@@ -40,9 +42,17 @@ function setHandleLabel(handle, language) {
 
 // Drop-in for Leaflet Routing Machine's createGeocoder option: the same row
 // (input and remove button, with the same class names the stylesheet keys on)
-// plus the grip between them.
+// with the waypoint's pin before the input and the grip after it.
+//
+// The pin is the one the map and the directions pane draw for this waypoint,
+// so the row can be matched to its marker: vias are numbered from 1 while the
+// rows count the start too, so the third row is via 2, and a coloured stripe
+// alone could not say so.
 function createGeocoder(i, nWps, options) {
   var container = L.DomUtil.create('div', ROW_CLASS);
+  var pin = L.DomUtil.create('span', PIN_CLASS, container);
+  pin.style.backgroundImage = 'url("' + waypointMarker.panelIconUrlFor(i, nWps) + '")';
+  pin.setAttribute('aria-hidden', 'true');
   var input = L.DomUtil.create('input', '', container);
   var handle = L.DomUtil.create('span', HANDLE_CLASS, container);
   var remove = options.addWaypoints ? L.DomUtil.create('span', 'leaflet-routing-remove-waypoint', container) : undefined;
@@ -265,6 +275,7 @@ module.exports = {
   attachToPlan: attachToPlan,
   updateLabels: updateLabels,
   HANDLE_CLASS: HANDLE_CLASS,
+  PIN_CLASS: PIN_CLASS,
   DRAGGING_ROW_CLASS: DRAGGING_ROW_CLASS,
   DRAGGING_LIST_CLASS: DRAGGING_LIST_CLASS,
   DRAG_THRESHOLD_PX: DRAG_THRESHOLD_PX

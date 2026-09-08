@@ -117,11 +117,26 @@ describe('createGeocoder', () => {
   test('the grip is a focusable, labelled button between input and remove', () => {
     const g = reorder.createGeocoder(1, 3, { addWaypoints: true, language: 'en' });
     const grip = g.container.querySelector('.' + reorder.HANDLE_CLASS);
+    const pin = g.container.querySelector('.' + reorder.PIN_CLASS);
     expect(grip.getAttribute('role')).toBe('button');
     expect(grip.getAttribute('tabindex')).toBe('0');
     expect(grip.getAttribute('aria-label')).toMatch(/Drag to reorder/);
     expect(grip.getAttribute('title')).toBe(grip.getAttribute('aria-label'));
-    expect(Array.from(g.container.children)).toEqual([g.input, grip, g.closeButton]);
+    expect(Array.from(g.container.children)).toEqual([pin, g.input, grip, g.closeButton]);
+  });
+
+  test('each row carries the pin the map draws for its waypoint', () => {
+    const marker = require('../src/waypoint_marker');
+    const pinOf = (i, n) => reorder.createGeocoder(i, n, { addWaypoints: true, language: 'en' })
+      .container.querySelector('.' + reorder.PIN_CLASS);
+    // Quoting of the url() differs between engines.
+    const urlOf = (i, n) => /url\(["']?([^"')]+)["']?\)/.exec(pinOf(i, n).style.backgroundImage)[1];
+    expect(urlOf(0, 4)).toBe(marker.panelIconUrl(marker.START, 0));
+    expect(urlOf(1, 4)).toBe(marker.panelIconUrl(marker.VIA, 1));
+    expect(urlOf(2, 4)).toBe(marker.panelIconUrl(marker.VIA, 2));
+    expect(urlOf(3, 4)).toBe(marker.panelIconUrl(marker.END, 0));
+    // Decoration for the eye; the placeholder already says start, via or end.
+    expect(pinOf(0, 2).getAttribute('aria-hidden')).toBe('true');
   });
 
   test('the grip is labelled in the interface language', () => {
