@@ -153,3 +153,67 @@ describe('OSRM_TILE_URL and the default layer', () => {
     warnSpy.mockRestore();
   });
 });
+
+describe('OSRM_TILE_URL layer selection via URL and stored preference', () => {
+  const links = require('../src/links');
+
+  // Mirrors resolveLayerByName() in src/index.js: exact match first, then
+  // case-insensitive, over the labels in the layer control.
+  function resolveLayerByName(baseLayers, name) {
+    if (baseLayers[name]) return baseLayers[name];
+    const lower = String(name).toLowerCase();
+    const key = Object.keys(baseLayers).find((k) => k.toLowerCase() === lower);
+    return key ? baseLayers[key] : undefined;
+  }
+
+  // Mirrors canonicalizeLayer() in src/index.js for the object form: the label
+  // a layer is written back to the URL under.
+  function canonicalizeLayer(baseLayers, layer) {
+    return Object.keys(baseLayers).find((k) => baseLayers[k] === layer);
+  }
+
+  function loadWithCustomLayer() {
+    return loadWithConfig({
+      OSRM_TILE_URL: 'http://localhost:8080/tile/{z}/{x}/{y}.png',
+      OSRM_TILE_NAME: 'Local tiles'
+    });
+  }
+
+  test('a ly URL parameter selects the custom layer', () => {
+    const opts = loadWithCustomLayer();
+    const parsed = links.parse('ly=' + encodeURIComponent('Local tiles'));
+    expect(resolveLayerByName(opts.layer[0], parsed.layer)._url).toContain('localhost:8080');
+  });
+
+  test('the custom label is matched case-insensitively', () => {
+    // Stored preferences and hand-edited links do not preserve casing.
+    const opts = loadWithCustomLayer();
+    expect(resolveLayerByName(opts.layer[0], 'local tiles')._url).toContain('localhost:8080');
+  });
+
+  test('the custom layer canonicalizes back to its label for the URL', () => {
+    // Without this the layer choice would be dropped from state.update().
+    const opts = loadWithCustomLayer();
+    expect(canonicalizeLayer(opts.layer[0], opts.defaultState.layer)).toBe('Local tiles');
+  });
+
+  test('a ly value naming no layer leaves the custom layer as the fallback', () => {
+    const opts = loadWithCustomLayer();
+    const parsed = links.parse('ly=NoSuchLayer');
+    const chosen = resolveLayerByName(opts.layer[0], parsed.layer) || opts.defaultState.layer;
+    expect(chosen._url).toContain('localhost:8080');
+  });
+
+  test('the built-in layers stay selectable alongside the custom one', () => {
+    const opts = loadWithCustomLayer();
+    expect(resolveLayerByName(opts.layer[0], 'Satellite')._url).toContain('arcgisonline.com');
+    expect(Object.keys(opts.layer[0])).toEqual([
+      'Streets', 'Outdoors', 'Satellite', 'openstreetmap.org', 'openstreetmap.de', 'Local tiles'
+    ]);
+  });
+
+  test('overlays are untouched by a custom base layer', () => {
+    const opts = loadWithCustomLayer();
+    expect(Object.keys(opts.overlay)).toEqual(['Hiking', 'Bike', 'Small Components']);
+  });
+});
