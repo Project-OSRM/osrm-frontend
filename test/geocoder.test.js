@@ -30,7 +30,11 @@ describe('geocoder.coordPreserving', () => {
     const L = require('leaflet');
 
     const g = geocoder.coordPreserving('https://nominatim.example/');
-    expect(L.Control.Geocoder.nominatim).toHaveBeenCalledWith({ serviceUrl: 'https://nominatim.example/' });
+    expect(L.Control.Geocoder.nominatim).toHaveBeenCalledWith({
+      serviceUrl: 'https://nominatim.example/',
+      geocodingQueryParams: { entrances: 1 },
+      reverseQueryParams: { entrances: 1 }
+    });
 
     const results = await g.geocode('34.129382,-118.141254');
     expect(results).toHaveLength(1);
@@ -39,7 +43,7 @@ describe('geocoder.coordPreserving', () => {
     expect(reverseMock).toHaveBeenCalled();
   });
 
-  test('invokes L.Control.Geocoder.nominatim() with no args when nominatimUrl omitted', () => {
+  test('keeps the default endpoint, and still asks for entrances, when no URL is given', () => {
     const reverseMock = jest.fn(() => Promise.resolve([]));
     const geocodeMock = jest.fn(() => Promise.resolve([]));
     const nominatimFactory = jest.fn(() => ({ reverse: reverseMock, geocode: geocodeMock }));
@@ -61,7 +65,12 @@ describe('geocoder.coordPreserving', () => {
     // Call without argument to ensure default nominatim factory is used
     geocoder.coordPreserving();
     expect(L.Control.Geocoder.nominatim).toHaveBeenCalled();
-    expect(L.Control.Geocoder.nominatim.mock.calls[0].length).toBe(0);
+    // No serviceUrl, so leaflet-control-geocoder keeps its own default endpoint;
+    // the entrance parameters are still requested.
+    expect(L.Control.Geocoder.nominatim).toHaveBeenCalledWith({
+      geocodingQueryParams: { entrances: 1 },
+      reverseQueryParams: { entrances: 1 }
+    });
   });
 
   // Tests for reverse-geocode coordinate wrapping (issues #206, #307).
@@ -250,3 +259,127 @@ describe('geocoder.wrappedWaypointNameFallback', () => {
     expect(result).toBe('S33.9, W70.6');
   });
 });
+
+// Nominatim 5.2+ returns a place's entrance nodes when asked for them. These
+// must survive every path a result can take to the UI, or the entrance picker
+// has nothing to offer.
+describe('geocoder entrance handling', () => {
+  const BER_ENTRANCES = [
+    { osm_id: 9942967218, type: 'main', lat: '52.3636100', lon: '13.5100542' },
+    { osm_id: 9959231437, type: 'main', lat: '52.3641971', lon: '13.5096892' }
+  ];
+
+  function mockLeaflet() {
+    jest.doMock('leaflet', () => ({
+      Control: { Geocoder: { nominatim: jest.fn(() => ({})) } },
+      CRS: { EPSG3857: { scale: () => 1 } },
+      latLng: (lat, lng) => {
+        const obj = { lat: +lat, lng: +lng, toBounds: () => ({}) };
+        obj.wrap = () => obj;
+        return obj;
+      },
+      latLngBounds: (sw, ne) => ({ sw, ne }),
+      extend: Object.assign
+    }));
+  }
+
+  beforeEach(() => {
+    jest.resetModules();
+    global.localStorage = {
+      getItem: () => null,
+      setItem: () => {}
+    };
+  });
+
+  afterEach(() => {
+    delete global.localStorage;
+    delete global.fetch;
+  });
+
+  test('requests entrances and parses them off the search response', async () => {
+    mockLeaflet();
+    let requestedUrl = null;
+    global.fetch = jest.fn((url) => {
+      requestedUrl = url;
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve([{
+          display_name: 'Flughafen Berlin Brandenburg',
+          lat: '52.3657974',
+          lon: '13.4888906',
+          entrances: BER_ENTRANCES
+        }])
+      });
+    });
+
+    const geocoder = require('../src/geocoder');
+    const results = await geocoder.coordPreserving('https://nominatim.example/').geocode('BER');
+
+    expect(requestedUrl).toContain('entrances=1');
+    expect(results[0].entrances).toEqual([
+      { osmId: 9942967218, type: 'main', center: expect.objectContaining({ lat: 52.36361, lng: 13.5100542 }) },
+      { osmId: 9959231437, type: 'main', center: expect.objectContaining({ lat: 52.3641971, lng: 13.5096892 }) }
+    ]);
+  });
+
+  test('lifts entrances off the raw payload leaflet-control-geocoder preserves', async () => {
+    jest.doMock('leaflet', () => ({
+      Control: {
+        Geocoder: {
+          nominatim: jest.fn(() => ({
+            geocode: () => Promise.resolve([{
+              name: 'Flughafen Berlin Brandenburg',
+              center: { lat: 52.3657974, lng: 13.4888906 },
+              properties: { entrances: BER_ENTRANCES }
+            }])
+          }))
+        }
+      },
+      CRS: { EPSG3857: { scale: () => 1 } },
+      latLng: (lat, lng) => ({ lat: +lat, lng: +lng }),
+      latLngBounds: (sw, ne) => ({ sw, ne }),
+      extend: Object.assign
+    }));
+
+    const geocoder = require('../src/geocoder');
+    const results = await geocoder.coordPreserving('https://nominatim.example/').geocode('BER');
+
+    expect(results[0].entrances).toHaveLength(2);
+    expect(results[0].entrances[0].type).toBe('main');
+  });
+
+  test('a typed coordinate keeps its exact position and is offered no entrances', async () => {
+    jest.doMock('leaflet', () => ({
+      Control: {
+        Geocoder: {
+          nominatim: jest.fn(() => ({
+            reverse: () => Promise.resolve([{
+              name: 'Flughafen Berlin Brandenburg',
+              center: { lat: 52.3657974, lng: 13.4888906 },
+              properties: { entrances: BER_ENTRANCES }
+            }])
+          }))
+        }
+      },
+      CRS: { EPSG3857: { scale: () => 1 } },
+      latLng: (lat, lng) => {
+        const obj = { lat: +lat, lng: +lng, toBounds: () => ({}) };
+        obj.wrap = () => obj;
+        return obj;
+      },
+      latLngBounds: (sw, ne) => ({ sw, ne }),
+      extend: Object.assign
+    }));
+
+    const geocoder = require('../src/geocoder');
+    const results = await geocoder.coordPreserving('https://nominatim.example/')
+      .geocode('52.3657974,13.4888906');
+
+    expect(results[0].center.lat).toBeCloseTo(52.3657974);
+    expect(results[0].entrances).toBeUndefined();
+  });
+});
+
+// Entrance nodes carry no geometry of their own, so the site they belong to is
+// outlined instead. Its polygon is fetched separately, never as part of search.

@@ -77,11 +77,18 @@ function announceRateLimit(msg) {
 geocoder.coordPreserving = function(nominatimUrl) {
   var nominatim;
   var normalizedNominatimUrl = typeof nominatimUrl === 'string' ? nominatimUrl.trim() : '';
+  // Nominatim only reports a place's entrance nodes when asked (`entrances=1`,
+  // supported since Nominatim 5.2 on /search and /reverse). Older instances
+  // ignore the parameter, so it is safe to send unconditionally.
+  var entranceParams = {
+    geocodingQueryParams: {entrances: 1},
+    reverseQueryParams: {entrances: 1}
+  };
   if (normalizedNominatimUrl.length > 0) {
-    nominatim = L.Control.Geocoder.nominatim({serviceUrl: normalizedNominatimUrl});
+    nominatim = L.Control.Geocoder.nominatim(L.extend({serviceUrl: normalizedNominatimUrl}, entranceParams));
   } else {
     // Preserve Leaflet-Control-Geocoder's default behavior when no URL provided
-    nominatim = L.Control.Geocoder.nominatim();
+    nominatim = L.Control.Geocoder.nominatim(L.extend({}, entranceParams));
   }
 
   // LRU cache persisted to localStorage when available.
@@ -166,6 +173,21 @@ geocoder.coordPreserving = function(nominatimUrl) {
                 out.bbox = r.bbox;
               }
             }
+            if (r.osmType) out.osmType = r.osmType;
+            if (r.osmId !== undefined) out.osmId = r.osmId;
+            if (Array.isArray(r.entrances)) {
+              out.entrances = r.entrances.map(function(e) {
+                var entry = {
+                  osmId: e.osmId,
+                  type: e.type,
+                  center: e.center ? {lat: e.center.lat, lng: e.center.lng} : null
+                };
+                // Without the tags a cached place silently loses its access
+                // rules and would offer doors the mode forbids.
+                if (e.tags) entry.tags = e.tags;
+                return entry;
+              });
+            }
             return out;
           })
         }];
@@ -205,6 +227,14 @@ geocoder.coordPreserving = function(nominatimUrl) {
                         if (!(r.center && typeof r.center.toBounds === 'function')) {
                           r.center = L.latLng(r.center.lat, r.center.lng);
                         }
+                      }
+                      // rehydrate entrance centers -> L.latLng
+                      if (r && Array.isArray(r.entrances)) {
+                        r.entrances.forEach(function(e) {
+                          if (e && e.center && e.center.lat !== undefined && e.center.lng !== undefined) {
+                            e.center = L.latLng(e.center.lat, e.center.lng);
+                          }
+                        });
                       }
                       // rehydrate bbox -> L.latLngBounds when possible
                       if (r && r.bbox) {
@@ -300,7 +330,7 @@ geocoder.coordPreserving = function(nominatimUrl) {
     };
   }
 
-  if (!globalNominatimCache) globalNominatimCache = createLRUCache('osrm_nominatim_cache_v1', 128, 24 * 60 * 60 * 1000);
+  if (!globalNominatimCache) globalNominatimCache = createLRUCache('osrm_nominatim_cache_v2', 128, 24 * 60 * 60 * 1000);
   var cache = globalNominatimCache;
   var supportsFetch = typeof fetch === 'function';
   var serviceBase = (normalizedNominatimUrl && normalizedNominatimUrl.length > 0) ? normalizedNominatimUrl.replace(/\/+$/, '') + '/' : 'https://nominatim.openstreetmap.org/';
@@ -318,7 +348,7 @@ geocoder.coordPreserving = function(nominatimUrl) {
   }
 
   function buildSearchUrl(query) {
-    return serviceBase + 'search?format=json&addressdetails=1&limit=5&q=' + encodeURIComponent(query);
+    return serviceBase + 'search?format=json&addressdetails=1&entrances=1&limit=5&q=' + encodeURIComponent(query);
   }
 
   function buildReverseUrl(latlng, scale) {
@@ -339,7 +369,53 @@ geocoder.coordPreserving = function(nominatimUrl) {
       }
     } catch (e) {}
     zoom = Math.max(0, Math.min(18, zoom));
-    return serviceBase + 'reverse?format=json&addressdetails=1&lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lon) + '&zoom=' + encodeURIComponent(zoom);
+    return serviceBase + 'reverse?format=json&addressdetails=1&entrances=1&lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lon) + '&zoom=' + encodeURIComponent(zoom);
+  }
+
+  // Normalizes Nominatim's `entrances` array into the shape the rest of the app
+  // uses. Returns null rather than an empty array so callers can treat "no
+  // entrance data" and "place has no entrances" identically.
+  //
+  // `tags` is the entrance node's own tag set, which Nominatim returns as
+  // `extratags` without being asked for it. It carries the OSM access keys —
+  // `access`, `foot`, `bicycle`, `motor_vehicle` — that say which modes may use
+  // a door, so it has to survive as far as the picker.
+  function parseEntrances(raw) {
+    if (!Array.isArray(raw)) return null;
+    var entrances = [];
+    raw.forEach(function(e) {
+      if (!e) return;
+      var lat = parseFloat(e.lat);
+      var lon = parseFloat(e.lon);
+      if (isNaN(lat) || isNaN(lon)) return;
+      var parsed = {
+        osmId: e.osm_id,
+        type: typeof e.type === 'string' ? e.type : 'yes',
+        center: L.latLng(lat, lon)
+      };
+      if (e.extratags && typeof e.extratags === 'object') parsed.tags = e.extratags;
+      entrances.push(parsed);
+    });
+    return entrances.length ? entrances : null;
+  }
+
+  // Lifts entrances out of the raw Nominatim payload that
+  // leaflet-control-geocoder preserves on `properties`. Used for the
+  // nominatim.geocode()/reverse() path, which maps results to {name, bbox,
+  // center, properties} and would otherwise drop the entrance list.
+  function attachPlaceDetails(results) {
+    if (!Array.isArray(results)) return results;
+    return results.map(function(r) {
+      if (!r || !r.properties) return r;
+      var extra = {};
+      if (!r.entrances) {
+        var entrances = parseEntrances(r.properties.entrances);
+        if (entrances) extra.entrances = entrances;
+      }
+      if (r.osmType === undefined && r.properties.osm_type) extra.osmType = r.properties.osm_type;
+      if (r.osmId === undefined && r.properties.osm_id !== undefined) extra.osmId = r.properties.osm_id;
+      return Object.keys(extra).length ? L.extend({}, r, extra) : r;
+    });
   }
 
   function parseSearchResults(json) {
@@ -354,11 +430,16 @@ geocoder.coordPreserving = function(nominatimUrl) {
           );
         }
       } catch (e) {}
-      return {
+      var result = {
         name: r.display_name || r.name || '',
         bbox: bbox,
         center: L.latLng(parseFloat(r.lat), parseFloat(r.lon))
       };
+      var entrances = parseEntrances(r.entrances);
+      if (entrances) result.entrances = entrances;
+      if (r.osm_type) result.osmType = r.osm_type;
+      if (r.osm_id !== undefined) result.osmId = r.osm_id;
+      return result;
     });
   }
 
@@ -398,7 +479,8 @@ geocoder.coordPreserving = function(nominatimUrl) {
 
     // Prefer using nominatim.geocode when available (helps tests that mock it).
     if (nominatim && typeof nominatim.geocode === 'function') {
-      return nominatim.geocode(query).then(function(results) {
+      return nominatim.geocode(query).then(function(rawResults) {
+        var results = attachPlaceDetails(rawResults);
         try {
           cache.set(url, results);
         } catch (e) {}
@@ -439,7 +521,8 @@ geocoder.coordPreserving = function(nominatimUrl) {
       setInputBgFromContext(context, 'white');
       basePromise = Promise.resolve(cached);
     } else if (nominatim && typeof nominatim.reverse === 'function') {
-      basePromise = nominatim.reverse(latlngWrapped, scale).then(function(results) {
+      basePromise = nominatim.reverse(latlngWrapped, scale).then(function(rawResults) {
+        var results = attachPlaceDetails(rawResults);
         try {
           cache.set(url, results);
         } catch (e) {}
@@ -475,11 +558,16 @@ geocoder.coordPreserving = function(nominatimUrl) {
               );
             }
           } catch (e) {}
-          var res = [{
+          var reverseResult = {
             name: json.display_name || json.name || '',
             bbox: bbox,
             center: L.latLng(parseFloat(json.lat), parseFloat(json.lon))
-          }];
+          };
+          var reverseEntrances = parseEntrances(json.entrances);
+          if (reverseEntrances) reverseResult.entrances = reverseEntrances;
+          if (json.osm_type) reverseResult.osmType = json.osm_type;
+          if (json.osm_id !== undefined) reverseResult.osmId = json.osm_id;
+          var res = [reverseResult];
           cache.set(url, res);
           setInputBgFromContext(context, 'white');
           return res;
@@ -510,10 +598,15 @@ geocoder.coordPreserving = function(nominatimUrl) {
     // Use scale corresponding to zoom level 18 (was hard-coded as 256 * 2^18 = 67108864)
     return doReverse(latlng, L.CRS.EPSG3857.scale(18), context).then(function(results) {
       if (results && results.length > 0) {
-        return [L.extend({}, results[0], {
+        var coordMatch = L.extend({}, results[0], {
           center: latlng,
           bbox: latlng.toBounds(1000)
-        })];
+        });
+        // A typed coordinate means "exactly here"; offering the entrances of
+        // whatever place happens to surround it would move the waypoint away
+        // from the point the user asked for.
+        delete coordMatch.entrances;
+        return [coordMatch];
       }
       return [{ name: query, center: latlng, bbox: latlng.toBounds(1000) }];
     }).catch(function() {
