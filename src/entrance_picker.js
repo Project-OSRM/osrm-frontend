@@ -35,6 +35,13 @@ var FIT_PADDING = 24;
 // Long enough to outlast Leaflet's default 250 ms pan/zoom animation.
 var SETTLE_TIMEOUT_MS = 450;
 
+// Labels live in their own pane, kept just below Leaflet's marker pane (600).
+// A zIndexOffset cannot do this job: Leaflet derives a marker's z-index from its
+// latitude, so a label on a northerly door still outranks a dot on a southerly
+// one however the offsets are set. A pane settles it for every marker at once.
+var LABEL_PANE = 'osrmEntranceLabels';
+var LABEL_PANE_Z_INDEX = 590;
+
 // Ties the chosen door back to the pin that stayed on the place. Dashed
 // throughout, and thinner than the route, so it never reads as something you can
 // travel along.
@@ -115,6 +122,60 @@ function buildChoices(placeCenter, entrances) {
   });
 }
 
+// Two label boxes touching edge-to-edge are not overlapping; only real overlap
+// counts, so labels may sit flush against each other.
+function boxesOverlap(a, b) {
+  return !(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top);
+}
+
+/**
+ * Groups labels that cannot all be shown at once.
+ *
+ * Overlap is transitive here: if A overlaps B and B overlaps C then all three
+ * become one group, even where A and C are clear of each other. Showing A and C
+ * but not B would be arbitrary, and the whole run has to collapse into one label
+ * for the result to be readable.
+ *
+ * @param {Array<{left: number, right: number, top: number, bottom: number}>} boxes
+ * @returns {Array<Array<number>>} indices, grouped; singletons are groups of one
+ */
+function clusterOverlappingLabels(boxes) {
+  if (!Array.isArray(boxes) || boxes.length === 0) return [];
+  // Union-find over the boxes.
+  var parent = boxes.map(function(_, i) {
+    return i;
+  });
+  function find(i) {
+    while (parent[i] !== i) {
+      parent[i] = parent[parent[i]];
+      i = parent[i];
+    }
+    return i;
+  }
+  function union(a, b) {
+    var ra = find(a);
+    var rb = find(b);
+    if (ra !== rb) parent[rb] = ra;
+  }
+  for (var i = 0; i < boxes.length - 1; i++) {
+    for (var j = i + 1; j < boxes.length; j++) {
+      if (boxes[i] && boxes[j] && boxesOverlap(boxes[i], boxes[j])) union(i, j);
+    }
+  }
+  // Preserve the original order, both of the groups and within them.
+  var groups = [];
+  var indexOfRoot = {};
+  boxes.forEach(function(_, k) {
+    var root = find(k);
+    if (indexOfRoot[root] === undefined) {
+      indexOfRoot[root] = groups.length;
+      groups.push([]);
+    }
+    groups[indexOfRoot[root]].push(k);
+  });
+  return groups;
+}
+
 // What to frame: the doors, and the place centre with them, because the
 // waypoint's pin sits there and has to stay in view alongside them.
 function choicePoints(choices, placeCenter) {
@@ -152,25 +213,53 @@ function choicePoints(choices, placeCenter) {
 function createEntrancePicker(map, options) {
   options = options || {};
   var onSelect = typeof options.onSelect === 'function' ? options.onSelect : function() {};
+  var translate = typeof options.translate === 'function' ? options.translate : function(key) {
+    return key;
+  };
   // Read live rather than captured once: the directions pane is still hidden
   // when the picker opens and slides in when the route arrives.
   var paneWidth = typeof options.paneWidth === 'function' ? options.paneWidth : function() {
     return 0;
   };
-  // Two groups, so each can be cleared without disturbing the other. Markers
+  // Three groups, so each can be cleared without disturbing the others. Markers
   // sit in Leaflet's marker pane and paths in the overlay pane, so the dots stay
   // above the dashed link whatever the draw order.
   //
   // The dashed link runs from the chosen door back to the pin, which never
   // moves.
   var linkLayer = L.layerGroup();
+  // Labels are markers of our own rather than Leaflet tooltips, for two
+  // reasons. The tooltip pane sits above the marker pane, so a label would be
+  // drawn over the very dot it names; as markers they share a pane with the
+  // dots, and a lower zIndexOffset puts every dot on top. And rebinding a
+  // permanent tooltip to re-measure it leaves the old element orphaned in the
+  // pane, whereas clearing a layer group really does remove what is in it.
+  var labelLayer = L.layerGroup();
   var markerLayer = L.layerGroup();
-  var layer = L.layerGroup([linkLayer, markerLayer]);
+  var layer = L.layerGroup([linkLayer, labelLayer, markerLayer]);
   var offer = null;
+  // What each dot currently drawn needs a label to say, in draw order: where it
+  // is, what it is called, whether it is the chosen one, and what clicking it
+  // does. Kept beside the markers rather than on them — Leaflet's marker is not
+  // ours to hang fields off — and label layout groups purely by overlap, so
+  // this is all it needs.
+  var renderedDoors = [];
   // Whether the layer and the document listener are in place. Tracked rather
   // than inferred from `offer`, because that is cleared before the teardown
   // runs.
   var attached = false;
+
+  // What a dot is called. A door that names itself in OSM says it better than
+  // this app could; the rest are described by what they are.
+  function label(choice) {
+    var named = entranceName(choice.entrance);
+    if (named) return named;
+    // An exit is only ever offered at an origin, and calling it an entrance
+    // there would contradict the reason it is on offer.
+    if (choice.entrance && choice.entrance.type === 'exit') return translate('Exit');
+    if (choice.kind === 'main') return translate('Main entrance');
+    return translate('Entrance');
+  }
 
   function onKeyDown(e) {
     if (e && e.key === 'Escape') hide();
@@ -182,17 +271,32 @@ function createEntrancePicker(map, options) {
   function render() {
     markerLayer.clearLayers();
     linkLayer.clearLayers();
-    if (!offer) return;
+    renderedDoors = [];
+    if (!offer) {
+      labelLayer.clearLayers();
+      return;
+    }
 
     offer.choices.forEach(function(choice) {
       var chosen = choice.id === offer.selectedId;
+      var text = label(choice);
       var className = 'osrm-entrance-marker osrm-entrance-marker-' + choice.kind +
         (chosen ? ' osrm-entrance-marker-selected' : '');
       var marker = L.marker(choice.center, {
         icon: L.divIcon({className: className, iconSize: [18, 18], iconAnchor: [9, 9], html: ''}),
-        alt: entranceName(choice.entrance) || '',
+        alt: text,
         keyboard: true,
         zIndexOffset: chosen ? 500 : 400
+      });
+      // The name travels beside the dot; layoutLabels turns it into a label the
+      // user can read without hovering, and click as a stand-in for the dot.
+      renderedDoors.push({
+        latLng: choice.center,
+        text: text,
+        selected: chosen,
+        select: function() {
+          select(choice);
+        }
       });
       marker.on('click', function(e) {
         // Without this the click also lands on the map, which would drop a
@@ -209,6 +313,131 @@ function createEntrancePicker(map, options) {
         linkLayer.addLayer(L.polyline([choice.center, offer.placeCenter], ENTRANCE_LINK_STYLE));
       }
     });
+
+    layoutLabels();
+  }
+
+  // Created lazily, because the picker may be built before the map has panes.
+  // Answers with the pane's name only once there really is a pane: naming one
+  // that does not exist would leave the label unplaced.
+  function ensureLabelPane() {
+    if (typeof map.createPane !== 'function' || typeof map.getPane !== 'function') return null;
+    var pane = map.getPane(LABEL_PANE);
+    if (!pane) {
+      pane = map.createPane(LABEL_PANE);
+      if (pane && pane.style) pane.style.zIndex = LABEL_PANE_Z_INDEX;
+    }
+    return pane ? LABEL_PANE : null;
+  }
+
+  // Which line of a label a click landed on, from the element under the
+  // pointer: the label's lines are its inner span's direct children, in the
+  // order of its entries. -1 when the click missed every line.
+  function clickedLineIndex(e) {
+    var target = e && e.originalEvent && e.originalEvent.target;
+    if (!target || !target.closest) return -1;
+    var line = target.closest('.osrm-entrance-label-inner > div');
+    if (!line || !line.parentNode) return -1;
+    return Array.prototype.indexOf.call(line.parentNode.children, line);
+  }
+
+  // These names come from OSM and would otherwise be read as markup. Escaped
+  // by hand rather than through a detached element, so the module needs no DOM
+  // of its own to build its markup.
+  function escapeText(value) {
+    return String(value === undefined || value === null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function labelLine(entry) {
+    return '<div' + (entry.selected ? ' class="osrm-entrance-label-selected"' : '') + '>' +
+      escapeText(entry.text) + '</div>';
+  }
+
+  // A label sits above the door it names, anchored on it. Zero-sized so the
+  // anchor is the door itself; the inner element does the drawing and is what
+  // gets measured.
+  //
+  // It is clickable, and clicking it does what clicking its door does. That is
+  // what makes a merged label usable: the doors it lists are the ones too close
+  // together to aim at, so their names are the only way to pick one apart. The
+  // label still sits beneath the dots, so a click that lands on a dot goes to
+  // the dot.
+  function addLabel(latLng, entries, merged) {
+    var options = {
+      icon: L.divIcon({
+        className: 'osrm-entrance-label' + (merged ? ' osrm-entrance-label-merged' : ''),
+        iconSize: null,
+        html: '<span class="osrm-entrance-label-inner">' +
+          entries.map(labelLine).join('') + '</span>'
+      }),
+      interactive: true,
+      keyboard: false,
+      zIndexOffset: 100
+    };
+    var pane = ensureLabelPane();
+    if (pane) options.pane = pane;
+    var marker = L.marker(latLng, options);
+    marker.on('click', function(e) {
+      // Same reason as on the dot: the map must not take this as a click.
+      L.DomEvent.stopPropagation(e);
+      // A single-door label is its door; a merged one picks the line clicked.
+      var index = entries.length === 1 ? 0 : clickedLineIndex(e);
+      var entry = entries[index];
+      if (entry && typeof entry.select === 'function') entry.select();
+    });
+    labelLayer.addLayer(marker);
+    return marker;
+  }
+
+  function labelBox(marker) {
+    var el = marker.getElement && marker.getElement();
+    var inner = el && el.querySelector && el.querySelector('.osrm-entrance-label-inner');
+    if (!inner || !inner.getBoundingClientRect) return null;
+    var r = inner.getBoundingClientRect();
+    return {left: r.left, right: r.right, top: r.top, bottom: r.bottom};
+  }
+
+  // Names are only worth showing permanently while they can be read. Where the
+  // boxes collide — which is a question of zoom, not of the data — the whole
+  // colliding run is replaced by one label listing every door in it, anchored on
+  // the first. Zooming in separates them and they come back individually.
+  function layoutLabels() {
+    if (!offer) return null;
+    var doors = renderedDoors;
+
+    // One label per door first, because their boxes are what the grouping is
+    // decided from.
+    labelLayer.clearLayers();
+    var labels = doors.map(function(door) {
+      return addLabel(door.latLng, [door], false);
+    });
+
+    var boxes = labels.map(labelBox);
+    if (boxes.some(function(b) {
+      return !b;
+    })) return null;
+
+    var groups = clusterOverlappingLabels(boxes);
+    if (groups.every(function(g) {
+      return g.length === 1;
+    })) return groups;
+
+    // At least one run collides, so the whole set is laid out again with those
+    // runs collapsed onto their first door.
+    labelLayer.clearLayers();
+    groups.forEach(function(group) {
+      addLabel(doors[group[0]].latLng,
+        group.map(function(i) {
+          return doors[i];
+        }),
+        group.length > 1);
+    });
+    return groups;
   }
 
   // Clicking the chosen door again releases it, which is how the route goes back
@@ -287,6 +516,12 @@ function createEntrancePicker(map, options) {
     if (!map.hasLayer(layer)) layer.addTo(map);
     render();
     focusViewWhenSettled();
+    // Which labels fit is a question of zoom, so the layout is redone after
+    // every one. Detached first because show() runs again on an already-open
+    // picker; Leaflet ignores a repeat registration of the same handler, but
+    // relying on that makes correctness here somebody else's.
+    map.off('zoomend', layoutLabels);
+    map.on('zoomend', layoutLabels);
     if (typeof document !== 'undefined') {
       document.removeEventListener('keydown', onKeyDown);
       document.addEventListener('keydown', onKeyDown);
@@ -298,7 +533,10 @@ function createEntrancePicker(map, options) {
     if (!attached) return;
     attached = false;
     offer = null;
+    renderedDoors = [];
+    map.off('zoomend', layoutLabels);
     linkLayer.clearLayers();
+    labelLayer.clearLayers();
     markerLayer.clearLayers();
     if (map.hasLayer(layer)) map.removeLayer(layer);
     if (typeof document !== 'undefined') {
@@ -310,6 +548,7 @@ function createEntrancePicker(map, options) {
     show: show,
     hide: hide,
     focusView: focusViewWhenSettled,
+    layoutLabels: layoutLabels,
     isOpen: function() {
       return !!offer;
     },
@@ -324,6 +563,8 @@ function createEntrancePicker(map, options) {
 
 module.exports = {
   routableEntrances: routableEntrances,
+  boxesOverlap: boxesOverlap,
+  clusterOverlappingLabels: clusterOverlappingLabels,
   entranceName: entranceName,
   waypointRole: waypointRole,
   buildChoices: buildChoices,

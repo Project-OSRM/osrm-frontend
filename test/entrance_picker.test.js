@@ -161,3 +161,53 @@ describe('choicePoints', () => {
     expect(picker.choicePoints(choices, null)).toHaveLength(1);
   });
 });
+
+describe('boxesOverlap', () => {
+  const box = (l, t, r, b) => ({ left: l, top: t, right: r, bottom: b });
+
+  test('boxes that share area overlap', () => {
+    expect(picker.boxesOverlap(box(0, 0, 40, 16), box(20, 0, 60, 16))).toBe(true);
+  });
+
+  test('boxes clear of each other do not', () => {
+    expect(picker.boxesOverlap(box(0, 0, 40, 16), box(100, 0, 140, 16))).toBe(false);
+    expect(picker.boxesOverlap(box(0, 0, 40, 16), box(0, 20, 40, 36))).toBe(false);
+  });
+
+  // Labels may sit flush against each other; only real overlap hides a name.
+  test('boxes touching edge to edge are not overlapping', () => {
+    expect(picker.boxesOverlap(box(0, 0, 40, 16), box(40, 0, 80, 16))).toBe(false);
+    expect(picker.boxesOverlap(box(0, 0, 40, 16), box(0, 16, 40, 32))).toBe(false);
+  });
+});
+
+describe('clusterOverlappingLabels', () => {
+  const box = (l, r) => ({ left: l, top: 0, right: r, bottom: 16 });
+
+  test('labels that all fit stay one to a door', () => {
+    const groups = picker.clusterOverlappingLabels([box(0, 40), box(100, 140), box(200, 240)]);
+    expect(groups).toEqual([[0], [1], [2]]);
+  });
+
+  test('a colliding pair becomes one group', () => {
+    expect(picker.clusterOverlappingLabels([box(0, 40), box(20, 60), box(200, 240)]))
+      .toEqual([[0, 1], [2]]);
+  });
+
+  // Showing A and C while hiding B would be arbitrary, so the whole run goes.
+  test('overlap is transitive: a run collapses even where its ends are clear', () => {
+    const groups = picker.clusterOverlappingLabels([box(0, 40), box(30, 70), box(60, 100)]);
+    expect(picker.boxesOverlap(box(0, 40), box(60, 100))).toBe(false);
+    expect(groups).toEqual([[0, 1, 2]]);
+  });
+
+  test('groups and their members keep the order the doors came in', () => {
+    expect(picker.clusterOverlappingLabels([box(200, 240), box(0, 40), box(20, 60)]))
+      .toEqual([[0], [1, 2]]);
+  });
+
+  test('nothing to lay out is not an error', () => {
+    expect(picker.clusterOverlappingLabels([])).toEqual([]);
+    expect(picker.clusterOverlappingLabels(null)).toEqual([]);
+  });
+});

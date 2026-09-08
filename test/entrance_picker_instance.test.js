@@ -40,6 +40,18 @@ jest.mock('leaflet', () => ({
     options: opts,
     handlers: {},
     getLatLng() { return this.latLng; },
+    // Mimics enough of the label element for the layout pass to measure it.
+    getElement() {
+      const html = (this.options.icon && this.options.icon.options.html) || '';
+      const text = html.replace(/<[^>]*>/g, '');
+      const boxes = require('./__label_boxes');
+      const box = boxes.get(text);
+      return {
+        querySelector: (sel) => (sel === '.osrm-entrance-label-inner' && box
+          ? { getBoundingClientRect: () => box }
+          : null)
+      };
+    },
     on(evt, fn) { this.handlers[evt] = fn; return this; },
     fire(evt, e) { this.handlers[evt] && this.handlers[evt](e || {}); }
   })
@@ -51,6 +63,9 @@ function makeMap() {
   return {
     _layers: [],
     _handlers: {},
+    _panes: {},
+    getPane(name) { return this._panes[name]; },
+    createPane(name) { this._panes[name] = { style: {} }; return this._panes[name]; },
     fitBounds: jest.fn(),
     on(evt, fn) { (this._handlers[evt] = this._handlers[evt] || []).push(fn); },
     off(evt, fn) {
@@ -82,7 +97,7 @@ function openPicker(showOpts, options) {
 
 // The picker's own layer group; its members are indexed by the helpers below.
 function pickerGroup(map) {
-  return map._layers.filter((l) => l._kind === 'layerGroup' && l._layers.length === 2)[0];
+  return map._layers.filter((l) => l._kind === 'layerGroup' && l._layers.length === 3)[0];
 }
 
 function links(map) {
@@ -90,9 +105,18 @@ function links(map) {
   return g ? g._layers[0]._layers : [];
 }
 
-function dots(map) {
+function labels(map) {
   const g = pickerGroup(map);
   return g ? g._layers[1]._layers : [];
+}
+
+function labelTexts(map) {
+  return labels(map).map((m) => m.options.icon.options.html.replace(/<[^>]*>/g, ''));
+}
+
+function dots(map) {
+  const g = pickerGroup(map);
+  return g ? g._layers[2]._layers : [];
 }
 
 beforeEach(() => jest.useFakeTimers());
@@ -315,5 +339,221 @@ describe('closing', () => {
     picker.hide();
     settle();
     expect(map.fitBounds).not.toHaveBeenCalled();
+  });
+});
+
+describe('label placement', () => {
+  const labelBoxes = require('./__label_boxes');
+  const box = (l, t, r, b) => ({ left: l, top: t, right: r, bottom: b });
+
+  const NAMED = [
+    { osmId: 1, type: 'main', center: { lat: 52.5209, lng: 13.3965 }, tags: { name: 'Nord' } },
+    { osmId: 2, type: 'yes', center: { lat: 52.5208, lng: 13.3970 }, tags: { name: 'Ost' } },
+    { osmId: 3, type: 'yes', center: { lat: 52.5207, lng: 13.3975 }, tags: { name: 'Sued' } }
+  ];
+
+  afterEach(() => labelBoxes.clear());
+
+  // Opens the picker with the given per-label boxes already in place, so the
+  // layout pass measures them as it runs.
+  function openWith(boxesByText, entrances) {
+    labelBoxes.set(boxesByText);
+    return openPicker({ entrances: entrances || NAMED });
+  }
+
+  const SPREAD = { Nord: box(0, 0, 40, 16), Ost: box(100, 0, 140, 16), Sued: box(200, 0, 240, 16) };
+  const COLLIDING = { Nord: box(0, 0, 40, 16), Ost: box(20, 0, 60, 16), Sued: box(200, 0, 240, 16) };
+
+  test('every door names itself when the labels all fit', () => {
+    const { map } = openWith(SPREAD);
+    expect(labelTexts(map)).toEqual(['Nord', 'Ost', 'Sued']);
+  });
+
+  test('an unnamed door is described by what it is', () => {
+    const { map } = openWith({ 'Main entrance': box(0, 0, 40, 16), Entrance: box(100, 0, 140, 16) },
+      [MAIN, SIDE]);
+    expect(labelTexts(map)).toEqual(['Main entrance', 'Entrance']);
+  });
+
+  test('an exit is labelled an exit, not an entrance', () => {
+    const exit = { osmId: 9, type: 'exit', center: MAIN.center };
+    const { map } = openWith({ Exit: box(0, 0, 40, 16) }, [exit]);
+    expect(labelTexts(map)).toEqual(['Exit']);
+  });
+
+  test('the wording goes through the translator', () => {
+    labelBoxes.set({ Haupteingang: box(0, 0, 60, 16) });
+    const { map } = openPicker({ entrances: [MAIN] },
+      { translate: (key) => ({ 'Main entrance': 'Haupteingang' })[key] || key });
+    expect(labelTexts(map)).toEqual(['Haupteingang']);
+  });
+
+  test('a colliding run collapses into one label listing every door in it', () => {
+    const { map } = openWith(COLLIDING);
+    // Two labels now: the merged run, and the one that still fits.
+    expect(labelTexts(map)).toEqual(['NordOst', 'Sued']);
+  });
+
+  test('the merged label is marked as such, and anchored on the first door', () => {
+    const { map } = openWith(COLLIDING);
+    const merged = labels(map)[0];
+    expect(merged.options.icon.options.className).toContain('osrm-entrance-label-merged');
+    expect(merged.latLng).toBe(NAMED[0].center);
+    expect(labels(map)[1].options.icon.options.className)
+      .not.toContain('osrm-entrance-label-merged');
+  });
+
+  test('everything colliding at once becomes a single label', () => {
+    const { map } = openWith({
+      Nord: box(0, 0, 40, 16), Ost: box(30, 0, 70, 16), Sued: box(60, 0, 100, 16)
+    });
+    expect(labelTexts(map)).toEqual(['NordOstSued']);
+  });
+
+  test('labels are drawn beneath the dots, in a pane of their own', () => {
+    const { map } = openWith(SPREAD);
+    expect(map._panes.osrmEntranceLabels).toBeTruthy();
+    expect(labels(map).every((m) => m.options.pane === 'osrmEntranceLabels')).toBe(true);
+    expect(labels(map).every((m) => m.options.zIndexOffset < dots(map)[0].options.zIndexOffset))
+      .toBe(true);
+  });
+
+  test('the pane is made once and reused', () => {
+    const { map, picker } = openWith(SPREAD);
+    const pane = map._panes.osrmEntranceLabels;
+    picker.layoutLabels();
+    expect(map._panes.osrmEntranceLabels).toBe(pane);
+  });
+
+  test('a map that cannot make the pane still gets its labels', () => {
+    labelBoxes.set(SPREAD);
+    const map = makeMap();
+    map.createPane = () => null;
+    const picker = entrancePicker.createEntrancePicker(map, {});
+    picker.show({ waypointIndex: 1, placeCenter: CENTRE, entrances: NAMED });
+    expect(labels(map)).toHaveLength(3);
+    // Never a pane name that names nothing.
+    expect(labels(map).every((m) => m.options.pane === undefined)).toBe(true);
+  });
+
+  test('names go in as text, so OSM cannot inject markup', () => {
+    const nasty = '<img src=x onerror=alert(1)>';
+    const { map } = openWith(
+      { [nasty]: box(0, 0, 40, 16), Ost: box(100, 0, 140, 16) },
+      [Object.assign({}, NAMED[0], { tags: { name: nasty } }), NAMED[1]]
+    );
+    const html = labels(map)[0].options.icon.options.html;
+    expect(html).not.toContain('<img');
+    expect(html).toContain('&lt;img');
+  });
+
+  test('quotes and ampersands in a name are escaped too', () => {
+    const name = 'Tor "A" & B';
+    const { map } = openWith({ [name]: box(0, 0, 40, 16) },
+      [Object.assign({}, NAMED[0], { tags: { name: name } })]);
+    const html = labels(map)[0].options.icon.options.html;
+    expect(html).toContain('&amp;');
+    expect(html).toContain('&quot;');
+    expect(html).not.toContain('"A"');
+  });
+
+  test('gives up rather than guessing when a label cannot be measured', () => {
+    // Nothing measurable: the layout pass leaves one label per door.
+    const { map } = openWith({});
+    expect(labelTexts(map)).toEqual(['Nord', 'Ost', 'Sued']);
+  });
+
+  test('a zoom lays the labels out again, because which ones fit is a zoom question', () => {
+    const { map } = openWith(SPREAD);
+    expect(labelTexts(map)).toEqual(['Nord', 'Ost', 'Sued']);
+    labelBoxes.set(COLLIDING);
+    map.fire('zoomend');
+    expect(labelTexts(map)).toEqual(['NordOst', 'Sued']);
+  });
+
+  test('closing leaves no labels behind and stops relaying them out', () => {
+    const { map, picker } = openWith(SPREAD);
+    const group = pickerGroup(map);
+    picker.hide();
+    expect(group._layers[1]._layers).toHaveLength(0);
+    expect(map._handlers.zoomend || []).toHaveLength(0);
+  });
+});
+
+describe('clicking a label', () => {
+  const labelBoxes = require('./__label_boxes');
+  const box = (l, t, r, b) => ({ left: l, top: t, right: r, bottom: b });
+
+  const NAMED = [
+    { osmId: 1, type: 'main', center: { lat: 52.5209, lng: 13.3965 }, tags: { name: 'Nord' } },
+    { osmId: 2, type: 'yes', center: { lat: 52.5208, lng: 13.3970 }, tags: { name: 'Ost' } }
+  ];
+
+  afterEach(() => labelBoxes.clear());
+
+  // A merged label's lines are the inner span's children; a click carries the
+  // element it landed on, which knows its parent's children.
+  function lineTarget(lineIndex, lineCount) {
+    const lines = [];
+    for (let i = 0; i < lineCount; i++) lines.push({ parentNode: null });
+    const parent = { children: lines };
+    lines.forEach((line) => { line.parentNode = parent; });
+    return { closest: (sel) => (sel === '.osrm-entrance-label-inner > div' ? lines[lineIndex] : null) };
+  }
+
+  test('a label stands in for its door', () => {
+    labelBoxes.set({ Nord: box(0, 0, 40, 16), Ost: box(100, 0, 140, 16) });
+    const { map, onSelect } = openPicker({ entrances: NAMED });
+    labels(map)[1].fire('click', { originalEvent: { target: {} } });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect.mock.calls[0][0].entrance).toBe(NAMED[1]);
+  });
+
+  test('the click does not fall through to the map', () => {
+    const L = require('leaflet');
+    labelBoxes.set({ Nord: box(0, 0, 40, 16), Ost: box(100, 0, 140, 16) });
+    const { map } = openPicker({ entrances: NAMED });
+    L.DomEvent.stopPropagation.mockClear();
+    const event = { originalEvent: { target: {} } };
+    labels(map)[0].fire('click', event);
+    expect(L.DomEvent.stopPropagation).toHaveBeenCalledWith(event);
+  });
+
+  // The doors in a merged label are the ones too close together to aim at, so
+  // its lines are the only way to reach them.
+  test('a line of a merged label picks that door', () => {
+    labelBoxes.set({ Nord: box(0, 0, 40, 16), Ost: box(20, 0, 60, 16) });
+    const { map, onSelect } = openPicker({ entrances: NAMED });
+    expect(labelTexts(map)).toEqual(['NordOst']);
+    labels(map)[0].fire('click', { originalEvent: { target: lineTarget(1, 2) } });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect.mock.calls[0][0].entrance).toBe(NAMED[1]);
+  });
+
+  test('a click that misses every line picks nothing', () => {
+    labelBoxes.set({ Nord: box(0, 0, 40, 16), Ost: box(20, 0, 60, 16) });
+    const { map, onSelect } = openPicker({ entrances: NAMED });
+    labels(map)[0].fire('click', { originalEvent: { target: { closest: () => null } } });
+    labels(map)[0].fire('click', {});
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  test('the chosen door\'s line is marked, and unmarked when it is released', () => {
+    labelBoxes.set({ Nord: box(0, 0, 40, 16), Ost: box(20, 0, 60, 16) });
+    const { map } = openPicker({ entrances: NAMED });
+    dots(map)[1].fire('click');
+    const html = labels(map)[0].options.icon.options.html;
+    expect(html).toContain('<div>Nord</div>');
+    expect(html).toContain('<div class="osrm-entrance-label-selected">Ost</div>');
+
+    dots(map)[1].fire('click');
+    expect(labels(map)[0].options.icon.options.html)
+      .not.toContain('osrm-entrance-label-selected');
+  });
+
+  test('labels do not take keyboard focus, which stays with the dots', () => {
+    labelBoxes.set({ Nord: box(0, 0, 40, 16), Ost: box(100, 0, 140, 16) });
+    const { map } = openPicker({ entrances: NAMED });
+    expect(labels(map).every((m) => m.options.keyboard === false)).toBe(true);
   });
 });
