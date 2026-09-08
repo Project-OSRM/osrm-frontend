@@ -57,6 +57,56 @@ var streets = L.tileLayer(cartoVoyagerUrl(), {
   small_components = L.tileLayer('https://tools.geofabrik.de/osmi/tiles/routing/{z}/{x}/{y}.png', {});
 
 /**
+ * Build the custom base layer described by `OSRM_TILE_URL`, if one is configured.
+ *
+ * A self-hosted or offline deployment cannot reach the public tile providers the
+ * built-in layers point at, so `OSRM_TILE_URL` lets it name its own tile server
+ * without patching this file and rebuilding. `OSRM_TILE_NAME` sets the label in
+ * the layer control and `OSRM_TILE_ATTRIBUTION` the attribution text; tiles from
+ * a private server are usually OSM-derived, so the OSM credit is the default.
+ *
+ * The URL must be an absolute http(s), protocol-relative, or root-relative
+ * template carrying the `{z}`, `{x}` and `{y}` placeholders Leaflet substitutes.
+ * Anything else is rejected with a warning rather than added as a layer that
+ * would silently render nothing.
+ *
+ * @returns {?L.TileLayer} the configured layer, or `null` when unconfigured or invalid
+ */
+function customTileLayer() {
+  var url = config.OSRM_TILE_URL;
+  if (typeof url !== 'string' || !url.trim()) return null;
+  url = url.trim();
+
+  if (!/^(https?:)?\/\/|^\//.test(url)) {
+    console.warn('Ignoring OSRM_TILE_URL: expected an http(s), protocol-relative or root-relative URL, got ' + url);
+    return null;
+  }
+  if (!(/\{z\}/.test(url) && /\{x\}/.test(url) && /\{y\}/.test(url))) {
+    console.warn('Ignoring OSRM_TILE_URL: the template is missing one of the {z}, {x}, {y} placeholders: ' + url);
+    return null;
+  }
+
+  var attribution = config.OSRM_TILE_ATTRIBUTION;
+  return L.tileLayer(url, {
+    attribution: (typeof attribution === 'string' && attribution.trim()) ? attribution.trim() : osmAttribution,
+    maxZoom: 19
+  });
+}
+
+/**
+ * The label the custom layer carries in the layer control.
+ *
+ * @returns {string} `OSRM_TILE_NAME` when set, otherwise `'Custom'`
+ */
+function customTileLayerName() {
+  var name = config.OSRM_TILE_NAME;
+  return (typeof name === 'string' && name.trim()) ? name.trim() : 'Custom';
+}
+
+var custom = customTileLayer();
+var customName = customTileLayerName();
+
+/**
  * Parse center coordinates from the runtime config (`OSRM_CENTER` env var).
  *
  * Accepts a comma- or space-separated "lat,lng" string. Falls back to
@@ -383,14 +433,16 @@ function getLanguage() {
 /**
  * Get the default base tile layer name from the runtime config (`OSRM_DEFAULT_LAYER` env var).
  *
- * Returns the configured value, or `'streets'` (CartoDB Voyager) when unset.
- * Key validation (and fallback for unrecognized values) happens at the call
- * site via `layerMap[getDefaultLayer()] || streets`.
+ * Returns the configured value; when unset it falls back to `'custom'` if
+ * `OSRM_TILE_URL` supplied one — a deployment that names its own tile server
+ * usually cannot reach the public providers either — and to `'streets'`
+ * (CartoDB Voyager) otherwise. Key validation (and fallback for unrecognized
+ * values) happens at the call site via `layerMap[getDefaultLayer()] || streets`.
  *
  * @returns {string} The default layer key (default `'streets'`).
  */
 function getDefaultLayer() {
-  return config.OSRM_DEFAULT_LAYER || 'streets';
+  return config.OSRM_DEFAULT_LAYER || (custom ? 'custom' : 'streets');
 }
 
 /**
@@ -407,6 +459,24 @@ var layerMap = {
   osm: osm,
   osm_de: osm_de
 };
+if (custom) layerMap.custom = custom;
+
+/**
+ * Base tile layers keyed by the label they carry in the layer control.
+ *
+ * A configured custom layer is appended last, and replaces a built-in entry
+ * when `OSRM_TILE_NAME` reuses its label.
+ *
+ * @type {Object<string, L.TileLayer>}
+ */
+var baseLayers = {
+  'Streets': streets,
+  'Outdoors': outdoors,
+  'Satellite': satellite,
+  'openstreetmap.org': osm,
+  'openstreetmap.de': osm_de
+};
+if (custom) baseLayers[customName] = custom;
 
 var defaultLayer = layerMap[getDefaultLayer()] || streets;
 
@@ -470,7 +540,10 @@ function buildServices() {
  * | `OSRM_CENTER`          | `38.8995,-77.0269`               | Comma-separated "lat,lng" for the initial map center. |
  * | `OSRM_ZOOM`            | `13`                             | Initial zoom level (0–18). |
  * | `OSRM_LANGUAGE`        | (browser language → `'en'`)      | UI language override. |
- * | `OSRM_DEFAULT_LAYER`   | `'streets'`                      | Default base layer key: `streets`, `outdoors`, `satellite`, `osm`, or `osm_de`. |
+ * | `OSRM_DEFAULT_LAYER`   | `'streets'`                      | Default base layer key: `streets`, `outdoors`, `satellite`, `osm`, `osm_de`, or `custom` when `OSRM_TILE_URL` is set. |
+ * | `OSRM_TILE_URL`        | —                                | Tile URL template (with `{z}`, `{x}`, `{y}`) for a self-hosted or offline tile server. Adds a `custom` base layer and, unless `OSRM_DEFAULT_LAYER` says otherwise, selects it. |
+ * | `OSRM_TILE_NAME`       | `'Custom'`                       | Label for the `OSRM_TILE_URL` layer in the layer control. |
+ * | `OSRM_TILE_ATTRIBUTION`| (OpenStreetMap credit)           | Attribution text for the `OSRM_TILE_URL` layer. |
  * | `OSRM_LABEL`           | `'Car (fastest)'`                | Label for the default routing service. |
  * | `OSRM_ENVIRONMENT`     | —                                | Set to `'docker'` to use Docker-mode backend defaults. |
  * | `OSRM_CARTO_KEY`       | — (bundled key on project-osrm.org) | CARTO Basemaps key for the Streets layer. Without one CARTO watermarks the tiles; they still render. |
@@ -532,21 +605,19 @@ var leafletOptions = {
    * - **Satellite** — ESRI World Imagery (max zoom 19)
    * - **openstreetmap.org** — Standard OSM tile layer
    * - **openstreetmap.de** — German OSM tile layer
+   * - **Custom** — only present when `OSRM_TILE_URL` names a tile server
+   *   (labelled by `OSRM_TILE_NAME`)
    *
-   * **Customizing:** To add or replace base layers, define a `L.tileLayer`
-   * and add an entry to this object. To change the *default* layer, set
+   * **Customizing:** A self-hosted or offline deployment should point
+   * `OSRM_TILE_URL` at its own tile server rather than edit this file. To add
+   * or replace base layers at source level, define a `L.tileLayer` and add an
+   * entry to `baseLayers`. To change the *default* layer, set
    * `OSRM_DEFAULT_LAYER` to one of the layer keys (`layerMap` in this file)
    * or edit `defaultState.layer`.
    *
    * @type {Array<Object<string, L.TileLayer>>}
    */
-  layer: [{
-    'Streets': streets,
-    'Outdoors': outdoors,
-    'Satellite': satellite,
-    'openstreetmap.org': osm,
-    'openstreetmap.de': osm_de
-  }],
+  layer: [baseLayers],
   /**
    * Togglable overlay tile layers shown in the Leaflet layer control.
    *

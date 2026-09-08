@@ -11,6 +11,17 @@ OSRM_ENVIRONMENT="${OSRM_ENVIRONMENT:-docker}"
 # Empty by default: a self-hosted deployment gets watermarked CARTO tiles until
 # it supplies a key of its own.
 OSRM_CARTO_KEY="${OSRM_CARTO_KEY:-}"
+# Empty by default: only a deployment with its own tile server sets these.
+OSRM_TILE_URL="${OSRM_TILE_URL:-}"
+OSRM_TILE_NAME="${OSRM_TILE_NAME:-}"
+OSRM_TILE_ATTRIBUTION="${OSRM_TILE_ATTRIBUTION:-}"
+
+# A deployment naming its own tile server usually cannot reach the public
+# providers either, so make that layer the default unless the operator picked
+# one. "streets" is the image default, so it reads as "not specified" here.
+if [ -n "$OSRM_TILE_URL" ] && [ "$OSRM_DEFAULT_LAYER" = "streets" ]; then
+  OSRM_DEFAULT_LAYER=custom
+fi
 
 # Validate OSRM_ZOOM is numeric (for valid JSON output)
 case "$OSRM_ZOOM" in
@@ -65,6 +76,9 @@ cat > /usr/share/nginx/html/config.json << EOF
   "OSRM_DEFAULT_LAYER": "$(escape_json "$OSRM_DEFAULT_LAYER")",
   "OSRM_ENVIRONMENT": "$(escape_json "$OSRM_ENVIRONMENT")",
   "OSRM_CARTO_KEY": "$(escape_json "$OSRM_CARTO_KEY")",
+  "OSRM_TILE_URL": "$(escape_json "$OSRM_TILE_URL")",
+  "OSRM_TILE_NAME": "$(escape_json "$OSRM_TILE_NAME")",
+  "OSRM_TILE_ATTRIBUTION": "$(escape_json "$OSRM_TILE_ATTRIBUTION")",
   "OSRM_MODES": "$(escape_json "$MODES_JSON")"
 }
 EOF
