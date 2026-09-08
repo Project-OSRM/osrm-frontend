@@ -43,7 +43,7 @@ describe('geocoder.coordPreserving', () => {
     expect(reverseMock).toHaveBeenCalled();
   });
 
-  test('invokes L.Control.Geocoder.nominatim() with no args when nominatimUrl omitted', () => {
+  test('keeps the default endpoint, and still asks for entrances, when no URL is given', () => {
     const reverseMock = jest.fn(() => Promise.resolve([]));
     const geocodeMock = jest.fn(() => Promise.resolve([]));
     const nominatimFactory = jest.fn(() => ({ reverse: reverseMock, geocode: geocodeMock }));
