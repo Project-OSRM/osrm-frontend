@@ -71,7 +71,8 @@ function entranceWaypointName(placeName, entrance, translate) {
  *   so switching between car, bike and foot re-applies the access rules
  * @param {function} [options.createPicker] — injection seam for tests
  * @returns {{onGeocodeResult: function, applySelection: function,
- *   refresh: function, hide: function, isOpen: function, claimView: function,
+ *   refresh: function, spliceWaypoints: function, hideWaypoint: function,
+ *   hide: function, isOpen: function, claimView: function,
  *   waypointName: function}}
  */
 function createEntranceWaypoints(options) {
@@ -85,9 +86,12 @@ function createEntranceWaypoints(options) {
   var mode = typeof options.mode === 'function' ? options.mode : function() {
     return null;
   };
-  // The last geocoding result seen, kept so a change of travel mode can
-  // re-apply the filters without a fresh geocode.
-  var lastEvent = null;
+  // The last geocoding result seen for each waypoint, kept so a change of
+  // travel mode or of the waypoint's role can re-apply the filters without a
+  // fresh geocode. Keyed by waypoint index, because several waypoints can be
+  // showing their doors at once; each entry holds the event and the role it was
+  // last filtered under, so a role change can be told from a mere renumbering.
+  var lastEvents = {};
   // Set when a geocode opens an offer and the picker frames its doors. The
   // route that follows would otherwise be fitted over that framing; index.js
   // asks for the claim once per route and stands down if it is set.
@@ -148,7 +152,12 @@ function createEntranceWaypoints(options) {
     // access tags.
     var count = plan && plan._waypoints ? plan._waypoints.length : 0;
     var role = entrancePicker.waypointRole(e.waypointIndex, count);
-    lastEvent = e;
+    // A copy of our own: `spliceWaypoints` renumbers the index it carries, and
+    // the event LRM fired belongs to LRM and its other listeners.
+    lastEvents[e.waypointIndex] = {
+      event: {waypointIndex: e.waypointIndex, waypoint: e.waypoint, value: e.value},
+      role: role
+    };
     // Read once: the mode is live, and filtering the doors by one value while
     // marking them for another would mark a door the filter had just judged on
     // different terms.
@@ -157,7 +166,10 @@ function createEntranceWaypoints(options) {
       ? entrancePicker.routableEntrances(result.entrances, role, activeMode)
       : [];
     if (!entrances.length) {
-      picker.hide();
+      // Only this waypoint's dots go. Naming a start with no doors of its own
+      // must not withdraw the destination's — that is the whole reason offers
+      // are per-waypoint.
+      picker.hideWaypoint(e.waypointIndex);
       return false;
     }
 
@@ -175,26 +187,114 @@ function createEntranceWaypoints(options) {
     return shown;
   }
 
-  // Re-applies the filters to the place last geocoded. Switching from foot to
+  // Re-applies the filters to every place remembered. Switching from foot to
   // car can forbid the very door a waypoint sits on, and can equally make one
-  // usable that was not, so this runs whether or not the offer is currently on
+  // usable that was not, so this runs whether or not an offer is currently on
   // screen — a place whose doors are all shut to cars comes back when the
-  // traveller switches to walking. It is `hide()` that ends an offer for good,
-  // by forgetting the place along with it.
+  // traveller switches to walking. It is `hide()` and `hideWaypoint()` that end
+  // an offer for good, by forgetting the place along with it.
   //
   // The redraw stays where it is: the user asked for a different profile, not
   // to be taken back to the doors.
   function refresh() {
-    if (!lastEvent) return false;
-    return onGeocodeResult(lastEvent, false);
+    var any = false;
+    Object.keys(lastEvents).forEach(function(key) {
+      if (onGeocodeResult(lastEvents[key].event, false)) any = true;
+    });
+    return any;
+  }
+
+  // Where a waypoint that was spliced out has reappeared among the ones spliced
+  // in, or -1 if it is genuinely gone. LRM's reverse button replaces the whole
+  // list — spliceWaypoints(0, length, ...the same waypoint objects, reordered)
+  // — so "removed" and "added" overlap, and only object identity tells a real
+  // removal from a waypoint that merely changed places. LRM passes a waypoint
+  // through untouched when it already has a `latLng`, so the objects survive.
+  function addedIndexOf(added, waypoint) {
+    if (!waypoint || !added) return -1;
+    for (var i = 0; i < added.length; i++) {
+      if (added[i] === waypoint) return i;
+    }
+    return -1;
+  }
+
+  /**
+   * Follows a splice of the waypoint list, keeping the remembered results lined
+   * up with the waypoints they belong to. Without this a refresh after a splice
+   * would re-offer a place against the wrong waypoint.
+   *
+   * A splice can also change what a waypoint *is*: reversing start and
+   * destination, or adding one after it so it becomes a via. Which doors are on
+   * offer follows directly from that role — an entrance=exit can be left
+   * through but not entered — so every waypoint whose role changed is
+   * re-filtered against the result already remembered for it. Without this,
+   * reversing a route left a door that is only valid at the new end unoffered
+   * until the address was typed again.
+   */
+  function spliceWaypoints(e) {
+    var index = e && typeof e.index === 'number' ? e.index : 0;
+    var removed = e && typeof e.nRemoved === 'number' ? e.nRemoved : 0;
+    var addedList = e && e.added ? e.added : [];
+    var added = addedList.length;
+    var delta = added - removed;
+    var moved = {};
+    Object.keys(lastEvents).forEach(function(key) {
+      var at = Number(key);
+      var record = lastEvents[key];
+      var to;
+      if (at < index) {
+        // Untouched: it sits before the splice.
+        moved[at] = record;
+        return;
+      }
+      if (at < index + removed) {
+        var reAdded = addedIndexOf(addedList, record.event && record.event.waypoint);
+        // Its waypoint is gone, and so is the place it belonged to.
+        if (reAdded === -1) return;
+        to = index + reAdded;
+        // Its offer is inside the range spliceOffers is about to clear, and
+        // spliceOffers cannot tell a waypoint that moved from one that went.
+        // Whatever its role does, the offer has to be put back.
+        record.reoffer = true;
+      } else {
+        to = at + delta;
+      }
+      // The event carries the index the picker is keyed by, so it has to move
+      // with it. The event is ours — a copy made when it was remembered.
+      if (record.event) record.event.waypointIndex = to;
+      moved[to] = record;
+    });
+    lastEvents = moved;
+    // Renumber the offers first, so the re-offering below lands on the indexes
+    // the waypoints now have.
+    picker.spliceOffers(index, removed, added);
+
+    var count = plan && plan._waypoints ? plan._waypoints.length : 0;
+    Object.keys(lastEvents).forEach(function(key) {
+      var record = lastEvents[key];
+      if (!record || !record.event) return;
+      var role = entrancePicker.waypointRole(Number(key), count);
+      var reoffer = record.reoffer;
+      delete record.reoffer;
+      // A role change alters which doors are on offer; a waypoint carried
+      // through the removed range has had its offer cleared and needs it back
+      // whether or not its role moved with it.
+      if (!reoffer && role === record.role) return;
+      onGeocodeResult(record.event, false);
+    });
   }
 
   return {
     onGeocodeResult: onGeocodeResult,
     applySelection: applySelection,
     refresh: refresh,
+    spliceWaypoints: spliceWaypoints,
+    hideWaypoint: function(waypointIndex) {
+      delete lastEvents[waypointIndex];
+      picker.hideWaypoint(waypointIndex);
+    },
     hide: function() {
-      lastEvent = null;
+      lastEvents = {};
       picker.hide();
     },
     isOpen: function() {

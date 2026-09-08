@@ -326,7 +326,8 @@ function choicePoints(choices, placeCenter) {
  * change of travel mode re-filters the doors already on screen, and the user
  * did not ask to be taken to them.
  * @returns {{show: function, hide: function, focusView: function,
- *   isOpen: function, getWaypointIndex: function, getSelectedId: function}}
+ *   hideWaypoint: function, spliceOffers: function, isOpen: function,
+ *   isOpenFor: function, getWaypointIndex: function, getSelectedId: function}}
  */
 function createEntrancePicker(map, options) {
   options = options || {};
@@ -355,7 +356,13 @@ function createEntrancePicker(map, options) {
   var labelLayer = L.layerGroup();
   var markerLayer = L.layerGroup();
   var layer = L.layerGroup([linkLayer, labelLayer, markerLayer]);
-  var offer = null;
+  // One offer per waypoint. More than one waypoint can be showing its doors at
+  // once: naming a start must not withdraw the destination's, which is what a
+  // single shared offer did.
+  var offers = [];
+  // The offer the view frames: the one shown most recently, which is the one
+  // the user is looking at. Escape is not scoped to it — that clears them all.
+  var activeWaypointIndex = null;
   // What each dot currently drawn needs a label to say, in draw order: where it
   // is, what it is called, whether it is the chosen one, and what clicking it
   // does. Kept beside the markers rather than on them — Leaflet's marker is not
@@ -379,6 +386,17 @@ function createEntrancePicker(map, options) {
     return translate('Entrance');
   }
 
+  function offerAt(waypointIndex) {
+    for (var i = 0; i < offers.length; i++) {
+      if (offers[i].waypointIndex === waypointIndex) return offers[i];
+    }
+    return null;
+  }
+
+  function activeOffer() {
+    return activeWaypointIndex === null ? null : offerAt(activeWaypointIndex);
+  }
+
   function onKeyDown(e) {
     if (e && e.key === 'Escape') hide();
   }
@@ -390,51 +408,53 @@ function createEntrancePicker(map, options) {
     markerLayer.clearLayers();
     linkLayer.clearLayers();
     renderedDoors = [];
-    if (!offer) {
+    if (!offers.length) {
       labelLayer.clearLayers();
       return;
     }
 
-    offer.choices.forEach(function(choice) {
-      var chosen = choice.id === offer.selectedId;
-      var text = label(choice);
-      var mark = entranceMark(choice.entrance, offer.mode);
-      var className = 'osrm-entrance-marker osrm-entrance-marker-' + choice.kind +
+    offers.forEach(function(offer) {
+      offer.choices.forEach(function(choice) {
+        var chosen = choice.id === offer.selectedId;
+        var text = label(choice);
+        var mark = entranceMark(choice.entrance, offer.mode);
+        var className = 'osrm-entrance-marker osrm-entrance-marker-' + choice.kind +
         (chosen ? ' osrm-entrance-marker-selected' : '');
-      var marker = L.marker(choice.center, {
-        icon: L.divIcon({className: className, iconSize: [18, 18], iconAnchor: [9, 9], html: ''}),
-        // The label shows this as an icon; the alt spells it out, because the
-        // icon is marked aria-hidden and would otherwise be announced as
-        // nothing at all.
-        alt: mark ? text + ' (' + translate(mark.label) + ')' : text,
-        keyboard: true,
-        zIndexOffset: chosen ? 500 : 400
-      });
-      // The name travels beside the dot; layoutLabels turns it into a label the
-      // user can read without hovering, and click as a stand-in for the dot.
-      renderedDoors.push({
-        latLng: choice.center,
-        text: text,
-        mark: mark,
-        selected: chosen,
-        select: function() {
-          select(choice);
-        }
-      });
-      marker.on('click', function(e) {
+        var marker = L.marker(choice.center, {
+          icon: L.divIcon({className: className, iconSize: [18, 18], iconAnchor: [9, 9], html: ''}),
+          // The label shows this as an icon; the alt spells it out, because the
+          // icon is marked aria-hidden and would otherwise be announced as
+          // nothing at all.
+          alt: mark ? text + ' (' + translate(mark.label) + ')' : text,
+          keyboard: true,
+          zIndexOffset: chosen ? 500 : 400
+        });
+        // The name travels beside the dot; layoutLabels turns it into a label the
+        // user can read without hovering, and click as a stand-in for the dot.
+        renderedDoors.push({
+          latLng: choice.center,
+          text: text,
+          mark: mark,
+          selected: chosen,
+          select: function() {
+            select(offer, choice);
+          }
+        });
+        marker.on('click', function(e) {
         // Without this the click also lands on the map, which would drop a
         // new waypoint on top of the place being chosen for.
-        L.DomEvent.stopPropagation(e);
-        select(choice);
-      });
-      markerLayer.addLayer(marker);
+          L.DomEvent.stopPropagation(e);
+          select(offer, choice);
+        });
+        markerLayer.addLayer(marker);
 
-      // The pin stays on the place, so the chosen door is tied back to it with a
-      // dashed line: the route runs to the door, and this is the last bit on
-      // foot that no router can describe.
-      if (chosen && offer.placeCenter) {
-        linkLayer.addLayer(L.polyline([choice.center, offer.placeCenter], ENTRANCE_LINK_STYLE));
-      }
+        // The pin stays on the place, so the chosen door is tied back to it with a
+        // dashed line: the route runs to the door, and this is the last bit on
+        // foot that no router can describe.
+        if (chosen && offer.placeCenter) {
+          linkLayer.addLayer(L.polyline([choice.center, offer.placeCenter], ENTRANCE_LINK_STYLE));
+        }
+      });
     });
 
     layoutLabels();
@@ -536,7 +556,7 @@ function createEntrancePicker(map, options) {
   // colliding run is replaced by one label listing every door in it, anchored on
   // the first. Zooming in separates them and they come back individually.
   function layoutLabels() {
-    if (!offer) return null;
+    if (!offers.length) return null;
     var doors = renderedDoors;
 
     // One label per door first, because their boxes are what the grouping is
@@ -572,10 +592,11 @@ function createEntrancePicker(map, options) {
   // Clicking the chosen door again releases it, which is how the route goes back
   // to the place itself. There is no separate dot for that: the pin is already
   // sitting on it.
-  function select(choice) {
+  function select(offer, choice) {
     // A dot's handler closes over the offer it was drawn for, so a click
-    // arriving after that offer was withdrawn must do nothing.
-    if (!offer) return;
+    // arriving after that offer was withdrawn — hidden, or replaced by a newer
+    // one for the same waypoint — must do nothing.
+    if (!offer || offerAt(offer.waypointIndex) !== offer) return;
     var release = choice.id === offer.selectedId;
     offer.selectedId = release ? null : choice.id;
     render();
@@ -597,6 +618,9 @@ function createEntrancePicker(map, options) {
   // than merely centred, so the pane never sits over the thing being picked
   // from.
   function focusView() {
+    // The newest offer is framed: it is the one the user just asked for. The
+    // others stay on the map, they simply do not pull the view around.
+    var offer = activeOffer();
     if (!offer) return false;
     var points = choicePoints(offer.choices, offer.placeCenter);
     if (points.length < 2) return false;
@@ -614,7 +638,7 @@ function createEntrancePicker(map, options) {
   // map to settle before framing, with a timer as the backstop for the case
   // where nothing moved and no moveend ever arrives.
   function focusViewWhenSettled() {
-    if (!offer) return;
+    if (!activeOffer()) return;
     var timer = null;
     function run() {
       map.off('moveend', run);
@@ -631,10 +655,12 @@ function createEntrancePicker(map, options) {
     // A single door is still worth offering: the pin already marks the place,
     // so one dot is a real choice rather than a foregone one.
     if (choices.length < 1) {
-      hide();
+      // Only this waypoint's offer goes. A place with no doors of its own says
+      // nothing about the doors another waypoint is showing.
+      hideWaypoint(opts.waypointIndex);
       return false;
     }
-    offer = {
+    var offer = {
       waypointIndex: opts.waypointIndex,
       placeName: opts.placeName,
       placeCenter: opts.placeCenter || null,
@@ -644,6 +670,15 @@ function createEntrancePicker(map, options) {
       mode: opts.mode || null,
       selectedId: opts.selectedId || null
     };
+    var existing = offerAt(opts.waypointIndex);
+    if (existing) {
+      // Re-showing the same waypoint replaces its offer in place, so the order
+      // the dots were drawn in does not jump around on a mode change.
+      offers[offers.indexOf(existing)] = offer;
+    } else {
+      offers.push(offer);
+    }
+    activeWaypointIndex = offer.waypointIndex;
     attached = true;
     if (!map.hasLayer(layer)) layer.addTo(map);
     render();
@@ -661,10 +696,72 @@ function createEntrancePicker(map, options) {
     return true;
   }
 
+  /**
+   * Follows a splice of the waypoint list.
+   *
+   * Offers are keyed by waypoint index, so inserting or removing a waypoint
+   * renumbers the ones after it. Dropping every offer instead — which is what
+   * a single shared offer amounted to — meant that placing a destination by
+   * clicking the map took away the doors the start was already showing.
+   *
+   * @param {number} index — where the splice happened
+   * @param {number} nRemoved — waypoints deleted there
+   * @param {number} nAdded — waypoints inserted there
+   */
+  function spliceOffers(index, nRemoved, nAdded) {
+    var removed = nRemoved || 0;
+    var delta = (nAdded || 0) - removed;
+    var kept = [];
+    offers.forEach(function(offer) {
+      // Untouched: it sits before the splice.
+      if (offer.waypointIndex < index) {
+        kept.push(offer);
+        return;
+      }
+      // Its waypoint is gone, and so is the place it belonged to.
+      if (offer.waypointIndex < index + removed) {
+        if (activeWaypointIndex === offer.waypointIndex) activeWaypointIndex = null;
+        return;
+      }
+      if (activeWaypointIndex === offer.waypointIndex) activeWaypointIndex += delta;
+      offer.waypointIndex += delta;
+      kept.push(offer);
+    });
+    if (kept.length === offers.length && !delta) return;
+    offers = kept;
+    if (!offers.length) {
+      hide();
+      return;
+    }
+    if (activeWaypointIndex === null) {
+      activeWaypointIndex = offers[offers.length - 1].waypointIndex;
+    }
+    render();
+  }
+
+  // Withdraws one waypoint's offer, leaving every other one on the map.
+  function hideWaypoint(waypointIndex) {
+    var offer = offerAt(waypointIndex);
+    if (!offer) return;
+    offers.splice(offers.indexOf(offer), 1);
+    if (activeWaypointIndex === waypointIndex) {
+      // Frame whatever is left, newest first, so the view still follows
+      // something the user can see.
+      activeWaypointIndex = offers.length
+        ? offers[offers.length - 1].waypointIndex : null;
+    }
+    if (!offers.length) {
+      hide();
+      return;
+    }
+    render();
+  }
+
   function hide() {
     if (!attached) return;
     attached = false;
-    offer = null;
+    offers = [];
+    activeWaypointIndex = null;
     renderedDoors = [];
     map.off('zoomend', layoutLabels);
     linkLayer.clearLayers();
@@ -679,15 +776,22 @@ function createEntrancePicker(map, options) {
   return {
     show: show,
     hide: hide,
+    hideWaypoint: hideWaypoint,
+    spliceOffers: spliceOffers,
     focusView: focusViewWhenSettled,
     layoutLabels: layoutLabels,
     isOpen: function() {
-      return !!offer;
+      return offers.length > 0;
+    },
+    isOpenFor: function(waypointIndex) {
+      return !!offerAt(waypointIndex);
     },
     getWaypointIndex: function() {
+      var offer = activeOffer();
       return offer ? offer.waypointIndex : null;
     },
-    getSelectedId: function() {
+    getSelectedId: function(waypointIndex) {
+      var offer = arguments.length ? offerAt(waypointIndex) : activeOffer();
       return offer ? offer.selectedId : null;
     }
   };

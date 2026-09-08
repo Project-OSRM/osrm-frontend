@@ -633,3 +633,146 @@ describe('re-showing without moving the view', () => {
     expect(dots(map)).toHaveLength(1);
   });
 });
+
+describe('one offer per waypoint', () => {
+  const OTHER = { osmId: 7, type: 'main', center: { lat: 52.4, lng: 13.5 } };
+
+  // Two waypoints showing their doors at once. openPicker builds the first.
+  function openTwo() {
+    const opened = openPicker();
+    opened.picker.show({
+      waypointIndex: 3, placeName: 'BER', placeCenter: { lat: 52.36, lng: 13.5 },
+      entrances: [OTHER]
+    });
+    return opened;
+  }
+
+  test('naming a second place does not withdraw the first place\'s doors', () => {
+    const { map, picker } = openTwo();
+    expect(dots(map)).toHaveLength(3);
+    expect(picker.isOpenFor(1)).toBe(true);
+    expect(picker.isOpenFor(3)).toBe(true);
+  });
+
+  test('the view follows the newest offer', () => {
+    const { map, picker } = openTwo();
+    expect(picker.getWaypointIndex()).toBe(3);
+    settle();
+    expect(map.fitBounds.mock.calls.pop()[0]._points).toContain(OTHER.center);
+  });
+
+  test('each offer keeps its own selection', () => {
+    const { map, picker, onSelect } = openTwo();
+    dots(map)[0].fire('click');
+    dots(map)[2].fire('click');
+    expect(picker.getSelectedId(1)).toBe('osm:1');
+    expect(picker.getSelectedId(3)).toBe('osm:7');
+    expect(onSelect.mock.calls.map((c) => c[0].waypointIndex)).toEqual([1, 3]);
+  });
+
+  test('re-showing a waypoint replaces its offer in place, leaving the other alone', () => {
+    const { map, picker } = openTwo();
+    picker.show({ waypointIndex: 1, placeCenter: CENTRE, entrances: [MAIN], frame: false });
+    expect(dots(map)).toHaveLength(2);
+    expect(picker.isOpenFor(3)).toBe(true);
+  });
+
+  test('withdrawing one offer leaves the others on the map', () => {
+    const { map, picker } = openTwo();
+    picker.hideWaypoint(1);
+    expect(picker.isOpenFor(1)).toBe(false);
+    expect(picker.isOpenFor(3)).toBe(true);
+    expect(dots(map)).toHaveLength(1);
+    expect(picker.isOpen()).toBe(true);
+  });
+
+  test('withdrawing the framed offer hands the view to a surviving one', () => {
+    const { picker } = openTwo();
+    expect(picker.getWaypointIndex()).toBe(3);
+    picker.hideWaypoint(3);
+    expect(picker.getWaypointIndex()).toBe(1);
+  });
+
+  test('withdrawing the last offer closes the picker altogether', () => {
+    const { map, picker } = openTwo();
+    picker.hideWaypoint(1);
+    picker.hideWaypoint(3);
+    expect(picker.isOpen()).toBe(false);
+    expect(map.hasLayer(pickerGroup(map))).toBe(false);
+  });
+
+  test('withdrawing a waypoint with no offer is harmless', () => {
+    const { picker } = openTwo();
+    picker.hideWaypoint(9);
+    expect(picker.isOpen()).toBe(true);
+  });
+
+  test('a click on a door whose offer was replaced does nothing', () => {
+    const { map, picker, onSelect } = openPicker();
+    const stale = dots(map)[0];
+    picker.show({ waypointIndex: 1, placeCenter: CENTRE, entrances: [SIDE], frame: false });
+    stale.fire('click');
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+});
+
+describe('offers follow a splice of the waypoint list', () => {
+  const OTHER = { osmId: 7, type: 'main', center: { lat: 52.4, lng: 13.5 } };
+
+  function openAt(indexes) {
+    const map = makeMap();
+    const picker = entrancePicker.createEntrancePicker(map, {});
+    indexes.forEach((i) => picker.show({
+      waypointIndex: i, placeCenter: CENTRE, entrances: [MAIN, OTHER], frame: false
+    }));
+    return { map, picker };
+  }
+
+  test('an insert before an offer renumbers it', () => {
+    const { picker } = openAt([2]);
+    picker.spliceOffers(0, 0, 1);
+    expect(picker.isOpenFor(3)).toBe(true);
+    expect(picker.isOpenFor(2)).toBe(false);
+  });
+
+  test('an offer before the splice is left where it is', () => {
+    const { picker } = openAt([0, 3]);
+    picker.spliceOffers(2, 0, 1);
+    expect(picker.isOpenFor(0)).toBe(true);
+    expect(picker.isOpenFor(4)).toBe(true);
+  });
+
+  test('removing a waypoint takes its offer and pulls the later ones back', () => {
+    const { picker } = openAt([1, 3]);
+    picker.spliceOffers(1, 1, 0);
+    expect(picker.isOpenFor(1)).toBe(false);
+    expect(picker.isOpenFor(2)).toBe(true);
+  });
+
+  test('the framed offer moves with its waypoint', () => {
+    const { picker } = openAt([2]);
+    picker.spliceOffers(0, 0, 2);
+    expect(picker.getWaypointIndex()).toBe(4);
+  });
+
+  test('removing the framed offer hands the view to a survivor', () => {
+    const { picker } = openAt([0, 2]);
+    expect(picker.getWaypointIndex()).toBe(2);
+    picker.spliceOffers(2, 1, 0);
+    expect(picker.getWaypointIndex()).toBe(0);
+  });
+
+  test('removing every offer closes the picker', () => {
+    const { map, picker } = openAt([0, 1]);
+    picker.spliceOffers(0, 2, 0);
+    expect(picker.isOpen()).toBe(false);
+    expect(map.hasLayer(pickerGroup(map))).toBe(false);
+  });
+
+  test('a splice that changes nothing leaves the offers untouched', () => {
+    const { picker } = openAt([0, 1]);
+    picker.spliceOffers(5, 0, 0);
+    expect(picker.isOpenFor(0)).toBe(true);
+    expect(picker.isOpenFor(1)).toBe(true);
+  });
+});
