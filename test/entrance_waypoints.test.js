@@ -231,6 +231,22 @@ describe('claimView', () => {
     expect(wiring.claimView()).toBe(false);
   });
 
+  test('an offer withdrawn before the route arrives takes its claim with it', () => {
+    // Escape, or a drag: the route that follows must fit as usual, or the map
+    // is left showing wherever the doors had been.
+    const { wiring } = build();
+    wiring.onGeocodeResult(geocodeEvent([MAIN]));
+    wiring.hide();
+    expect(wiring.claimView()).toBe(false);
+  });
+
+  test('a later geocode with no usable door withdraws the earlier claim', () => {
+    const { wiring } = build();
+    wiring.onGeocodeResult(geocodeEvent([MAIN]));
+    wiring.onGeocodeResult(geocodeEvent([EXIT]));
+    expect(wiring.claimView()).toBe(false);
+  });
+
   test('a geocode with no usable door claims nothing', () => {
     const { wiring } = build();
     wiring.onGeocodeResult(geocodeEvent([EXIT]));

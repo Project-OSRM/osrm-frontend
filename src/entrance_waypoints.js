@@ -164,8 +164,13 @@ function createEntranceWaypoints(options) {
     },
     // Whether the next route belongs to a picker that has just framed its
     // doors. Answering consumes the claim, so only one route stands down.
+    //
+    // An offer withdrawn before that route arrives — Escape, a drag, a later
+    // geocode with no usable door — takes its claim with it. Otherwise the
+    // route would stand down for a picker that is no longer on screen, and
+    // the map would be left showing wherever the doors had been.
     claimView: function() {
-      var claimed = viewClaimed;
+      var claimed = viewClaimed && picker.isOpen();
       viewClaimed = false;
       return claimed;
     },
