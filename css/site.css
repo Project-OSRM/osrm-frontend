@@ -1272,6 +1272,18 @@ td.distance {
     color: #022bb1;
 }
 
+/* Marks something about a door worth knowing in the current travel mode:
+   step-free access on foot, a way in for a car when driving. A mark only, never
+   a filter — most doors carry neither tag, so an absent one says nothing about
+   the door. The per-mark classes carry no styling of their own yet; they exist
+   so a mark can be restyled without touching the others. */
+.osrm-entrance-mark {
+    margin-left: 5px;
+    font-size: 11px;
+    line-height: 1;
+    vertical-align: baseline;
+}
+
 /* A merged label lists one door per line, so it cannot stay on one. */
 .osrm-entrance-label-merged .osrm-entrance-label-inner div + div {
     border-top: 1px solid rgba(20, 36, 63, 0.12);

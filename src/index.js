@@ -723,10 +723,25 @@ var entranceWaypoints = createEntranceWaypoints({
   translate: function(key) {
     return localization.t(mergedOptions.language, key);
   },
-  paneWidth: directionsPaneWidth
+  paneWidth: directionsPaneWidth,
+  // Read live: a door forbidden to cars may be fine on foot, so the offer has to
+  // follow whatever profile is selected right now.
+  mode: function() {
+    var index = typeof state.options.profile === 'number'
+      ? state.options.profile : activeProfileIndex;
+    return services[index] && services[index].profile;
+  }
 });
 
 plan.on('waypointgeocoderesult', entranceWaypoints.onGeocodeResult);
+
+// The doors on offer depend on the travel mode, so an open picker is recomputed
+// rather than left showing ones the new profile forbids.
+if (modeSelector && modeSelector.select) {
+  L.DomEvent.on(modeSelector.select, 'change', function() {
+    entranceWaypoints.refresh();
+  });
+}
 
 // Adding, removing or reordering waypoints invalidates the index the offer is
 // pinned to; dragging the pin means the user has already chosen a spot.
