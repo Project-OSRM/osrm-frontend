@@ -425,6 +425,22 @@ describe('following a splice of the waypoint list', () => {
     expect(offer.frame).toBe(false);
   });
 
+  // A three-waypoint reverse: the ends swap roles, the middle stays a via. Its
+  // offer is inside the removed range like every other, so it has to be put
+  // back even though nothing about its role changed.
+  test('reversing a longer route keeps the middle waypoint\'s offer', () => {
+    const plan = makePlan(3);
+    const [first, middle, last] = plan._waypoints;
+    const { wiring, picker } = build({ plan });
+    wiring.onGeocodeResult(geocodeEvent([MAIN], { waypointIndex: 1, waypoint: middle }));
+    expect(picker.isOpenFor(1)).toBe(true);
+
+    plan._waypoints.reverse();
+    wiring.spliceWaypoints({ index: 0, nRemoved: 3, added: [last, middle, first] });
+
+    expect(picker.isOpenFor(1)).toBe(true);
+  });
+
   test('a splice that leaves the roles alone re-offers nothing', () => {
     const plan = makePlan(3);
     const { wiring, picker } = build({ plan });
@@ -450,6 +466,20 @@ describe('following a splice of the waypoint list', () => {
     wiring.spliceWaypoints({ index: 2, nRemoved: 0, added: [plan._waypoints[2]] });
 
     expect(picker.hiddenWaypoints).toContain(1);
+  });
+
+  // The event belongs to LRM and its other listeners; renumbering happens on a
+  // copy of our own.
+  test('a splice does not rewrite the event the plan fired', () => {
+    const plan = makePlan(3);
+    const { wiring } = build({ plan });
+    const event = geocodeEvent([MAIN], { waypointIndex: 1, waypoint: plan._waypoints[1] });
+    wiring.onGeocodeResult(event);
+
+    plan._waypoints.unshift({ latLng: null, name: '' });
+    wiring.spliceWaypoints({ index: 0, nRemoved: 0, added: [plan._waypoints[0]] });
+
+    expect(event.waypointIndex).toBe(1);
   });
 
   test('hideWaypoint forgets the place as well as withdrawing the dots', () => {

@@ -152,7 +152,12 @@ function createEntranceWaypoints(options) {
     // access tags.
     var count = plan && plan._waypoints ? plan._waypoints.length : 0;
     var role = entrancePicker.waypointRole(e.waypointIndex, count);
-    lastEvents[e.waypointIndex] = {event: e, role: role};
+    // A copy of our own: `spliceWaypoints` renumbers the index it carries, and
+    // the event LRM fired belongs to LRM and its other listeners.
+    lastEvents[e.waypointIndex] = {
+      event: {waypointIndex: e.waypointIndex, waypoint: e.waypoint, value: e.value},
+      role: role
+    };
     // Read once: the mode is live, and filtering the doors by one value while
     // marking them for another would mark a door the filter had just judged on
     // different terms.
@@ -247,25 +252,34 @@ function createEntranceWaypoints(options) {
         // Its waypoint is gone, and so is the place it belonged to.
         if (reAdded === -1) return;
         to = index + reAdded;
+        // Its offer is inside the range spliceOffers is about to clear, and
+        // spliceOffers cannot tell a waypoint that moved from one that went.
+        // Whatever its role does, the offer has to be put back.
+        record.reoffer = true;
       } else {
         to = at + delta;
       }
       // The event carries the index the picker is keyed by, so it has to move
-      // with it.
+      // with it. The event is ours — a copy made when it was remembered.
       if (record.event) record.event.waypointIndex = to;
       moved[to] = record;
     });
     lastEvents = moved;
-    // Renumber the offers first. A waypoint that moved has had its offer
-    // dropped here — spliceOffers cannot tell it apart from a removal — and the
-    // re-filtering below puts it back at the index it now has.
+    // Renumber the offers first, so the re-offering below lands on the indexes
+    // the waypoints now have.
     picker.spliceOffers(index, removed, added);
 
     var count = plan && plan._waypoints ? plan._waypoints.length : 0;
     Object.keys(lastEvents).forEach(function(key) {
       var record = lastEvents[key];
       if (!record || !record.event) return;
-      if (entrancePicker.waypointRole(Number(key), count) === record.role) return;
+      var role = entrancePicker.waypointRole(Number(key), count);
+      var reoffer = record.reoffer;
+      delete record.reoffer;
+      // A role change alters which doors are on offer; a waypoint carried
+      // through the removed range has had its offer cleared and needs it back
+      // whether or not its role moved with it.
+      if (!reoffer && role === record.role) return;
       onGeocodeResult(record.event, false);
     });
   }
