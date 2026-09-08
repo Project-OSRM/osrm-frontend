@@ -1193,3 +1193,41 @@ td.distance {
     pointer-events: none;
     z-index: 1000;
 }
+
+/* Entrance picker — alternative positions offered for a geocoded place.
+   Nominatim gives entrance nodes no name or ref, so the dot's position on the
+   map is the only thing that tells one apart from another. They are deliberately
+   smaller and flatter than the A/B waypoint pins: the pin shows where the route
+   actually starts, these only show where it could be moved to. */
+.osrm-entrance-marker {
+    box-sizing: border-box;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+    transition: transform 0.1s ease-out;
+}
+
+.osrm-entrance-marker:hover {
+    transform: scale(1.35);
+}
+
+/* A door tagged entrance=main — the one most travellers are looking for. */
+.osrm-entrance-marker-main {
+    background-color: #2b7ac9;
+}
+
+/* Any other public entrance. */
+.osrm-entrance-marker-other {
+    background-color: #7fb2e5;
+}
+
+/* The door the route currently runs to. Filled dark and ringed, so it reads as
+   chosen while every other door stays on the map and one click away. */
+.osrm-entrance-marker-selected {
+    background-color: #022bb1;
+    border-color: #fff;
+    box-shadow: 0 0 0 3px rgba(2, 43, 177, 0.35), 0 1px 3px rgba(0, 0, 0, 0.4);
+}
