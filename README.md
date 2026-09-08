@@ -149,6 +149,28 @@ Set `OSRM_DEFAULT_LAYER` to one of: `streets`, `outdoors`, `satellite`, `osm`, `
 docker run -p 9966:9966 -e OSRM_DEFAULT_LAYER=satellite ghcr.io/project-osrm/osrm-frontend:latest
 ```
 
+**Using your own tile server (`OSRM_TILE_URL`):**
+A self-hosted or offline deployment cannot reach the public tile providers above.
+Point `OSRM_TILE_URL` at your own tile server and the frontend adds it as an extra
+base layer — no source edit, no rebuild:
+
+```bash
+docker run -p 9966:9966 \
+  -e 'OSRM_TILE_URL=http://localhost:8080/tile/{z}/{x}/{y}.png' \
+  -e 'OSRM_TILE_NAME=Local tiles' \
+  ghcr.io/project-osrm/osrm-frontend:latest
+```
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OSRM_TILE_URL` | — | Tile URL template. Must be an http(s), protocol-relative or root-relative URL carrying the `{z}`, `{x}` and `{y}` placeholders; anything else is ignored with a console warning. |
+| `OSRM_TILE_NAME` | `Custom` | Label shown in the layer control. |
+| `OSRM_TILE_ATTRIBUTION` | OpenStreetMap credit | Attribution text for the layer. |
+
+Setting `OSRM_TILE_URL` also makes that layer the default, since a deployment
+serving its own tiles is usually offline. Set `OSRM_DEFAULT_LAYER` explicitly to
+override — `custom` selects the tile layer, the other keys the built-in ones.
+
 **Adding or replacing base layers (source builds):**
 Define a new `L.tileLayer` and add it to the `layer` array in `src/leaflet_options.js`:
 ```js

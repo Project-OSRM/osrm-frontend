@@ -32,6 +32,9 @@
         // by config.json, so set the OSRM_CARTO_KEY environment variable
         // instead and the entrypoint will pass it through.
         OSRM_CARTO_KEY: 'cb1_2qvg_1_8e87c8903d178ccf6f862d52'
+        // A deployment with its own tile server adds OSRM_TILE_URL here (plus
+        // optional OSRM_TILE_NAME and OSRM_TILE_ATTRIBUTION); in Docker set the
+        // matching environment variables instead.
         // OSRM_BACKEND and OSRM_MODES will be set by config.json if available
       };
 

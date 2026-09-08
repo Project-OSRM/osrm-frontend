@@ -52,6 +52,60 @@ function generateConfig(envOverrides, options) {
 }
 
 describe('docker entrypoint runtime config', () => {
+  test('passes a custom tile server through to config.json', () => {
+    const config = generateConfig({
+      OSRM_ENVIRONMENT: 'docker',
+      OSRM_TILE_URL: 'http://localhost:8080/tile/{z}/{x}/{y}.png',
+      OSRM_TILE_NAME: 'Local tiles',
+      OSRM_TILE_ATTRIBUTION: '\u00a9 My Tile Provider'
+    });
+    expect(config.OSRM_TILE_URL).toBe('http://localhost:8080/tile/{z}/{x}/{y}.png');
+    expect(config.OSRM_TILE_NAME).toBe('Local tiles');
+    expect(config.OSRM_TILE_ATTRIBUTION).toBe('\u00a9 My Tile Provider');
+  });
+
+  test('emits empty tile settings when none are configured', () => {
+    const config = generateConfig({ OSRM_ENVIRONMENT: 'docker' });
+    expect(config.OSRM_TILE_URL).toBe('');
+    expect(config.OSRM_TILE_NAME).toBe('');
+    expect(config.OSRM_TILE_ATTRIBUTION).toBe('');
+  });
+
+  test('a custom tile server becomes the default layer when none was chosen', () => {
+    // The image ships OSRM_DEFAULT_LAYER=streets, so that value reads as
+    // "operator did not choose" the same way the default backend does.
+    const config = generateConfig({
+      OSRM_ENVIRONMENT: 'docker',
+      OSRM_DEFAULT_LAYER: 'streets',
+      OSRM_TILE_URL: 'http://localhost:8080/tile/{z}/{x}/{y}.png'
+    });
+    expect(config.OSRM_DEFAULT_LAYER).toBe('custom');
+  });
+
+  test('an explicitly chosen layer survives a custom tile server', () => {
+    const config = generateConfig({
+      OSRM_ENVIRONMENT: 'docker',
+      OSRM_DEFAULT_LAYER: 'satellite',
+      OSRM_TILE_URL: 'http://localhost:8080/tile/{z}/{x}/{y}.png'
+    });
+    expect(config.OSRM_DEFAULT_LAYER).toBe('satellite');
+  });
+
+  test('the default layer is untouched without a custom tile server', () => {
+    const config = generateConfig({ OSRM_ENVIRONMENT: 'docker', OSRM_DEFAULT_LAYER: 'streets' });
+    expect(config.OSRM_DEFAULT_LAYER).toBe('streets');
+  });
+
+  test('a tile URL with JSON-significant characters stays valid JSON', () => {
+    const config = generateConfig({
+      OSRM_ENVIRONMENT: 'docker',
+      OSRM_TILE_URL: 'http://localhost:8080/"{z}"/{x}/{y}.png',
+      OSRM_TILE_ATTRIBUTION: 'a "quoted" \\ credit'
+    });
+    expect(config.OSRM_TILE_URL).toBe('http://localhost:8080/"{z}"/{x}/{y}.png');
+    expect(config.OSRM_TILE_ATTRIBUTION).toBe('a "quoted" \\ credit');
+  });
+
   test('uses public profiles as Docker defaults when no routing env vars are provided', () => {
     const config = generateConfig({
       OSRM_BACKEND: 'http://localhost:5000',
