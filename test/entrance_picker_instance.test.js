@@ -24,7 +24,15 @@ function mockMakeLayerGroup(children) {
 }
 
 function mockMakeBounds(points) {
-  return { _kind: 'bounds', _points: points, isValid: () => points.length > 0 };
+  const lats = points.map((p) => p.lat);
+  const lngs = points.map((p) => p.lng);
+  return {
+    _kind: 'bounds',
+    _points: points,
+    isValid: () => points.length > 0,
+    getSouthWest: () => ({ lat: Math.min(...lats), lng: Math.min(...lngs) }),
+    getNorthEast: () => ({ lat: Math.max(...lats), lng: Math.max(...lngs) })
+  };
 }
 
 jest.mock('leaflet', () => ({
@@ -63,11 +71,30 @@ jest.mock('leaflet', () => ({
 
 const entrancePicker = require('../src/entrance_picker');
 
-function makeMap() {
+const makeBounds = mockMakeBounds;
+
+// The projection is a plain scaling of lat/lng, which is all the framing
+// arithmetic needs: what matters is relative distances, not the real Mercator.
+function makeMap(overrides) {
+  const o = Object.assign({
+    size: { x: 1200, y: 800 },
+    pixelsPerDegree: 10000,
+    center: { lat: 52.5209336, lng: 13.3956302 }
+  }, overrides);
   return {
     _layers: [],
     _handlers: {},
     _panes: {},
+    getSize: () => o.size,
+    latLngToContainerPoint: (ll) => ({
+      x: o.size.x / 2 + (ll.lng - o.center.lng) * o.pixelsPerDegree,
+      y: o.size.y / 2 - (ll.lat - o.center.lat) * o.pixelsPerDegree
+    }),
+    project: (ll, zoom) => ({
+      x: ll.lng * o.pixelsPerDegree * (zoom || 1),
+      y: -ll.lat * o.pixelsPerDegree * (zoom || 1)
+    }),
+    getBoundsZoom: jest.fn(() => (o.boundsZoom !== undefined ? o.boundsZoom : 1)),
     getPane(name) { return this._panes[name]; },
     createPane(name) { this._panes[name] = { style: {} }; return this._panes[name]; },
     fitBounds: jest.fn(),
@@ -85,8 +112,8 @@ const CENTRE = { lat: 52.5209336, lng: 13.3956302 };
 const MAIN = { osmId: 1, type: 'main', center: { lat: 52.5209566, lng: 13.3965227 } };
 const SIDE = { osmId: 2, type: 'yes', center: { lat: 52.5207240, lng: 13.3974377 } };
 
-function openPicker(showOpts, options) {
-  const map = makeMap();
+function openPicker(showOpts, options, mapOverrides) {
+  const map = makeMap(mapOverrides);
   const onSelect = jest.fn();
   const picker = entrancePicker.createEntrancePicker(
     map, Object.assign({ onSelect }, options));
@@ -191,12 +218,20 @@ describe('show', () => {
 
   // The doors are metres apart on a site the map is showing from kilometres
   // away; without this the offer is a cluster nobody can aim at.
-  test('brings the doors into view, and the pin with them', () => {
+  test('brings the doors into view', () => {
     const { map } = openPicker();
     settle();
     expect(map.fitBounds).toHaveBeenCalledTimes(1);
     expect(map.fitBounds.mock.calls[0][0]._points)
-      .toEqual([MAIN.center, SIDE.center, CENTRE]);
+      .toEqual([MAIN.center, SIDE.center]);
+  });
+
+  // One door spans nothing, so the pin has to be in the frame or there is
+  // nothing to frame against.
+  test('a lone door is framed together with the pin', () => {
+    const { map } = openPicker({ entrances: [MAIN] });
+    settle();
+    expect(map.fitBounds.mock.calls[0][0]._points).toEqual([MAIN.center, CENTRE]);
   });
 
   // The route to the place arrives just after the geocode that opened the
@@ -774,5 +809,74 @@ describe('offers follow a splice of the waypoint list', () => {
     picker.spliceOffers(5, 0, 0);
     expect(picker.isOpenFor(0)).toBe(true);
     expect(picker.isOpenFor(1)).toBe(true);
+  });
+});
+
+describe('choosing what to frame', () => {
+  // A bbox big enough that the doors stay far apart inside it.
+  const ROOMY = makeBounds([{ lat: 52.5205, lng: 13.3960 }, { lat: 52.5212, lng: 13.3980 }]);
+  // The BER case: a 5 km site whose five doors sit metres apart.
+  const HUGE = makeBounds([{ lat: 52.30, lng: 13.45 }, { lat: 52.40, lng: 13.55 }]);
+
+  test('the place bbox is framed when it leaves the doors far enough apart', () => {
+    // At this zoom the two doors project ~45 px apart: aimable, so the site
+    // itself is what gets framed.
+    const { map } = openPicker({ placeBounds: ROOMY }, null, { boundsZoom: 5 });
+    settle();
+    expect(map.fitBounds.mock.calls[0][0]).toBe(ROOMY);
+  });
+
+  // Framing a 5 km airport puts its doors about 3 px apart: a cluster nobody
+  // can aim at. The doors win and the site runs off the edges.
+  test('the doors are framed instead when the bbox would bunch them up', () => {
+    const { map } = openPicker({ placeBounds: HUGE }, null, { boundsZoom: 0.0001 });
+    settle();
+    const framed = map.fitBounds.mock.calls[0][0];
+    expect(framed).not.toBe(HUGE);
+    expect(framed._points).toEqual([MAIN.center, SIDE.center]);
+  });
+
+  test('a single door leaves nothing to bunch up, so the bbox is kept', () => {
+    const { map } = openPicker({ placeBounds: HUGE, entrances: [MAIN] }, null,
+      { boundsZoom: 0.0001 });
+    settle();
+    expect(map.fitBounds.mock.calls[0][0]).toBe(HUGE);
+  });
+
+  test('a bbox the geocoder did not give falls back to the doors', () => {
+    const { map } = openPicker({ placeBounds: makeBounds([]) });
+    settle();
+    expect(map.fitBounds.mock.calls[0][0]._points).toEqual([MAIN.center, SIDE.center]);
+  });
+
+  // Already framed and legible: moving the map would be disruption for its own
+  // sake.
+  // Centred between the two doors, so what is left to decide is size alone.
+  const BETWEEN_DOORS = { lat: 52.5208403, lng: 13.3969802 };
+
+  test('a place already filling the view is left alone', () => {
+    // The doors span ~576 px here, half the free viewport, and sit clear of
+    // both the edges and the pane: moving the map would be disruption for its
+    // own sake.
+    const { map } = openPicker(null, null,
+      { center: BETWEEN_DOORS, pixelsPerDegree: 630000 });
+    settle();
+    expect(map.fitBounds).not.toHaveBeenCalled();
+  });
+
+  test('a place too small to read is framed even when it is in the clear', () => {
+    // The same doors, now ~9 px apart.
+    const { map } = openPicker(null, null,
+      { center: BETWEEN_DOORS, pixelsPerDegree: 10000 });
+    settle();
+    expect(map.fitBounds).toHaveBeenCalled();
+  });
+
+  test('a place hidden behind the directions pane is always re-framed', () => {
+    // Big enough to be legible, but the pane covers where it sits.
+    const { map } = openPicker(null, { paneWidth: () => 1100 },
+      { center: BETWEEN_DOORS, pixelsPerDegree: 630000 });
+    settle();
+    expect(map.fitBounds).toHaveBeenCalled();
   });
 });

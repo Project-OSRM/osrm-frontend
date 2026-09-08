@@ -325,3 +325,72 @@ describe('marks', () => {
       .toEqual([plain, marked]);
   });
 });
+
+describe('when a framing is worth the disruption', () => {
+  const viewport = { width: 1000, height: 800 };
+
+  test('anything not already in the clear is framed', () => {
+    expect(picker.shouldZoomToExtent({ width: 900, height: 700 }, viewport, false)).toBe(true);
+  });
+
+  test('a place already filling enough of the view is left alone', () => {
+    expect(picker.shouldZoomToExtent({ width: 900, height: 100 }, viewport, true)).toBe(false);
+  });
+
+  test('a place clear but too small to read is framed', () => {
+    expect(picker.shouldZoomToExtent({ width: 10, height: 10 }, viewport, true)).toBe(true);
+  });
+
+  test('either dimension filling the view is enough', () => {
+    const tall = { width: 10, height: viewport.height * (picker.MIN_EXTENT_FILL + 0.05) };
+    expect(picker.shouldZoomToExtent(tall, viewport, true)).toBe(false);
+  });
+
+  test('a viewport with no room at all is framed rather than divided by zero', () => {
+    expect(picker.shouldZoomToExtent({ width: 10, height: 10 }, { width: 0, height: 0 }, true))
+      .toBe(true);
+    expect(picker.shouldZoomToExtent({ width: 10, height: 10 }, null, true)).toBe(true);
+  });
+});
+
+describe('isExtentClear', () => {
+  const size = { x: 1000, y: 800 };
+
+  test('an extent inside the uncovered part of the map is clear', () => {
+    expect(picker.isExtentClear({ x: 50, y: 50 }, { x: 500, y: 400 }, size, 200)).toBe(true);
+  });
+
+  // Anything under the directions pane is as good as off screen.
+  test('an extent reaching under the pane is not', () => {
+    expect(picker.isExtentClear({ x: 50, y: 50 }, { x: 900, y: 400 }, size, 200)).toBe(false);
+  });
+
+  test('an extent off any edge is not', () => {
+    expect(picker.isExtentClear({ x: -10, y: 50 }, { x: 500, y: 400 }, size, 0)).toBe(false);
+    expect(picker.isExtentClear({ x: 50, y: 50 }, { x: 500, y: 900 }, size, 0)).toBe(false);
+  });
+
+  test('corners in either order read the same', () => {
+    expect(picker.isExtentClear({ x: 500, y: 400 }, { x: 50, y: 50 }, size, 200)).toBe(true);
+  });
+});
+
+describe('minPairSeparation', () => {
+  test('finds the closest pair, not the first', () => {
+    expect(picker.minPairSeparation([{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 103, y: 4 }]))
+      .toBe(5);
+  });
+
+  test('fewer than two points can never be too close', () => {
+    expect(picker.minPairSeparation([{ x: 0, y: 0 }])).toBe(Infinity);
+    expect(picker.minPairSeparation([])).toBe(Infinity);
+    expect(picker.minPairSeparation(null)).toBe(Infinity);
+  });
+});
+
+describe('entranceCenters', () => {
+  test('is the doors alone, without the place centre', () => {
+    const choices = picker.buildChoices(at(52.5, 13.4), [door('main'), door('yes', { osmId: 2 })]);
+    expect(picker.entranceCenters(choices)).toHaveLength(2);
+  });
+});

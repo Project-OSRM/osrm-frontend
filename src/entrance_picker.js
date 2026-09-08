@@ -29,6 +29,16 @@ var ENTRANCE_USE = {
 
 var MAX_PICKER_ZOOM = 18;
 
+// The area has to fill at least this share of the free viewport to count as
+// framed. Below it the site reads as a blob somewhere on the map rather than as
+// the place the user is choosing a door into.
+var MIN_EXTENT_FILL = 0.35;
+
+// Two entrance dots closer together than this on screen cannot be aimed at
+// separately. The dots are 18 px across, so this leaves a clear gap between
+// them.
+var MIN_DOT_SEPARATION_PX = 32;
+
 // Breathing room between the framed doors and the edges of the viewport.
 var FIT_PADDING = 24;
 
@@ -298,6 +308,48 @@ function choicePoints(choices, placeCenter) {
   });
   if (placeCenter) points.push(placeCenter);
   return points;
+}
+
+// Zooming is worth the disruption unless the area already sits clear of the
+// pane and fills enough of the free viewport to be legible. Both are measured
+// in container pixels.
+function shouldZoomToExtent(extent, viewport, clear) {
+  if (!clear) return true;
+  if (!viewport || viewport.width <= 0 || viewport.height <= 0) return true;
+  var fill = Math.max(extent.width / viewport.width, extent.height / viewport.height);
+  return fill < MIN_EXTENT_FILL;
+}
+
+// Whether an extent, already projected to container pixels, sits inside the
+// part of the map the directions pane does not cover. Anything under the pane
+// is as good as off screen.
+function isExtentClear(sw, ne, mapSize, paneWidth) {
+  var usableWidth = mapSize.x - (paneWidth || 0);
+  return Math.min(sw.x, ne.x) >= 0 && Math.max(sw.x, ne.x) <= usableWidth &&
+    Math.min(sw.y, ne.y) >= 0 && Math.max(sw.y, ne.y) <= mapSize.y;
+}
+
+// The door positions: every choice is a door.
+function entranceCenters(choices) {
+  return choices.map(function(choice) {
+    return choice.center;
+  });
+}
+
+// Smallest gap between any two of the projected dots, in pixels. This is what
+// decides whether a framing leaves the entrances separately clickable.
+function minPairSeparation(points) {
+  if (!points || points.length < 2) return Infinity;
+  var min = Infinity;
+  for (var i = 0; i < points.length - 1; i++) {
+    for (var j = i + 1; j < points.length; j++) {
+      var dx = points[i].x - points[j].x;
+      var dy = points[i].y - points[j].y;
+      var d = Math.sqrt(dx * dx + dy * dy);
+      if (d < min) min = d;
+    }
+  }
+  return min;
 }
 
 /**
@@ -617,17 +669,63 @@ function createEntrancePicker(map, options) {
   // Framed into the part of the map the directions pane does not cover, rather
   // than merely centred, so the pane never sits over the thing being picked
   // from.
+  // What to frame. The place's own bounding box is preferred — it shows the
+  // site the doors belong to — but only while that framing leaves the doors far
+  // enough apart to aim at. BER's five entrances sit ~36 m apart on a 5 km site,
+  // which is about 3 px at the zoom its bbox implies, so there the entrances win
+  // and the site simply runs off the edges.
+  function framingBounds(padRight, offer) {
+    var area = offer.placeBounds;
+    var doors = entranceCenters(offer.choices);
+
+    if (!area || !area.isValid()) {
+      // The pin stays on the centre, so it belongs in the frame alongside the
+      // doors unless the doors alone already span enough to aim at.
+      var points = doors.length > 1 ? doors : choicePoints(offer.choices, offer.placeCenter);
+      return points.length > 1 ? L.latLngBounds(points) : null;
+    }
+    if (doors.length < 2) return area;
+
+    // The zoom fitting the area would settle on, and the dots as they would
+    // land at it.
+    var areaZoom = map.getBoundsZoom(area, false,
+      L.point(padRight + 2 * FIT_PADDING, 2 * FIT_PADDING));
+    var projected = doors.map(function(latLng) {
+      return map.project(latLng, areaZoom);
+    });
+    if (minPairSeparation(projected) >= MIN_DOT_SEPARATION_PX) return area;
+    return L.latLngBounds(doors);
+  }
+
+  // Frames whatever framingBounds picked into the part of the map the
+  // directions pane does not cover, rather than merely centring it, so the pane
+  // never sits over the thing being picked from.
   function focusView() {
     // The newest offer is framed: it is the one the user just asked for. The
     // others stay on the map, they simply do not pull the view around.
     var offer = activeOffer();
     if (!offer) return false;
-    var points = choicePoints(offer.choices, offer.placeCenter);
-    if (points.length < 2) return false;
-    map.fitBounds(L.latLngBounds(points), {
+    var padRight = paneWidth();
+    var bounds = framingBounds(padRight, offer);
+    if (!bounds || !bounds.isValid()) return false;
+
+    var sw = map.latLngToContainerPoint(bounds.getSouthWest());
+    var ne = map.latLngToContainerPoint(bounds.getNorthEast());
+    var mapSize = map.getSize();
+    var extent = {width: Math.abs(ne.x - sw.x), height: Math.abs(sw.y - ne.y)};
+    var viewport = {
+      width: mapSize.x - padRight - 2 * FIT_PADDING,
+      height: mapSize.y - 2 * FIT_PADDING
+    };
+    // Already framed and legible: moving the map would be disruption for its
+    // own sake.
+    var clear = isExtentClear(sw, ne, mapSize, padRight);
+    if (!shouldZoomToExtent(extent, viewport, clear)) return false;
+
+    map.fitBounds(bounds, {
       maxZoom: MAX_PICKER_ZOOM,
       paddingTopLeft: L.point(FIT_PADDING, FIT_PADDING),
-      paddingBottomRight: L.point(paneWidth() + FIT_PADDING, FIT_PADDING)
+      paddingBottomRight: L.point(padRight + FIT_PADDING, FIT_PADDING)
     });
     return true;
   }
@@ -664,6 +762,9 @@ function createEntrancePicker(map, options) {
       waypointIndex: opts.waypointIndex,
       placeName: opts.placeName,
       placeCenter: opts.placeCenter || null,
+      // The site the doors belong to, when the geocoder gave one. Framed in
+      // preference to the doors alone, while it leaves them far enough apart.
+      placeBounds: opts.placeBounds || null,
       choices: choices,
       // Which mark a door earns depends on it, and refresh() re-shows the
       // picker with a new one whenever the travel mode changes.
@@ -799,6 +900,12 @@ function createEntrancePicker(map, options) {
 
 module.exports = {
   routableEntrances: routableEntrances,
+  shouldZoomToExtent: shouldZoomToExtent,
+  isExtentClear: isExtentClear,
+  entranceCenters: entranceCenters,
+  minPairSeparation: minPairSeparation,
+  MIN_EXTENT_FILL: MIN_EXTENT_FILL,
+  MIN_DOT_SEPARATION_PX: MIN_DOT_SEPARATION_PX,
   allowsMode: allowsMode,
   entranceMark: entranceMark,
   boxesOverlap: boxesOverlap,
