@@ -210,6 +210,33 @@ describe('route fit tracker', function() {
     expect(tracker.isFitPending()).toBe(false);
   });
 
+  test('suppresses the fit for the route that follows a reorder', function() {
+    var tracker = routeZoom.createRouteFitTracker();
+
+    tracker.waypointsReordered();
+    tracker.routesFound();
+
+    expect(tracker.isFitPending()).toBe(false);
+  });
+
+  test('fits again on the first route after a reorder', function() {
+    var tracker = routeZoom.createRouteFitTracker();
+
+    tracker.waypointsReordered();
+    tracker.routesFound();
+    tracker.routesFound();
+
+    expect(tracker.isFitPending()).toBe(true);
+  });
+
+  test('a reorder does not swallow the pan of the next typed address', function() {
+    var tracker = routeZoom.createRouteFitTracker();
+
+    tracker.waypointsReordered();
+
+    expect(tracker.waypointGeocoded()).toBe(true);
+  });
+
   test('centers a clicked waypoint after an unfinished drag', function() {
     var tracker = routeZoom.createRouteFitTracker();
 

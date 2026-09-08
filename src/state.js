@@ -3,6 +3,7 @@
 var L = require('leaflet');
 var links = require('./links');
 var urlState = require('./url_state');
+var waypointReorder = require('./waypoint_reorder');
 
 var State = L.Class.extend({
   options: { },
@@ -54,6 +55,7 @@ var State = L.Class.extend({
             );
           }
         });
+        waypointReorder.updateLabels(plan._geocoderContainer, e.language);
       }
       
       // Re-render directions with new language if routes exist.

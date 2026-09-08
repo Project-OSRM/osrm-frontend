@@ -46,6 +46,7 @@ var layerUtils = require('./layer_utils');
 var routeZoom = require('./route_zoom');
 var resolveInitialAlternative = require('./route_alternative');
 var waypointMarker = require('./waypoint_marker');
+var waypointReorder = require('./waypoint_reorder');
 require('./polyfill');
 
 var parsedOptions = urlState.parse(window.location.search.slice(1));
@@ -260,6 +261,12 @@ var ReversablePlan = L.Routing.Plan.extend({
       }
     }
     return container;
+  },
+  // The rows are rebuilt on every waypoint change, so the reorder grips are
+  // wired again after each rebuild.
+  _updateGeocoders: function() {
+    L.Routing.Plan.prototype._updateGeocoders.call(this);
+    waypointReorder.attachToPlan(this);
   }
 });
 
@@ -292,6 +299,7 @@ var plan = new ReversablePlan([], {
   reverseWaypoints: true,
   dragStyles: options.lrm.dragStyles,
   geocodersClassName: options.lrm.geocodersClassName,
+  createGeocoder: waypointReorder.createGeocoder,
   geocoderPlaceholder: function(i, n, geocoderElement) {
     var activeLanguage = geocoderElement && geocoderElement.options ? geocoderElement.options.language : mergedOptions.language;
     var startend = [localization.t(activeLanguage, 'Start - press enter to drop marker'), localization.t(activeLanguage, 'End - press enter to drop marker')];
@@ -668,6 +676,12 @@ lrmControl.on('routesfound', function(e) {
 // the view must stay where the user put it.
 plan.on('waypointdragstart', function() {
   routeFitTracker.waypointDragStarted();
+});
+
+// Reordering from the panel rearranges places already on the map; the view
+// stays where it is.
+plan.on('waypointsreorder', function() {
+  routeFitTracker.waypointsReordered();
 });
 
 lrmControl.on('routingerror', function() {

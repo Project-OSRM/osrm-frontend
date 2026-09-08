@@ -62,6 +62,14 @@ function createRouteFitTracker() {
       routeRequestFromDrag = true;
       geocodeFromDrag = true;
     },
+    // Reordering from the panel is a rearrangement of places the user has
+    // already put on the map, so the view stays put like it does for a drag.
+    // No reverse geocode follows (the names travel with the waypoints), so
+    // only the route request is marked; marking the geocode too would swallow
+    // the pan of the next typed address.
+    waypointsReordered: function() {
+      routeRequestFromDrag = true;
+    },
     waypointPlaced: function() {
       routeRequestFromDrag = false;
       geocodeFromDrag = false;
