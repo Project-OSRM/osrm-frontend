@@ -47,6 +47,8 @@ var routeZoom = require('./route_zoom');
 var resolveInitialAlternative = require('./route_alternative');
 var waypointMarker = require('./waypoint_marker');
 var waypointReorder = require('./waypoint_reorder');
+var entranceWaypointsModule = require('./entrance_waypoints');
+var createEntranceWaypoints = entranceWaypointsModule.createEntranceWaypoints;
 require('./polyfill');
 
 var parsedOptions = urlState.parse(window.location.search.slice(1));
@@ -249,6 +251,21 @@ map.on('overlayremove', function(e) {
 
 /* OSRM setup */
 var ReversablePlan = L.Routing.Plan.extend({
+  // LRM's own `waypointgeocoded` event carries only the waypoint, dropping the
+  // geocoding result and with it the entrance list Nominatim returned. Re-fire
+  // it with the result attached.
+  _createGeocoder: function(i) {
+    var geocoderElem = L.Routing.Plan.prototype._createGeocoder.call(this, i);
+    geocoderElem.on('geocoded', function(e) {
+      this.fire('waypointgeocoderesult', {
+        waypointIndex: i,
+        waypoint: e.waypoint,
+        value: e.value
+      });
+    }, this);
+    return geocoderElem;
+  },
+
   createGeocoders: function() {
     var container = L.Routing.Plan.prototype.createGeocoders.call(this);
     // Inject mode selector after geocoders are created
@@ -285,7 +302,10 @@ var plan = new ReversablePlan([], {
       draggable: this.draggableWaypoints,
       icon: makeIcon(i, n)
     };
-    var marker = L.marker(wp.latLng, options);
+    // Choosing an entrance routes to the door but leaves the pin on the place
+    // that was searched for, so the pin is drawn where the place is, not where
+    // the route ends.
+    var marker = L.marker(entranceWaypointsModule.waypointMarkerLatLng(wp), options);
     marker.on('click', function() {
       plan.spliceWaypoints(i, 1);
     });
@@ -688,6 +708,37 @@ lrmControl.on('routingerror', function() {
   routeFitTracker.routingFailed();
 });
 
+/* Entrance picker — see src/entrance_waypoints.js for what it does and why. */
+
+function directionsPaneWidth() {
+  var pane = document.querySelector('.leaflet-routing-container');
+  if (!pane || pane.classList.contains('leaflet-routing-container-hide')) return 0;
+  return pane.offsetWidth;
+}
+
+var entranceWaypoints = createEntranceWaypoints({
+  map: map,
+  plan: plan,
+  routeFitTracker: routeFitTracker,
+  translate: function(key) {
+    return localization.t(mergedOptions.language, key);
+  },
+  paneWidth: directionsPaneWidth
+});
+
+plan.on('waypointgeocoderesult', entranceWaypoints.onGeocodeResult);
+
+// Adding, removing or reordering waypoints invalidates the index the offer is
+// pinned to; dragging the pin means the user has already chosen a spot.
+plan.on('waypointsspliced', entranceWaypoints.hide);
+plan.on('waypointdragstart', entranceWaypoints.hide);
+
+// The route the picker was waiting on never came; its claim on the view must
+// not carry over to whatever route comes next.
+lrmControl.on('routingerror', function() {
+  entranceWaypoints.claimView();
+});
+
 plan.on('waypointgeocoded', function(e) {
   // A drag ends with a reverse geocode of the dropped marker; recentering on it
   // would fight the pan the user just made.
@@ -819,6 +870,14 @@ lrmControl.on('routeselected', function(e) {
   var paneWidth = 0;
   if (container && !container.classList.contains('leaflet-routing-container-hide')) {
     paneWidth = container.offsetWidth;
+  }
+
+  // A picker that has just framed the doors it offers keeps the view: the route
+  // that follows the geocode must not fit itself over them. Only that route
+  // stands down.
+  if (entranceWaypoints.claimView()) {
+    routeFitTracker.clearFitPending();
+    return;
   }
 
   if (!routeFitTracker.isFitPending()) {
