@@ -123,6 +123,10 @@ function createReverseNotifier(options) {
     return -1;
   }
 
+  // The cases where there is legitimately nothing to notify are checked rather
+  // than caught: no result, one too far to be this waypoint's place, no
+  // waypoint at those coordinates, or a plan that does not exist yet — which is
+  // ordinary while the app is still starting up.
   function notify(latLng, results) {
     var result = results && results.length ? results[0] : null;
     if (!result || !result.center) return;
@@ -130,7 +134,8 @@ function createReverseNotifier(options) {
         result.center.distanceTo(latLng) >= tolerance) return;
     var index = waypointIndexAt(latLng);
     if (index === -1) return;
-    var plan = getPlan();
+    var plan = typeof getPlan === 'function' ? getPlan() : null;
+    if (!plan || typeof plan.fire !== 'function') return;
     plan.fire('waypointgeocoderesult', {
       waypointIndex: index,
       waypoint: plan._waypoints[index],
@@ -145,7 +150,13 @@ function createReverseNotifier(options) {
       if (typeof cb === 'function') cb.call(context, results);
       try {
         notify(latLng, results);
-      } catch (e) {}
+      } catch (e) {
+        // Anything reaching here is a bug, but it must not take the waypoint's
+        // name down with it: LRM has already been called back, and a throw on
+        // this path would leave the waypoint half-named. Reported rather than
+        // swallowed, so it is findable.
+        console.warn('osrm-entrances: offering a reverse-geocoded place failed', e);
+      }
     }, context);
   };
 

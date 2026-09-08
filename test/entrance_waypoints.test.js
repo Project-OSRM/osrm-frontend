@@ -618,10 +618,32 @@ describe('reverse-geocoded waypoints reaching the picker', () => {
     expect(plan.fired).toHaveLength(1);
   });
 
-  test('a plan that does not exist yet is simply not notified', () => {
+  // Ordinary while the app is still starting up: checked, not caught.
+  test('a plan that does not exist yet is quietly not notified', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
     const geocoder = { reverse: (ll, scale, cb) => cb([RESULT]) };
-    const wrapped = createReverseNotifier({ geocoder, getPlan: () => null });
-    expect(() => wrapped.reverse(latLng(52.5, 13.4), 100, () => {})).not.toThrow();
+    const at = latLng(52.5209336, 13.3956302);
+    [null, {}, { _waypoints: [] }].forEach((plan) => {
+      const wrapped = createReverseNotifier({ geocoder, getPlan: () => plan });
+      expect(() => wrapped.reverse(at, 100, () => {})).not.toThrow();
+    });
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  // A throw here would leave the waypoint half-named, so it is contained — but
+  // reported, because anything reaching it is a bug.
+  test('an unexpected failure is reported rather than swallowed', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const { wrapped, plan, at } = build();
+    plan.fire = () => { throw new Error('boom'); };
+    let named = false;
+    expect(() => wrapped.reverse(at, 100, () => { named = true; })).not.toThrow();
+    // LRM was still called back, so the waypoint has its name.
+    expect(named).toBe(true);
+    expect(warn).toHaveBeenCalledWith(
+      'osrm-entrances: offering a reverse-geocoded place failed', expect.any(Error));
+    warn.mockRestore();
   });
 
   test('every other geocoder method is passed through, bound to the original', () => {
