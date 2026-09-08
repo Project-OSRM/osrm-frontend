@@ -238,9 +238,12 @@ function createEntrancePicker(map, options) {
   var markerLayer = L.layerGroup();
   var layer = L.layerGroup([linkLayer, labelLayer, markerLayer]);
   var offer = null;
-  // Every dot currently drawn, in draw order. Label layout groups purely by
-  // overlap, so it works off this rather than off the offer.
-  var renderedMarkers = [];
+  // What each dot currently drawn needs a label to say, in draw order: where it
+  // is, what it is called, whether it is the chosen one, and what clicking it
+  // does. Kept beside the markers rather than on them — Leaflet's marker is not
+  // ours to hang fields off — and label layout groups purely by overlap, so
+  // this is all it needs.
+  var renderedDoors = [];
   // Whether the layer and the document listener are in place. Tracked rather
   // than inferred from `offer`, because that is cleared before the teardown
   // runs.
@@ -268,7 +271,7 @@ function createEntrancePicker(map, options) {
   function render() {
     markerLayer.clearLayers();
     linkLayer.clearLayers();
-    renderedMarkers = [];
+    renderedDoors = [];
     if (!offer) {
       labelLayer.clearLayers();
       return;
@@ -285,13 +288,16 @@ function createEntrancePicker(map, options) {
         keyboard: true,
         zIndexOffset: chosen ? 500 : 400
       });
-      // The name travels with the dot; layoutLabels turns it into a label the
+      // The name travels beside the dot; layoutLabels turns it into a label the
       // user can read without hovering, and click as a stand-in for the dot.
-      marker.__entranceLabel = text;
-      marker.__entranceSelected = chosen;
-      marker.__entranceSelect = function() {
-        select(choice);
-      };
+      renderedDoors.push({
+        latLng: choice.center,
+        text: text,
+        selected: chosen,
+        select: function() {
+          select(choice);
+        }
+      });
       marker.on('click', function(e) {
         // Without this the click also lands on the map, which would drop a
         // new waypoint on top of the place being chosen for.
@@ -299,7 +305,6 @@ function createEntrancePicker(map, options) {
         select(choice);
       });
       markerLayer.addLayer(marker);
-      renderedMarkers.push(marker);
 
       // The pin stays on the place, so the chosen door is tied back to it with a
       // dashed line: the route runs to the door, and this is the last bit on
@@ -313,6 +318,8 @@ function createEntrancePicker(map, options) {
   }
 
   // Created lazily, because the picker may be built before the map has panes.
+  // Answers with the pane's name only once there really is a pane: naming one
+  // that does not exist would leave the label unplaced.
   function ensureLabelPane() {
     if (typeof map.createPane !== 'function' || typeof map.getPane !== 'function') return null;
     var pane = map.getPane(LABEL_PANE);
@@ -320,15 +327,7 @@ function createEntrancePicker(map, options) {
       pane = map.createPane(LABEL_PANE);
       if (pane && pane.style) pane.style.zIndex = LABEL_PANE_Z_INDEX;
     }
-    return LABEL_PANE;
-  }
-
-  function labelEntry(marker) {
-    return {
-      text: marker.__entranceLabel,
-      selected: !!marker.__entranceSelected,
-      select: marker.__entranceSelect
-    };
+    return pane ? LABEL_PANE : null;
   }
 
   // Which line of a label a click landed on, from the element under the
@@ -342,12 +341,21 @@ function createEntrancePicker(map, options) {
     return Array.prototype.indexOf.call(line.parentNode.children, line);
   }
 
-  // These names come from OSM and would otherwise be read as markup.
+  // These names come from OSM and would otherwise be read as markup. Escaped
+  // by hand rather than through a detached element, so the module needs no DOM
+  // of its own to build its markup.
+  function escapeText(value) {
+    return String(value === undefined || value === null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function labelLine(entry) {
-    var div = document.createElement('div');
-    div.textContent = entry.text;
     return '<div' + (entry.selected ? ' class="osrm-entrance-label-selected"' : '') + '>' +
-      div.innerHTML + '</div>';
+      escapeText(entry.text) + '</div>';
   }
 
   // A label sits above the door it names, anchored on it. Zero-sized so the
@@ -394,23 +402,19 @@ function createEntrancePicker(map, options) {
     return {left: r.left, right: r.right, top: r.top, bottom: r.bottom};
   }
 
-  function markerLatLng(marker) {
-    return marker.getLatLng ? marker.getLatLng() : marker.latLng;
-  }
-
   // Names are only worth showing permanently while they can be read. Where the
   // boxes collide — which is a question of zoom, not of the data — the whole
   // colliding run is replaced by one label listing every door in it, anchored on
   // the first. Zooming in separates them and they come back individually.
   function layoutLabels() {
     if (!offer) return null;
-    var markers = renderedMarkers;
+    var doors = renderedDoors;
 
     // One label per door first, because their boxes are what the grouping is
     // decided from.
     labelLayer.clearLayers();
-    var labels = markers.map(function(marker) {
-      return addLabel(markerLatLng(marker), [labelEntry(marker)], false);
+    var labels = doors.map(function(door) {
+      return addLabel(door.latLng, [door], false);
     });
 
     var boxes = labels.map(labelBox);
@@ -427,9 +431,9 @@ function createEntrancePicker(map, options) {
     // runs collapsed onto their first door.
     labelLayer.clearLayers();
     groups.forEach(function(group) {
-      addLabel(markerLatLng(markers[group[0]]),
+      addLabel(doors[group[0]].latLng,
         group.map(function(i) {
-          return labelEntry(markers[i]);
+          return doors[i];
         }),
         group.length > 1);
     });
@@ -529,7 +533,7 @@ function createEntrancePicker(map, options) {
     if (!attached) return;
     attached = false;
     offer = null;
-    renderedMarkers = [];
+    renderedDoors = [];
     map.off('zoomend', layoutLabels);
     linkLayer.clearLayers();
     labelLayer.clearLayers();

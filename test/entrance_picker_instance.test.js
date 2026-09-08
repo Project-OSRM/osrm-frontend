@@ -425,6 +425,17 @@ describe('label placement', () => {
     expect(map._panes.osrmEntranceLabels).toBe(pane);
   });
 
+  test('a map that cannot make the pane still gets its labels', () => {
+    labelBoxes.set(SPREAD);
+    const map = makeMap();
+    map.createPane = () => null;
+    const picker = entrancePicker.createEntrancePicker(map, {});
+    picker.show({ waypointIndex: 1, placeCenter: CENTRE, entrances: NAMED });
+    expect(labels(map)).toHaveLength(3);
+    // Never a pane name that names nothing.
+    expect(labels(map).every((m) => m.options.pane === undefined)).toBe(true);
+  });
+
   test('names go in as text, so OSM cannot inject markup', () => {
     const nasty = '<img src=x onerror=alert(1)>';
     const { map } = openWith(
@@ -434,6 +445,16 @@ describe('label placement', () => {
     const html = labels(map)[0].options.icon.options.html;
     expect(html).not.toContain('<img');
     expect(html).toContain('&lt;img');
+  });
+
+  test('quotes and ampersands in a name are escaped too', () => {
+    const name = 'Tor "A" & B';
+    const { map } = openWith({ [name]: box(0, 0, 40, 16) },
+      [Object.assign({}, NAMED[0], { tags: { name: name } })]);
+    const html = labels(map)[0].options.icon.options.html;
+    expect(html).toContain('&amp;');
+    expect(html).toContain('&quot;');
+    expect(html).not.toContain('"A"');
   });
 
   test('gives up rather than guessing when a label cannot be measured', () => {
