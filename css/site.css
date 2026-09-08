@@ -563,41 +563,32 @@
   max-height: 75%;
 }
 
-.leaflet-routing-geocoders.osrm-directions-inputs .leaflet-routing-geocoder:first-child input {
-  border-top: 0px;
-  border-right: 0px;
-  border-bottom: 0px;
-  height: 100%;
-  /* Okabe-Ito, matching the map pins; see src/waypoint_marker.js for why. */
-  border-left-color: #0072b2;
-  border-left-width: thick;
-}
-
-.leaflet-routing-geocoders.osrm-directions-inputs .leaflet-routing-geocoder:last-of-type input {
-  border-top: 0px;
-  border-right: 0px;
-  border-bottom: 0px;
-  height: 100%;
-  border-left-color: #d55e00;
-  border-left-width: thick;
-}
-
 .leaflet-routing-geocoders.osrm-directions-inputs .leaflet-routing-geocoder input {
-  border-top: 0px;
-  border-right: 0px;
-  border-bottom: 0px;
+  border: 0px;
   height: 100%;
-  border-left-color: #595959;
-  border-left-width: thick;
+}
+
+/* The waypoint's pin, as the map and the directions pane draw it, so the row
+   can be matched to its marker. The image is set on the element. */
+.leaflet-routing-waypoint-pin {
+  display: inline-block;
+  vertical-align: middle;
+  width: 20px;
+  height: 28px;
+  margin-left: 4px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
 }
 
 .osrm-directions-inputs input {
   font-size: 12px;
-  width: calc(100% - 55px);
+  /* The pin and the grip and remove button either side of it. */
+  width: calc(100% - 79px);
   background-color: transparent;
   color: rgba(0, 0, 0, 0.5);
   height: 30px;
-  padding: 10px 10px 10px 20px;
+  padding: 10px 10px 10px 8px;
 }
 
 .osrm-directions-route-summary {

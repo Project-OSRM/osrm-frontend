@@ -155,9 +155,16 @@ function panelIconUrl(kind, position) {
   return dataUri(pinMarkup(kind, position, PIN_HEIGHT));
 }
 
+// The same panel pin for waypoint i of n, for a row that does know how many
+// waypoints there are: the input rows.
+function panelIconUrlFor(i, n) {
+  return panelIconUrl(kindOf(i, n), i);
+}
+
 module.exports = {
   waypointIconOptions: waypointIconOptions,
   panelIconUrl: panelIconUrl,
+  panelIconUrlFor: panelIconUrlFor,
   START: START,
   VIA: VIA,
   END: END,
