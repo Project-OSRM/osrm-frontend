@@ -29,6 +29,8 @@ const CENTRE = { lat: 52.5209336, lng: 13.3956302 };
 const DOOR = { lat: 52.5209566, lng: 13.3965227 };
 const MAIN = { osmId: 1, type: 'main', center: DOOR };
 const EXIT = { osmId: 2, type: 'exit', center: DOOR };
+// entrance=entrance is a one-way in, so it is no use at an origin.
+const IN_ONLY = { osmId: 3, type: 'entrance', center: DOOR };
 
 function makePlan(count) {
   const waypoints = [];
@@ -52,18 +54,42 @@ function makeFakePicker() {
   const picker = {
     shown: [],
     hidden: 0,
+    // Waypoint indices withdrawn one at a time, in order.
+    hiddenWaypoints: [],
+    // Which waypoints currently have an offer, as the real picker tracks.
+    openFor: new Set(),
     open: false,
     onSelect: null,
     show: jest.fn(function(opts) {
       picker.shown.push(opts);
+      picker.openFor.add(opts.waypointIndex);
       picker.open = true;
       return true;
     }),
     hide: jest.fn(function() {
       picker.hidden++;
+      picker.openFor.clear();
       picker.open = false;
     }),
-    isOpen: jest.fn(() => picker.open)
+    hideWaypoint: jest.fn(function(waypointIndex) {
+      picker.hiddenWaypoints.push(waypointIndex);
+      picker.openFor.delete(waypointIndex);
+      picker.open = picker.openFor.size > 0;
+    }),
+    // Mirrors the real picker: offers are renumbered by a splice, not dropped.
+    spliceOffers: jest.fn(function(index, nRemoved, nAdded) {
+      const delta = (nAdded || 0) - (nRemoved || 0);
+      const next = new Set();
+      picker.openFor.forEach((at) => {
+        if (at < index) { next.add(at); return; }
+        if (at < index + (nRemoved || 0)) return;
+        next.add(at + delta);
+      });
+      picker.openFor = next;
+      picker.open = picker.openFor.size > 0;
+    }),
+    isOpen: jest.fn(() => picker.open),
+    isOpenFor: jest.fn((waypointIndex) => picker.openFor.has(waypointIndex))
   };
   return picker;
 }
@@ -153,17 +179,22 @@ describe('building the offer', () => {
     expect(picker.shown[1].entrances).toEqual([MAIN, EXIT]);
   });
 
-  test('a place with no usable door withdraws the offer instead of showing one', () => {
-    const { wiring, picker } = build();
-    expect(wiring.onGeocodeResult(geocodeEvent([EXIT]))).toBe(false);
-    expect(picker.show).not.toHaveBeenCalled();
-    expect(picker.hidden).toBe(1);
+  test('a place with no usable door withdraws its own offer, and only its own', () => {
+    const plan = makePlan(3);
+    const { wiring, picker } = build({ plan });
+    // A via with doors, then a start with none: the via keeps its dots.
+    wiring.onGeocodeResult(geocodeEvent([MAIN], { waypointIndex: 1 }));
+    expect(wiring.onGeocodeResult(geocodeEvent([IN_ONLY], { waypointIndex: 0 }))).toBe(false);
+    expect(picker.hiddenWaypoints).toEqual([0]);
+    expect(picker.hidden).toBe(0);
+    expect(picker.isOpenFor(1)).toBe(true);
   });
 
   test('a geocode with no result at all is not an error', () => {
     const { wiring, picker } = build();
     expect(wiring.onGeocodeResult({ waypointIndex: 1, value: null })).toBe(false);
     expect(picker.show).not.toHaveBeenCalled();
+    expect(picker.hiddenWaypoints).toEqual([1]);
   });
 });
 
@@ -243,6 +274,7 @@ describe('claimView', () => {
   test('a later geocode with no usable door withdraws the earlier claim', () => {
     const { wiring } = build();
     wiring.onGeocodeResult(geocodeEvent([MAIN]));
+    // The same waypoint, so its offer — and the claim with it — is withdrawn.
     wiring.onGeocodeResult(geocodeEvent([EXIT]));
     expect(wiring.claimView()).toBe(false);
   });
@@ -310,13 +342,14 @@ describe('travel mode', () => {
     expect(picker.shown[0].entrances).toEqual([NO_CARS]);
   });
 
-  test('a refresh that leaves no usable door closes the picker', () => {
+  test('a refresh that leaves no usable door withdraws that offer', () => {
     let mode = 'foot';
     const { wiring, picker } = build({ options: { mode: () => mode } });
     wiring.onGeocodeResult(geocodeEvent([NO_CARS]));
 
     mode = 'driving';
     expect(wiring.refresh()).toBe(false);
+    expect(picker.hiddenWaypoints).toEqual([1]);
     expect(picker.open).toBe(false);
   });
 
@@ -339,5 +372,106 @@ describe('travel mode', () => {
     wiring.onGeocodeResult(geocodeEvent([MAIN, NO_CARS]));
     expect(picker.shown[0].entrances).toEqual([MAIN, NO_CARS]);
     expect(picker.shown[0].mode).toBeNull();
+  });
+});
+
+describe('following a splice of the waypoint list', () => {
+  test('a remembered result moves with its waypoint, so a refresh stays correct', () => {
+    const plan = makePlan(3);
+    const { wiring, picker } = build({ plan, options: { mode: () => 'foot' } });
+    wiring.onGeocodeResult(geocodeEvent([MAIN], { waypointIndex: 1, waypoint: plan._waypoints[1] }));
+
+    // A waypoint inserted at the front pushes it to index 2.
+    plan._waypoints.unshift({ latLng: null, name: '' });
+    wiring.spliceWaypoints({ index: 0, nRemoved: 0, added: [plan._waypoints[0]] });
+
+    wiring.refresh();
+    expect(picker.shown[picker.shown.length - 1].waypointIndex).toBe(2);
+  });
+
+  test('a removed waypoint takes its remembered place with it', () => {
+    const plan = makePlan(3);
+    const { wiring, picker } = build({ plan });
+    wiring.onGeocodeResult(geocodeEvent([MAIN], { waypointIndex: 1, waypoint: plan._waypoints[1] }));
+
+    plan._waypoints.splice(1, 1);
+    wiring.spliceWaypoints({ index: 1, nRemoved: 1, added: [] });
+
+    expect(wiring.refresh()).toBe(false);
+    expect(picker.shown).toHaveLength(1);
+  });
+
+  // The reported bug behind this slice. An entrance=exit can be left through
+  // but not entered, so it is right to offer nothing while the place is the
+  // destination — and wrong to keep offering nothing once it becomes the start.
+  // LRM's reverse button replaces the whole list, so this arrives as a splice
+  // of everything, with the same waypoint objects in a new order.
+  test('reversing the route re-offers the doors the new roles allow', () => {
+    const plan = makePlan(2);
+    const [first, second] = plan._waypoints;
+    const { wiring, picker } = build({ plan });
+
+    wiring.onGeocodeResult(geocodeEvent([EXIT], { waypointIndex: 1, waypoint: second }));
+    expect(picker.isOpenFor(1)).toBe(false);
+
+    plan._waypoints.reverse();
+    wiring.spliceWaypoints({ index: 0, nRemoved: 2, added: [second, first] });
+
+    expect(picker.isOpenFor(0)).toBe(true);
+    const offer = picker.shown[picker.shown.length - 1];
+    expect(offer.waypointIndex).toBe(0);
+    expect(offer.entrances).toEqual([EXIT]);
+    // Redrawn where it is: a reorder is not a request to be taken to the doors.
+    expect(offer.frame).toBe(false);
+  });
+
+  test('a splice that leaves the roles alone re-offers nothing', () => {
+    const plan = makePlan(3);
+    const { wiring, picker } = build({ plan });
+    wiring.onGeocodeResult(geocodeEvent([MAIN], { waypointIndex: 1, waypoint: plan._waypoints[1] }));
+    const shownBefore = picker.shown.length;
+
+    // A via stays a via when another waypoint is added after it.
+    plan._waypoints.splice(2, 0, { latLng: null, name: '' });
+    wiring.spliceWaypoints({ index: 2, nRemoved: 0, added: [plan._waypoints[2]] });
+
+    expect(picker.shown).toHaveLength(shownBefore);
+  });
+
+  test('a waypoint that becomes a via loses the one-way doors', () => {
+    const plan = makePlan(2);
+    const { wiring, picker } = build({ plan });
+    // The destination, where a one-way in is exactly right.
+    wiring.onGeocodeResult(geocodeEvent([IN_ONLY], { waypointIndex: 1, waypoint: plan._waypoints[1] }));
+    expect(picker.isOpenFor(1)).toBe(true);
+
+    // A waypoint appended after it makes it a via, which needs both directions.
+    plan._waypoints.push({ latLng: null, name: '' });
+    wiring.spliceWaypoints({ index: 2, nRemoved: 0, added: [plan._waypoints[2]] });
+
+    expect(picker.hiddenWaypoints).toContain(1);
+  });
+
+  test('hideWaypoint forgets the place as well as withdrawing the dots', () => {
+    const { wiring, picker } = build();
+    wiring.onGeocodeResult(geocodeEvent([MAIN]));
+    wiring.hideWaypoint(1);
+    expect(picker.hiddenWaypoints).toEqual([1]);
+    expect(wiring.refresh()).toBe(false);
+  });
+
+  test('a refresh re-applies to every place remembered, not just the newest', () => {
+    const plan = makePlan(3);
+    let mode = 'foot';
+    const { wiring, picker } = build({ plan, options: { mode: () => mode } });
+    wiring.onGeocodeResult(geocodeEvent([MAIN], { waypointIndex: 0, waypoint: plan._waypoints[0] }));
+    wiring.onGeocodeResult(geocodeEvent([MAIN], { waypointIndex: 2, waypoint: plan._waypoints[2] }));
+    const shownBefore = picker.shown.length;
+
+    mode = 'driving';
+    expect(wiring.refresh()).toBe(true);
+    const redrawn = picker.shown.slice(shownBefore);
+    expect(redrawn.map((o) => o.waypointIndex).sort()).toEqual([0, 2]);
+    expect(redrawn.every((o) => o.mode === 'driving' && o.frame === false)).toBe(true);
   });
 });

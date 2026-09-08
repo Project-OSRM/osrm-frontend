@@ -743,10 +743,16 @@ if (modeSelector && modeSelector.select) {
   });
 }
 
-// Adding, removing or reordering waypoints invalidates the index the offer is
-// pinned to; dragging the pin means the user has already chosen a spot.
-plan.on('waypointsspliced', entranceWaypoints.hide);
-plan.on('waypointdragstart', entranceWaypoints.hide);
+// Adding, removing or reordering waypoints renumbers the ones after the splice,
+// and each waypoint keeps its own offer — so the offers are renumbered too
+// rather than thrown away. Dropping them all meant that placing a destination
+// by clicking the map took the start's doors off the screen with it.
+plan.on('waypointsspliced', entranceWaypoints.spliceWaypoints);
+// Only the dragged waypoint's doors go: it is being moved off the place they
+// belong to, and no other waypoint is affected.
+plan.on('waypointdragstart', function(e) {
+  entranceWaypoints.hideWaypoint(e && e.index);
+});
 
 // The route the picker was waiting on never came; its claim on the view must
 // not carry over to whatever route comes next.
