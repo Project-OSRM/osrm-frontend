@@ -383,3 +383,91 @@ describe('geocoder entrance handling', () => {
 
 // Entrance nodes carry no geometry of their own, so the site they belong to is
 // outlined instead. Its polygon is fetched separately, never as part of search.
+
+describe('geocoder.fetchOutline', () => {
+  function mockLeaflet() {
+    jest.doMock('leaflet', () => ({
+      Control: { Geocoder: { nominatim: jest.fn(() => ({})) } },
+      CRS: { EPSG3857: { scale: () => 1 } },
+      latLng: (lat, lng) => ({ lat: +lat, lng: +lng }),
+      latLngBounds: (sw, ne) => ({ sw, ne }),
+      extend: Object.assign
+    }));
+  }
+
+  const POLYGON = { type: 'Polygon', coordinates: [[[13.45, 52.34], [13.53, 52.34], [13.53, 52.39], [13.45, 52.34]]] };
+
+  beforeEach(() => {
+    jest.resetModules();
+    global.localStorage = { getItem: () => null, setItem: () => {} };
+  });
+
+  afterEach(() => {
+    delete global.localStorage;
+    delete global.fetch;
+  });
+
+  function respondWith(body) {
+    global.fetch = jest.fn(() => Promise.resolve({
+      ok: true, status: 200, json: () => Promise.resolve(body)
+    }));
+  }
+
+  test('looks the place up by OSM id and returns its polygon', async () => {
+    mockLeaflet();
+    respondWith([{ geojson: POLYGON }]);
+    const geocoder = require('../src/geocoder');
+
+    const outline = await geocoder.coordPreserving('https://nominatim.example/')
+      .fetchOutline({ osmType: 'way', osmId: 859790021 });
+
+    expect(outline).toEqual(POLYGON);
+    const url = global.fetch.mock.calls[0][0];
+    expect(url).toContain('lookup?');
+    expect(url).toContain('osm_ids=W859790021');
+    expect(url).toContain('polygon_geojson=1');
+    // No polygon_threshold: its tolerance is absolute degrees, so a value that
+    // usefully thins an airport flattens a building into a few stray corners.
+    expect(url).not.toContain('polygon_threshold');
+  });
+
+  test('caches by place so reopening the picker costs no request', async () => {
+    mockLeaflet();
+    respondWith([{ geojson: POLYGON }]);
+    const geocoder = require('../src/geocoder');
+    const g = geocoder.coordPreserving('https://nominatim.example/');
+
+    await g.fetchOutline({ osmType: 'way', osmId: 1 });
+    await g.fetchOutline({ osmType: 'way', osmId: 1 });
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  test('returns null for a place with no area', async () => {
+    mockLeaflet();
+    respondWith([{ geojson: { type: 'Point', coordinates: [13.5, 52.3] } }]);
+    const geocoder = require('../src/geocoder');
+
+    expect(await geocoder.coordPreserving('https://nominatim.example/')
+      .fetchOutline({ osmType: 'node', osmId: 42 })).toBeNull();
+  });
+
+  test('returns null without requesting anything when the result has no OSM id', async () => {
+    mockLeaflet();
+    respondWith([{ geojson: POLYGON }]);
+    const geocoder = require('../src/geocoder');
+
+    expect(await geocoder.coordPreserving('https://nominatim.example/')
+      .fetchOutline({ name: 'somewhere' })).toBeNull();
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  test('a failed lookup is not fatal — the picker just shows no outline', async () => {
+    mockLeaflet();
+    global.fetch = jest.fn(() => Promise.reject(new Error('offline')));
+    const geocoder = require('../src/geocoder');
+
+    expect(await geocoder.coordPreserving('https://nominatim.example/')
+      .fetchOutline({ osmType: 'relation', osmId: 7 })).toBeNull();
+  });
+});

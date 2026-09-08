@@ -41,6 +41,7 @@ jest.mock('leaflet', () => ({
   point: (x, y) => ({ x, y }),
   divIcon: (opts) => ({ _kind: 'divIcon', options: opts }),
   polyline: (points, style) => ({ _kind: 'polyline', points, style }),
+  geoJSON: (geometry, opts) => ({ _kind: 'geoJSON', geometry, options: opts }),
   DomEvent: { stopPropagation: jest.fn() },
   marker: (latLng, opts) => ({
     _kind: 'marker',
@@ -128,17 +129,22 @@ function openPicker(showOpts, options, mapOverrides) {
 
 // The picker's own layer group; its members are indexed by the helpers below.
 function pickerGroup(map) {
-  return map._layers.filter((l) => l._kind === 'layerGroup' && l._layers.length === 3)[0];
+  return map._layers.filter((l) => l._kind === 'layerGroup' && l._layers.length === 4)[0];
 }
 
-function links(map) {
+function outlines(map) {
   const g = pickerGroup(map);
   return g ? g._layers[0]._layers : [];
 }
 
-function labels(map) {
+function links(map) {
   const g = pickerGroup(map);
   return g ? g._layers[1]._layers : [];
+}
+
+function labels(map) {
+  const g = pickerGroup(map);
+  return g ? g._layers[2]._layers : [];
 }
 
 // The names a label shows, with any mark glyph stripped — the marks are
@@ -151,7 +157,7 @@ function labelTexts(map) {
 
 function dots(map) {
   const g = pickerGroup(map);
-  return g ? g._layers[2]._layers : [];
+  return g ? g._layers[3]._layers : [];
 }
 
 beforeEach(() => jest.useFakeTimers());
@@ -878,5 +884,106 @@ describe('choosing what to frame', () => {
       { center: BETWEEN_DOORS, pixelsPerDegree: 630000 });
     settle();
     expect(map.fitBounds).toHaveBeenCalled();
+  });
+});
+
+describe('the site outline', () => {
+  const GEOMETRY = { type: 'Polygon', coordinates: [[[13.395, 52.52], [13.397, 52.52], [13.396, 52.521]]] };
+
+  function openWithOutline(resolve, showOpts) {
+    let settleOutline;
+    const fetchOutline = jest.fn(() => new Promise((r) => { settleOutline = r; }));
+    const opened = openPicker(Object.assign({ place: { osmId: 1 } }, showOpts), { fetchOutline });
+    return Object.assign({ fetchOutline, resolveOutline: (g) => { settleOutline(g); return Promise.resolve(); } }, opened);
+  }
+
+  test('is fetched for the place and drawn behind the doors', async () => {
+    const { map, fetchOutline, resolveOutline } = openWithOutline();
+    expect(fetchOutline).toHaveBeenCalledWith({ osmId: 1 });
+    expect(outlines(map)).toHaveLength(0);
+
+    await resolveOutline(GEOMETRY);
+    expect(outlines(map)).toHaveLength(1);
+    expect(outlines(map)[0].geometry).toBe(GEOMETRY);
+    // Context, not a target: never in the way of a click on a door.
+    expect(outlines(map)[0].options.style.interactive).toBe(false);
+  });
+
+  // Sharing the overlay pane with the route would order the two by whichever
+  // was added last, and the outline arrives when its request resolves.
+  test('is drawn in a pane below the route line', async () => {
+    const { map, resolveOutline } = openWithOutline();
+    await resolveOutline(GEOMETRY);
+    expect(outlines(map)[0].options.pane).toBe('osrmEntranceOutline');
+    expect(Number(map._panes.osrmEntranceOutline.style.zIndex)).toBeLessThan(400);
+    // And above the tiles.
+    expect(Number(map._panes.osrmEntranceOutline.style.zIndex)).toBeGreaterThan(200);
+    // Still below the labels, which are below the dots.
+    expect(Number(map._panes.osrmEntranceOutline.style.zIndex))
+      .toBeLessThan(Number(map._panes.osrmEntranceLabels.style.zIndex));
+  });
+
+  test('a map that cannot make panes still draws the outline', async () => {
+    let settleOutline;
+    const fetchOutline = jest.fn(() => new Promise((r) => { settleOutline = r; }));
+    const map = makeMap();
+    map.createPane = () => null;
+    const picker = entrancePicker.createEntrancePicker(map, { fetchOutline });
+    picker.show({ waypointIndex: 1, placeCenter: CENTRE, entrances: [MAIN, SIDE],
+      place: { osmId: 1 } });
+    settleOutline(GEOMETRY);
+    await Promise.resolve();
+    expect(outlines(map)).toHaveLength(1);
+    expect(outlines(map)[0].options.pane).toBeUndefined();
+  });
+
+  test('a place with no outline simply has none', async () => {
+    const { map, resolveOutline } = openWithOutline();
+    await resolveOutline(null);
+    expect(outlines(map)).toHaveLength(0);
+    expect(dots(map)).toHaveLength(2);
+  });
+
+  test('the picker works without a fetcher at all', () => {
+    const { map } = openPicker();
+    expect(dots(map)).toHaveLength(2);
+    expect(outlines(map)).toHaveLength(0);
+  });
+
+  test('nothing is fetched for a show that carries no place', () => {
+    const fetchOutline = jest.fn();
+    openPicker(null, { fetchOutline });
+    expect(fetchOutline).not.toHaveBeenCalled();
+  });
+
+  // The offer may be gone by the time the request lands.
+  test('an outline arriving after its offer was withdrawn is dropped', async () => {
+    const { map, picker, resolveOutline } = openWithOutline();
+    picker.hide();
+    await resolveOutline(GEOMETRY);
+    expect(outlines(map)).toHaveLength(0);
+  });
+
+  test('an outline arriving after its offer was replaced is dropped', async () => {
+    const { map, picker, resolveOutline } = openWithOutline();
+    picker.show({ waypointIndex: 1, placeCenter: CENTRE, entrances: [MAIN], frame: false });
+    await resolveOutline(GEOMETRY);
+    expect(outlines(map)).toHaveLength(0);
+  });
+
+  // But another waypoint being shown meanwhile must not cancel this one.
+  test('showing another waypoint does not cancel an outline in flight', async () => {
+    const { map, picker, resolveOutline } = openWithOutline();
+    picker.show({ waypointIndex: 5, placeCenter: CENTRE, entrances: [SIDE], frame: false });
+    await resolveOutline(GEOMETRY);
+    expect(outlines(map)).toHaveLength(1);
+  });
+
+  test('each offer keeps its own outline, and closing clears them', async () => {
+    const { map, picker, resolveOutline } = openWithOutline();
+    await resolveOutline(GEOMETRY);
+    expect(outlines(map)).toHaveLength(1);
+    picker.hide();
+    expect(outlines(map)).toHaveLength(0);
   });
 });

@@ -45,6 +45,27 @@ var FIT_PADDING = 24;
 // Long enough to outlast Leaflet's default 250 ms pan/zoom animation.
 var SETTLE_TIMEOUT_MS = 450;
 
+// The outline sits in its own pane between Leaflet's tiles (200) and its
+// overlay pane (400), where the route line is drawn. Sharing the overlay pane
+// would leave the two ordered by whichever was added last, and the outline
+// arrives when its request resolves — usually after the route — so it would
+// land on top of the very thing it must not obscure.
+var OUTLINE_PANE = 'osrmEntranceOutline';
+var OUTLINE_PANE_Z_INDEX = 350;
+
+// The site the entrances belong to. Muted and non-interactive: it is context
+// for the dots, not a thing to click, and it must never obscure the route line.
+var OUTLINE_STYLE = {
+  color: '#2b7ac9',
+  weight: 2,
+  opacity: 0.7,
+  dashArray: '6 4',
+  fill: true,
+  fillColor: '#2b7ac9',
+  fillOpacity: 0.07,
+  interactive: false
+};
+
 // Labels live in their own pane, kept just below Leaflet's marker pane (600).
 // A zIndexOffset cannot do this job: Leaflet derives a marker's z-index from its
 // latitude, so a label on a northerly door still outranks a dot on a southerly
@@ -371,6 +392,7 @@ function minPairSeparation(points) {
  * @param {object} options
  * @param {function} options.onSelect — called with {waypointIndex, placeName,
  *   latLng, markerLatLng, entrance}
+ * @param {function} [options.fetchOutline] — (place) => Promise<GeoJSON|null>
  * @param {function} [options.paneWidth] — () => width in px of the directions
  *   pane, so the doors are framed into the part of the map it does not cover
  *
@@ -384,6 +406,7 @@ function minPairSeparation(points) {
 function createEntrancePicker(map, options) {
   options = options || {};
   var onSelect = typeof options.onSelect === 'function' ? options.onSelect : function() {};
+  var fetchOutline = typeof options.fetchOutline === 'function' ? options.fetchOutline : null;
   var translate = typeof options.translate === 'function' ? options.translate : function(key) {
     return key;
   };
@@ -392,12 +415,13 @@ function createEntrancePicker(map, options) {
   var paneWidth = typeof options.paneWidth === 'function' ? options.paneWidth : function() {
     return 0;
   };
-  // Three groups, so each can be cleared without disturbing the others. Markers
+  // Four groups, so each can be cleared without disturbing the others. Markers
   // sit in Leaflet's marker pane and paths in the overlay pane, so the dots stay
   // above the dashed link whatever the draw order.
   //
   // The dashed link runs from the chosen door back to the pin, which never
   // moves.
+  var outlineLayer = L.layerGroup();
   var linkLayer = L.layerGroup();
   // Labels are markers of our own rather than Leaflet tooltips, for two
   // reasons. The tooltip pane sits above the marker pane, so a label would be
@@ -407,7 +431,7 @@ function createEntrancePicker(map, options) {
   // pane, whereas clearing a layer group really does remove what is in it.
   var labelLayer = L.layerGroup();
   var markerLayer = L.layerGroup();
-  var layer = L.layerGroup([linkLayer, labelLayer, markerLayer]);
+  var layer = L.layerGroup([outlineLayer, linkLayer, labelLayer, markerLayer]);
   // One offer per waypoint. More than one waypoint can be showing its doors at
   // once: naming a start must not withdraw the destination's, which is what a
   // single shared offer did.
@@ -459,6 +483,7 @@ function createEntrancePicker(map, options) {
   function render() {
     markerLayer.clearLayers();
     linkLayer.clearLayers();
+    outlineLayer.clearLayers();
     renderedDoors = [];
     if (!offers.length) {
       labelLayer.clearLayers();
@@ -466,6 +491,14 @@ function createEntrancePicker(map, options) {
     }
 
     offers.forEach(function(offer) {
+      // Redrawn from the geometry each time rather than left in place, so one
+      // waypoint's outline can be removed without disturbing another's.
+      if (offer.outline) {
+        var outlineOptions = {style: OUTLINE_STYLE};
+        var outlinePane = ensurePane(OUTLINE_PANE, OUTLINE_PANE_Z_INDEX);
+        if (outlinePane) outlineOptions.pane = outlinePane;
+        outlineLayer.addLayer(L.geoJSON(offer.outline, outlineOptions));
+      }
       offer.choices.forEach(function(choice) {
         var chosen = choice.id === offer.selectedId;
         var text = label(choice);
@@ -514,15 +547,15 @@ function createEntrancePicker(map, options) {
 
   // Created lazily, because the picker may be built before the map has panes.
   // Answers with the pane's name only once there really is a pane: naming one
-  // that does not exist would leave the label unplaced.
-  function ensureLabelPane() {
+  // that does not exist would leave the layer unplaced.
+  function ensurePane(name, zIndex) {
     if (typeof map.createPane !== 'function' || typeof map.getPane !== 'function') return null;
-    var pane = map.getPane(LABEL_PANE);
+    var pane = map.getPane(name);
     if (!pane) {
-      pane = map.createPane(LABEL_PANE);
-      if (pane && pane.style) pane.style.zIndex = LABEL_PANE_Z_INDEX;
+      pane = map.createPane(name);
+      if (pane && pane.style) pane.style.zIndex = zIndex;
     }
-    return pane ? LABEL_PANE : null;
+    return pane ? name : null;
   }
 
   // Which line of a label a click landed on, from the element under the
@@ -580,7 +613,7 @@ function createEntrancePicker(map, options) {
       keyboard: false,
       zIndexOffset: 100
     };
-    var pane = ensureLabelPane();
+    var pane = ensurePane(LABEL_PANE, LABEL_PANE_Z_INDEX);
     if (pane) options.pane = pane;
     var marker = L.marker(latLng, options);
     marker.on('click', function(e) {
@@ -748,6 +781,22 @@ function createEntrancePicker(map, options) {
     map.on('moveend', run);
   }
 
+  // The outline is best-effort context: a failed or absent one simply means the
+  // picker shows dots without a site boundary.
+  function loadOutline(offer, place) {
+    offer.outline = null;
+    if (!fetchOutline || !place) return;
+    fetchOutline(place).then(function(geometry) {
+      // Guarded by the offer's own identity rather than a shared counter: the
+      // offer may have been withdrawn, or replaced by a later one for the same
+      // waypoint, while the request was in flight — but another waypoint being
+      // shown meanwhile must not cancel this one.
+      if (!geometry || offerAt(offer.waypointIndex) !== offer) return;
+      offer.outline = geometry;
+      render();
+    });
+  }
+
   function show(opts) {
     var choices = buildChoices(opts.placeCenter, opts.entrances);
     // A single door is still worth offering: the pin already marks the place,
@@ -769,7 +818,8 @@ function createEntrancePicker(map, options) {
       // Which mark a door earns depends on it, and refresh() re-shows the
       // picker with a new one whenever the travel mode changes.
       mode: opts.mode || null,
-      selectedId: opts.selectedId || null
+      selectedId: opts.selectedId || null,
+      outline: null
     };
     var existing = offerAt(opts.waypointIndex);
     if (existing) {
@@ -782,6 +832,7 @@ function createEntrancePicker(map, options) {
     activeWaypointIndex = offer.waypointIndex;
     attached = true;
     if (!map.hasLayer(layer)) layer.addTo(map);
+    loadOutline(offer, opts.place);
     render();
     if (opts.frame !== false) focusViewWhenSettled();
     // Which labels fit is a question of zoom, so the layout is redone after
@@ -865,6 +916,7 @@ function createEntrancePicker(map, options) {
     activeWaypointIndex = null;
     renderedDoors = [];
     map.off('zoomend', layoutLabels);
+    outlineLayer.clearLayers();
     linkLayer.clearLayers();
     labelLayer.clearLayers();
     markerLayer.clearLayers();

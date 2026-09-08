@@ -169,6 +169,7 @@ function createReverseNotifier(options) {
  * @param {L.Routing.Plan} options.plan
  * @param {object} options.routeFitTracker — from route_zoom
  * @param {function} [options.translate] — (key) => localized string
+ * @param {function} [options.fetchOutline] — (place) => Promise<GeoJSON|null>
  * @param {function} [options.paneWidth] — () => width of the directions pane
  * @param {function} [options.mode] — () => the active routing profile, read live
  *   so switching between car, bike and foot re-applies the access rules
@@ -239,6 +240,7 @@ function createEntranceWaypoints(options) {
 
   var picker = createPicker(options.map, {
     translate: translate,
+    fetchOutline: options.fetchOutline,
     paneWidth: options.paneWidth,
     onSelect: applySelection
   });
@@ -282,6 +284,7 @@ function createEntranceWaypoints(options) {
       placeCenter: result.center,
       placeBounds: result.bbox,
       entrances: entrances,
+      place: result,
       // The picker marks doors differently per mode, so it gets the same value
       // the filtering above used.
       mode: activeMode,
