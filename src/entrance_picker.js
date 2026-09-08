@@ -383,6 +383,10 @@ function minPairSeparation(points) {
  * @param {L.Map} map
  * @param {object} options
  * @param {function} options.onSelect  — called with {waypointIndex, placeName, latLng, entrance}
+ *
+ * show() takes `frame: false` to redraw an offer without moving the view: a
+ * change of travel mode or of a waypoint's role re-filters the doors already
+ * on screen, and the user did not ask to be taken to them.
  * @param {function} [options.translate] — (key) => localized string
  * @param {function} [options.fetchOutline] — (place) => Promise<GeoJSON geometry|null>
  * @param {function} [options.paneWidth] — () => width in px of the directions pane
@@ -488,9 +492,13 @@ function createEntrancePicker(map, options) {
           zIndexOffset: chosen ? 500 : 400
         });
         // The name travels with the dot; layoutLabels turns it into a label the
-        // user can read without hovering.
+        // user can read without hovering, and click as a stand-in for the dot.
         marker.__entranceLabel = text;
         marker.__entranceMark = mark;
+        marker.__entranceSelected = chosen;
+        marker.__entranceSelect = function() {
+          select(offer, choice);
+        };
         marker.on('click', function(e) {
           // Without this the click also lands on the map, which would drop a
           // new waypoint on top of the place being chosen for.
@@ -548,9 +556,30 @@ function createEntrancePicker(map, options) {
   // anchor is the door itself; the inner element does the drawing and is what
   // gets measured.
   function labelEntry(marker) {
-    return {text: marker.__entranceLabel, mark: marker.__entranceMark || null};
+    return {
+      text: marker.__entranceLabel,
+      mark: marker.__entranceMark || null,
+      selected: !!marker.__entranceSelected,
+      select: marker.__entranceSelect
+    };
   }
 
+  // Which line of a label a click landed on, from the element under the
+  // pointer: the label's lines are its inner span's direct children, in the
+  // order of its entries. -1 when the click missed every line.
+  function clickedLineIndex(e) {
+    var target = e && e.originalEvent && e.originalEvent.target;
+    if (!target || !target.closest) return -1;
+    var line = target.closest('.osrm-entrance-label-inner > div');
+    if (!line || !line.parentNode) return -1;
+    return Array.prototype.indexOf.call(line.parentNode.children, line);
+  }
+
+  // A label is clickable, and clicking it does what clicking its door does.
+  // That is what makes a merged label usable: the doors it lists are the ones
+  // too close together to aim at, so their names are the only way to pick one
+  // apart. The label still sits beneath the dots, so a click that lands on a
+  // dot goes to the dot.
   function addLabel(latLng, entries, merged) {
     var options = {
       icon: L.divIcon({
@@ -559,13 +588,21 @@ function createEntrancePicker(map, options) {
         html: '<span class="osrm-entrance-label-inner">' +
           entries.map(labelLine).join('') + '</span>'
       }),
-      // Never in the way of a click on a door, and always drawn beneath one.
-      interactive: false,
+      interactive: true,
+      keyboard: false,
       zIndexOffset: 100
     };
     var pane = ensureLabelPane();
     if (pane) options.pane = pane;
     var marker = L.marker(latLng, options);
+    marker.on('click', function(e) {
+      // Same reason as on the dot: the map must not take this as a click.
+      L.DomEvent.stopPropagation(e);
+      // A single-door label is its door; a merged one picks the line clicked.
+      var index = entries.length === 1 ? 0 : clickedLineIndex(e);
+      var entry = entries[index];
+      if (entry && typeof entry.select === 'function') entry.select();
+    });
     labelLayer.addLayer(marker);
     return marker;
   }
@@ -580,7 +617,8 @@ function createEntrancePicker(map, options) {
       ? '<span class="osrm-entrance-mark ' + entry.mark.className +
         '" aria-hidden="true">' + entry.mark.glyph + '</span>'
       : '';
-    return '<div>' + div.innerHTML + mark + '</div>';
+    return '<div' + (entry.selected ? ' class="osrm-entrance-label-selected"' : '') + '>' +
+      div.innerHTML + mark + '</div>';
   }
 
   function labelBox(marker) {
@@ -759,7 +797,7 @@ function createEntrancePicker(map, options) {
     attached = true;
     if (!map.hasLayer(layer)) layer.addTo(map);
     loadOutline(offer, opts.place);
-    focusViewWhenSettled();
+    if (opts.frame !== false) focusViewWhenSettled();
     render();
     // Which labels fit is a question of zoom, so the layout is redone after
     // every one.

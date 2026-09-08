@@ -311,6 +311,19 @@ describe('the travel mode', () => {
     expect(picker.shown[1].entrances).toEqual([MAIN]);
   });
 
+  test('a fresh geocode frames its doors; a refresh redraws them where they are', () => {
+    // Switching profile recomputes the route; the map must not jump back to
+    // the doors for that.
+    let mode = 'foot';
+    const { wiring, picker } = build({ options: { mode: () => mode } });
+    wiring.onGeocodeResult(geocodeEvent([MAIN, NO_CARS]));
+    expect(picker.shown[0].frame).toBe(true);
+
+    mode = 'driving';
+    wiring.refresh();
+    expect(picker.shown[1].frame).toBe(false);
+  });
+
   test('a refresh that leaves no usable door closes the picker', () => {
     let mode = 'foot';
     const { wiring, picker } = build({ options: { mode: () => mode } });
@@ -446,12 +459,6 @@ describe('the view while the picker is open', () => {
     picker.isOpen.mockClear();
     wiring.isOpen();
     expect(picker.isOpen).toHaveBeenCalled();
-  });
-
-  test('re-framing is delegated to the picker', () => {
-    const { wiring, picker } = build();
-    wiring.focusView();
-    expect(picker.focusView).toHaveBeenCalled();
   });
 
   test('hide closes the picker, which is what a splice or a drag does', () => {
@@ -717,6 +724,18 @@ describe('splicing the waypoint list', () => {
     expect(picker.hiddenWaypoints).toContain(1);
   });
 
+  test('a role change redraws the doors without moving the view', () => {
+    const plan = makePlan(2);
+    const [first, second] = plan._waypoints;
+    const { wiring, picker } = build({ plan });
+    wiring.onGeocodeResult(geocodeEvent([MAIN], { waypointIndex: 1, waypoint: second }));
+
+    plan._waypoints.reverse();
+    wiring.spliceWaypoints({ index: 0, nRemoved: 2, added: [second, first] });
+
+    expect(picker.shown[picker.shown.length - 1].frame).toBe(false);
+  });
+
   test('a splice that leaves the roles alone does not re-offer anything', () => {
     const plan = makePlan(3);
     const { wiring, picker } = build({ plan });
@@ -754,5 +773,49 @@ describe('splicing the waypoint list', () => {
     expect(picker.hiddenWaypoints).toEqual([1]);
     expect(picker.hide).not.toHaveBeenCalled();
     expect(picker.isOpenFor(0)).toBe(true);
+  });
+});
+
+describe('claimView', () => {
+  // The route that follows the geocode which opened a picker must not fit
+  // itself over the doors the picker just framed. Any other route — for a
+  // new via point, a profile change, a reorder — is not the picker's doing.
+  test('the geocode that frames the doors claims the next route, once', () => {
+    const { wiring } = build();
+    expect(wiring.claimView()).toBe(false);
+    wiring.onGeocodeResult(geocodeEvent([MAIN]));
+    expect(wiring.claimView()).toBe(true);
+    expect(wiring.claimView()).toBe(false);
+  });
+
+  test('a geocode with no usable door claims nothing', () => {
+    const { wiring } = build();
+    wiring.onGeocodeResult(geocodeEvent([]));
+    expect(wiring.claimView()).toBe(false);
+  });
+
+  test('a refresh does not claim the route it triggers', () => {
+    let mode = 'foot';
+    const { wiring, picker } = build({ options: { mode: () => mode } });
+    wiring.onGeocodeResult(geocodeEvent([MAIN]));
+    wiring.claimView();
+
+    mode = 'driving';
+    expect(wiring.refresh()).toBe(true);
+    expect(picker.shown).toHaveLength(2);
+    expect(wiring.claimView()).toBe(false);
+  });
+
+  test('a splice that changes a role does not claim the route it triggers', () => {
+    const plan = makePlan(2);
+    const [first, second] = plan._waypoints;
+    const { wiring, picker } = build({ plan });
+    wiring.onGeocodeResult(geocodeEvent([MAIN], { waypointIndex: 1, waypoint: second }));
+    wiring.claimView();
+
+    plan._waypoints.reverse();
+    wiring.spliceWaypoints({ index: 0, nRemoved: 2, added: [second, first] });
+    expect(picker.shown.length).toBeGreaterThan(1);
+    expect(wiring.claimView()).toBe(false);
   });
 });

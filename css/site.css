@@ -1255,8 +1255,21 @@ td.distance {
     font-size: 12px;
     line-height: 1.35;
     padding: 3px 7px;
-    pointer-events: none;
+    /* Clickable, standing in for the door it names; a merged label is the only
+       way to pick apart doors too close together to aim at. */
+    pointer-events: auto;
+    cursor: pointer;
     white-space: nowrap;
+}
+
+.osrm-entrance-label-inner div:hover {
+    color: #2b7ac9;
+}
+
+/* The line for the door the route runs to, matching its filled dot. */
+.osrm-entrance-label-selected {
+    font-weight: bold;
+    color: #022bb1;
 }
 
 /* A merged label lists one door per line, so it cannot stay on one. */

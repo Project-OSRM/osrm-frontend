@@ -456,6 +456,17 @@ describe('framing the view', () => {
     expect(map.fitBounds).toHaveBeenCalledTimes(1);
   });
 
+  test('frame: false redraws the offer without moving the view', () => {
+    // A change of travel mode or of a waypoint's role re-shows the offer; the
+    // user did not ask to be taken to the doors.
+    const { map } = openPicker(null, {
+      placeBounds: makeBounds([CENTRE, MAIN.center]), frame: false
+    });
+    map.fire('moveend');
+    jest.advanceTimersByTime(500);
+    expect(map.fitBounds).not.toHaveBeenCalled();
+  });
+
   test('a moveend re-frames without waiting for the backstop timer', () => {
     const { map } = openPicker(null, { placeBounds: makeBounds([CENTRE, MAIN.center]) });
     map.fire('moveend');
@@ -619,11 +630,71 @@ describe('label placement', () => {
     expect(dots(map).every((m) => m.options.pane === undefined)).toBe(true);
   });
 
-  test('labels never take a click meant for a door', () => {
-    const { map } = openWith({
-      Nord: box(0, 0, 40, 16), Ost: box(100, 0, 140, 16), Sued: box(200, 0, 240, 16)
-    });
-    expect(labels(map).every((m) => m.options.interactive === false)).toBe(true);
+  test('a label is clickable and stands in for its door', () => {
+    labelBoxes.set({ Nord: box(0, 0, 40, 16), Ost: box(100, 0, 140, 16), Sued: box(200, 0, 240, 16) });
+    const { map, onSelect } = openPicker(null, { entrances: NAMED });
+    expect(labels(map).every((m) => m.options.interactive === true)).toBe(true);
+    labels(map)[1].fire('click', { originalEvent: { target: {} } });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect.mock.calls[0][0].entrance).toBe(NAMED[1]);
+  });
+
+  test('a click on a label does not fall through to the map', () => {
+    const L = require('leaflet');
+    labelBoxes.set({ Nord: box(0, 0, 40, 16), Ost: box(100, 0, 140, 16), Sued: box(200, 0, 240, 16) });
+    const { map } = openPicker(null, { entrances: NAMED });
+    L.DomEvent.stopPropagation.mockClear();
+    const event = { originalEvent: { target: {} } };
+    labels(map)[0].fire('click', event);
+    expect(L.DomEvent.stopPropagation).toHaveBeenCalledWith(event);
+  });
+
+  // A merged label's lines are the inner span's children; a click carries the
+  // element it landed on, which knows its parent's children.
+  function lineTarget(lineIndex, lineCount) {
+    const lines = [];
+    for (let i = 0; i < lineCount; i++) lines.push({ parentNode: null });
+    const parent = { children: lines };
+    lines.forEach((line) => { line.parentNode = parent; });
+    const line = lines[lineIndex];
+    return { closest: (sel) => (sel === '.osrm-entrance-label-inner > div' ? line : null) };
+  }
+
+  test('a line of a merged label picks that door, which is the only way to reach it', () => {
+    // Nord and Ost collide, so they share one label; the doors themselves are
+    // too close together to aim at.
+    labelBoxes.set({ Nord: box(0, 0, 40, 16), Ost: box(20, 0, 60, 16), Sued: box(200, 0, 240, 16) });
+    const { map, onSelect } = openPicker(null, { entrances: NAMED });
+    expect(labelTexts(map)).toEqual(['NordOst', 'Sued']);
+    labels(map)[0].fire('click', { originalEvent: { target: lineTarget(1, 2) } });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect.mock.calls[0][0].entrance).toBe(NAMED[1]);
+  });
+
+  test('a click on a merged label that misses every line picks nothing', () => {
+    labelBoxes.set({ Nord: box(0, 0, 40, 16), Ost: box(20, 0, 60, 16), Sued: box(200, 0, 240, 16) });
+    const { map, onSelect } = openPicker(null, { entrances: NAMED });
+    labels(map)[0].fire('click', { originalEvent: { target: { closest: () => null } } });
+    labels(map)[0].fire('click', {});
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  test('a merged label marks the line of the chosen door', () => {
+    labelBoxes.set({ Nord: box(0, 0, 40, 16), Ost: box(20, 0, 60, 16), Sued: box(200, 0, 240, 16) });
+    const { map } = openPicker(null, { entrances: NAMED });
+    dots(map)[1].fire('click');
+    const html = labels(map)[0].options.icon.options.html;
+    expect(html).toContain('<div>Nord</div>');
+    expect(html).toContain('<div class="osrm-entrance-label-selected">Ost</div>');
+    // Choosing it again releases it, and the mark goes with it.
+    dots(map)[1].fire('click');
+    expect(labels(map)[0].options.icon.options.html).not.toContain('osrm-entrance-label-selected');
+  });
+
+  test('labels do not take keyboard focus, which stays with the dots', () => {
+    labelBoxes.set({ Nord: box(0, 0, 40, 16), Ost: box(100, 0, 140, 16), Sued: box(200, 0, 240, 16) });
+    const { map } = openPicker(null, { entrances: NAMED });
+    expect(labels(map).every((m) => m.options.keyboard === false)).toBe(true);
   });
 
   test('the pane is made once and reused', () => {

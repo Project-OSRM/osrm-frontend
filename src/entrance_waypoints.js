@@ -165,7 +165,7 @@ function createReverseNotifier(options) {
  *   so switching between car, bike and foot re-applies the access rules
  * @param {function} [options.createPicker] — injection seam for tests
  * @returns {{onGeocodeResult: function, hide: function, isOpen: function,
- *   focusView: function, waypointName: function}}
+ *   claimView: function, waypointName: function}}
  */
 function createEntranceWaypoints(options) {
   options = options || {};
@@ -184,6 +184,13 @@ function createEntranceWaypoints(options) {
   // their doors at once; each entry holds the event and the role it was last
   // filtered under, so a role change can be told from a mere renumbering.
   var lastEvents = {};
+  // Set when a fresh geocode opens or re-opens an offer and the picker frames
+  // it. The route that follows would otherwise be fitted over that framing;
+  // index.js asks for the claim once per route and stands down if it is set.
+  // Only a fresh geocode claims: a route recomputed for a new via point, a
+  // profile change or a reorder is not the picker's doing, and the view must
+  // not jump to the doors on every one of them.
+  var viewClaimed = false;
 
   // Points one waypoint at a new location without going through
   // spliceWaypoints, which recreates the geocoder inputs and would steal the
@@ -231,7 +238,10 @@ function createEntranceWaypoints(options) {
     onSelect: applySelection
   });
 
-  function onGeocodeResult(e) {
+  // `frame` is false for the internal re-filters below; the plan's event
+  // handler passes only the event, and a fresh geocode frames its doors.
+  function onGeocodeResult(e, frame) {
+    frame = frame !== false;
     var result = e && e.value;
     // Two independent filters. Which end of the route this waypoint is decides
     // the direction a door must work in — an entrance=exit can only be left
@@ -252,7 +262,7 @@ function createEntranceWaypoints(options) {
       return false;
     }
 
-    return picker.show({
+    var shown = picker.show({
       waypointIndex: e.waypointIndex,
       // The picker marks doors differently per mode, so it needs the same value
       // the filtering above used.
@@ -261,8 +271,11 @@ function createEntranceWaypoints(options) {
       placeCenter: result.center,
       placeBounds: result.bbox,
       entrances: entrances,
-      place: result
+      place: result,
+      frame: frame
     });
+    if (shown && frame) viewClaimed = true;
+    return shown;
   }
 
   // Re-applies the filters to every place on screen. Switching from foot to car
@@ -273,7 +286,7 @@ function createEntranceWaypoints(options) {
     var any = false;
     Object.keys(lastEvents).forEach(function(key) {
       if (!picker.isOpenFor(Number(key))) return;
-      if (onGeocodeResult(lastEvents[key].event)) any = true;
+      if (onGeocodeResult(lastEvents[key].event, false)) any = true;
     });
     return any;
   }
@@ -343,7 +356,7 @@ function createEntranceWaypoints(options) {
       var record = lastEvents[key];
       if (!record || !record.event) return;
       if (entrancePicker.waypointRole(Number(key), count) === record.role) return;
-      onGeocodeResult(record.event);
+      onGeocodeResult(record.event, false);
     });
   }
 
@@ -363,8 +376,12 @@ function createEntranceWaypoints(options) {
     isOpen: function() {
       return picker.isOpen();
     },
-    focusView: function() {
-      picker.focusView();
+    // Whether the next route belongs to a picker that has just framed its
+    // doors. Answering consumes the claim, so only one route stands down.
+    claimView: function() {
+      var claimed = viewClaimed;
+      viewClaimed = false;
+      return claimed;
     },
     waypointName: function(placeName, entrance) {
       return entranceWaypointName(placeName, entrance, translate);

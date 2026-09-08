@@ -763,6 +763,12 @@ var entranceWaypoints = createEntranceWaypoints({
 
 plan.on('waypointgeocoderesult', entranceWaypoints.onGeocodeResult);
 
+// The route the picker was waiting on never came; its claim on the view must
+// not carry over to whatever route comes next.
+lrmControl.on('routingerror', function() {
+  entranceWaypoints.claimView();
+});
+
 // The doors on offer depend on the travel mode, so an open picker is recomputed
 // rather than left showing ones the new profile forbids. Registered here rather
 // than alongside the other profile-change handlers so it runs after the wiring
@@ -908,12 +914,13 @@ lrmControl.on('routeselected', function(e) {
     paneWidth = container.offsetWidth;
   }
 
-  // An open picker is a question waiting on the user, so the view belongs to it:
-  // the area being chosen from stays framed clear of the directions pane, and
-  // the route fit stands down until the picker closes.
-  if (entranceWaypoints.isOpen()) {
+  // A picker that has just framed the doors it offers keeps the view: the route
+  // that follows the geocode must not fit itself over them. Only that route
+  // stands down. A picker that is merely still open — while a via point is
+  // added, the profile changed or the list reordered — has no claim, or the
+  // map would jump back to the doors on every route.
+  if (entranceWaypoints.claimView()) {
     routeFitTracker.clearFitPending();
-    entranceWaypoints.focusView();
     return;
   }
 
