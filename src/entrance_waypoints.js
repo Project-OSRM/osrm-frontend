@@ -60,6 +60,109 @@ function entranceWaypointName(placeName, entrance, translate) {
   return placeName + ' (' + suffix + ')';
 }
 
+// LRM's own default for maxGeocoderTolerance, in metres. Beyond it LRM labels
+// the waypoint with bare coordinates instead of the place it found.
+var MAX_GEOCODER_TOLERANCE = 200;
+
+/**
+ * Wraps the geocoder handed to LRM's plan so a reverse-geocoded waypoint still
+ * reaches the picker.
+ *
+ * LRM fires `geocoded` only when the user picks from the autocomplete. A
+ * waypoint that arrives with coordinates and no name — restored from a shared
+ * URL, dropped by a click on the map, dragged somewhere new — is named by
+ * GeocoderElement.update() calling `geocoder.reverse` directly, and that result
+ * is discarded once the name has been taken out of it. The entrance list goes
+ * with it, so a place whose doors were on offer a moment ago has none after a
+ * reload, even though the answer is sitting in the cache.
+ *
+ * A reverse result has the same shape as a search result, so it is re-fired as
+ * `waypointgeocoderesult` against whichever waypoint the coordinates belong to.
+ *
+ * No guard against reopening the picker unbidden is needed: `update()` only
+ * reverse-geocodes when the waypoint has no name, and LRM's one forced call
+ * clears the name first, so every reverse arriving here is a waypoint being
+ * named for the first time.
+ *
+ * @param {object} options
+ * @param {object} options.geocoder — the geocoder LRM would otherwise be given
+ * @param {function} options.getPlan — () => the plan, read late because the plan
+ *   is built from the geocoder and cannot exist yet
+ * @param {number} [options.tolerance] — metres; beyond this LRM discards the
+ *   name, and offering that place's doors would offer doors of somewhere the
+ *   user did not pick
+ * @returns {object} a geocoder to hand to the plan
+ */
+function createReverseNotifier(options) {
+  options = options || {};
+  var geocoder = options.geocoder;
+  var getPlan = options.getPlan;
+  if (!geocoder || typeof geocoder.reverse !== 'function') return geocoder;
+  var tolerance = typeof options.tolerance === 'number'
+    ? options.tolerance : MAX_GEOCODER_TOLERANCE;
+
+  // Bound rather than copied, so the original keeps its own `this` whatever it
+  // closes over.
+  var wrapped = {};
+  for (var key in geocoder) {
+    wrapped[key] = typeof geocoder[key] === 'function'
+      ? geocoder[key].bind(geocoder) : geocoder[key];
+  }
+
+  function waypointIndexAt(latLng) {
+    var plan = typeof getPlan === 'function' ? getPlan() : null;
+    var waypoints = plan && plan._waypoints;
+    if (!waypoints || !latLng) return -1;
+    for (var i = 0; i < waypoints.length; i++) {
+      var wp = waypoints[i];
+      var at = wp && wp.latLng;
+      if (!at) continue;
+      if (at === latLng) return i;
+      if (at.lat === latLng.lat && at.lng === latLng.lng) return i;
+    }
+    return -1;
+  }
+
+  // The cases where there is legitimately nothing to notify are checked rather
+  // than caught: no result, one too far to be this waypoint's place, no
+  // waypoint at those coordinates, or a plan that does not exist yet — which is
+  // ordinary while the app is still starting up.
+  function notify(latLng, results) {
+    var result = results && results.length ? results[0] : null;
+    if (!result || !result.center) return;
+    if (typeof result.center.distanceTo === 'function' &&
+        result.center.distanceTo(latLng) >= tolerance) return;
+    var index = waypointIndexAt(latLng);
+    if (index === -1) return;
+    var plan = typeof getPlan === 'function' ? getPlan() : null;
+    if (!plan || typeof plan.fire !== 'function') return;
+    plan.fire('waypointgeocoderesult', {
+      waypointIndex: index,
+      waypoint: plan._waypoints[index],
+      value: result
+    });
+  }
+
+  wrapped.reverse = function(latLng, scale, cb, context) {
+    return geocoder.reverse(latLng, scale, function(results) {
+      // LRM's callback first: it sets the waypoint's name, and the picker's
+      // offer is built against a waypoint that has already been named.
+      if (typeof cb === 'function') cb.call(context, results);
+      try {
+        notify(latLng, results);
+      } catch (e) {
+        // Anything reaching here is a bug, but it must not take the waypoint's
+        // name down with it: LRM has already been called back, and a throw on
+        // this path would leave the waypoint half-named. Reported rather than
+        // swallowed, so it is findable.
+        console.warn('osrm-entrances: offering a reverse-geocoded place failed', e);
+      }
+    }, context);
+  };
+
+  return wrapped;
+}
+
 /**
  * @param {object} options
  * @param {L.Map} options.map
@@ -321,6 +424,7 @@ function createEntranceWaypoints(options) {
 
 module.exports = {
   waypointMarkerLatLng: waypointMarkerLatLng,
+  createReverseNotifier: createReverseNotifier,
   entranceWaypointName: entranceWaypointName,
   createEntranceWaypoints: createEntranceWaypoints
 };

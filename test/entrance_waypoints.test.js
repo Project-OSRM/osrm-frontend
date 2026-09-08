@@ -21,6 +21,7 @@ jest.mock('leaflet', () => ({
 
 const {
   createEntranceWaypoints,
+  createReverseNotifier,
   entranceWaypointName,
   waypointMarkerLatLng
 } = require('../src/entrance_waypoints');
@@ -503,5 +504,157 @@ describe('following a splice of the waypoint list', () => {
     const redrawn = picker.shown.slice(shownBefore);
     expect(redrawn.map((o) => o.waypointIndex).sort()).toEqual([0, 2]);
     expect(redrawn.every((o) => o.mode === 'driving' && o.frame === false)).toBe(true);
+  });
+});
+
+describe('reverse-geocoded waypoints reaching the picker', () => {
+  // A reverse result: the same shape a search returns, entrances included.
+  const RESULT = { name: 'Pergamonmuseum', center: latLng(52.5209336, 13.3956302),
+    entrances: [MAIN] };
+
+  // Leaflet's LatLng, as much of it as this needs.
+  function latLng(lat, lng) {
+    return {
+      lat, lng,
+      distanceTo(other) {
+        // Plane approximation; the numbers here are metres apart, not degrees.
+        const dx = (other.lng - lng) * 68000;
+        const dy = (other.lat - lat) * 111000;
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+    };
+  }
+
+  function build(extra) {
+    const at = (extra && extra.at) || latLng(52.5209336, 13.3956302);
+    const plan = {
+      _waypoints: [{ latLng: null, name: '' }, { latLng: at, name: '' }],
+      fired: [],
+      fire(type, data) { this.fired.push({ type, data }); }
+    };
+    const results = (extra && extra.results !== undefined) ? extra.results : [RESULT];
+    const geocoder = {
+      name: 'inner',
+      reverse: jest.fn(function(ll, scale, cb, context) {
+        if (typeof cb === 'function') cb.call(context, results);
+        return 'returned';
+      }),
+      geocode: jest.fn(function() { return this.name; })
+    };
+    const wrapped = createReverseNotifier(Object.assign(
+      { geocoder, getPlan: () => plan }, extra && extra.options));
+    return { plan, geocoder, wrapped, at };
+  }
+
+  test('re-fires the reverse result at the waypoint it belongs to', () => {
+    // The whole point: LRM names a restored waypoint by reverse geocoding and
+    // then throws the result away, entrance list and all.
+    const { plan, wrapped, at } = build();
+    wrapped.reverse(at, 100, () => {});
+    expect(plan.fired).toHaveLength(1);
+    expect(plan.fired[0].type).toBe('waypointgeocoderesult');
+    expect(plan.fired[0].data).toEqual({
+      waypointIndex: 1, waypoint: plan._waypoints[1], value: RESULT
+    });
+  });
+
+  test('LRM is called back first, so the waypoint is named before the offer', () => {
+    const order = [];
+    const { plan, wrapped, at } = build();
+    plan.fire = () => order.push('picker');
+    wrapped.reverse(at, 100, () => order.push('lrm'));
+    expect(order).toEqual(['lrm', 'picker']);
+  });
+
+  test('the caller keeps its own callback context and return value', () => {
+    const ctx = { seen: null };
+    const { wrapped, at } = build();
+    const out = wrapped.reverse(at, 100, function(r) { this.seen = r; }, ctx);
+    expect(ctx.seen).toEqual([RESULT]);
+    expect(out).toBe('returned');
+  });
+
+  test('a coordinate matching no waypoint fires nothing', () => {
+    const { plan, wrapped } = build();
+    wrapped.reverse(latLng(1, 1), 100, () => {});
+    expect(plan.fired).toEqual([]);
+  });
+
+  // Beyond LRM's tolerance it labels the waypoint with bare coordinates rather
+  // than the place, so offering that place's doors would offer doors of
+  // somewhere the user did not pick.
+  test('a result too far from the waypoint is not offered', () => {
+    const far = { name: 'Elsewhere', center: latLng(52.53, 13.40), entrances: [MAIN] };
+    const { plan, wrapped, at } = build({ results: [far] });
+    wrapped.reverse(at, 100, () => {});
+    expect(plan.fired).toEqual([]);
+  });
+
+  test('the tolerance is configurable, and a near result still passes', () => {
+    // About 10 m from the waypoint.
+    const near = { name: 'Next door', center: latLng(52.5210236, 13.3956302),
+      entrances: [MAIN] };
+    const { plan, wrapped, at } = build({ results: [near], options: { tolerance: 5 } });
+    wrapped.reverse(at, 100, () => {});
+    expect(plan.fired).toEqual([]);
+
+    const loose = build({ results: [near], options: { tolerance: 5000 } });
+    loose.wrapped.reverse(loose.at, 100, () => {});
+    expect(loose.plan.fired).toHaveLength(1);
+  });
+
+  test('an empty or malformed result is not an error', () => {
+    [[], null, [{}]].forEach((results) => {
+      const { plan, wrapped, at } = build({ results });
+      expect(() => wrapped.reverse(at, 100, () => {})).not.toThrow();
+      expect(plan.fired).toEqual([]);
+    });
+  });
+
+  test('the waypoint is matched by identity as well as by value', () => {
+    const { plan, wrapped } = build();
+    // A different object with the same coordinates still finds its waypoint.
+    wrapped.reverse(latLng(52.5209336, 13.3956302), 100, () => {});
+    expect(plan.fired).toHaveLength(1);
+  });
+
+  // Ordinary while the app is still starting up: checked, not caught.
+  test('a plan that does not exist yet is quietly not notified', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const geocoder = { reverse: (ll, scale, cb) => cb([RESULT]) };
+    const at = latLng(52.5209336, 13.3956302);
+    [null, {}, { _waypoints: [] }].forEach((plan) => {
+      const wrapped = createReverseNotifier({ geocoder, getPlan: () => plan });
+      expect(() => wrapped.reverse(at, 100, () => {})).not.toThrow();
+    });
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  // A throw here would leave the waypoint half-named, so it is contained — but
+  // reported, because anything reaching it is a bug.
+  test('an unexpected failure is reported rather than swallowed', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const { wrapped, plan, at } = build();
+    plan.fire = () => { throw new Error('boom'); };
+    let named = false;
+    expect(() => wrapped.reverse(at, 100, () => { named = true; })).not.toThrow();
+    // LRM was still called back, so the waypoint has its name.
+    expect(named).toBe(true);
+    expect(warn).toHaveBeenCalledWith(
+      'osrm-entrances: offering a reverse-geocoded place failed', expect.any(Error));
+    warn.mockRestore();
+  });
+
+  test('every other geocoder method is passed through, bound to the original', () => {
+    const { geocoder, wrapped } = build();
+    expect(wrapped.geocode()).toBe('inner');
+    expect(wrapped.name).toBe('inner');
+  });
+
+  test('a geocoder that cannot reverse is handed back untouched', () => {
+    const plain = { geocode: () => {} };
+    expect(createReverseNotifier({ geocoder: plain, getPlan: () => ({}) })).toBe(plain);
+    expect(createReverseNotifier({})).toBeUndefined();
   });
 });
