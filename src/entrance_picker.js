@@ -54,15 +54,56 @@ var ENTRANCE_LINK_STYLE = {
   interactive: false
 };
 
+// The OSM access keys that govern each routing mode, most specific first. The
+// general `access` key is the fallback for all of them, and `vehicle` covers
+// both wheeled modes. This is the ordering OSM's access documentation
+// prescribes: the most specific tag present wins.
+var MODE_ACCESS_KEYS = {
+  foot: ['foot', 'access'],
+  bike: ['bicycle', 'vehicle', 'access'],
+  bicycle: ['bicycle', 'vehicle', 'access'],
+  driving: ['motor_vehicle', 'vehicle', 'access'],
+  car: ['motor_vehicle', 'vehicle', 'access']
+};
+
+// Values that put a door out of bounds. Everything else — `yes`, `permissive`,
+// `designated`, `destination`, `customers`, `permit` — is treated as usable:
+// somebody routing to a shop's door is the customer it is tagged for. An
+// unrecognised value is not read as a prohibition.
+var FORBIDDEN_ACCESS = {no: true, private: true};
+
 /**
- * The entrances usable at one end of a route.
+ * Whether a door's own tags permit the given travel mode. A door with nothing
+ * to say on the subject is allowed: absence of a tag is not a prohibition.
+ *
+ * @param {object} entrance — with an optional `tags` map from OSM
+ * @param {string} [mode] — 'foot', 'bike'/'bicycle', or 'driving'/'car'
+ */
+function allowsMode(entrance, mode) {
+  if (!mode) return true;
+  var keys = MODE_ACCESS_KEYS[mode];
+  if (!keys) return true;
+  var tags = entrance && entrance.tags;
+  if (!tags) return true;
+  for (var i = 0; i < keys.length; i++) {
+    var value = tags[keys[i]];
+    // The most specific tag present settles it; a broader one cannot override.
+    if (typeof value === 'string') return !FORBIDDEN_ACCESS[value.trim().toLowerCase()];
+  }
+  return true;
+}
+
+/**
+ * The entrances usable at one end of a route, for one travel mode.
  *
  * @param {Array} entrances
  * @param {string} [role] — 'origin' (the traveller leaves the building here),
  *   'destination' (arrives), or 'via' (both, and so the strictest). Defaults to
  *   'via', which offers only doors that work in either direction.
+ * @param {string} [mode] — the routing profile. Omitted, no access filtering is
+ *   applied.
  */
-function routableEntrances(entrances, role) {
+function routableEntrances(entrances, role, mode) {
   if (!Array.isArray(entrances)) return [];
   // A via point is both arrived at and left from, so it needs both directions.
   var needsEnter = role !== 'origin';
@@ -71,7 +112,8 @@ function routableEntrances(entrances, role) {
     if (!entrance || !entrance.center) return false;
     var use = ENTRANCE_USE[entrance.type];
     if (!use) return false;
-    return (!needsEnter || use.enter) && (!needsLeave || use.leave);
+    if (!((!needsEnter || use.enter) && (!needsLeave || use.leave))) return false;
+    return allowsMode(entrance, mode);
   });
 }
 
@@ -92,6 +134,78 @@ function entranceName(entrance) {
   if (typeof name !== 'string') return null;
   name = name.trim();
   return name.length ? name : null;
+}
+
+// OSM's wheelchair values that mean a door can actually be used. `designated`
+// marks one provided specifically for wheelchair users, so it qualifies at
+// least as much as `yes`. `limited` deliberately does not: it means passable
+// only with help, or under conditions the tag does not spell out, and a mark
+// promising step-free access there would be worse than no mark at all.
+var WHEELCHAIR_ACCESSIBLE = {yes: true, designated: true};
+
+// What is worth pointing out about a door depends entirely on how the traveller
+// is arriving, so each mark belongs to one travel mode and appears in no other.
+// Step-free access matters to someone on foot and says nothing to a driver;
+// which door swallows cars matters to a driver and is noise to everyone else.
+//
+// There is deliberately no mark for cycling. Its natural candidate, `bicycle`
+// on an entrance node, does not reach even 0.05% of them globally — far below
+// `wheelchair` at 4.7% — so a cycling mark would be an icon nobody ever sees.
+var MARKS = {
+  wheelchair: {
+    className: 'osrm-entrance-mark-wheelchair',
+    // U+267F, then U+FE0F. Both glyphs ask for the emoji form explicitly rather
+    // than relying on the font's default, because the two characters default
+    // differently: U+267F is Emoji_Presentation=Yes and renders in colour on its
+    // own, while U+1F17F below is No and falls back to a plain black-and-white
+    // glyph without the selector — which is how one mark ends up coloured and
+    // the other not.
+    glyph: '\u267F\uFE0F',
+    label: 'Wheelchair accessible',
+    applies: function(tags) {
+      var value = tags.wheelchair;
+      if (typeof value !== 'string') return false;
+      return WHEELCHAIR_ACCESSIBLE[value.trim().toLowerCase()] === true;
+    }
+  },
+  parking: {
+    className: 'osrm-entrance-mark-parking',
+    // U+1F17F as a surrogate pair — an escape this file's ES5 syntax cannot
+    // write directly — then U+FE0F. See the note above.
+    glyph: '\uD83C\uDD7F\uFE0F',
+    label: 'Parking entrance',
+    applies: function(tags) {
+      return tags.amenity === 'parking_entrance';
+    }
+  }
+};
+
+// Keyed by the same profile names as MODE_ACCESS_KEYS, so both tables agree on
+// what a mode is called.
+var MODE_MARK = {
+  foot: 'wheelchair',
+  driving: 'parking',
+  car: 'parking'
+};
+
+/**
+ * The mark a door earns for one travel mode, or null.
+ *
+ * A mark never filters. Roughly seven in eight entrance nodes carry no
+ * wheelchair tag and far fewer carry parking tags, so an absent value means
+ * nobody surveyed the door rather than that the door lacks the property, and
+ * `routableEntrances` stays untouched by any of this.
+ *
+ * @param {object} entrance
+ * @param {string} [mode] — the routing profile. A mode with no mark of its own,
+ *   or none at all, marks nothing.
+ * @returns {?{className: string, glyph: string, label: string}}
+ */
+function entranceMark(entrance, mode) {
+  var mark = MARKS[MODE_MARK[mode]];
+  var tags = entrance && entrance.tags;
+  if (!mark || !tags) return null;
+  return mark.applies(tags) ? mark : null;
 }
 
 // Where a waypoint sits in the route, which is what decides the direction a door
@@ -207,6 +321,10 @@ function choicePoints(choices, placeCenter) {
  *   latLng, markerLatLng, entrance}
  * @param {function} [options.paneWidth] — () => width in px of the directions
  *   pane, so the doors are framed into the part of the map it does not cover
+ *
+ * show() takes `frame: false` to redraw an offer without moving the view: a
+ * change of travel mode re-filters the doors already on screen, and the user
+ * did not ask to be taken to them.
  * @returns {{show: function, hide: function, focusView: function,
  *   isOpen: function, getWaypointIndex: function, getSelectedId: function}}
  */
@@ -280,11 +398,15 @@ function createEntrancePicker(map, options) {
     offer.choices.forEach(function(choice) {
       var chosen = choice.id === offer.selectedId;
       var text = label(choice);
+      var mark = entranceMark(choice.entrance, offer.mode);
       var className = 'osrm-entrance-marker osrm-entrance-marker-' + choice.kind +
         (chosen ? ' osrm-entrance-marker-selected' : '');
       var marker = L.marker(choice.center, {
         icon: L.divIcon({className: className, iconSize: [18, 18], iconAnchor: [9, 9], html: ''}),
-        alt: text,
+        // The label shows this as an icon; the alt spells it out, because the
+        // icon is marked aria-hidden and would otherwise be announced as
+        // nothing at all.
+        alt: mark ? text + ' (' + translate(mark.label) + ')' : text,
         keyboard: true,
         zIndexOffset: chosen ? 500 : 400
       });
@@ -293,6 +415,7 @@ function createEntrancePicker(map, options) {
       renderedDoors.push({
         latLng: choice.center,
         text: text,
+        mark: mark,
         selected: chosen,
         select: function() {
           select(choice);
@@ -354,8 +477,14 @@ function createEntrancePicker(map, options) {
   }
 
   function labelLine(entry) {
+    // Hidden from assistive tech on purpose: the dot's alt already says what the
+    // mark means in words, and announcing the symbol too would repeat it.
+    var mark = entry.mark
+      ? '<span class="osrm-entrance-mark ' + entry.mark.className +
+        '" aria-hidden="true">' + entry.mark.glyph + '</span>'
+      : '';
     return '<div' + (entry.selected ? ' class="osrm-entrance-label-selected"' : '') + '>' +
-      escapeText(entry.text) + '</div>';
+      escapeText(entry.text) + mark + '</div>';
   }
 
   // A label sits above the door it names, anchored on it. Zero-sized so the
@@ -510,12 +639,15 @@ function createEntrancePicker(map, options) {
       placeName: opts.placeName,
       placeCenter: opts.placeCenter || null,
       choices: choices,
+      // Which mark a door earns depends on it, and refresh() re-shows the
+      // picker with a new one whenever the travel mode changes.
+      mode: opts.mode || null,
       selectedId: opts.selectedId || null
     };
     attached = true;
     if (!map.hasLayer(layer)) layer.addTo(map);
     render();
-    focusViewWhenSettled();
+    if (opts.frame !== false) focusViewWhenSettled();
     // Which labels fit is a question of zoom, so the layout is redone after
     // every one. Detached first because show() runs again on an already-open
     // picker; Leaflet ignores a repeat registration of the same handler, but
@@ -563,6 +695,8 @@ function createEntrancePicker(map, options) {
 
 module.exports = {
   routableEntrances: routableEntrances,
+  allowsMode: allowsMode,
+  entranceMark: entranceMark,
   boxesOverlap: boxesOverlap,
   clusterOverlappingLabels: clusterOverlappingLabels,
   entranceName: entranceName,

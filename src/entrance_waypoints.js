@@ -67,9 +67,11 @@ function entranceWaypointName(placeName, entrance, translate) {
  * @param {object} options.routeFitTracker — from route_zoom
  * @param {function} [options.translate] — (key) => localized string
  * @param {function} [options.paneWidth] — () => width of the directions pane
+ * @param {function} [options.mode] — () => the active routing profile, read live
+ *   so switching between car, bike and foot re-applies the access rules
  * @param {function} [options.createPicker] — injection seam for tests
  * @returns {{onGeocodeResult: function, applySelection: function,
- *   hide: function, isOpen: function, claimView: function,
+ *   refresh: function, hide: function, isOpen: function, claimView: function,
  *   waypointName: function}}
  */
 function createEntranceWaypoints(options) {
@@ -80,6 +82,12 @@ function createEntranceWaypoints(options) {
     return key;
   };
   var createPicker = options.createPicker || entrancePicker.createEntrancePicker;
+  var mode = typeof options.mode === 'function' ? options.mode : function() {
+    return null;
+  };
+  // The last geocoding result seen, kept so a change of travel mode can
+  // re-apply the filters without a fresh geocode.
+  var lastEvent = null;
   // Set when a geocode opens an offer and the picker frames its doors. The
   // route that follows would otherwise be fitted over that framing; index.js
   // asks for the claim once per route and stands down if it is set.
@@ -128,15 +136,25 @@ function createEntranceWaypoints(options) {
     onSelect: applySelection
   });
 
-  function onGeocodeResult(e) {
+  // `frame` is false for the internal re-filter below; the plan's event handler
+  // passes only the event, and a fresh geocode frames its doors.
+  function onGeocodeResult(e, frame) {
+    frame = frame !== false;
     var result = e && e.value;
-    // Which end of the route this waypoint is decides the direction a door must
-    // work in: an entrance=exit can only be left through, an entrance=entrance
-    // only entered.
+    // Two independent filters. Which end of the route this waypoint is decides
+    // the direction a door must work in — an entrance=exit can only be left
+    // through, an entrance=entrance only entered. The travel mode then decides
+    // which of those the traveller may actually use, from the door's own OSM
+    // access tags.
     var count = plan && plan._waypoints ? plan._waypoints.length : 0;
     var role = entrancePicker.waypointRole(e.waypointIndex, count);
+    lastEvent = e;
+    // Read once: the mode is live, and filtering the doors by one value while
+    // marking them for another would mark a door the filter had just judged on
+    // different terms.
+    var activeMode = mode();
     var entrances = result
-      ? entrancePicker.routableEntrances(result.entrances, role)
+      ? entrancePicker.routableEntrances(result.entrances, role, activeMode)
       : [];
     if (!entrances.length) {
       picker.hide();
@@ -147,16 +165,36 @@ function createEntranceWaypoints(options) {
       waypointIndex: e.waypointIndex,
       placeName: result.name,
       placeCenter: result.center,
-      entrances: entrances
+      entrances: entrances,
+      // The picker marks doors differently per mode, so it gets the same value
+      // the filtering above used.
+      mode: activeMode,
+      frame: frame
     });
-    if (shown) viewClaimed = true;
+    if (shown && frame) viewClaimed = true;
     return shown;
+  }
+
+  // Re-applies the filters to the place last geocoded. Switching from foot to
+  // car can forbid the very door a waypoint sits on, and can equally make one
+  // usable that was not, so this runs whether or not the offer is currently on
+  // screen — a place whose doors are all shut to cars comes back when the
+  // traveller switches to walking. It is `hide()` that ends an offer for good,
+  // by forgetting the place along with it.
+  //
+  // The redraw stays where it is: the user asked for a different profile, not
+  // to be taken back to the doors.
+  function refresh() {
+    if (!lastEvent) return false;
+    return onGeocodeResult(lastEvent, false);
   }
 
   return {
     onGeocodeResult: onGeocodeResult,
     applySelection: applySelection,
+    refresh: refresh,
     hide: function() {
+      lastEvent = null;
       picker.hide();
     },
     isOpen: function() {

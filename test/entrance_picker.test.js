@@ -211,3 +211,117 @@ describe('clusterOverlappingLabels', () => {
     expect(picker.clusterOverlappingLabels(null)).toEqual([]);
   });
 });
+
+describe('access by travel mode', () => {
+  const tagged = (tags) => door('main', { tags });
+
+  // Absence of a tag is not a prohibition: most doors say nothing at all.
+  test('a door with nothing to say is open to everyone', () => {
+    expect(picker.allowsMode(door('main'), 'driving')).toBe(true);
+    expect(picker.allowsMode(tagged({}), 'foot')).toBe(true);
+  });
+
+  test('no mode, or a mode with no rules, filters nothing', () => {
+    expect(picker.allowsMode(tagged({ access: 'no' }))).toBe(true);
+    expect(picker.allowsMode(tagged({ access: 'no' }), 'hovercraft')).toBe(true);
+  });
+
+  test('only no and private forbid', () => {
+    ['no', 'private'].forEach((value) => {
+      expect(picker.allowsMode(tagged({ access: value }), 'foot')).toBe(false);
+    });
+    // Somebody routing to a shop's door is the customer it is tagged for.
+    ['yes', 'permissive', 'designated', 'destination', 'customers', 'permit']
+      .forEach((value) => {
+        expect(picker.allowsMode(tagged({ access: value }), 'foot')).toBe(true);
+      });
+  });
+
+  test('an unrecognised value is not read as a prohibition', () => {
+    expect(picker.allowsMode(tagged({ access: 'seasonal' }), 'foot')).toBe(true);
+  });
+
+  test('the case of the value, and stray whitespace around it, do not matter', () => {
+    expect(picker.allowsMode(tagged({ access: 'No' }), 'foot')).toBe(false);
+    expect(picker.allowsMode(tagged({ access: ' no ' }), 'foot')).toBe(false);
+    expect(picker.allowsMode(tagged({ motor_vehicle: 'no\n' }), 'driving')).toBe(false);
+  });
+
+  // OSM's own hierarchy: the most specific key present wins outright.
+  test('the most specific key present settles it', () => {
+    expect(picker.allowsMode(tagged({ access: 'no', foot: 'yes' }), 'foot')).toBe(true);
+    expect(picker.allowsMode(tagged({ access: 'yes', foot: 'no' }), 'foot')).toBe(false);
+    expect(picker.allowsMode(tagged({ vehicle: 'no', motor_vehicle: 'yes' }), 'driving'))
+      .toBe(true);
+    expect(picker.allowsMode(tagged({ access: 'yes', vehicle: 'no' }), 'bike')).toBe(false);
+  });
+
+  test('each mode reads its own keys and ignores the others', () => {
+    const carsOnly = tagged({ foot: 'no' });
+    expect(picker.allowsMode(carsOnly, 'foot')).toBe(false);
+    expect(picker.allowsMode(carsOnly, 'driving')).toBe(true);
+    expect(picker.allowsMode(carsOnly, 'bike')).toBe(true);
+  });
+
+  test('the profile aliases agree with each other', () => {
+    const shut = tagged({ motor_vehicle: 'no' });
+    expect(picker.allowsMode(shut, 'driving')).toBe(picker.allowsMode(shut, 'car'));
+    const bikes = tagged({ bicycle: 'no' });
+    expect(picker.allowsMode(bikes, 'bike')).toBe(picker.allowsMode(bikes, 'bicycle'));
+  });
+
+  test('routableEntrances applies the mode on top of the direction', () => {
+    const open = door('main', { osmId: 1 });
+    const noCars = door('main', { osmId: 2, tags: { motor_vehicle: 'no' } });
+    expect(picker.routableEntrances([open, noCars], 'origin', 'driving')).toEqual([open]);
+    expect(picker.routableEntrances([open, noCars], 'origin', 'foot'))
+      .toEqual([open, noCars]);
+    // Omitted, nothing is filtered on access at all.
+    expect(picker.routableEntrances([open, noCars], 'origin')).toEqual([open, noCars]);
+  });
+});
+
+describe('marks', () => {
+  const tagged = (tags) => door('main', { tags });
+
+  test('a step-free door is marked on foot, and nowhere else', () => {
+    const wide = tagged({ wheelchair: 'yes' });
+    expect(picker.entranceMark(wide, 'foot').label).toBe('Wheelchair accessible');
+    expect(picker.entranceMark(wide, 'driving')).toBeNull();
+    expect(picker.entranceMark(wide, 'bike')).toBeNull();
+  });
+
+  test('designated counts as step-free, limited does not', () => {
+    expect(picker.entranceMark(tagged({ wheelchair: 'designated' }), 'foot')).toBeTruthy();
+    // "Limited" means passable only with help, or on terms the tag never spells
+    // out; promising step-free access there is worse than saying nothing.
+    expect(picker.entranceMark(tagged({ wheelchair: 'limited' }), 'foot')).toBeNull();
+    expect(picker.entranceMark(tagged({ wheelchair: 'no' }), 'foot')).toBeNull();
+  });
+
+  test('a parking entrance is marked when driving, and nowhere else', () => {
+    const gate = tagged({ amenity: 'parking_entrance' });
+    expect(picker.entranceMark(gate, 'driving').label).toBe('Parking entrance');
+    expect(picker.entranceMark(gate, 'car').label).toBe('Parking entrance');
+    expect(picker.entranceMark(gate, 'foot')).toBeNull();
+  });
+
+  test('cycling has no mark of its own, and neither has no mode at all', () => {
+    const both = tagged({ wheelchair: 'yes', amenity: 'parking_entrance' });
+    expect(picker.entranceMark(both, 'bike')).toBeNull();
+    expect(picker.entranceMark(both)).toBeNull();
+  });
+
+  test('an untagged door earns nothing', () => {
+    expect(picker.entranceMark(door('main'), 'foot')).toBeNull();
+    expect(picker.entranceMark(null, 'foot')).toBeNull();
+  });
+
+  // A mark never filters: an absent tag means nobody surveyed the door.
+  test('a mark says nothing about whether the door is offered', () => {
+    const plain = door('main', { osmId: 1 });
+    const marked = door('main', { osmId: 2, tags: { wheelchair: 'yes' } });
+    expect(picker.routableEntrances([plain, marked], 'origin', 'foot'))
+      .toEqual([plain, marked]);
+  });
+});

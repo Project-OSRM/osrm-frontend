@@ -41,9 +41,13 @@ jest.mock('leaflet', () => ({
     handlers: {},
     getLatLng() { return this.latLng; },
     // Mimics enough of the label element for the layout pass to measure it.
+    // Boxes are keyed by the door's name, so the mark glyph is stripped with
+    // the markup.
     getElement() {
       const html = (this.options.icon && this.options.icon.options.html) || '';
-      const text = html.replace(/<[^>]*>/g, '');
+      const text = html
+        .replace(/<span class="osrm-entrance-mark[^>]*>[^<]*<\/span>/g, '')
+        .replace(/<[^>]*>/g, '');
       const boxes = require('./__label_boxes');
       const box = boxes.get(text);
       return {
@@ -110,8 +114,12 @@ function labels(map) {
   return g ? g._layers[1]._layers : [];
 }
 
+// The names a label shows, with any mark glyph stripped — the marks are
+// asserted on the markup itself.
 function labelTexts(map) {
-  return labels(map).map((m) => m.options.icon.options.html.replace(/<[^>]*>/g, ''));
+  return labels(map).map((m) => m.options.icon.options.html
+    .replace(/<span class="osrm-entrance-mark[^>]*>[^<]*<\/span>/g, '')
+    .replace(/<[^>]*>/g, ''));
 }
 
 function dots(map) {
@@ -555,5 +563,73 @@ describe('clicking a label', () => {
     labelBoxes.set({ Nord: box(0, 0, 40, 16), Ost: box(100, 0, 140, 16) });
     const { map } = openPicker({ entrances: NAMED });
     expect(labels(map).every((m) => m.options.keyboard === false)).toBe(true);
+  });
+});
+
+describe('marks on the map', () => {
+  const labelBoxes = require('./__label_boxes');
+  const box = (l, t, r, b) => ({ left: l, top: t, right: r, bottom: b });
+
+  const STEP_FREE = {
+    osmId: 1, type: 'main', center: { lat: 52.5209, lng: 13.3965 },
+    tags: { name: 'Nord', wheelchair: 'yes' }
+  };
+  const PLAIN = {
+    osmId: 2, type: 'yes', center: { lat: 52.5208, lng: 13.3970 }, tags: { name: 'Ost' }
+  };
+
+  afterEach(() => labelBoxes.clear());
+
+  function open(mode, boxes) {
+    labelBoxes.set(boxes || { Nord: box(0, 0, 40, 16), Ost: box(100, 0, 140, 16) });
+    return openPicker({ entrances: [STEP_FREE, PLAIN], mode: mode });
+  }
+
+  test('a marked door carries its glyph in the label; an unmarked one does not', () => {
+    const { map } = open('foot');
+    const html = labels(map).map((m) => m.options.icon.options.html);
+    expect(html[0]).toContain('osrm-entrance-mark-wheelchair');
+    expect(html[1]).not.toContain('osrm-entrance-mark');
+  });
+
+  test('the mark is hidden from assistive tech, which reads it off the dot instead', () => {
+    const { map } = open('foot');
+    expect(labels(map)[0].options.icon.options.html).toContain('aria-hidden="true"');
+    expect(dots(map)[0].options.alt).toBe('Nord (Wheelchair accessible)');
+    expect(dots(map)[1].options.alt).toBe('Ost');
+  });
+
+  test('a mode with no mark for that door marks nothing', () => {
+    const { map } = open('driving');
+    expect(labels(map)[0].options.icon.options.html).not.toContain('osrm-entrance-mark');
+    expect(dots(map)[0].options.alt).toBe('Nord');
+  });
+
+  test('a merged label marks only the doors that earned it', () => {
+    const { map } = open('foot', { Nord: box(0, 0, 40, 16), Ost: box(20, 0, 60, 16) });
+    expect(labelTexts(map)).toEqual(['NordOst']);
+    const html = labels(map)[0].options.icon.options.html;
+    expect(html.match(/osrm-entrance-mark-wheelchair/g)).toHaveLength(1);
+  });
+
+  test('the mark label goes through the translator', () => {
+    labelBoxes.set({ Nord: box(0, 0, 40, 16) });
+    const { map } = openPicker({ entrances: [STEP_FREE], mode: 'foot' },
+      { translate: (key) => ({ 'Wheelchair accessible': 'Barrierefrei' })[key] || key });
+    expect(dots(map)[0].options.alt).toBe('Nord (Barrierefrei)');
+  });
+});
+
+describe('re-showing without moving the view', () => {
+  test('frame: false redraws the offer where it is', () => {
+    const { map, picker } = openPicker();
+    settle();
+    expect(map.fitBounds).toHaveBeenCalledTimes(1);
+
+    picker.show({ waypointIndex: 1, placeCenter: CENTRE, entrances: [MAIN], frame: false });
+    map.fire('moveend');
+    settle();
+    expect(map.fitBounds).toHaveBeenCalledTimes(1);
+    expect(dots(map)).toHaveLength(1);
   });
 });

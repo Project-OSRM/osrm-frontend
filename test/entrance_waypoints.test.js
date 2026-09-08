@@ -263,3 +263,81 @@ describe('hide', () => {
     expect(wiring.isOpen()).toBe(false);
   });
 });
+
+describe('travel mode', () => {
+  const NO_CARS = {
+    osmId: 5, type: 'main', center: DOOR, tags: { motor_vehicle: 'no' }
+  };
+
+  test('is read live, so switching profile changes what is offered', () => {
+    let mode = 'foot';
+    const { wiring, picker } = build({ options: { mode: () => mode } });
+    wiring.onGeocodeResult(geocodeEvent([MAIN, NO_CARS]));
+    expect(picker.shown[0].entrances).toEqual([MAIN, NO_CARS]);
+    expect(picker.shown[0].mode).toBe('foot');
+
+    mode = 'driving';
+    expect(wiring.refresh()).toBe(true);
+    expect(picker.shown[1].entrances).toEqual([MAIN]);
+    expect(picker.shown[1].mode).toBe('driving');
+  });
+
+  // The user did not ask to be taken back to the doors just by changing profile.
+  test('a refresh redraws the doors where they are and claims no view', () => {
+    let mode = 'foot';
+    const { wiring, picker } = build({ options: { mode: () => mode } });
+    wiring.onGeocodeResult(geocodeEvent([MAIN, NO_CARS]));
+    expect(picker.shown[0].frame).toBe(true);
+    wiring.claimView();
+
+    mode = 'driving';
+    wiring.refresh();
+    expect(picker.shown[1].frame).toBe(false);
+    expect(wiring.claimView()).toBe(false);
+  });
+
+  // The mirror of the case below: a mode switch can make a door usable that was
+  // not, and the place is still the one on screen.
+  test('a refresh reopens an offer the previous mode had emptied', () => {
+    let mode = 'driving';
+    const { wiring, picker } = build({ options: { mode: () => mode } });
+    expect(wiring.onGeocodeResult(geocodeEvent([NO_CARS]))).toBe(false);
+    expect(picker.open).toBe(false);
+
+    mode = 'foot';
+    expect(wiring.refresh()).toBe(true);
+    expect(picker.open).toBe(true);
+    expect(picker.shown[0].entrances).toEqual([NO_CARS]);
+  });
+
+  test('a refresh that leaves no usable door closes the picker', () => {
+    let mode = 'foot';
+    const { wiring, picker } = build({ options: { mode: () => mode } });
+    wiring.onGeocodeResult(geocodeEvent([NO_CARS]));
+
+    mode = 'driving';
+    expect(wiring.refresh()).toBe(false);
+    expect(picker.open).toBe(false);
+  });
+
+  test('refresh does nothing when no picker is open', () => {
+    const { wiring, picker } = build();
+    expect(wiring.refresh()).toBe(false);
+    expect(picker.show).not.toHaveBeenCalled();
+  });
+
+  // hide() is the deliberate dismissal, and it ends the offer for good.
+  test('refresh forgets the place once the picker has been hidden', () => {
+    const { wiring } = build({ options: { mode: () => 'foot' } });
+    wiring.onGeocodeResult(geocodeEvent([MAIN]));
+    wiring.hide();
+    expect(wiring.refresh()).toBe(false);
+  });
+
+  test('no mode supplied means no access filtering', () => {
+    const { wiring, picker } = build();
+    wiring.onGeocodeResult(geocodeEvent([MAIN, NO_CARS]));
+    expect(picker.shown[0].entrances).toEqual([MAIN, NO_CARS]);
+    expect(picker.shown[0].mode).toBeNull();
+  });
+});
