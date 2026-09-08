@@ -68,8 +68,9 @@ function entranceWaypointName(placeName, entrance, translate) {
  * @param {function} [options.translate] — (key) => localized string
  * @param {function} [options.paneWidth] — () => width of the directions pane
  * @param {function} [options.createPicker] — injection seam for tests
- * @returns {{onGeocodeResult: function, hide: function, isOpen: function,
- *   claimView: function, waypointName: function}}
+ * @returns {{onGeocodeResult: function, applySelection: function,
+ *   hide: function, isOpen: function, claimView: function,
+ *   waypointName: function}}
  */
 function createEntranceWaypoints(options) {
   options = options || {};

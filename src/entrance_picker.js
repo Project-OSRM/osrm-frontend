@@ -146,8 +146,8 @@ function choicePoints(choices, placeCenter) {
  *   latLng, markerLatLng, entrance}
  * @param {function} [options.paneWidth] — () => width in px of the directions
  *   pane, so the doors are framed into the part of the map it does not cover
- * @returns {{show: function, hide: function, isOpen: function,
- *   getWaypointIndex: function, getSelectedId: function}}
+ * @returns {{show: function, hide: function, focusView: function,
+ *   isOpen: function, getWaypointIndex: function, getSelectedId: function}}
  */
 function createEntrancePicker(map, options) {
   options = options || {};
