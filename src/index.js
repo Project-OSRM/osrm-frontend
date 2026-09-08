@@ -739,6 +739,7 @@ var entranceWaypoints = createEntranceWaypoints({
   translate: function(key) {
     return localization.t(mergedOptions.language, key);
   },
+  fetchOutline: routingGeocoder.fetchOutline,
   paneWidth: directionsPaneWidth,
   // Read live: a door forbidden to cars may be fine on foot, so the offer has to
   // follow whatever profile is selected right now.

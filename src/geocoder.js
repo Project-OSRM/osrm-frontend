@@ -1,6 +1,7 @@
 'use strict';
 
 var L = require('leaflet');
+var simplify = require('./simplify');
 
 var geocoder = function(i, num) {
   var container = L.DomUtil.create('div',
@@ -335,6 +336,70 @@ geocoder.coordPreserving = function(nominatimUrl) {
   var supportsFetch = typeof fetch === 'function';
   var serviceBase = (normalizedNominatimUrl && normalizedNominatimUrl.length > 0) ? normalizedNominatimUrl.replace(/\/+$/, '') + '/' : 'https://nominatim.openstreetmap.org/';
 
+  // Place outlines are fetched one at a time, only when something is actually
+  // about to draw one. They deliberately do not ride along on search: `suggest`
+  // runs on every keystroke, and a polygon per result would multiply a payload
+  // that is almost always discarded. Kept in memory only — the persisted result
+  // cache has a fixed shape that geometry has no place in.
+  var outlineCache = {};
+
+  var OSM_TYPE_PREFIX = {node: 'N', way: 'W', relation: 'R'};
+
+  // Backstop against a pathological relation. Ordinary places are governed by
+  // visual negligibility instead and never come near this.
+  var MAX_OUTLINE_POINTS_PER_RING = 2000;
+
+  function buildLookupUrl(osmType, osmId) {
+    var prefix = OSM_TYPE_PREFIX[String(osmType).toLowerCase()];
+    if (!prefix) return null;
+    // The full outline is requested and thinned here instead of via Nominatim's
+    // polygon_threshold, whose tolerance is an absolute number of degrees: a
+    // value large enough to thin a 5 km airport also flattens a 170 m building
+    // into a few stray corners. See simplifyOutline below.
+    return serviceBase + 'lookup?format=json&polygon_geojson=1' +
+      '&osm_ids=' + prefix + encodeURIComponent(osmId);
+  }
+
+  // Thins the outline without changing how it looks: Visvalingam–Whyatt drops
+  // vertices in order of the area they contribute and stops as soon as the
+  // smallest survivor would be visible at the scale the picker draws the place.
+  // A building keeps every corner that reads as a corner; only redundant
+  // vertices go.
+  function simplifyOutline(geometry) {
+    return simplify.simplifyGeometry(geometry, {maxPoints: MAX_OUTLINE_POINTS_PER_RING});
+  }
+
+  // Resolves to the place's GeoJSON outline, or null when it has none (a node),
+  // when the endpoint is an older Nominatim, or when the request fails. Callers
+  // treat a missing outline as "just don't draw one".
+  function fetchOutline(result) {
+    if (!result || result.osmType === undefined || result.osmId === undefined) {
+      return Promise.resolve(null);
+    }
+    var url = buildLookupUrl(result.osmType, result.osmId);
+    if (!url) return Promise.resolve(null);
+    if (Object.prototype.hasOwnProperty.call(outlineCache, url)) {
+      return Promise.resolve(outlineCache[url]);
+    }
+    if (!supportsFetch) return Promise.resolve(null);
+    return fetch(url, {headers: {'Accept': 'application/json'}}).then(function(resp) {
+      if (!resp.ok) return null;
+      return resp.json();
+    }).then(function(json) {
+      var geometry = Array.isArray(json) && json[0] ? json[0].geojson : null;
+      // Only areas are worth outlining; a node's outline is the point itself.
+      if (!geometry || (geometry.type !== 'Polygon' && geometry.type !== 'MultiPolygon')) {
+        geometry = null;
+      } else {
+        geometry = simplifyOutline(geometry);
+      }
+      outlineCache[url] = geometry;
+      return geometry;
+    }).catch(function() {
+      return null;
+    });
+  }
+
   function setInputBgFromContext(context, color) {
     try {
       if (!context) return;
@@ -648,6 +713,8 @@ geocoder.coordPreserving = function(nominatimUrl) {
         return results;
       });
     },
+
+    fetchOutline: fetchOutline,
 
     reverse: function(latlng, scale, cb, context) {
       return doReverse(latlng, scale, context).then(function(results) {
