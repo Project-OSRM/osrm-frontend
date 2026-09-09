@@ -15,6 +15,10 @@ OSRM_CARTO_KEY="${OSRM_CARTO_KEY:-}"
 OSRM_TILE_URL="${OSRM_TILE_URL:-}"
 OSRM_TILE_NAME="${OSRM_TILE_NAME:-}"
 OSRM_TILE_ATTRIBUTION="${OSRM_TILE_ATTRIBUTION:-}"
+# Empty by default: the frontend then offers the bundled Nominatim instance.
+# Set to a JSON array of {"name","url"} to choose the geocoders on offer; an
+# entry with an empty url contacts nothing and names waypoints by coordinates.
+OSRM_GEOCODERS="${OSRM_GEOCODERS:-}"
 
 # A deployment naming its own tile server usually cannot reach the public
 # providers either, so make that layer the default unless the operator picked
@@ -79,6 +83,7 @@ cat > /usr/share/nginx/html/config.json << EOF
   "OSRM_TILE_URL": "$(escape_json "$OSRM_TILE_URL")",
   "OSRM_TILE_NAME": "$(escape_json "$OSRM_TILE_NAME")",
   "OSRM_TILE_ATTRIBUTION": "$(escape_json "$OSRM_TILE_ATTRIBUTION")",
+  "OSRM_GEOCODERS": "$(escape_json "$OSRM_GEOCODERS")",
   "OSRM_MODES": "$(escape_json "$MODES_JSON")"
 }
 EOF

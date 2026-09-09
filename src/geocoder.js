@@ -725,6 +725,49 @@ geocoder.coordPreserving = function(nominatimUrl) {
   };
 };
 
+// Formats a coordinate the way the search box accepts it back: plain decimals,
+// comma-separated. The hemispheric form below reads better but cannot be pasted
+// into the input, which is what a deployment without geocoding leaves users
+// doing with every pinned location.
+geocoder.plainCoordinateNameFallback = function(latLng) {
+  var wrapped = (latLng && typeof latLng.wrap === 'function') ? latLng.wrap() : latLng;
+  var ll = wrapped || latLng || {};
+  return Number(ll.lat || 0).toFixed(6) + ', ' + Number(ll.lng || 0).toFixed(6);
+};
+
+// A geocoder that contacts nothing. The search box still accepts typed
+// coordinates, and waypoints are named by their coordinates instead of by a
+// place: LRM's GeocoderElement falls straight through to `waypointNameFallback`
+// when the geocoder has no `reverse`, so the omission below is what disables
+// the automatic lookup that a map click, a drag or a URL-restored waypoint
+// would otherwise trigger.
+geocoder.coordinatesOnly = function() {
+  function resolve(query) {
+    var latlng = parseCoords(query);
+    if (!latlng) return [];
+    return [{
+      name: geocoder.plainCoordinateNameFallback(latlng),
+      center: latlng,
+      bbox: latlng.toBounds(1000)
+    }];
+  }
+
+  function respond(query, cb, context) {
+    var results = resolve(query);
+    if (typeof cb === 'function') cb.call(context, results);
+    return Promise.resolve(results);
+  }
+
+  return {
+    geocode: respond,
+    suggest: respond,
+    // Nothing to outline without a place to look up.
+    fetchOutline: function() {
+      return Promise.resolve(null);
+    }
+  };
+};
+
 // Replacement for LRM's built-in waypointNameFallback that wraps the longitude
 // into [-180, 180] before formatting. When reverse geocoding fails (no network,
 // rate limit, location in the ocean) and the raw coordinate is shown, this

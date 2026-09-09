@@ -52,6 +52,20 @@ function generateConfig(envOverrides, options) {
 }
 
 describe('docker entrypoint runtime config', () => {
+  test('passes the configured geocoders through to config.json', () => {
+    const geocoders = JSON.stringify([
+      { name: 'House Nominatim', url: 'https://nominatim.internal/' },
+      { name: 'Coordinates only', url: '' }
+    ]);
+    const config = generateConfig({ OSRM_ENVIRONMENT: 'docker', OSRM_GEOCODERS: geocoders });
+    expect(JSON.parse(config.OSRM_GEOCODERS)).toEqual(JSON.parse(geocoders));
+  });
+
+  test('emits an empty geocoder list when none is configured', () => {
+    const config = generateConfig({ OSRM_ENVIRONMENT: 'docker' });
+    expect(config.OSRM_GEOCODERS).toBe('');
+  });
+
   test('passes a custom tile server through to config.json', () => {
     const config = generateConfig({
       OSRM_ENVIRONMENT: 'docker',
