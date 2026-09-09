@@ -126,6 +126,37 @@ For Docker deployments, prefer runtime configuration via `OSRM_MODES` (see [abov
 instead of editing source files. If you need source-level customization, edit the
 `parseModes()` and `buildServices()` functions in `src/leaflet_options.js`.
 
+## Geocoding
+
+Address search and the reverse lookups that name dropped or dragged waypoints go
+to the public [Nominatim](https://nominatim.openstreetmap.org/) instance by
+default. `OSRM_GEOCODERS` decides which geocoders a deployment offers — a JSON
+array shaped like `OSRM_MODES`:
+
+```bash
+docker run -p 9966:9966 \
+  -e 'OSRM_GEOCODERS=[{"name":"House Nominatim","url":"https://nominatim.internal/"}]' \
+  ghcr.io/project-osrm/osrm-frontend:latest
+```
+
+An entry whose `url` is empty is the **coordinates-only** geocoder: it contacts
+nothing at all. The search box still accepts typed coordinates, and waypoints are
+named by their coordinates (`34.129382, -118.141254`) — a form that pastes back
+into the search box. Configure it alone when the deployment may not reach a
+third-party geocoder:
+
+```bash
+docker run -p 9966:9966 -e 'OSRM_GEOCODERS=[{"url":""}]' ghcr.io/project-osrm/osrm-frontend:latest
+```
+
+| Field | Default | Description |
+|-------|---------|-------------|
+| `name` | `Geocoder <n>`, or `Coordinates only` for an empty `url` | Display name. |
+| `url` | — | Nominatim endpoint. Empty means no geocoding at all. |
+
+The first entry is the one in use. With `OSRM_GEOCODERS` unset, the single entry
+is the Nominatim instance baked in at build time via `NOMINATIM_ENDPOINT`.
+
 ## Customizing Tile Layers and Overlays
 
 ### Base layers (`layer`)

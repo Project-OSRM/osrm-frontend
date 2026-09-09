@@ -24,6 +24,14 @@ function cartoVoyagerUrl() {
   return base + '?key=' + encodeURIComponent(key.trim());
 }
 
+// The label the coordinates-only geocoder carries. Named here because both the
+// parser and the deployment's own OSRM_GEOCODERS entries can produce it.
+var COORDINATES_ONLY_NAME = 'Coordinates only';
+
+// The Nominatim instance used when OSRM_GEOCODERS names none. `NOMINATIM_ENDPOINT`
+// rewrites this literal at build time (scripts/replace.js).
+var nominatimPath = 'https://nominatim.openstreetmap.org/';
+
 var osmAttribution = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   cartoAttribution = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attribution">CARTO</a>',
   esriAttribution = 'Tiles © <a href="https://www.esri.com/">Esri</a> — Source: Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community',
@@ -481,6 +489,54 @@ if (custom) baseLayers[customName] = custom;
 var defaultLayer = layerMap[getDefaultLayer()] || streets;
 
 /**
+ * The geocoding endpoints the deployment offers, from `OSRM_GEOCODERS`.
+ *
+ * Shaped like `OSRM_MODES`: a JSON array (or an already-parsed array) of
+ * `{name, url}` entries. An entry whose `url` is empty is the coordinates-only
+ * geocoder — it contacts nothing, names waypoints by their coordinates, and
+ * lets the search box accept typed coordinates. A deployment that may not
+ * reach third parties at all configures that entry alone.
+ *
+ * With `OSRM_GEOCODERS` unset the single entry is the Nominatim instance in
+ * `nominatim.path`, so an untouched deployment behaves exactly as before and
+ * the build-time `NOMINATIM_ENDPOINT` substitution keeps working.
+ *
+ * @returns {Array<{name: string, url: string}>} one entry per offered geocoder
+ */
+function parseGeocoders() {
+  // Read config fresh from window each time, not the captured config variable
+  var currentConfig = (typeof window !== 'undefined' ? window.osrmConfig : null) || {};
+  var value = currentConfig.OSRM_GEOCODERS;
+  var entries = null;
+
+  if (Array.isArray(value)) {
+    entries = value;
+  } else if (typeof value === 'string' && value.trim().length > 0) {
+    try {
+      entries = JSON.parse(value);
+    } catch (e) {
+      console.warn('Failed to parse OSRM_GEOCODERS JSON:', e);
+    }
+  }
+
+  if (Array.isArray(entries) && entries.length > 0) {
+    return entries.map(function(entry, index) {
+      // A bare string is the endpoint URL; '' asks for coordinates only.
+      if (typeof entry === 'string') {
+        return { name: entry.trim() ? 'Geocoder ' + (index + 1) : COORDINATES_ONLY_NAME, url: entry.trim() };
+      }
+      var url = (entry && typeof entry.url === 'string') ? entry.url.trim() : '';
+      var name = (entry && typeof entry.name === 'string' && entry.name.trim())
+        ? entry.name.trim()
+        : (url ? 'Geocoder ' + (index + 1) : COORDINATES_ONLY_NAME);
+      return { name: name, url: url };
+    });
+  }
+
+  return [{ name: 'Nominatim', url: nominatimPath }];
+}
+
+/**
  * Build the services array consumed by the routing control and mode selector.
  *
  * Each entry exposes a human-readable `label`, a `labelKey` for localization,
@@ -651,7 +707,20 @@ var leafletOptions = {
    * @type {{path: string}}
    */
   nominatim: {
-    path: 'https://nominatim.openstreetmap.org/'
+    path: nominatimPath
+  },
+
+  /**
+   * Geocoding endpoints offered by this deployment, in the order they are
+   * presented. The first entry is the default; an entry with an empty `url`
+   * is the coordinates-only geocoder, which contacts nothing.
+   *
+   * A getter so it always reflects the current runtime config, like `services`.
+   *
+   * @type {Array<{name: string, url: string}>}
+   */
+  get geocoders() {
+    return parseGeocoders();
   }
 };
 

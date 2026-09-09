@@ -292,7 +292,14 @@ function makeIcon(i, n) {
   return L.icon(waypointMarker.waypointIconOptions(i, n));
 }
 
-var routingGeocoder = createGeocoder.coordPreserving(leafletOptions.nominatim && leafletOptions.nominatim.path);
+// The deployment decides which geocoders exist; the first one is used. An entry
+// with no URL is the coordinates-only geocoder, which contacts nothing — a
+// deployment that may not reach a third-party geocoder configures only that one.
+var activeGeocoder = leafletOptions.geocoders[0];
+var geocodingDisabled = !activeGeocoder || !activeGeocoder.url;
+var routingGeocoder = geocodingDisabled
+  ? createGeocoder.coordinatesOnly()
+  : createGeocoder.coordPreserving(activeGeocoder.url);
 
 // Declared before the geocoder wrapper below, which reads it back late: the
 // plan is built from that geocoder and so cannot exist yet when it is made.
@@ -310,7 +317,11 @@ var planGeocoder = entranceWaypointsModule.createReverseNotifier({
 
 plan = new ReversablePlan([], {
   geocoder: planGeocoder,
-  waypointNameFallback: createGeocoder.wrappedWaypointNameFallback,
+  // Without geocoding every waypoint is named by its coordinates, so the name
+  // has to be one the search box accepts back.
+  waypointNameFallback: geocodingDisabled
+    ? createGeocoder.plainCoordinateNameFallback
+    : createGeocoder.wrappedWaypointNameFallback,
   language: mergedOptions.language,
   routeWhileDragging: true,
   createMarker: function(i, wp, n) {
