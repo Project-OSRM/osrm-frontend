@@ -12,6 +12,8 @@
 // sharp at any zoom or pixel density; the bitmaps they replace were 20x56 with
 // no high-resolution variant despite their -2x names.
 
+var approaches = require('./approaches');
+
 // From the Okabe-Ito palette, which is designed to stay separable under
 // colour vision deficiency. The green and red these replace were the textbook
 // confusable pair: simulating deuteranopia and protanopia over the old colours
@@ -119,17 +121,37 @@ function endGlyph(colour) {
     '" fill="' + GLYPH_COLOUR + '"/>' + cells;
 }
 
+// A badge in the pin's upper right for a waypoint that is not free to be
+// reached from either side of the road: a square for the
+// curb side, a diamond for the opposite side. The shapes differ so colour is
+// not what tells them apart, and a white outline keeps the dark fill apart from
+// whichever pin it sits on. The default has no badge, which leaves the pin
+// exactly as it was drawn before approaches existed.
+//
+// No parentheses in the markup, for the reason given at svg().
+var BADGE_COLOUR = '#1a1a1a';
+var BADGE_SHAPES = {};
+BADGE_SHAPES[approaches.CURB] = '<rect x="13" y="1" width="6" height="6"';
+BADGE_SHAPES[approaches.OPPOSITE] = '<path d="M16 1L19 4.5L16 8L13 4.5z"';
+
+function approachBadge(approach) {
+  var shape = BADGE_SHAPES[approaches.normalizeApproach(approach)];
+  if (!shape) return '';
+  return shape + ' fill="' + BADGE_COLOUR + '" stroke="' + GLYPH_COLOUR + '" stroke-width="1"/>';
+}
+
 function dataUri(markup) {
   return 'data:image/svg+xml,' + encodeURIComponent(markup);
 }
 
 // One pin, by what the waypoint is rather than where it sits in a list, so
 // the map and the itinerary can ask for the same drawing. position numbers a
-// via and is ignored otherwise.
-function pinMarkup(kind, position, height) {
-  if (kind === START) return svg(startGlyph(), START_COLOUR, height);
-  if (kind === END) return svg(endGlyph(END_COLOUR), END_COLOUR, height);
-  return svg(viaGlyph(position), VIA_COLOUR, height);
+// via and is ignored otherwise. A restricted approach adds its badge.
+function pinMarkup(kind, position, height, approach) {
+  var badge = approachBadge(approach);
+  if (kind === START) return svg(startGlyph() + badge, START_COLOUR, height);
+  if (kind === END) return svg(endGlyph(END_COLOUR) + badge, END_COLOUR, height);
+  return svg(viaGlyph(position) + badge, VIA_COLOUR, height);
 }
 
 function kindOf(i, n) {
@@ -140,9 +162,11 @@ function kindOf(i, n) {
 
 // The Leaflet icon options for waypoint i of n, matching L.Routing's
 // createMarker signature. Kept free of Leaflet so it can be tested directly.
-function waypointIconOptions(i, n) {
+// `approach` is the waypoint's approach; a restricted one
+// is badged, and the default leaves the pin as it always was.
+function waypointIconOptions(i, n, approach) {
   return {
-    iconUrl: dataUri(pinMarkup(kindOf(i, n), i, ICON_SIZE[1])),
+    iconUrl: dataUri(pinMarkup(kindOf(i, n), i, ICON_SIZE[1], approach)),
     iconSize: ICON_SIZE.slice(),
     iconAnchor: ICON_ANCHOR.slice()
   };
@@ -151,15 +175,15 @@ function waypointIconOptions(i, n) {
 // The same pin for an itinerary row, trimmed to the pin itself. The row knows
 // what the waypoint is and, for a via, which one; it does not know how many
 // waypoints the route has, so it says so directly rather than as i of n.
-function panelIconUrl(kind, position) {
-  return dataUri(pinMarkup(kind, position, PIN_HEIGHT));
+function panelIconUrl(kind, position, approach) {
+  return dataUri(pinMarkup(kind, position, PIN_HEIGHT, approach));
 }
 
 // The same panel pin for waypoint i of n, for a row that does know how many
 // waypoints there are: the input rows. Only a via has a position.
-function panelIconUrlFor(i, n) {
+function panelIconUrlFor(i, n, approach) {
   var kind = kindOf(i, n);
-  return panelIconUrl(kind, kind === VIA ? i : 0);
+  return panelIconUrl(kind, kind === VIA ? i : 0, approach);
 }
 
 module.exports = {

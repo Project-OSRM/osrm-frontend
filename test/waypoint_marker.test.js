@@ -169,3 +169,93 @@ describe('panel pin for row i of n', () => {
     expect(/<text[^>]*>(\d)<\/text>/.exec(rowMarkup)[1]).toBe('2');
   });
 });
+
+describe('pins badged with the waypoint\'s approach', () => {
+  const decodeUri = (url) => decodeURIComponent(url.slice('data:image/svg+xml,'.length));
+  const KINDS = [[0, 3], [1, 3], [2, 3], [10, 20]];
+
+  test('the default leaves every pin byte for byte as it was', () => {
+    for (const [i, n] of KINDS) {
+      const plain = marker.waypointIconOptions(i, n).iconUrl;
+      expect(marker.waypointIconOptions(i, n, 'unrestricted').iconUrl).toBe(plain);
+      expect(marker.waypointIconOptions(i, n, undefined).iconUrl).toBe(plain);
+      expect(marker.panelIconUrlFor(i, n, 'unrestricted')).toBe(marker.panelIconUrlFor(i, n));
+    }
+  });
+
+  test('an unknown approach is no approach', () => {
+    expect(marker.waypointIconOptions(0, 2, 'sideways').iconUrl).toBe(marker.waypointIconOptions(0, 2).iconUrl);
+  });
+
+  test('curb and opposite each change the pin, and differ from each other', () => {
+    for (const [i, n] of KINDS) {
+      const plain = marker.waypointIconOptions(i, n).iconUrl;
+      const curb = marker.waypointIconOptions(i, n, 'curb').iconUrl;
+      const opposite = marker.waypointIconOptions(i, n, 'opposite').iconUrl;
+      expect(new Set([plain, curb, opposite]).size).toBe(3);
+    }
+  });
+
+  test('they differ by shape, so colour is not what tells them apart', () => {
+    const shapeOf = (approach) => decodeUri(marker.waypointIconOptions(1, 3, approach).iconUrl)
+      .replace(/fill="[^"]*"/g, '').replace(/stroke="[^"]*"/g, '');
+    expect(shapeOf('curb')).not.toBe(shapeOf('opposite'));
+    expect(shapeOf('curb')).not.toBe(shapeOf(undefined));
+    expect(shapeOf('opposite')).not.toBe(shapeOf(undefined));
+  });
+
+  test('the badge goes on top of the pin and its glyph', () => {
+    const svg = decodeUri(marker.waypointIconOptions(1, 3, 'curb').iconUrl);
+    expect(svg.indexOf('<rect')).toBeGreaterThan(svg.indexOf('<text'));
+  });
+
+  test('the size and anchor do not move', () => {
+    for (const approach of ['curb', 'opposite']) {
+      const options = marker.waypointIconOptions(1, 3, approach);
+      expect(options.iconSize).toEqual([20, 56]);
+      expect(options.iconAnchor).toEqual([10, 28]);
+      expect(decodeUri(options.iconUrl)).toContain('viewBox="0 0 20 56"');
+    }
+  });
+
+  test('the glyph is still there under the badge', () => {
+    expect(decodeUri(marker.waypointIconOptions(1, 5, 'curb').iconUrl)).toContain('>1</text>');
+    expect(decodeUri(marker.waypointIconOptions(4, 5, 'opposite').iconUrl)).toContain(FLAG_FIELD);
+  });
+
+  test('the badge sits in the pin\'s upper right, inside both canvases', () => {
+    // The square spans x 13-19, y 1-7 and the diamond x 13-19, y 1-8; with the
+    // 1px outline both stay inside the 20 wide canvas, and clear of the 28 tall
+    // panel canvas.
+    const curb = [marker.waypointIconOptions(0, 2, 'curb').iconUrl, marker.panelIconUrlFor(0, 2, 'curb')];
+    const opposite = [marker.waypointIconOptions(0, 2, 'opposite').iconUrl, marker.panelIconUrlFor(0, 2, 'opposite')];
+    for (const url of curb) {
+      expect(decodeUri(url)).toContain('<rect x="13" y="1" width="6" height="6"');
+    }
+    for (const url of opposite) {
+      expect(decodeUri(url)).toContain('<path d="M16 1L19 4.5L16 8L13 4.5z"');
+    }
+    expect(decodeUri(marker.panelIconUrlFor(0, 2, 'curb'))).toContain('viewBox="0 0 20 28"');
+  });
+
+  test('the panel pin is badged the same way as the map pin', () => {
+    const body = (svg) => svg.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
+    for (const approach of ['curb', 'opposite']) {
+      expect(body(decodeUri(marker.panelIconUrlFor(1, 3, approach))))
+        .toBe(body(decodeUri(marker.waypointIconOptions(1, 3, approach).iconUrl)));
+    }
+  });
+
+  test('panelIconUrl takes the approach too', () => {
+    expect(marker.panelIconUrl(marker.START, 0, 'curb')).toBe(marker.panelIconUrlFor(0, 2, 'curb'));
+  });
+
+  test('the URI has no parenthesis or quote, which would end a CSS url() early', () => {
+    for (const approach of ['curb', 'opposite']) {
+      for (const [i, n] of KINDS) {
+        expect(marker.waypointIconOptions(i, n, approach).iconUrl).not.toMatch(/[()']/);
+        expect(marker.panelIconUrlFor(i, n, approach)).not.toMatch(/[()']/);
+      }
+    }
+  });
+});

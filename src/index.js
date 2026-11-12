@@ -47,6 +47,8 @@ var routeZoom = require('./route_zoom');
 var resolveInitialAlternative = require('./route_alternative');
 var waypointMarker = require('./waypoint_marker');
 var waypointReorder = require('./waypoint_reorder');
+var approachControl = require('./approach_control');
+var approaches = require('./approaches');
 var entranceWaypointsModule = require('./entrance_waypoints');
 var createEntranceWaypoints = entranceWaypointsModule.createEntranceWaypoints;
 require('./polyfill');
@@ -279,17 +281,18 @@ var ReversablePlan = L.Routing.Plan.extend({
     }
     return container;
   },
-  // The rows are rebuilt on every waypoint change, so the reorder grips are
-  // wired again after each rebuild.
+  // The rows are rebuilt on every waypoint change, so the reorder grips and the
+  // approach toggles are wired again after each rebuild.
   _updateGeocoders: function() {
     L.Routing.Plan.prototype._updateGeocoders.call(this);
     waypointReorder.attachToPlan(this);
+    approachControl.attachToPlan(this);
   }
 });
 
 /* Setup markers */
-function makeIcon(i, n) {
-  return L.icon(waypointMarker.waypointIconOptions(i, n));
+function makeIcon(i, n, approach) {
+  return L.icon(waypointMarker.waypointIconOptions(i, n, approach));
 }
 
 // The deployment decides which geocoders exist; the first one is used. An entry
@@ -327,7 +330,7 @@ plan = new ReversablePlan([], {
   createMarker: function(i, wp, n) {
     var options = {
       draggable: this.draggableWaypoints,
-      icon: makeIcon(i, n)
+      icon: makeIcon(i, n, approaches.approachOf(wp))
     };
     // Choosing an entrance routes to the door but leaves the pin on the place
     // that was searched for, so the pin is drawn where the place is, not where
@@ -729,6 +732,11 @@ plan.on('waypointdragstart', function() {
 // stays where it is.
 plan.on('waypointsreorder', function() {
   routeFitTracker.waypointsReordered();
+});
+
+// Choosing another approach re-routes the same places; the view stays too.
+plan.on('waypointapproachchange', function() {
+  routeFitTracker.waypointApproachChanged();
 });
 
 lrmControl.on('routingerror', function() {

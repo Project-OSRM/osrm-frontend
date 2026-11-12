@@ -114,15 +114,16 @@ describe('createGeocoder', () => {
     expect(g.closeButton).toBeUndefined();
   });
 
-  test('the grip is a focusable, labelled button between input and remove', () => {
+  test('the grip is a focusable, labelled button after the approach toggle, before remove', () => {
     const g = reorder.createGeocoder(1, 3, { addWaypoints: true, language: 'en' });
     const grip = g.container.querySelector('.' + reorder.HANDLE_CLASS);
     const pin = g.container.querySelector('.' + reorder.PIN_CLASS);
+    const toggle = g.container.querySelector('.leaflet-routing-approach-toggle');
     expect(grip.getAttribute('role')).toBe('button');
     expect(grip.getAttribute('tabindex')).toBe('0');
     expect(grip.getAttribute('aria-label')).toMatch(/Drag to reorder/);
     expect(grip.getAttribute('title')).toBe(grip.getAttribute('aria-label'));
-    expect(Array.from(g.container.children)).toEqual([pin, g.input, grip, g.closeButton]);
+    expect(Array.from(g.container.children)).toEqual([pin, g.input, toggle, grip, g.closeButton]);
   });
 
   test('each row carries the pin the map draws for its waypoint', () => {

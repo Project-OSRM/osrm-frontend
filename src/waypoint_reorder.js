@@ -15,6 +15,7 @@
 var L = require('leaflet');
 var localization = require('./localization');
 var waypointMarker = require('./waypoint_marker');
+var approachControl = require('./approach_control');
 
 var ROW_CLASS = 'leaflet-routing-geocoder';
 var HANDLE_CLASS = 'leaflet-routing-waypoint-handle';
@@ -42,7 +43,8 @@ function setHandleLabel(handle, language) {
 
 // Drop-in for Leaflet Routing Machine's createGeocoder option: the same row
 // (input and remove button, with the same class names the stylesheet keys on)
-// with the waypoint's pin before the input and the grip after it.
+// with the waypoint's pin before the input, then the approach toggle and the
+// grip after it.
 //
 // The pin is the one the map and the directions pane draw for this waypoint,
 // so the row can be matched to its marker: vias are numbered from 1 while the
@@ -54,6 +56,7 @@ function createGeocoder(i, nWps, options) {
   pin.style.backgroundImage = 'url("' + waypointMarker.panelIconUrlFor(i, nWps) + '")';
   pin.setAttribute('aria-hidden', 'true');
   var input = L.DomUtil.create('input', '', container);
+  approachControl.createToggle(container, options.language);
   var handle = L.DomUtil.create('span', HANDLE_CLASS, container);
   var remove = options.addWaypoints ? L.DomUtil.create('span', 'leaflet-routing-remove-waypoint', container) : undefined;
 

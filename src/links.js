@@ -3,6 +3,7 @@
 var L = require('leaflet');
 var qs = require('qs');
 var jsonp = require('jsonp');
+var approaches = require('./approaches');
 
 function _formatCoord(latLng) {
   var precision = 6;
@@ -65,7 +66,10 @@ function formatLink(options) {
     scale: options.units,
     ly: _formatLayer(options.layer),
     srv: options.service,
-    profile: options.profile
+    profile: options.profile,
+    // Left out unless a waypoint is restricted, so a link without
+    // restrictions is the link it always was.
+    ap: approaches.formatApproaches(options.waypoints)
   }, {indices: false});
 }
 
@@ -88,6 +92,11 @@ function parseLink(link) {
         // exactly one loc is given (backward compatibility)
         parsedValues.waypoints = [L.Routing.waypoint(_parseCoord(q.loc))];
       }
+    }
+    // Approaches belong to the waypoints, by position. A value that does not
+    // match the waypoints (stale, hand-edited) is padded or cut to fit.
+    if (typeof q.ap === 'string' && parsedValues.waypoints) {
+      approaches.applyApproaches(parsedValues.waypoints, q.ap);
     }
     parsedValues.language = q.hl;
     parsedValues.alternative = q.alt;

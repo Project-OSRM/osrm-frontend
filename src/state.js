@@ -3,7 +3,9 @@
 var L = require('leaflet');
 var links = require('./links');
 var urlState = require('./url_state');
+var approaches = require('./approaches');
 var waypointReorder = require('./waypoint_reorder');
+var approachControl = require('./approach_control');
 
 var State = L.Class.extend({
   options: { },
@@ -56,6 +58,7 @@ var State = L.Class.extend({
           }
         });
         waypointReorder.updateLabels(plan._geocoderContainer, e.language);
+        approachControl.updateLabels(plan, e.language);
       }
       
       // Re-render directions with new language if routes exist.
@@ -123,12 +126,12 @@ var State = L.Class.extend({
         }
         // Already a waypoint-like with latLng
         if (wp.latLng) return wp;
-        // Plain {lat, lng}
+        // Plain {lat, lng}, with `approach` when the waypoint is restricted
         if (typeof wp.lat === 'number' && typeof wp.lng === 'number') {
           if (typeof L.Routing !== 'undefined' && typeof L.Routing.waypoint === 'function' && typeof L.latLng === 'function') {
-            return L.Routing.waypoint(L.latLng(wp.lat, wp.lng));
+            return approaches.setApproach(L.Routing.waypoint(L.latLng(wp.lat, wp.lng)), wp.approach);
           }
-          return { latLng: { lat: wp.lat, lng: wp.lng } };
+          return approaches.setApproach({ latLng: { lat: wp.lat, lng: wp.lng } }, wp.approach);
         }
         // array form [lat,lng]
         if (Array.isArray(wp) && wp.length >= 2) {

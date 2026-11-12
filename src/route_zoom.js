@@ -70,6 +70,11 @@ function createRouteFitTracker() {
     waypointsReordered: function() {
       routeRequestFromDrag = true;
     },
+    // Choosing another approach for a waypoint re-routes the same places, so
+    // the view stays put, as it does for a reorder. Nothing is geocoded.
+    waypointApproachChanged: function() {
+      routeRequestFromDrag = true;
+    },
     waypointPlaced: function() {
       routeRequestFromDrag = false;
       geocodeFromDrag = false;
