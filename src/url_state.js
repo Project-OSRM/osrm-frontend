@@ -1,6 +1,24 @@
 'use strict';
 
 var links = require('./links');
+var approaches = require('./approaches');
+
+// The plain waypoints this module hands out are {lat, lng}, plus `approach`
+// when the waypoint is restricted, so a waypoint without one is the object it
+// always was.
+function withApproach(plain, approach) {
+  var normalized = approaches.normalizeApproach(approach);
+  if (normalized !== approaches.UNRESTRICTED) plain.approach = normalized;
+  return plain;
+}
+
+// The inverse, for links.format: a waypoint-like object that carries the
+// approach in its options, where links.format reads it.
+function withOptions(waypoint, approach) {
+  var normalized = approaches.normalizeApproach(approach);
+  if (normalized !== approaches.UNRESTRICTED) waypoint.options = { approach: normalized };
+  return waypoint;
+}
 
 function parse(q) {
   // Accept either a query-string (without '?') or default to current location
@@ -19,10 +37,10 @@ function parse(q) {
         parsed.waypoints = parsed.waypoints.map(function(wp) {
           if (!wp) return undefined;
           if (wp && wp.latLng && typeof wp.latLng.lat === 'number' && typeof wp.latLng.lng === 'number') {
-            return { lat: wp.latLng.lat, lng: wp.latLng.lng };
+            return withApproach({ lat: wp.latLng.lat, lng: wp.latLng.lng }, approaches.approachOf(wp));
           }
           if (wp && typeof wp.lat === 'number' && typeof wp.lng === 'number') {
-            return { lat: wp.lat, lng: wp.lng };
+            return withApproach({ lat: wp.lat, lng: wp.lng }, wp.approach);
           }
           return undefined;
         });
@@ -46,7 +64,7 @@ function format(options) {
       // Already in waypoint-like form
       if (wp.latLng) return wp;
       if (typeof wp.lat === 'number' && typeof wp.lng === 'number') {
-        return { latLng: { lat: wp.lat, lng: wp.lng } };
+        return withOptions({ latLng: { lat: wp.lat, lng: wp.lng } }, wp.approach);
       }
       if (Array.isArray(wp) && wp.length >= 2) {
         var lat = Number(wp[0]);

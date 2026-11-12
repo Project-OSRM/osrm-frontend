@@ -157,6 +157,32 @@ docker run -p 9966:9966 -e 'OSRM_GEOCODERS=[{"url":""}]' ghcr.io/project-osrm/os
 The first entry is the one in use. With `OSRM_GEOCODERS` unset, the single entry
 is the Nominatim instance baked in at build time via `NOMINATIM_ENDPOINT`.
 
+## Approach side (curbside)
+
+Each waypoint can be told which side of the road the route has to reach it from.
+This shows how a route changes when a stop has to be made at the curb, such as a
+delivery or a pickup.
+
+Every waypoint row has a small road icon between the address and the reorder
+grip. Pressing it (click, or Enter or Space once focused) cycles through:
+
+| Icon | Approach | Meaning |
+|------|----------|---------|
+| dashed road edges | `unrestricted` (default) | The router may reach the waypoint from either side. |
+| thick near edge | `curb` | The route reaches and leaves the waypoint on the waypoint's own side of the road. |
+| thick far edge | `opposite` | The route reaches and leaves the waypoint from the other side of the road. |
+
+A restricted waypoint also carries a badge on its pin, on the map and in the
+address panel: a square for `curb`, a diamond for `opposite`.
+
+The settings are kept in the share link only, as `ap`, with one entry per
+waypoint in the order of the `loc` parameters and an empty entry for an
+unrestricted waypoint, for example `&ap=curb;;opposite`.
+
+`opposite` needs an osrm-backend version that supports it. A backend that
+rejects the value answers with an error, which the frontend shows like any other
+failed route.
+
 ## Customizing Tile Layers and Overlays
 
 ### Base layers (`layer`)
