@@ -1,5 +1,7 @@
 'use strict';
 
+var approaches = require('./approaches');
+
 // TODO: remove this patch once the upstream bug is fixed in leaflet-routing-machine.
 // Upstream issue: https://github.com/perliedman/leaflet-routing-machine/issues/719
 //
@@ -106,14 +108,37 @@ function wrapWaypoints(router) {
   };
 }
 
+// Patch router.buildRouteUrl() to add OSRM's `approaches` parameter, taken from
+// each waypoint's `options.approach`. OSRM wants one entry per coordinate, so the
+// value has to be built from the waypoints of the request at hand. That rules out
+// `requestParameters`, which is fixed for the router's lifetime and is percent-encoded
+// when appended. When no waypoint is restricted nothing is added, so such a request is
+// the one that was always sent.
+function appendApproaches(router) {
+  // Make this idempotent: avoid double-patching the same router instance.
+  if (router._appendApproachesPatched) return;
+  // A router that builds no URL has nothing to add the parameter to.
+  if (typeof router.buildRouteUrl !== 'function') return;
+  router._appendApproachesPatched = true;
+
+  var origBuildRouteUrl = router.buildRouteUrl.bind(router);
+  router.buildRouteUrl = function(waypoints, options) {
+    var url = origBuildRouteUrl(waypoints, options);
+    var value = approaches.formatApproaches(waypoints);
+    return value ? url + '&approaches=' + value : url;
+  };
+}
+
 module.exports = {
   applyPatches: function(router) {
     router._leftOrRight = leftOrRight;
     wrapWaypoints(router);
+    appendApproaches(router);
   },
   // Exported for unit testing
   leftOrRight: leftOrRight,
   wrapWaypoints: wrapWaypoints,
+  appendApproaches: appendApproaches,
   
   // Allow setting the active service by index
   setActiveService: function(router, serviceIndex, services) {
