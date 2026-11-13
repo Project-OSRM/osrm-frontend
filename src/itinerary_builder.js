@@ -148,6 +148,11 @@ module.exports = function (language) {
       // icon
       td = L.DomUtil.create('td', '', row);
       span = L.DomUtil.create('span', 'leaflet-routing-icon leaflet-routing-icon-' + icon, td);
+      // The sprite turns left across oncoming traffic in right-hand driving.
+      // Mirror only the maneuver icon when traffic keeps to the left.
+      if (icon === 'u-turn' && text.driving_side === 'left') {
+        span.style.transform = 'scaleX(-1)';
+      }
       paintWaypointIcon(span, icon, steps);
       td.appendChild(span);
 
