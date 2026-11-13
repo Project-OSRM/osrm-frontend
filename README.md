@@ -66,7 +66,27 @@ Browser Back and Forward restore them along with the waypoints.
 
 ### Backends behind HTTP authentication
 
-The frontend has no configuration option for backend credentials, and embedding them in the
+For Docker, set `OSRM_PROXY_URL` to the backend base URL and optionally set
+`OSRM_PROXY_USERNAME` and `OSRM_PROXY_PASSWORD` for HTTP Basic authentication.
+The container proxies `/osrm/` to that backend and defaults to a single car mode.
+Explicit `OSRM_MODES` and `OSRM_BACKEND` settings still take precedence; modes
+using the proxy should use `"url":"/osrm"`.
+
+```bash
+docker run -p 9966:9966 \
+  -e OSRM_PROXY_URL=https://osrm.internal.example.com \
+  -e OSRM_PROXY_USERNAME -e OSRM_PROXY_PASSWORD \
+  ghcr.io/project-osrm/osrm-frontend:latest
+```
+
+Set the two credential variables in the host environment before running this
+command. They stay in a private nginx configuration file and are never included
+in the public `config.json`. HTTPS upstream certificates are verified. The proxy
+is available to everyone who can reach the frontend, so protect the frontend too
+when access to routing must be restricted.
+
+For deployments outside Docker, configure a reverse proxy as shown below.
+Embedding credentials in the
 backend URL (`https://user:password@example.com`) does not work: browsers refuse to send
 credentials embedded in subresource URLs, so the request either fails with `401` or never
 completes. This is browser policy and cannot be worked around from the page. Credentials placed

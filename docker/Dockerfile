@@ -40,6 +40,7 @@ ENV OSRM_ENVIRONMENT=docker \
     OSRM_PROFILES=driving,bike,foot
 
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/osrm-proxy.conf /etc/nginx/osrm-proxy.conf
 COPY docker/entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 

@@ -44,6 +44,50 @@ escape_json() {
   }' | tr -d '\n'
 }
 
+# Generate the optional same-origin routing proxy. Credentials stay in nginx's
+# private configuration and are never written into the public config.json.
+PROXY_CONFIG=/etc/nginx/osrm-proxy.conf
+if [ -n "${OSRM_PROXY_URL:-}" ]; then
+  if ! printf '%s\n' "$OSRM_PROXY_URL" | LC_ALL=C awk '
+    NR != 1 || !/^https?:\/\/[A-Za-z0-9.\[\]:-]+(\/[A-Za-z0-9._~%\/-]*)?$/ { bad = 1 }
+    END { exit bad }
+  '; then
+    echo 'Invalid OSRM_PROXY_URL: expected an http(s) backend URL without credentials or a query.' >&2
+    exit 1
+  fi
+  if [ -n "${OSRM_PROXY_PASSWORD:-}" ] && [ -z "${OSRM_PROXY_USERNAME:-}" ]; then
+    echo 'OSRM_PROXY_PASSWORD requires OSRM_PROXY_USERNAME.' >&2
+    exit 1
+  fi
+  case "${OSRM_PROXY_USERNAME:-}" in
+    *:*) echo 'OSRM_PROXY_USERNAME must not contain a colon.' >&2; exit 1 ;;
+  esac
+  PROXY_AUTH=''
+  if [ -n "${OSRM_PROXY_USERNAME:-}" ]; then
+    PROXY_AUTH="Basic $(printf '%s:%s' "$OSRM_PROXY_USERNAME" "${OSRM_PROXY_PASSWORD:-}" | base64 | tr -d '\r\n')"
+  fi
+  # Restrict the generated file before writing the Authorization header.
+  (umask 077; : > "$PROXY_CONFIG")
+  chmod 600 "$PROXY_CONFIG"
+  cat > "$PROXY_CONFIG" << EOF
+location ^~ /osrm/ {
+    proxy_pass ${OSRM_PROXY_URL%/}/;
+    proxy_set_header Host \$proxy_host;
+    proxy_set_header Authorization "$PROXY_AUTH";
+    proxy_ssl_server_name on;
+    proxy_ssl_verify on;
+    proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+    add_header Cache-Control "no-store" always;
+    add_header X-Content-Type-Options "nosniff" always;
+}
+EOF
+  unset PROXY_AUTH
+else
+  # A container can restart without the proxy settings; remove stale routing
+  # configuration so it cannot keep using the previous credentials.
+  : > "$PROXY_CONFIG"
+fi
+
 # Load routing modes from the preferred OSRM_MODES config.
 # OSRM_BACKEND is deprecated and only kept as a single-backend fallback.
 MODES_JSON=""
@@ -64,6 +108,8 @@ elif [ -f /etc/osrm/modes.json ]; then
 elif [ -n "$OSRM_BACKEND" ] && [ "$OSRM_BACKEND" != "http://localhost:5000" ]; then
   # Backward compatibility: a non-default OSRM_BACKEND means one deprecated single backend.
   CONFIG_BACKEND="$OSRM_BACKEND"
+elif [ -n "${OSRM_PROXY_URL:-}" ]; then
+  MODES_JSON='[{"name":"driving","url":"/osrm","profile":"driving"}]'
 else
   # Default: use the three public OSRM profiles (same as non-Docker mode).
   # Override with OSRM_MODES or OSRM_BACKEND to point at a self-hosted server.
