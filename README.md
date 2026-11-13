@@ -53,6 +53,27 @@ docker run -p 9966:9966 \
 2. If only `OSRM_MODES` is set, the frontend parses the JSON and configures the listed modes.
 3. If both are set, `OSRM_MODES` wins and the frontend emits a deprecation warning for `OSRM_BACKEND`.
 
+### Vector backgrounds
+
+Set `OSRM_VECTOR_STYLE` to an HTTP(S) or root-relative MapLibre style JSON URL.
+The style specifies vector tile sources, fonts, sprites and their attribution.
+`OSRM_VECTOR_NAME` names the layer in the layer control (default: `Vector`);
+`OSRM_VECTOR_ATTRIBUTION` adds any required provider credit. Set these keys in
+`window.osrmConfig` for a static deployment, or as Docker environment variables.
+
+```bash
+docker run -p 9966:9966 \
+  -e OSRM_VECTOR_STYLE=https://tiles.example.com/style.json \
+  -e OSRM_VECTOR_NAME='Local vector' \
+  ghcr.io/project-osrm/osrm-frontend:latest
+```
+
+The renderer is loaded only when the vector background is selected. A raster
+OpenStreetMap background remains available while the style loads or if WebGL
+is unavailable. Styles hosted on another origin must allow CORS requests for
+the style and its tile, font and sprite resources. A configured vector background
+is the default unless `OSRM_DEFAULT_LAYER` selects another layer.
+
 ### Route options
 
 Open **Route options** below the waypoint inputs to exclude a comma-separated list

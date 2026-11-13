@@ -11,8 +11,7 @@
     <meta charset='utf-8' />
     <title>OSRM Debug</title>
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-    <script src='https://unpkg.com/maplibre-gl@5.21.0/dist/maplibre-gl.js'></script>
-    <link href='https://unpkg.com/maplibre-gl@5.21.0/dist/maplibre-gl.css' rel='stylesheet' />
+    <link href='https://unpkg.com/maplibre-gl@6.18.0/dist/maplibre-gl.css' rel='stylesheet' />
     <style>
         body { margin:0; padding:0; }
         #map { position:absolute; top:0; bottom:0; width:100%; }
@@ -26,7 +25,8 @@
 <div id="legend">
     <div style="color: white;">km/h:</div><div style="background: #5e4fa2">0-10</div><div style="background: #3288bd">10-20</div><div style="background: #66c2a5">20-30</div><div style="background: #abdda4">30-40</div><div style="background: #e6f598">40-50</div><div style="background: #fee08b">50-60</div><div style="background: #fdae61">60-70</div><div style="background: #f46d43">70-80</div><div style="background: #d53e4f">80-90</div><div style="background: #9e0142">90+</div>
 </div>
-<script>
+<script type="module">
+import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.18.0/dist/maplibre-gl.mjs';
 function numberFieldText(fieldName, suffix) {
     return [
         "concat",

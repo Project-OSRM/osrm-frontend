@@ -1,0 +1,35 @@
+'use strict';
+jest.mock('leaflet', () => ({
+  tileLayer: (url, options) => ({ url, options }),
+  latLng: (lat, lng) => ({ lat, lng })
+}));
+jest.mock('../src/vector_layer', () => ({ createLayer: (style, options) => ({ style, options }) }));
+
+function load(config) {
+  jest.resetModules();
+  global.window = { osrmConfig: config };
+  try { return require('../src/leaflet_options'); }
+  finally { delete global.window; }
+}
+
+test('adds a named vector base layer and makes it the default', () => {
+  const options = load({ OSRM_VECTOR_STYLE: '/styles/local.json', OSRM_VECTOR_NAME: 'Local vector', OSRM_VECTOR_ATTRIBUTION: 'Local provider' });
+  expect(options.layer[0]['Local vector'].style).toBe('/styles/local.json');
+  expect(options.defaultState.layer).toBe(options.layer[0]['Local vector']);
+  expect(options.defaultState.layer.options.attribution).toBe('Local provider');
+});
+
+test('preserves explicit raster defaults and all built-in background choices', () => {
+  const options = load({ OSRM_VECTOR_STYLE: 'https://tiles.example/style.json', OSRM_DEFAULT_LAYER: 'osm' });
+  expect(options.layer[0].Vector).toBeDefined();
+  expect(options.defaultState.layer).toBe(options.layer[0]['openstreetmap.org']);
+});
+
+test('does not offer an unconfigured or invalid vector style', () => {
+  const warn = jest.spyOn(console, 'warn').mockImplementation();
+  for (const style of [undefined, '', 42, 'javascript:alert(1)', 'file:///style.json']) {
+    expect(load({ OSRM_VECTOR_STYLE: style }).layer[0].Vector).toBeUndefined();
+  }
+  expect(warn).toHaveBeenCalledTimes(2);
+  warn.mockRestore();
+});

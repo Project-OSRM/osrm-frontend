@@ -230,3 +230,24 @@ describe('authenticated backend proxy (issue #316)', () => {
     expect(generateConfig({ OSRM_PROXY_URL: '' }, { proxy: true }).proxy).toBe('');
   });
 });
+
+test('passes vector background settings through runtime configuration', () => {
+  const config = generateConfig({
+    OSRM_VECTOR_STYLE: 'https://tiles.example/style.json',
+    OSRM_VECTOR_NAME: 'Local vector',
+    OSRM_VECTOR_ATTRIBUTION: '© Local provider'
+  });
+  expect(config.OSRM_VECTOR_STYLE).toBe('https://tiles.example/style.json');
+  expect(config.OSRM_VECTOR_NAME).toBe('Local vector');
+  expect(config.OSRM_VECTOR_ATTRIBUTION).toBe('© Local provider');
+  expect(config.OSRM_DEFAULT_LAYER).toBe('vector');
+});
+
+test('prefers a configured vector background over the raster fallback by default', () => {
+  const settings = {
+    OSRM_VECTOR_STYLE: '/styles/local.json',
+    OSRM_TILE_URL: '/tiles/{z}/{x}/{y}.png'
+  };
+  expect(generateConfig(settings).OSRM_DEFAULT_LAYER).toBe('vector');
+  expect(generateConfig({ ...settings, OSRM_DEFAULT_LAYER: 'custom' }).OSRM_DEFAULT_LAYER).toBe('custom');
+});
