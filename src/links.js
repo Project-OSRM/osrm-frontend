@@ -3,6 +3,7 @@
 var L = require('leaflet');
 var qs = require('qs');
 var jsonp = require('jsonp');
+var routePreferences = require('./route_preferences');
 
 function _formatCoord(latLng) {
   var precision = 6;
@@ -65,7 +66,9 @@ function formatLink(options) {
     scale: options.units,
     ly: _formatLayer(options.layer),
     srv: options.service,
-    profile: options.profile
+    profile: options.profile,
+    exclude: routePreferences.normalize(options).exclude || undefined,
+    u: options.allowUTurns === true ? 'true' : undefined
   }, {indices: false});
 }
 
@@ -95,6 +98,9 @@ function parseLink(link) {
     parsedValues.layer = q.ly;
     parsedValues.service = q.srv;
     parsedValues.profile = q.profile;
+    if (typeof q.exclude === 'string') parsedValues.exclude = routePreferences.normalize({ exclude: q.exclude }).exclude;
+    if (q.u === 'true' || q.u === '1') parsedValues.allowUTurns = true;
+    else if (q.u === 'false' || q.u === '0') parsedValues.allowUTurns = false;
     parsedValues.originAddress = q.src;
     parsedValues.destinationAddress = q.dst;
   } catch (e) {

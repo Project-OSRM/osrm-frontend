@@ -28,6 +28,7 @@ var resolveWaypointSlot = require('./waypoint_placement').resolveWaypointSlot;
 }());
 
 var modeSelectorModule = require('./mode_selector');
+var routePreferences = require('./route_preferences');
 // leaflet.locatecontrol@0.89 UMD has a bug: after the CJS IIFE it tries
 // `window.L.Control.Locate.locate` but never sets L.Control.Locate in the
 // CJS path, causing a crash at bundle load time. Pre-initialising the
@@ -391,6 +392,7 @@ var controlOptions = {
   collapsible: options.lrm.collapsible,
   itineraryBuilder: new ItineraryBuilder()
 };
+routePreferences.applyToRouter({ options: controlOptions }, mergedOptions);
 // profile labels already translated earlier
 
 
@@ -491,6 +493,32 @@ function applyDebugUrlForProfile(profileIndex) {
 applyDebugUrlForProfile(activeProfileIndex);
 
 var state = state(map, lrmControl, toolsControl, modeSelector, mergedOptions);
+var routeFitTracker = routeZoom.createRouteFitTracker();
+var routePreferencesControl;
+
+function applyRoutePreferences(preferences) {
+  var values = routePreferences.normalize(preferences);
+  routePreferences.applyToRouter(router, values);
+  state.options.exclude = values.exclude;
+  state.options.allowUTurns = values.allowUTurns;
+  if (routePreferencesControl) routePreferencesControl.set(values);
+}
+
+routePreferencesControl = routePreferences.createControl(localization.get(language), mergedOptions, function(values) {
+  applyRoutePreferences(values);
+  state.update({ push: true });
+  if (lrmControl.getWaypoints().filter(function(wp) {
+    return wp && wp.latLng;
+  }).length >= 2) {
+    routeFitTracker.waypointsReordered();
+    lrmControl.route();
+  }
+});
+plan._geocoderContainer.appendChild(routePreferencesControl.container);
+applyRoutePreferences(mergedOptions);
+toolsControl.on('languagechanged', function(e) {
+  routePreferencesControl.updateLocalization(localization.get(e.language));
+});
 
 // Listen for browser navigation (back/forward) and restore app state
 if (urlState && urlState.listen) {
@@ -536,6 +564,7 @@ if (urlState && urlState.listen) {
       }
 
       // Apply profile/service selection
+      applyRoutePreferences(mergedState);
       if (parsed && parsed.profile !== undefined && parsed.profile !== null) {
         var profileIndex = parseInt(parsed.profile, 10);
         if (!isNaN(profileIndex)) {
@@ -708,7 +737,6 @@ if (routingContainer) {
 }
 
 // Decides whether the next route or geocode result may move the map view
-var routeFitTracker = routeZoom.createRouteFitTracker();
 
 // Show pane when route is computed
 lrmControl.on('routesfound', function(e) {

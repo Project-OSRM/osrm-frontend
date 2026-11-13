@@ -53,6 +53,17 @@ docker run -p 9966:9966 \
 2. If only `OSRM_MODES` is set, the frontend parses the JSON and configures the listed modes.
 3. If both are set, `OSRM_MODES` wins and the frontend emits a deprecation warning for `OSRM_BACKEND`.
 
+### Route options
+
+Open **Route options** below the waypoint inputs to exclude a comma-separated list
+of road classes, such as `motorway,toll,ferry`, or allow U-turns at via points.
+The backend's routing profile determines which classes and combinations it supports;
+unsupported exclusions are reported as routing errors. By default no classes are
+excluded and routes continue straight at via points where possible.
+
+These settings travel in shared links as `exclude=motorway,toll` and `u=true`.
+Browser Back and Forward restore them along with the waypoints.
+
 ### Backends behind HTTP authentication
 
 The frontend has no configuration option for backend credentials, and embedding them in the

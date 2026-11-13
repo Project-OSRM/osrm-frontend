@@ -834,6 +834,19 @@ td.distance {
     background-image: url('../images/osrm.directions.icons.color.svg');
 }
 
+.osrm-route-preferences {
+  clear: both;
+  padding-top: 8px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.osrm-route-preferences summary { cursor: pointer; }
+.osrm-route-preferences label { display: block; margin-top: 8px; }
+.osrm-route-preferences label > span { margin-right: 6px; }
+.osrm-route-preferences input[type="text"] { box-sizing: border-box; width: 100%; }
+.osrm-route-preferences small { display: block; color: #555; }
+
 .leaflet-routing-icon-continue         { background-position: 2px 0px; }
 .leaflet-routing-icon-sharp-right      { background-position: -24px 0px; }
 .leaflet-routing-icon-turn-right       { background-position: -50px 0px; }

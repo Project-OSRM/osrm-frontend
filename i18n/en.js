@@ -25,5 +25,9 @@ module.exports = {
   'Bike': 'Bike',
   'Car': 'Car',
   'Foot': 'Foot',
-  'Build': 'Build: '
+  'Build': 'Build: ',
+  'Route options': 'Route options',
+  'Exclude road classes': 'Exclude road classes',
+  'Road classes depend on the routing backend.': 'Road classes depend on the routing backend.',
+  'Allow U-turns at via points': 'Allow U-turns at via points'
 };
