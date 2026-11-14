@@ -58,6 +58,12 @@ function attach(options) {
   }
   var addButton = panel.querySelector('.leaflet-routing-add-waypoint');
   var reverseButton = panel.querySelector('.leaflet-routing-reverse-waypoints');
+  var toolbar = tools.getContainer && tools.getContainer();
+  var toolbarFooter;
+  if (toolbar) {
+    toolbarFooter = L.DomUtil.create('footer', 'osrm-panel-toolbar', panel);
+    toolbarFooter.appendChild(toolbar);
+  }
   var status = 'Plan your route';
 
   function translate(key) {
@@ -163,6 +169,7 @@ function attach(options) {
   function updateLocalization(nextLanguage) {
     language = nextLanguage || language;
     title.textContent = translate('Directions');
+    if (toolbarFooter) toolbarFooter.setAttribute('aria-label', translate('Map tools'));
     if (modeLabel) modeLabel.textContent = translate('Travel mode');
     if (collapse) {
       collapse.title = translate('Toggle directions');

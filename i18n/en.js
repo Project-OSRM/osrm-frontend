@@ -42,5 +42,9 @@ module.exports = {
   'Finding route…': 'Finding route…',
   'Route unavailable': 'Route unavailable',
   'Try another waypoint or change your route options.': 'Try another waypoint or change your route options.',
-  'Choose a start and destination, or click the map to add stops.': 'Choose a start and destination, or click the map to add stops.'
+  'Choose a start and destination, or click the map to add stops.': 'Choose a start and destination, or click the map to add stops.',
+  'Loading vector map…': 'Loading vector map…',
+  'Vector map could not load. Try again or choose another background.': 'Vector map could not load. Try again or choose another background.',
+  'Try again': 'Try again',
+  'Map tools': 'Map tools'
 };

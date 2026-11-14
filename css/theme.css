@@ -161,6 +161,8 @@
 .osrm-theme-dark .leaflet-control-scale { position: fixed; right: 100px; bottom: 18px; margin: 0; transform: none; }
 .osrm-theme-dark .leaflet-control-scale-line { color: #bacfd9; border-color: #bacfd9; background: #172d36a6; text-shadow: none; }
 .osrm-theme-dark .leaflet-osrm-tools-container { padding: 5px 8px; border: 1px solid #3d565e; border-radius: 10px; background: #193036eb; box-shadow: 0 3px 16px #00151c26; }
+.osrm-panel-toolbar { flex: none; margin-top: 12px; padding-top: 10px; border-top: 1px solid #35505766; }
+.osrm-theme-dark .osrm-panel-toolbar .leaflet-osrm-tools-container { position: relative; inset: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; float: none; width: 100%; max-width: none; margin: 0 !important; box-sizing: border-box; box-shadow: none; }
 .osrm-theme-dark .leaflet-osrm-tools-container .osrm-directions-icon { filter: brightness(0) invert(0.9); }
 .osrm-theme-dark .osrm-localization-chooser,
 .osrm-theme-dark .osrm-units-chooser { color: #d0dfe5; background-color: #1c353c; }
@@ -195,10 +197,17 @@
   .osrm-theme-dark .osrm-directions-inputs { max-height: 27dvh; margin-bottom: 10px; }
   .osrm-theme-dark .leaflet-routing-geocoders .leaflet-routing-geocoder { min-height: 44px; }
   .osrm-theme-dark .osrm-directions-inputs .leaflet-routing-geocoder input { height: 40px; }
-  .osrm-theme-dark .leaflet-routing-alternatives-container { flex: 0 1 auto; max-height: 22dvh; min-height: 0; }
+  .osrm-theme-dark .leaflet-routing-alternatives-container { flex: 0 0 auto; max-height: 22dvh; min-height: 100px; }
   .osrm-theme-dark .osrm-directions-summary { padding: 15px; }
   .osrm-theme-dark .osrm-route-time { font-size: 24px; }
   .osrm-theme-dark .leaflet-control-zoom { bottom: calc(var(--osrm-panel-height, 300px) + 22px); }
   .osrm-theme-dark .leaflet-control-scale { bottom: calc(var(--osrm-panel-height, 300px) + 10px); right: 75px; }
-  .osrm-theme-dark .leaflet-osrm-tools-container { position: fixed; left: 12px; top: 12px; max-width: calc(100vw - 80px); }
 }
+
+/* Vector startup never loads a raster basemap underneath the renderer. */
+.osrm-vector-status { position: absolute; top: 16px; left: 50%; z-index: 750; display: flex; align-items: center; gap: 10px; max-width: min(480px, calc(100% - 96px)); transform: translateX(-50%); padding: 9px 13px; border: 1px solid #4b687b; border-radius: 10px; background: #162d3aeb; color: #d4e2ec; box-shadow: 0 3px 16px #00141c22; font: 12px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+.osrm-vector-status:not(.osrm-vector-status-error):before { content: ''; flex: none; width: 12px; height: 12px; border: 2px solid #7897b355; border-top-color: #9ec5ff; border-radius: 50%; animation: osrm-vector-loading 0.8s linear infinite; }
+.osrm-vector-status button { float: none; flex: none; width: auto; height: auto; min-height: 32px; margin: 0; padding: 5px 10px; border: 0; border-radius: 6px; background: #2b70df; color: white; cursor: pointer; font: inherit; }
+@keyframes osrm-vector-loading { to { transform: rotate(360deg); } }
+@media (max-width: 720px) { .osrm-vector-status { top: 66px; } }
+@media (prefers-reduced-motion: reduce) { .osrm-vector-status:before { animation: none; } }

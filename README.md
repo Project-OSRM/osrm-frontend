@@ -68,9 +68,10 @@ docker run -p 9966:9966 \
   ghcr.io/project-osrm/osrm-frontend:latest
 ```
 
-The renderer is loaded only when the vector background is selected. A raster
-OpenStreetMap background remains available while the style loads or if WebGL
-is unavailable. Styles hosted on another origin must allow CORS requests for
+The renderer is loaded only when the vector background is selected. It starts
+directly on a plain background without loading raster tiles underneath. If the
+renderer or style cannot load, a retry control appears; another background can
+also be selected from the layer control. Styles hosted on another origin must allow CORS requests for
 the style and its tile, font and sprite resources. A configured vector background
 is the default unless `OSRM_DEFAULT_LAYER` selects another layer.
 

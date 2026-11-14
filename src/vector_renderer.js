@@ -10,7 +10,7 @@ function createBackgroundRenderer(MaplibreGL) {
     },
 
     // WebGL can fail before onAdd creates a MapLibre map. Removing that
-    // partially added layer must still work so the raster fallback survives.
+    // partially added layer must still work so loading can be retried safely.
     onRemove: function(map) {
       if (this.getMaplibreMap()) {
         MaplibreGL.prototype.onRemove.call(this, map);

@@ -37,6 +37,11 @@ beforeEach(() => {
   tools._shareContainer.className = 'leaflet-osrm-tools-share';
   tools._shareButton = document.createElement('span');
   tools._shareContainer.appendChild(tools._shareButton);
+  tools._container = document.createElement('div');
+  tools._container.className = 'leaflet-osrm-tools-container';
+  tools._container.appendChild(tools._shareContainer);
+  mapContainer.appendChild(tools._container);
+  tools.getContainer = () => tools._container;
   tools._toggleSharePopup = jest.fn();
   interfaceTheme.initialize(true);
   theme = interfaceTheme.attach({ map, control, tools, modeSelector: selector, language: 'en' });
@@ -84,6 +89,15 @@ test('keeps sharing and collapsing available to the keyboard after moving them i
   expect(collapse.getAttribute('aria-label')).toBe('Toggle directions');
   collapse.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true }));
   expect(panel.classList.contains('leaflet-routing-container-hide')).toBe(true);
+});
+
+test('places the existing toolbar in a footer aligned with the directions panel', () => {
+  const footer = panel.querySelector('.osrm-panel-toolbar');
+  expect(footer.lastElementChild).toBe(tools.getContainer());
+  expect(panel.lastElementChild).toBe(footer);
+  expect(footer.getAttribute('aria-label')).toBe('Map tools');
+  expect(footer.querySelector('.leaflet-osrm-tools-share')).toBeNull();
+  expect(panel.querySelector('.osrm-panel-header .leaflet-osrm-tools-share')).toBe(tools._shareContainer);
 });
 
 test('shows all route cards, identifies the fastest, and makes detailed directions expandable', () => {

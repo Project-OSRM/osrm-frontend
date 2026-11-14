@@ -124,6 +124,7 @@ function customVectorLayer() {
   }
   return require('./vector_layer').createLayer(style, {
     theme: config.OSRM_VECTOR_THEME === 'original' ? 'original' : 'dark',
+    language: getLanguage(),
     attribution: typeof config.OSRM_VECTOR_ATTRIBUTION === 'string' ? config.OSRM_VECTOR_ATTRIBUTION : osmAttribution,
     minZoom: 1,
     maxZoom: 22
