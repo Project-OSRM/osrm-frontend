@@ -55,3 +55,19 @@ test('removes raster backdrops and unused raster sources from the vector theme',
 test('produces a valid MapLibre style including category-based point-of-interest labels', () => {
   expect(validateStyleMin(theme.transformStyle(null, styleFixture()))).toEqual([]);
 });
+
+test('preserves highway shield contrast without adding the dark label halo', () => {
+  const original = styleFixture();
+  const layout = { 'text-field': ['get', 'ref'], 'icon-image': 'road_3', 'text-size': 10 };
+  original.layers.push(
+    { id: 'highway-shield-non-us', type: 'symbol', source: 'osm', 'source-layer': 'transportation_name', layout },
+    { id: 'road_shield_us', type: 'symbol', source: 'osm', 'source-layer': 'transportation_name', layout,
+      paint: { 'text-color': '#111111', 'text-halo-color': '#ffffff', 'text-halo-width': 0.2 } }
+  );
+  const result = theme.transformStyle(null, original);
+  expect(result.layers.find(layer => layer.id === 'highway-shield-non-us').paint).toEqual({});
+  expect(result.layers.find(layer => layer.id === 'road_shield_us').paint).toEqual(original.layers.at(-1).paint);
+  expect(result.layers.find(layer => layer.id === 'highway-shield-non-us').layout).toEqual(layout);
+  expect(result.layers.find(layer => layer.id === 'poi').paint['text-halo-width']).toBe(1.25);
+  expect(validateStyleMin(result)).toEqual([]);
+});

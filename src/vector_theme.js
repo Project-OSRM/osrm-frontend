@@ -53,9 +53,10 @@ function transformStyle(previousStyle, style) {
     }
     if (layer.type === 'fill-extrusion') paint['fill-extrusion-color'] = palette.building;
     if (layer.type === 'line') paint['line-color'] = lineColor(name);
-    if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
-      paint['text-color'] = /shield/.test(name) ? '#243444' :
-        /water/.test(name) ? '#86b5c5' : /transportation|highway/.test(name) ? palette.mutedText : palette.text;
+    // Shields include their own light sprite background. Keep the provider's
+    // text contrast and halo instead of applying a dark street-label outline.
+    if (layer.type === 'symbol' && layer.layout && layer.layout['text-field'] && !/shield/.test(name)) {
+      paint['text-color'] = /water/.test(name) ? '#86b5c5' : /transportation|highway/.test(name) ? palette.mutedText : palette.text;
       if (/poi/.test(name)) {
         paint['text-color'] = ['match', ['get', 'class'],
           ['park', 'garden', 'playground'], '#a0c59b',
