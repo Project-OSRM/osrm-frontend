@@ -700,6 +700,12 @@
    opacity: 0.5;
 }
 
+/* Keep route strokes at their screen width while Leaflet scales SVG geometry
+   during wheel, pinch, and animated zooms. Applies to casings and alternatives. */
+.leaflet-overlay-pane svg path {
+  vector-effect: non-scaling-stroke;
+}
+
 /* Instructions */
 .osrm-directions-steps {
     position: relative;
