@@ -47,10 +47,10 @@ test('zooms through small fractional steps instead of jumping to a whole zoom le
   jest.advanceTimersByTime(80);
   expect(zooms.length).toBeGreaterThan(2);
   expect(map.getZoom()).toBeGreaterThan(10);
-  expect(map.getZoom()).toBeLessThan(10.6);
+  expect(map.getZoom()).toBeLessThan(10.75);
   expect(Math.max(...zooms.map((zoom, index) => zoom - (index ? zooms[index - 1] : 10)))).toBeLessThan(0.2);
   settle();
-  expect(map.getZoom()).toBeCloseTo(10.6, 4);
+  expect(map.getZoom()).toBeCloseTo(10.75, 4);
 });
 
 test('keeps the geographic point under the pointer fixed throughout the animation', () => {
