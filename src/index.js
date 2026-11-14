@@ -574,7 +574,7 @@ if (urlState && urlState.listen) {
             routerPatches.setActiveService(router, profileIndex, services);
             applyDebugUrlForProfile(profileIndex);
             ls.set('profile', profileIndex);
-            if (modeSelector && modeSelector.select) modeSelector.setValue(profileIndex);
+            if (modeSelector && modeSelector.select) modeSelector.select.value = profileIndex;
             state.options.profile = profileIndex;
 
             // Trigger re-route with current waypoints if applicable
@@ -645,7 +645,7 @@ if (toolsControl && toolsControl.on) {
 (function initializeProfileSelection() {
   // Set initial profile on modeSelector for UI sync
   if (modeSelector && modeSelector.select) {
-    modeSelector.setValue(activeProfileIndex);
+    modeSelector.select.value = activeProfileIndex;
   }
   
   // Also update the state object so profile is preserved on language change
