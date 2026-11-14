@@ -33,3 +33,10 @@ test('does not offer an unconfigured or invalid vector style', () => {
   expect(warn).toHaveBeenCalledTimes(2);
   warn.mockRestore();
 });
+
+test('enables the dark vector theme by default and preserves an original-style option', () => {
+  expect(load({ OSRM_VECTOR_STYLE: '/style.json' }).vectorTheme).toBe('dark');
+  const original = load({ OSRM_VECTOR_STYLE: '/style.json', OSRM_VECTOR_THEME: 'original' });
+  expect(original.vectorTheme).toBe('original');
+  expect(original.layer[0].Vector.options.theme).toBe('original');
+});

@@ -18,6 +18,7 @@ OSRM_TILE_ATTRIBUTION="${OSRM_TILE_ATTRIBUTION:-}"
 OSRM_VECTOR_STYLE="${OSRM_VECTOR_STYLE:-}"
 OSRM_VECTOR_NAME="${OSRM_VECTOR_NAME:-}"
 OSRM_VECTOR_ATTRIBUTION="${OSRM_VECTOR_ATTRIBUTION:-}"
+OSRM_VECTOR_THEME="${OSRM_VECTOR_THEME:-dark}"
 # Empty by default: the frontend then offers the bundled Nominatim instance.
 # Set to a JSON array of {"name","url"} to choose the geocoders on offer; an
 # entry with an empty url contacts nothing and names waypoints by coordinates.
@@ -137,6 +138,7 @@ cat > /usr/share/nginx/html/config.json << EOF
   "OSRM_VECTOR_STYLE": "$(escape_json "$OSRM_VECTOR_STYLE")",
   "OSRM_VECTOR_NAME": "$(escape_json "$OSRM_VECTOR_NAME")",
   "OSRM_VECTOR_ATTRIBUTION": "$(escape_json "$OSRM_VECTOR_ATTRIBUTION")",
+  "OSRM_VECTOR_THEME": "$(escape_json "$OSRM_VECTOR_THEME")",
   "OSRM_GEOCODERS": "$(escape_json "$OSRM_GEOCODERS")",
   "OSRM_MODES": "$(escape_json "$MODES_JSON")"
 }

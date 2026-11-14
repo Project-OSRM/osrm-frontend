@@ -38,6 +38,9 @@ var locate = require('leaflet.locatecontrol');
 var options = require('./lrm_options');
 var urlState = require('./url_state');
 var leafletOptions = require('./leaflet_options');
+var interfaceTheme = require('./interface_theme');
+var darkInterface = leafletOptions.vectorTheme === 'dark';
+interfaceTheme.initialize(darkInterface);
 var ls = require('local-storage');
 var tools = require('./tools');
 var state = require('./state');
@@ -478,6 +481,9 @@ if (L && L.DomEvent && typeof L.DomEvent.disableScrollPropagation === 'function'
 }
 
 var toolsControl = tools.control(localization.get(mergedOptions.language), localization.getLanguages(), Object.assign({}, options.tools, { initialUnits: mergedOptions.units })).addTo(map);
+if (darkInterface) {
+  interfaceTheme.attach({ map: map, control: lrmControl, tools: toolsControl, modeSelector: modeSelector, language: language });
+}
 
 /**
  * Point the tools control's debug map button at the debug map configured for a
@@ -734,7 +740,7 @@ if (modeSelector && modeSelector.select) {
 
 // Hide directions pane by default
 var routingContainer = document.querySelector('.leaflet-routing-container');
-if (routingContainer) {
+if (routingContainer && !darkInterface) {
   routingContainer.classList.add('leaflet-routing-container-hide');
 }
 
@@ -768,6 +774,9 @@ lrmControl.on('routingerror', function() {
 /* Entrance picker — see src/entrance_waypoints.js for what it does and why. */
 
 function directionsPaneWidth() {
+  // The themed layout gives the map its own unobscured viewport beside the
+  // sidebar (or above the mobile sheet), so it needs no overlay padding.
+  if (darkInterface) return 0;
   var pane = document.querySelector('.leaflet-routing-container');
   if (!pane || pane.classList.contains('leaflet-routing-container-hide')) return 0;
   return pane.offsetWidth;
@@ -947,7 +956,7 @@ lrmControl.on('routeselected', function(e) {
 
   var container = document.querySelector('.leaflet-routing-container');
   var paneWidth = 0;
-  if (container && !container.classList.contains('leaflet-routing-container-hide')) {
+  if (!darkInterface && container && !container.classList.contains('leaflet-routing-container-hide')) {
     paneWidth = container.offsetWidth;
   }
 

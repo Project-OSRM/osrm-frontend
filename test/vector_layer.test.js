@@ -39,7 +39,7 @@ test('loads the renderer on selection and removes the raster fallback after the 
   const layer = addVector(loader);
   expect(layer.getLayers()).toHaveLength(1);
   await flush();
-  expect(runtime.createLayer).toHaveBeenCalledWith('/styles/local.json');
+  expect(runtime.createLayer).toHaveBeenCalledWith('/styles/local.json', 'dark');
   expect(layer.getLayers()).toHaveLength(2);
   runtime.events.fire('load');
   expect(layer.getLayers()).toEqual([runtime.renderer]);

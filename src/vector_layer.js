@@ -68,7 +68,7 @@ function createLayer(style, options, runtimeLoader) {
         if (this._generation !== generation || this._map !== map) return;
         var renderer;
         try {
-          renderer = runtime.createLayer(style);
+          renderer = runtime.createLayer(style, this.options.theme || 'dark');
           this.addLayer(renderer);
           renderer.getMaplibreMap().once('load', function() {
             if (this._generation === generation && this.hasLayer(renderer) && this.hasLayer(fallback)) this.removeLayer(fallback);

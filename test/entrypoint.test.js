@@ -251,3 +251,8 @@ test('prefers a configured vector background over the raster fallback by default
   expect(generateConfig(settings).OSRM_DEFAULT_LAYER).toBe('vector');
   expect(generateConfig({ ...settings, OSRM_DEFAULT_LAYER: 'custom' }).OSRM_DEFAULT_LAYER).toBe('custom');
 });
+
+test('configures the dark vector theme by default and permits original provider styling', () => {
+  expect(generateConfig({ OSRM_VECTOR_STYLE: '/style.json' }).OSRM_VECTOR_THEME).toBe('dark');
+  expect(generateConfig({ OSRM_VECTOR_STYLE: '/style.json', OSRM_VECTOR_THEME: 'original' }).OSRM_VECTOR_THEME).toBe('original');
+});

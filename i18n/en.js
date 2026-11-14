@@ -29,5 +29,18 @@ module.exports = {
   'Route options': 'Route options',
   'Exclude road classes': 'Exclude road classes',
   'Road classes depend on the routing backend.': 'Road classes depend on the routing backend.',
-  'Allow U-turns at via points': 'Allow U-turns at via points'
+  'Allow U-turns at via points': 'Allow U-turns at via points',
+  'Directions': 'Directions',
+  'Travel mode': 'Travel mode',
+  'Toggle directions': 'Toggle directions',
+  'Add stop': 'Add stop',
+  'Reverse stops': 'Reverse stops',
+  'Fastest': 'Fastest',
+  'Alternative': 'Alternative',
+  'Turn-by-turn directions': 'Turn-by-turn directions',
+  'Plan your route': 'Plan your route',
+  'Finding route…': 'Finding route…',
+  'Route unavailable': 'Route unavailable',
+  'Try another waypoint or change your route options.': 'Try another waypoint or change your route options.',
+  'Choose a start and destination, or click the map to add stops.': 'Choose a start and destination, or click the map to add stops.'
 };

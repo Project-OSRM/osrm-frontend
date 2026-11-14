@@ -74,6 +74,14 @@ is unavailable. Styles hosted on another origin must allow CORS requests for
 the style and its tile, font and sprite resources. A configured vector background
 is the default unless `OSRM_DEFAULT_LAYER` selects another layer.
 
+Vector maps use a dark slate and teal palette with a matching directions sidebar,
+blue route cards, expandable instructions and selectable duration labels on the map.
+The sidebar stays beside the map on desktop and becomes a bottom sheet on smaller
+screens. The map viewport excludes the panel so fitted routes remain visible.
+Set `OSRM_VECTOR_THEME=original` to keep the provider's original colors and the
+classic interface. The dark theme preserves vector source attribution, fonts,
+labels and road geometry; it removes raster backdrop layers from the vector style.
+
 ### Route options
 
 Open **Route options** below the waypoint inputs to exclude a comma-separated list

@@ -123,6 +123,7 @@ function customVectorLayer() {
     return null;
   }
   return require('./vector_layer').createLayer(style, {
+    theme: config.OSRM_VECTOR_THEME === 'original' ? 'original' : 'dark',
     attribution: typeof config.OSRM_VECTOR_ATTRIBUTION === 'string' ? config.OSRM_VECTOR_ATTRIBUTION : osmAttribution,
     minZoom: 1,
     maxZoom: 22
@@ -616,6 +617,7 @@ function buildServices() {
  * | `OSRM_BACKEND`         | —                                | **Deprecated.** Single backend URL. Use `OSRM_MODES` instead. |
  * | `OSRM_VECTOR_STYLE`    | —                                | MapLibre style JSON URL for an optional vector background. |
  * | `OSRM_VECTOR_NAME`     | `Vector`                         | Name of the vector background in the layer control. |
+ * | `OSRM_VECTOR_THEME`    | `dark`                           | Dark map palette and sidebar; `original` preserves the provider style and classic interface. |
  * | `OSRM_VECTOR_ATTRIBUTION` | OpenStreetMap credit          | Additional attribution for the vector background. |
  * | `OSRM_CENTER`          | `38.8995,-77.0269`               | Comma-separated "lat,lng" for the initial map center. |
  * | `OSRM_ZOOM`            | `13`                             | Initial zoom level (0–18). |
@@ -631,6 +633,7 @@ function buildServices() {
  * @module leaflet_options
  */
 var leafletOptions = {
+  vectorTheme: vector && config.OSRM_VECTOR_THEME !== 'original' ? 'dark' : 'original',
 
   /**
    * Default map state applied at startup. Merged with URL query parameters
