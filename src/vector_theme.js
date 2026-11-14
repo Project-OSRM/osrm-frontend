@@ -6,22 +6,37 @@ var palette = {
   forest: '#28504e',
   park: '#345e52',
   grass: '#3a6155',
-  building: '#3b495d',
-  buildingOutline: '#48576c',
+  residential: '#344355',
+  buildingBase: '#344356',
+  building: '#3e4e62',
+  buildingOutline: '#46586b',
   street: '#5e7088',
   mainRoad: '#8395ad',
+  highway: '#91a4bb',
+  secondaryRoad: '#71859a',
   roadCasing: '#29394b',
   text: '#d5dfe7',
   mutedText: '#a8bacb',
   halo: '#2a3948'
 };
 
-function fillColor(name) {
+function fillColor(name, id) {
+  if (/^landcover(?:_|$)/.test(id) || id === 'landuse') {
+    return ['match', ['coalesce', ['get', 'kind'], ['get', 'class'], ''],
+      ['wood', 'forest'], palette.forest,
+      ['park', 'garden', 'recreation_ground', 'village_green', 'golf_course', 'cemetery', 'stadium'], palette.park,
+      ['grass', 'grassland', 'meadow', 'allotments'], palette.grass,
+      ['scrub', 'heath'], '#33534d',
+      ['industrial', 'commercial'], '#394554',
+      palette.background];
+  }
+  if (/residential/.test(name)) return palette.residential;
+  if (/water_shadow/.test(name)) return '#1e464d';
   if (/water|ocean|lake/.test(name)) return palette.water;
   if (/wood|forest/.test(name)) return palette.forest;
   if (/park|pitch|cemetery|garden/.test(name)) return palette.park;
   if (/grass|wetland|landcover/.test(name)) return palette.grass;
-  if (/building/.test(name)) return palette.building;
+  if (/building/.test(name)) return /(?:top|roof)/.test(name) ? palette.building : palette.buildingBase;
   if (/sand|beach/.test(name)) return '#655f50';
   if (/hospital/.test(name)) return '#444453';
   return palette.background;
@@ -30,8 +45,11 @@ function fillColor(name) {
 function lineColor(name) {
   if (/water|river|stream/.test(name)) return '#2d6970';
   if (/casing|_case(?:_|$)/.test(name)) return palette.roadCasing;
-  if (/motorway|trunk|primary|_(?:mot|pri)(?:_|$)/.test(name)) return palette.mainRoad;
-  if (/boundary/.test(name)) return '#66788a';
+  if (/motorway|_(?:mot)(?:_|$)/.test(name)) return palette.highway;
+  if (/trunk|primary|_(?:pri)(?:_|$)/.test(name)) return palette.mainRoad;
+  if (/secondary|tertiary|_sec(?:_|$)/.test(name)) return palette.secondaryRoad;
+  if (/path|service/.test(name)) return '#526d74';
+  if (/boundary/.test(name)) return '#53667a';
   if (/rail|aeroway/.test(name)) return '#56677b';
   return palette.street;
 }
@@ -48,25 +66,25 @@ function transformStyle(previousStyle, style) {
     if (layer.type === 'background') paint['background-color'] = palette.background;
     if (layer.type === 'fill') {
       delete paint['fill-pattern'];
-      paint['fill-color'] = fillColor(name);
-      if (paint['fill-outline-color']) paint['fill-outline-color'] = /building/.test(name) ? palette.buildingOutline : fillColor(name);
+      paint['fill-color'] = fillColor(name, layer.id.toLowerCase());
+      if (paint['fill-outline-color']) paint['fill-outline-color'] = /building/.test(name) ? palette.buildingOutline : fillColor(name, layer.id.toLowerCase());
     }
     if (layer.type === 'fill-extrusion') paint['fill-extrusion-color'] = palette.building;
     if (layer.type === 'line') paint['line-color'] = lineColor(name);
     // Shields include their own light sprite background. Keep the provider's
     // text contrast and halo instead of applying a dark street-label outline.
     if (layer.type === 'symbol' && layer.layout && layer.layout['text-field'] && !/shield/.test(name)) {
-      paint['text-color'] = /water/.test(name) ? '#86b5c5' : /transportation|highway/.test(name) ? palette.mutedText : palette.text;
+      paint['text-color'] = /water/.test(name) ? '#86b5c5' : /transportation|highway|roadname|street_labels/.test(name) ? palette.mutedText : palette.text;
       if (/poi/.test(name)) {
-        paint['text-color'] = ['match', ['get', 'class'],
+        paint['text-color'] = ['match', ['coalesce', ['get', 'kind'], ['get', 'class'], ''],
           ['park', 'garden', 'playground'], '#a0c59b',
           ['restaurant', 'cafe', 'bar', 'fast_food'], '#d4af8e',
           ['school', 'college', 'university'], '#c0af9b',
           palette.mutedText];
       }
       paint['text-halo-color'] = palette.halo;
-      paint['text-halo-width'] = 1.25;
-      paint['text-halo-blur'] = 0.4;
+      paint['text-halo-width'] = 1;
+      paint['text-halo-blur'] = 0.2;
     }
     if (layer.type === 'hillshade') {
       paint['hillshade-shadow-color'] = '#163c42';

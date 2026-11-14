@@ -68,7 +68,7 @@ test('preserves highway shield contrast without adding the dark label halo', () 
   expect(result.layers.find(layer => layer.id === 'highway-shield-non-us').paint).toEqual({});
   expect(result.layers.find(layer => layer.id === 'road_shield_us').paint).toEqual(original.layers.at(-1).paint);
   expect(result.layers.find(layer => layer.id === 'highway-shield-non-us').layout).toEqual(layout);
-  expect(result.layers.find(layer => layer.id === 'poi').paint['text-halo-width']).toBe(1.25);
+  expect(result.layers.find(layer => layer.id === 'poi').paint['text-halo-width']).toBe(1);
   expect(validateStyleMin(result)).toEqual([]);
 });
 
@@ -79,6 +79,33 @@ test('preserves CARTO road casing and major-road hierarchy in the dark palette',
   });
   const result = theme.transformStyle(null, original);
   expect(result.layers.find(layer => layer.id === 'road_pri_case_noramp').paint['line-color']).toBe(theme.palette.roadCasing);
-  expect(result.layers.find(layer => layer.id === 'road_mot_fill_noramp').paint['line-color']).toBe(theme.palette.mainRoad);
+  expect(result.layers.find(layer => layer.id === 'road_mot_fill_noramp').paint['line-color']).toBe(theme.palette.highway);
   expect(result.layers.find(layer => layer.id === 'road_minor_fill').paint['line-color']).toBe(theme.palette.street);
+});
+
+test('distinguishes land cover, neighborhoods and building roofs while keeping the palette', () => {
+  const original = styleFixture();
+  ['landcover', 'landuse_residential', 'building', 'building-top'].forEach(id => {
+    original.layers.push({ id, type: 'fill', source: 'osm', 'source-layer': 'landuse' });
+  });
+  const result = theme.transformStyle(null, original);
+  const paint = id => result.layers.find(layer => layer.id === id).paint;
+  expect(paint('landcover')['fill-color']).toContain(theme.palette.forest);
+  expect(paint('landcover')['fill-color']).toContain(theme.palette.grass);
+  expect(paint('landcover')['fill-color']).toContain(theme.palette.park);
+  expect(paint('landuse_residential')['fill-color']).toBe(theme.palette.residential);
+  expect(paint('building')['fill-color']).toBe(theme.palette.buildingBase);
+  expect(paint('building-top')['fill-color']).toBe(theme.palette.building);
+  expect(validateStyleMin(result)).toEqual([]);
+});
+
+test('keeps street labels quieter than place labels and preserves their layout', () => {
+  const original = styleFixture();
+  ['roadname_minor', 'place_city'].forEach(id => {
+    original.layers.push({ id, type: 'symbol', source: 'osm', 'source-layer': 'places', layout: { 'text-field': ['get', 'name'] } });
+  });
+  const result = theme.transformStyle(null, original);
+  expect(result.layers.find(layer => layer.id === 'roadname_minor').paint['text-color']).toBe(theme.palette.mutedText);
+  expect(result.layers.find(layer => layer.id === 'place_city').paint['text-color']).toBe(theme.palette.text);
+  expect(result.layers.find(layer => layer.id === 'roadname_minor').layout).toEqual(original.layers.find(layer => layer.id === 'roadname_minor').layout);
 });
