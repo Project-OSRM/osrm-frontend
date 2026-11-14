@@ -161,7 +161,7 @@
 .osrm-theme-dark .leaflet-control-scale { position: fixed; right: 100px; bottom: 18px; margin: 0; transform: none; }
 .osrm-theme-dark .leaflet-control-scale-line { color: #bacfd9; border-color: #bacfd9; background: #172d36a6; text-shadow: none; }
 .osrm-theme-dark .leaflet-osrm-tools-container { padding: 5px 8px; border: 1px solid #3d565e; border-radius: 10px; background: #193036eb; box-shadow: 0 3px 16px #00151c26; }
-.osrm-panel-toolbar { flex: none; margin-top: 12px; padding-top: 10px; border-top: 1px solid #35505766; }
+.osrm-panel-toolbar { flex: none; margin: -8px 0 16px; }
 .osrm-theme-dark .osrm-panel-toolbar .leaflet-osrm-tools-container { position: relative; inset: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; float: none; width: 100%; max-width: none; margin: 0 !important; box-sizing: border-box; box-shadow: none; }
 .osrm-theme-dark .leaflet-osrm-tools-container .osrm-directions-icon { filter: brightness(0) invert(0.9); }
 .osrm-theme-dark .osrm-localization-chooser,

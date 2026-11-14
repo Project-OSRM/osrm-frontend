@@ -50,6 +50,12 @@ function createLayer(style, options, runtimeLoader) {
       L.LayerGroup.prototype.initialize.call(this);
       this.options = Object.assign({}, options);
     },
+    setTheme: function(theme) {
+      this.options.theme = theme;
+      this.eachLayer(function(renderer) {
+        if (renderer.setTheme) renderer.setTheme(theme);
+      });
+    },
     getAttribution: function() {
       return this.options.attribution;
     },

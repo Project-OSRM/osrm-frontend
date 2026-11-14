@@ -91,10 +91,10 @@ test('keeps sharing and collapsing available to the keyboard after moving them i
   expect(panel.classList.contains('leaflet-routing-container-hide')).toBe(true);
 });
 
-test('places the existing toolbar in a footer aligned with the directions panel', () => {
+test('places the existing toolbar directly below the directions heading', () => {
   const footer = panel.querySelector('.osrm-panel-toolbar');
   expect(footer.lastElementChild).toBe(tools.getContainer());
-  expect(panel.lastElementChild).toBe(footer);
+  expect(panel.querySelector('.osrm-panel-header').nextElementSibling).toBe(footer);
   expect(footer.getAttribute('aria-label')).toBe('Map tools');
   expect(footer.querySelector('.leaflet-osrm-tools-share')).toBeNull();
   expect(panel.querySelector('.osrm-panel-header .leaflet-osrm-tools-share')).toBe(tools._shareContainer);

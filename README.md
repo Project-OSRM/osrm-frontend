@@ -68,7 +68,12 @@ docker run -p 9966:9966 \
   ghcr.io/project-osrm/osrm-frontend:latest
 ```
 
-The renderer is loaded only when the vector background is selected. It starts
+When a vector style is configured, Streets and Vector share one renderer and
+tile cache. Streets uses the provider’s original colors; Vector uses the configured
+theme. Switching between them changes paint properties without reloading tiles.
+Without a vector style, Streets keeps its CARTO raster background.
+
+The renderer is loaded only when Streets or Vector is selected. It starts
 directly on a plain background without loading raster tiles underneath. If the
 renderer or style cannot load, a retry control appears; another background can
 also be selected from the layer control. Styles hosted on another origin must allow CORS requests for

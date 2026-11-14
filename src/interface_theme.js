@@ -61,8 +61,9 @@ function attach(options) {
   var toolbar = tools.getContainer && tools.getContainer();
   var toolbarFooter;
   if (toolbar) {
-    toolbarFooter = L.DomUtil.create('footer', 'osrm-panel-toolbar', panel);
+    toolbarFooter = L.DomUtil.create('nav', 'osrm-panel-toolbar');
     toolbarFooter.appendChild(toolbar);
+    panel.insertBefore(toolbarFooter, header.nextSibling);
   }
   var status = 'Plan your route';
 

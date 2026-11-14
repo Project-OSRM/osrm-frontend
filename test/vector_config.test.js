@@ -3,7 +3,7 @@ jest.mock('leaflet', () => ({
   tileLayer: (url, options) => ({ url, options }),
   latLng: (lat, lng) => ({ lat, lng })
 }));
-jest.mock('../src/vector_layer', () => ({ createLayer: (style, options) => ({ style, options }) }));
+jest.mock('../src/vector_backgrounds', () => ({ createBackgrounds: (style, options) => ({ vector: { style, options }, streets: { style, options: Object.assign({}, options, { theme: 'original' }) } }) }));
 
 function load(config) {
   jest.resetModules();
@@ -39,4 +39,11 @@ test('enables the dark vector theme by default and preserves an original-style o
   const original = load({ OSRM_VECTOR_STYLE: '/style.json', OSRM_VECTOR_THEME: 'original' });
   expect(original.vectorTheme).toBe('original');
   expect(original.layer[0].Vector.options.theme).toBe('original');
+});
+
+test('Streets uses the configured vector source with the original palette', () => {
+  const options = load({ OSRM_VECTOR_STYLE: '/style.json', OSRM_DEFAULT_LAYER: 'streets' });
+  expect(options.layer[0].Streets.style).toBe(options.layer[0].Vector.style);
+  expect(options.defaultState.layer).toBe(options.layer[0].Streets);
+  expect(options.layer[0].Streets.options.theme).toBe('original');
 });

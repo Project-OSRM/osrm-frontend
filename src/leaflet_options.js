@@ -122,7 +122,7 @@ function customVectorLayer() {
     console.warn('Ignoring OSRM_VECTOR_STYLE: expected an http(s) or root-relative style URL.');
     return null;
   }
-  return require('./vector_layer').createLayer(style, {
+  return require('./vector_backgrounds').createBackgrounds(style, {
     theme: config.OSRM_VECTOR_THEME === 'original' ? 'original' : 'dark',
     language: getLanguage(),
     attribution: typeof config.OSRM_VECTOR_ATTRIBUTION === 'string' ? config.OSRM_VECTOR_ATTRIBUTION : osmAttribution,
@@ -131,7 +131,9 @@ function customVectorLayer() {
   });
 }
 
-var vector = customVectorLayer();
+var vectorBackgrounds = customVectorLayer();
+var vector = vectorBackgrounds && vectorBackgrounds.vector;
+if (vectorBackgrounds) streets = vectorBackgrounds.streets;
 var vectorName = (typeof config.OSRM_VECTOR_NAME === 'string' && config.OSRM_VECTOR_NAME.trim()) || 'Vector';
 
 /**
@@ -684,7 +686,7 @@ var leafletOptions = {
    * Leaflet format for the first argument to `L.control.layers()`.
    *
    * **Default base layers:**
-   * - **Streets** — CartoDB Voyager (raster tiles, max zoom 19)
+   * - **Streets** — original vector palette when configured; otherwise CARTO raster tiles
    * - **Outdoors** — OpenTopoMap (max zoom 17)
    * - **Satellite** — ESRI World Imagery (max zoom 19)
    * - **openstreetmap.org** — Standard OSM tile layer
