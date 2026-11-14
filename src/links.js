@@ -27,15 +27,15 @@ function _parseCoord(coordStr) {
   return L.latLng(lat, lon);
 }
 
-function _parseInteger(intStr) {
-  var integer = parseInt(intStr, 10);
-  if (isNaN(integer)) {
+function _parseZoom(value) {
+  var zoom = parseFloat(value);
+  if (!isFinite(zoom)) {
     throw {
-      name: 'InvalidInt',
-      message: "\"" + intStr + "\" is not a valid integer."
+      name: 'InvalidZoom',
+      message: "\"" + value + "\" is not a valid zoom."
     };
   }
-  return integer;
+  return zoom;
 }
 
 function _formatLayer(layer) {
@@ -58,7 +58,7 @@ function formatLink(options) {
     });
   }
   return qs.stringify({
-    z: options.zoom,
+    z: typeof options.zoom === 'number' ? Math.round(options.zoom * 1000) / 1000 : options.zoom,
     center: options.center ? _formatCoord(options.center) : undefined,
     loc: locs,
     hl: options.language,
@@ -79,7 +79,7 @@ function parseLink(link) {
     options = {},
     k;
   try {
-    if (q.z !== undefined && q.z !== null) parsedValues.zoom = _parseInteger(q.z);
+    if (q.z !== undefined && q.z !== null) parsedValues.zoom = _parseZoom(q.z);
     parsedValues.center = q.center && _parseCoord(q.center);
     if (q.loc) {
       if (q.loc.constructor === Array) {

@@ -45,6 +45,7 @@ var localization = require('./localization');
 var initialLayers = require('./initial_layers');
 var layerUtils = require('./layer_utils');
 var routeZoom = require('./route_zoom');
+var smoothWheelZoom = require('./smooth_wheel_zoom');
 var resolveInitialAlternative = require('./route_alternative');
 var waypointMarker = require('./waypoint_marker');
 var waypointReorder = require('./waypoint_reorder');
@@ -181,6 +182,7 @@ var map = L.map('map', {
   layers: layers,
   maxZoom: 18
 }).setView(mergedOptions.center, mergedOptions.zoom);
+smoothWheelZoom.enable(map);
 
 // Pass basemap layers
 mapLayer = mapLayer.reduce(function(title, layer) {
