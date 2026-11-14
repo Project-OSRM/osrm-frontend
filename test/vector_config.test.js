@@ -1,4 +1,6 @@
 'use strict';
+
+jest.mock('../src/vector_layer', () => ({ createLayer: (style, options) => ({ _url: style, style, options, _options: options }) }));
 jest.mock('leaflet', () => ({
   tileLayer: (url, options) => ({ url, options }),
   latLng: (lat, lng) => ({ lat, lng })
@@ -22,7 +24,7 @@ test('adds a named vector base layer and makes it the default', () => {
 test('preserves explicit raster defaults and all built-in background choices', () => {
   const options = load({ OSRM_VECTOR_STYLE: 'https://tiles.example/style.json', OSRM_DEFAULT_LAYER: 'osm' });
   expect(options.layer[0].Standard).toBeDefined();
-  expect(options.defaultState.layer).toBe(options.layer[0]['openstreetmap.org']);
+  expect(options.defaultState.layer).toBe(options.layer[0]['OpenStreetMap']);
 });
 
 test('does not offer an unconfigured or invalid vector style', () => {
@@ -41,15 +43,15 @@ test('enables the dark vector theme by default and preserves an original-style o
   expect(original.layer[0].Standard.options.theme).toBe('original');
 });
 
-test('Streets uses the configured vector source with the original palette', () => {
-  const options = load({ OSRM_VECTOR_STYLE: '/style.json', OSRM_DEFAULT_LAYER: 'streets' });
-  expect(options.layer[0].Streets.style).toBe(options.layer[0].Standard.style);
-  expect(options.defaultState.layer).toBe(options.layer[0].Streets);
-  expect(options.layer[0].Streets.options.theme).toBe('original');
-});
-
 test('accepts standard as the default layer key', () => {
   const options = load({ OSRM_VECTOR_STYLE: '/style.json', OSRM_DEFAULT_LAYER: 'standard' });
   expect(options.defaultState.layer).toBe(options.layer[0].Standard);
   expect(options.layer[0].Vector).toBeUndefined();
+});
+
+test('orders backgrounds with Standard first and uses official OSM vector tiles', () => {
+  const options = load({ OSRM_VECTOR_STYLE: '/style.json' });
+  expect(Object.keys(options.layer[0])).toEqual(['Standard', 'OpenStreetMap', 'osm.de', 'Satellite', 'Outdoors']);
+  expect(options.layer[0]['OpenStreetMap'].style).toBe('https://vector.openstreetmap.org/styles/shortbread/colorful.json');
+  expect(options.layer[0]['OpenStreetMap'].options.theme).toBe('original');
 });

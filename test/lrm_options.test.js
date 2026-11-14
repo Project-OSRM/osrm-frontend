@@ -1,5 +1,7 @@
 'use strict';
 
+jest.mock('../src/vector_layer', () => ({ createLayer: (style, options) => ({ _url: style, style, options, _options: options }) }));
+
 /**
  * The connector Leaflet Routing Machine draws between a waypoint and the point
  * the route actually reaches — the walk across a forecourt, or from a pin

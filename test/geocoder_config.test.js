@@ -1,5 +1,7 @@
 'use strict';
 
+jest.mock('../src/vector_layer', () => ({ createLayer: (style, options) => ({ _url: style, style, options, _options: options }) }));
+
 jest.mock('leaflet', () => {
   const latLng = (lat, lng) => ({
     lat: lat,

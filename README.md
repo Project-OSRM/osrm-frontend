@@ -56,7 +56,7 @@ docker run -p 9966:9966 \
 ### Vector backgrounds
 
 The static demo uses CARTO Voyager vector tiles: Standard applies the dark
-palette, and Streets retains Voyager's original colors. Docker deployments can
+palette. OpenStreetMap uses OSM's official Shortbread vector style. Docker deployments can
 configure their own source using `OSRM_VECTOR_STYLE`.
 
 Set `OSRM_VECTOR_STYLE` to an HTTP(S) or root-relative MapLibre style JSON URL.
@@ -72,12 +72,11 @@ docker run -p 9966:9966 \
   ghcr.io/project-osrm/osrm-frontend:latest
 ```
 
-When a vector style is configured, Streets and Standard share one renderer and
-tile cache. Streets uses the provider’s original colors; Standard uses the configured
-theme. Switching between them changes paint properties without reloading tiles.
-Without a vector style, Streets keeps its CARTO raster background.
+Standard uses the configured vector style with the selected theme. OpenStreetMap
+uses its own vector source. The layer menu lists Standard, OpenStreetMap, osm.de,
+Satellite and Outdoors, in that order (Standard appears when configured).
 
-The renderer is loaded only when Streets or Vector is selected. It starts
+The renderer is loaded only when a vector background is selected. It starts
 directly on a plain background without loading raster tiles underneath. If the
 renderer or style cannot load, a retry control appears; another background can
 also be selected from the layer control. Styles hosted on another origin must allow CORS requests for
@@ -238,14 +237,14 @@ shown as radio buttons in the map's layer control (bottom-left corner).
 
 | Label | Source | Max zoom |
 |-------|--------|----------|
-| Streets | [CartoDB Voyager](https://carto.com/) | 19 |
+| Standard | [CARTO Voyager vector](https://carto.com/basemaps/) with dark palette (static demo) | 22 |
 | Outdoors | [OpenTopoMap](https://opentopomap.org/) | 17 |
 | Satellite | [ESRI World Imagery](https://www.esri.com/) | 19 |
-| openstreetmap.org | [OSM](https://openstreetmap.org/) | 19 |
-| openstreetmap.de | [OSM.de](https://openstreetmap.de/) | 19 |
+| OpenStreetMap | [OSM Shortbread vector](https://vector.openstreetmap.org/styles/shortbread/) | 22 |
+| osm.de | [OSM.de](https://openstreetmap.de/) | 19 |
 
 **Changing the default layer for Docker deployments:**
-Set `OSRM_DEFAULT_LAYER` to one of: `streets`, `outdoors`, `satellite`, `osm`, `osm_de`.
+Set `OSRM_DEFAULT_LAYER` to one of: `standard`, `outdoors`, `satellite`, `osm`, `osm_de`. The legacy `streets` key selects Standard when configured, otherwise OpenStreetMap.
 ```bash
 docker run -p 9966:9966 -e OSRM_DEFAULT_LAYER=satellite ghcr.io/project-osrm/osrm-frontend:latest
 ```
@@ -283,7 +282,7 @@ var myTiles = L.tileLayer('https://example.com/tiles/{z}/{x}/{y}.png', {
 // In the leafletOptions object:
 layer: [{
     'My Custom Map': myTiles,
-    'Streets': streets,
+    'OpenStreetMap': osm,
     'Outdoors': outdoors,
     // ... other layers
 }]

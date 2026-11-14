@@ -6,24 +6,6 @@ var L = require('leaflet');
 // In Node/test environments, window won't exist, so use empty config
 var config = (typeof window !== 'undefined' ? window.osrmConfig : null) || {};
 
-/**
- * The CARTO Voyager raster tile URL, keyed when a key is configured.
- *
- * Unkeyed tiles still render, but CARTO stamps them with an "API KEY REQUIRED"
- * watermark, so a deployment without a key of its own is degraded rather than
- * broken. The key is necessarily public — it travels in every tile request the
- * browser makes — so it is deployment configuration rather than a secret, and
- * lives with the rest of it in `window.osrmConfig`.
- *
- * @returns {string} a Leaflet tile URL template
- */
-function cartoVoyagerUrl() {
-  var base = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-  var key = config.OSRM_CARTO_KEY;
-  if (typeof key !== 'string' || !key.trim()) return base;
-  return base + '?key=' + encodeURIComponent(key.trim());
-}
-
 // The label the coordinates-only geocoder carries. Named here because both the
 // parser and the deployment's own OSRM_GEOCODERS entries can produce it.
 var COORDINATES_ONLY_NAME = 'Coordinates only';
@@ -33,16 +15,10 @@ var COORDINATES_ONLY_NAME = 'Coordinates only';
 var nominatimPath = 'https://nominatim.openstreetmap.org/';
 
 var osmAttribution = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  cartoAttribution = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attribution">CARTO</a>',
   esriAttribution = 'Tiles © <a href="https://www.esri.com/">Esri</a> — Source: Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community',
   waymarkedtrailsAttribution = '© <a href="https://waymarkedtrails.org/">Sarah Hoffmann</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)';
 
-var streets = L.tileLayer(cartoVoyagerUrl(), {
-    attribution: cartoAttribution,
-    subdomains: 'abcd',
-    maxZoom: 19
-  }),
-  outdoors = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+var outdoors = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
     attribution: osmAttribution + ', <a href="https://opentopomap.org/">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
     maxZoom: 17
   }),
@@ -50,8 +26,12 @@ var streets = L.tileLayer(cartoVoyagerUrl(), {
     attribution: esriAttribution,
     maxZoom: 19
   }),
-  osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: osmAttribution
+  osm = require('./vector_layer').createLayer('https://vector.openstreetmap.org/styles/shortbread/colorful.json', {
+    theme: 'original',
+    language: getLanguage(),
+    attribution: osmAttribution,
+    minZoom: 1,
+    maxZoom: 22
   }),
   osm_de = L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
     attribution: osmAttribution
@@ -133,7 +113,6 @@ function customVectorLayer() {
 
 var vectorBackgrounds = customVectorLayer();
 var vector = vectorBackgrounds && vectorBackgrounds.vector;
-if (vectorBackgrounds) streets = vectorBackgrounds.streets;
 var vectorName = (typeof config.OSRM_VECTOR_NAME === 'string' && config.OSRM_VECTOR_NAME.trim()) || 'Standard';
 
 /**
@@ -466,14 +445,14 @@ function getLanguage() {
  * Returns the configured value; when unset it falls back to `'vector'` if
  * `OSRM_VECTOR_STYLE` supplied a vector background, otherwise `'custom'` if
  * `OSRM_TILE_URL` supplied one — a deployment that names its own tile server
- * usually cannot reach the public providers either — and to `'streets'`
- * (CartoDB Voyager) otherwise. Key validation (and fallback for unrecognized
- * values) happens at the call site via `layerMap[getDefaultLayer()] || streets`.
+ * usually cannot reach the public providers either — and to `'osm'`
+ * (OpenStreetMap vector) otherwise. Key validation (and fallback for unrecognized
+ * values) happens at the call site via `layerMap[getDefaultLayer()] || vector || osm`.
  *
- * @returns {string} The default layer key (default `'streets'`).
+ * @returns {string} The default layer key (default `'osm'`).
  */
 function getDefaultLayer() {
-  return config.OSRM_DEFAULT_LAYER || (vector ? 'vector' : (custom ? 'custom' : 'streets'));
+  return config.OSRM_DEFAULT_LAYER || (vector ? 'vector' : (custom ? 'custom' : 'osm'));
 }
 
 /**
@@ -484,7 +463,7 @@ function getDefaultLayer() {
  * @type {Object<string, L.TileLayer>}
  */
 var layerMap = {
-  streets: streets,
+  streets: vector || osm,
   outdoors: outdoors,
   satellite: satellite,
   osm: osm,
@@ -504,17 +483,15 @@ if (vector) {
  *
  * @type {Object<string, L.TileLayer>}
  */
-var baseLayers = {
-  'Streets': streets,
-  'Outdoors': outdoors,
-  'Satellite': satellite,
-  'openstreetmap.org': osm,
-  'openstreetmap.de': osm_de
-};
-if (custom) baseLayers[customName] = custom;
+var baseLayers = {};
 if (vector) baseLayers[vectorName] = vector;
+baseLayers.OpenStreetMap = osm;
+baseLayers['osm.de'] = osm_de;
+baseLayers.Satellite = satellite;
+baseLayers.Outdoors = outdoors;
+if (custom) baseLayers[customName] = custom;
 
-var defaultLayer = layerMap[getDefaultLayer()] || streets;
+var defaultLayer = layerMap[getDefaultLayer()] || vector || osm;
 
 /**
  * The geocoding endpoints the deployment offers, from `OSRM_GEOCODERS`.
@@ -628,13 +605,12 @@ function buildServices() {
  * | `OSRM_CENTER`          | `38.8995,-77.0269`               | Comma-separated "lat,lng" for the initial map center. |
  * | `OSRM_ZOOM`            | `13`                             | Initial zoom level (0–18). |
  * | `OSRM_LANGUAGE`        | (browser language → `'en'`)      | UI language override. |
- * | `OSRM_DEFAULT_LAYER`   | `'streets'`                      | Default base layer key: `streets`, `outdoors`, `satellite`, `osm`, `osm_de`, or `custom` when `OSRM_TILE_URL` is set. |
+ * | `OSRM_DEFAULT_LAYER`   | `'osm'`                      | Default base layer key: `streets`, `outdoors`, `satellite`, `osm`, `osm_de`, or `custom` when `OSRM_TILE_URL` is set. |
  * | `OSRM_TILE_URL`        | —                                | Tile URL template (with `{z}`, `{x}`, `{y}`) for a self-hosted or offline tile server. Adds a `custom` base layer and, unless `OSRM_DEFAULT_LAYER` says otherwise, selects it. |
  * | `OSRM_TILE_NAME`       | `'Custom'`                       | Label for the `OSRM_TILE_URL` layer in the layer control. |
  * | `OSRM_TILE_ATTRIBUTION`| (OpenStreetMap credit)           | Attribution text for the `OSRM_TILE_URL` layer. |
  * | `OSRM_LABEL`           | `'Car (fastest)'`                | Label for the default routing service. |
  * | `OSRM_ENVIRONMENT`     | —                                | Set to `'docker'` to use Docker-mode backend defaults. |
- * | `OSRM_CARTO_KEY`       | — (bundled key on project-osrm.org) | CARTO Basemaps key for the Streets layer. Without one CARTO watermarks the tiles; they still render. |
  *
  * @module leaflet_options
  */
@@ -689,11 +665,10 @@ var leafletOptions = {
    * Leaflet format for the first argument to `L.control.layers()`.
    *
    * **Default base layers:**
-   * - **Streets** — original vector palette when configured; otherwise CARTO raster tiles
    * - **Outdoors** — OpenTopoMap (max zoom 17)
    * - **Satellite** — ESRI World Imagery (max zoom 19)
-   * - **openstreetmap.org** — Standard OSM tile layer
-   * - **openstreetmap.de** — German OSM tile layer
+   * - **OpenStreetMap** — OpenStreetMap Shortbread vector layer
+   * - **osm.de** — German OSM tile layer
    * - **Custom** — only present when `OSRM_TILE_URL` names a tile server
    *   (labelled by `OSRM_TILE_NAME`)
    * - **Standard** — only present when `OSRM_VECTOR_STYLE` names a style JSON

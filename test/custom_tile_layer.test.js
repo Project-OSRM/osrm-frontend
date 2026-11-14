@@ -1,5 +1,7 @@
 'use strict';
 
+jest.mock('../src/vector_layer', () => ({ createLayer: (style, options) => ({ _url: style, style, options, _options: options }) }));
+
 // Mock leaflet so this test runs in the node environment without a DOM
 jest.mock('leaflet', () => ({
   tileLayer: (url, options) => ({ _url: url, _options: options }),
@@ -32,7 +34,7 @@ describe('OSRM_TILE_URL custom base layer', () => {
   test('leaves the layer control untouched when unconfigured', () => {
     const opts = loadWithConfig({});
     expect(Object.keys(opts.layer[0])).toEqual([
-      'Streets', 'Outdoors', 'Satellite', 'openstreetmap.org', 'openstreetmap.de'
+      'OpenStreetMap', 'osm.de', 'Satellite', 'Outdoors'
     ]);
   });
 
@@ -143,13 +145,13 @@ describe('OSRM_TILE_URL and the default layer', () => {
 
   test('OSRM_DEFAULT_LAYER=custom without a tile URL falls back to streets', () => {
     const opts = loadWithConfig({ OSRM_DEFAULT_LAYER: 'custom' });
-    expect(opts.defaultState.layer._url).toContain('cartocdn.com');
+    expect(opts.defaultState.layer._url).toContain('vector.openstreetmap.org');
   });
 
   test('a rejected tile URL leaves streets as the default', () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
     const opts = loadWithConfig({ OSRM_TILE_URL: 'ftp://tiles.example.com/{z}/{x}/{y}.png' });
-    expect(opts.defaultState.layer._url).toContain('cartocdn.com');
+    expect(opts.defaultState.layer._url).toContain('vector.openstreetmap.org');
     warnSpy.mockRestore();
   });
 });
@@ -208,7 +210,7 @@ describe('OSRM_TILE_URL layer selection via URL and stored preference', () => {
     const opts = loadWithCustomLayer();
     expect(resolveLayerByName(opts.layer[0], 'Satellite')._url).toContain('arcgisonline.com');
     expect(Object.keys(opts.layer[0])).toEqual([
-      'Streets', 'Outdoors', 'Satellite', 'openstreetmap.org', 'openstreetmap.de', 'Local tiles'
+      'OpenStreetMap', 'osm.de', 'Satellite', 'Outdoors', 'Local tiles'
     ]);
   });
 

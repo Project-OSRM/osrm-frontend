@@ -91,6 +91,9 @@ function resolveLayerByName(name) {
   }
   // Keep links to the previous default vector label working.
   if (lower === 'vector' && map.Standard) return map.Standard;
+  if (lower === 'openstreetmap.org' || lower === 'osm.org') return map.OpenStreetMap;
+  if (lower === 'streets') return map.Standard || map.OpenStreetMap;
+  if (lower === 'openstreetmap.de') return map['osm.de'];
   // fallback: check id in options if available
   for (var j = 0; j < keys.length; j++) {
     var val = map[keys[j]];
@@ -182,6 +185,7 @@ var _initResult = initialLayers.determineInitialLayers(baselayer, overlay, servi
 var layers = _initResult.layers;
 var bikeOverlayAutoActivated = _initResult.bikeOverlayAutoActivated;
 var map = L.map('map', {
+  renderer: require('./fixed_width_renderer')(),
   zoomControl: true,
   dragging: true,
   layers: layers,

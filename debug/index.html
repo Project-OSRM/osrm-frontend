@@ -56,9 +56,8 @@ var simple = {
     "glyphs": "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
     "sources": {
         "osm": {
-            "type": "raster",
-            "tiles": ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-            "tileSize": 256,
+            "type": "vector",
+            "url": "https://vector.openstreetmap.org/shortbread_v1/tilejson.json",
             "attribution": "\u00a9 <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors"
         },
         "osrm": {
@@ -77,11 +76,21 @@ var simple = {
             }
         },
         {
-            "id": "osm-tiles",
-            "type": "raster",
+            "id": "osm-water",
+            "type": "fill",
             "source": "osm",
+            "source-layer": "water_polygons",
+            "paint": { "fill-color": "#24575d", "fill-opacity": 0.4 }
+        },
+        {
+            "id": "osm-streets",
+            "type": "line",
+            "source": "osm",
+            "source-layer": "streets",
             "paint": {
-                "raster-opacity": 0.4
+                "line-color": "#8395ad",
+                "line-opacity": 0.4,
+                "line-width": ["interpolate", ["linear"], ["zoom"], 10, 0.5, 18, 3]
             }
         },
         {

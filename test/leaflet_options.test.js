@@ -1,5 +1,7 @@
 'use strict';
 
+jest.mock('../src/vector_layer', () => ({ createLayer: (style, options) => ({ _url: style, style, options, _options: options }) }));
+
 // Mock leaflet so this test runs in the node environment without a DOM
 jest.mock('leaflet', () => ({
   tileLayer: (url, options) => ({ _url: url, _options: options }),
@@ -10,44 +12,6 @@ const leafletOptions = require('../src/leaflet_options');
 
 describe('leaflet_options — tileset migration', () => {
   describe('base layer URLs', () => {
-    test('the streets layer carries the configured CARTO key', () => {
-      // Unkeyed tiles render but CARTO watermarks them, so the key is what
-      // makes the default basemap presentable.
-      jest.resetModules();
-      global.window = { osrmConfig: { OSRM_CARTO_KEY: 'test_key_123' } };
-      const keyed = require('../src/leaflet_options');
-      expect(keyed.layer[0]['Streets']._url).toContain('?key=test_key_123');
-      delete global.window;
-      jest.resetModules();
-    });
-
-    test('an absent, blank or non-string key leaves the URL unkeyed', () => {
-      // A fork with no key of its own gets watermarked tiles rather than a
-      // broken URL with an empty key parameter in it.
-      [undefined, '', '   ', 42].forEach((value) => {
-        jest.resetModules();
-        global.window = { osrmConfig: { OSRM_CARTO_KEY: value } };
-        const opts = require('../src/leaflet_options');
-        expect(opts.layer[0]['Streets']._url).not.toContain('key=');
-        delete global.window;
-      });
-      jest.resetModules();
-    });
-
-    test('a key with URL-significant characters is escaped', () => {
-      jest.resetModules();
-      global.window = { osrmConfig: { OSRM_CARTO_KEY: 'a b&c' } };
-      const opts = require('../src/leaflet_options');
-      expect(opts.layer[0]['Streets']._url).toContain('?key=a%20b%26c');
-      delete global.window;
-      jest.resetModules();
-    });
-
-    test('streets layer uses CartoDB Voyager (not Mapbox)', () => {
-      expect(leafletOptions.layer[0]['Streets']._url).toContain('cartocdn.com');
-      expect(leafletOptions.layer[0]['Streets']._url).toContain('voyager');
-    });
-
     test('outdoors layer uses OpenTopoMap (not Mapbox)', () => {
       expect(leafletOptions.layer[0]['Outdoors']._url).toContain('opentopomap.org');
     });
@@ -58,11 +22,11 @@ describe('leaflet_options — tileset migration', () => {
     });
 
     test('OSM layer uses openstreetmap.org', () => {
-      expect(leafletOptions.layer[0]['openstreetmap.org']._url).toContain('tile.openstreetmap.org');
+      expect(leafletOptions.layer[0]['OpenStreetMap']._url).toContain('vector.openstreetmap.org/styles/shortbread/colorful.json');
     });
 
     test('OSM.de layer uses openstreetmap.de', () => {
-      expect(leafletOptions.layer[0]['openstreetmap.de']._url).toContain('tile.openstreetmap.de');
+      expect(leafletOptions.layer[0]['osm.de']._url).toContain('tile.openstreetmap.de');
     });
   });
 
@@ -100,8 +64,9 @@ describe('leaflet_options — tileset migration', () => {
       });
     });
 
-    test('streets layer is named Streets', () => {
-      expect(layerNames()).toContain('Streets');
+    test('OpenStreetMap replaces Streets', () => {
+      expect(layerNames()).toContain('OpenStreetMap');
+      expect(layerNames()).not.toContain('Streets');
     });
 
     test('outdoors layer is named Outdoors', () => {
@@ -115,7 +80,7 @@ describe('leaflet_options — tileset migration', () => {
 
   describe('default state', () => {
     test('default layer is the streets (CartoDB) tile layer', () => {
-      expect(leafletOptions.defaultState.layer._url).toContain('cartocdn.com');
+      expect(leafletOptions.defaultState.layer._url).toContain('vector.openstreetmap.org');
     });
 
     test('default zoom is 13', () => {
@@ -311,7 +276,7 @@ describe('leaflet_options — runtime configuration overrides', () => {
     test('falls back to streets layer for unknown layer name', () => {
       global.window = { osrmConfig: { OSRM_DEFAULT_LAYER: 'unknown' } };
       const leafletOptions = require('../src/leaflet_options');
-      expect(leafletOptions.defaultState.layer._url).toContain('cartocdn.com');
+      expect(leafletOptions.defaultState.layer._url).toContain('vector.openstreetmap.org');
       delete global.window;
     });
   });
