@@ -81,8 +81,8 @@ test('creates a directions header while retaining the original native mode selec
   expect(panel.querySelector('.osrm-route-empty h2').textContent).toBe('Plan your route');
 });
 
-test('keeps sharing and collapsing available to the keyboard after moving them into the header', () => {
-  expect(panel.querySelector('.osrm-panel-actions .leaflet-osrm-tools-share')).toBe(tools._shareContainer);
+test('keeps toolbar sharing and header collapsing available to the keyboard', () => {
+  expect(panel.querySelector('.osrm-panel-toolbar .leaflet-osrm-tools-share')).toBe(tools._shareContainer);
   tools._shareButton.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
   expect(tools._toggleSharePopup).toHaveBeenCalledTimes(1);
   const collapse = panel.querySelector('.leaflet-routing-collapse-btn');
@@ -96,8 +96,8 @@ test('places the existing toolbar directly below the directions heading', () => 
   expect(footer.lastElementChild).toBe(tools.getContainer());
   expect(panel.querySelector('.osrm-panel-header').nextElementSibling).toBe(footer);
   expect(footer.getAttribute('aria-label')).toBe('Map tools');
-  expect(footer.querySelector('.leaflet-osrm-tools-share')).toBeNull();
-  expect(panel.querySelector('.osrm-panel-header .leaflet-osrm-tools-share')).toBe(tools._shareContainer);
+  expect(footer.querySelector('.leaflet-osrm-tools-share')).toBe(tools._shareContainer);
+  expect(panel.querySelector('.osrm-panel-header .leaflet-osrm-tools-share')).toBeNull();
 });
 
 test('shows all route cards, identifies the fastest, and makes detailed directions expandable', () => {

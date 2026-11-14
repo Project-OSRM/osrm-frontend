@@ -29,9 +29,7 @@ function attach(options) {
   var actions = L.DomUtil.create('div', 'osrm-panel-actions', header);
   var collapse = panel.querySelector('.leaflet-routing-collapse-btn');
   panel.insertBefore(header, panel.firstChild);
-  if (tools._shareContainer) actions.appendChild(tools._shareContainer);
   if (tools._shareButton) {
-    tools._shareButton.classList.add('osrm-header-share-icon');
     tools._shareButton.setAttribute('role', 'button');
     tools._shareButton.tabIndex = 0;
     L.DomEvent.on(tools._shareButton, 'keydown', function(event) {

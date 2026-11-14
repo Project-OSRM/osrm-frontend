@@ -42,8 +42,7 @@
 .osrm-panel-header { display: flex; align-items: center; justify-content: space-between; flex: none; gap: 12px; margin-bottom: 22px; }
 .osrm-panel-header h1 { margin: 0; color: var(--osrm-text); font-size: 26px; line-height: 36px; font-weight: 650; letter-spacing: -0.6px; }
 .osrm-panel-actions { display: flex; align-items: center; gap: 8px; }
-.osrm-theme-dark .osrm-panel-header .leaflet-routing-collapse-btn,
-.osrm-panel-header .leaflet-osrm-tools-share {
+.osrm-theme-dark .osrm-panel-header .leaflet-routing-collapse-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -58,13 +57,6 @@
 }
 .osrm-theme-dark .leaflet-routing-collapse-btn:after { content: '\00d7'; font: 28px/1 sans-serif; font-weight: 300; }
 .osrm-theme-dark .leaflet-routing-container-hide .leaflet-routing-collapse-btn:after { content: '\2630'; font-size: 18px; }
-.osrm-panel-header .osrm-header-share-icon {
-  display: block;
-  width: 36px;
-  height: 36px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f6' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 15V3m-4 4 4-4 4 4M8 10H5v11h14V10h-3'/%3E%3C/svg%3E") center / 21px 21px no-repeat;
-}
-.osrm-panel-header .share-popup { top: 44px; right: 0; left: auto; width: min(304px, calc(100vw - 40px)); border: 1px solid var(--osrm-border); border-radius: 14px; padding: 12px; box-shadow: 0 12px 30px #0005; background: #193136; }
 .osrm-mode-section { flex: none; margin-bottom: 16px; }
 .osrm-mode-caption { display: block; margin-bottom: 7px; color: var(--osrm-muted); font-size: 10px; font-weight: 650; letter-spacing: 1.1px; text-transform: uppercase; }
 .osrm-theme-dark .leaflet-osrm-mode-selector { display: block; float: none; width: 100%; margin: 0; border: 1px solid #355057; border-radius: 12px; background: var(--osrm-surface); }
@@ -163,11 +155,15 @@
 .osrm-theme-dark .leaflet-osrm-tools-container { padding: 5px 8px; border: 1px solid #3d565e; border-radius: 10px; background: #193036eb; box-shadow: 0 3px 16px #00151c26; }
 .osrm-panel-toolbar { flex: none; margin: -8px 0 16px; }
 .osrm-theme-dark .osrm-panel-toolbar .leaflet-osrm-tools-container { position: relative; inset: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; float: none; width: 100%; height: auto; min-height: 38px; max-width: none; margin: 0 !important; box-sizing: border-box; box-shadow: none; }
-/* Let wrapped controls contribute to the toolbar's height instead of inheriting
-   the classic toolbar's fixed 26px height. */
-.osrm-theme-dark .osrm-panel-toolbar .leaflet-osrm-tools-localization { display: flex; flex: 1 1 180px; flex-wrap: wrap; gap: 4px; min-width: 0; }
-.osrm-theme-dark .osrm-panel-toolbar select { flex: 1 1 auto; min-width: 0; max-width: 100%; box-sizing: border-box; }
-.osrm-theme-dark .osrm-panel-toolbar .leaflet-osrm-tools-version { flex: none; }
+/* Keep actions together and give language and units a dedicated second row. */
+.osrm-theme-dark .osrm-panel-toolbar .leaflet-osrm-tools-container > div { display: flex; align-items: center; justify-content: center; flex: 0 0 28px; height: 32px; padding: 0; box-sizing: border-box; }
+.osrm-theme-dark .osrm-panel-toolbar .leaflet-osrm-tools-container > .leaflet-osrm-tools-localization { order: 1; flex: 0 0 100%; gap: 8px; height: auto; min-width: 0; padding-top: 6px; border-top: 1px solid var(--osrm-border); }
+.osrm-theme-dark .osrm-panel-toolbar select { flex: 1 1 0; width: 0; min-width: 0; max-width: 100%; height: 32px; padding: 0 8px; border: 1px solid var(--osrm-border); border-radius: 6px; box-sizing: border-box; }
+.osrm-theme-dark .osrm-panel-toolbar .osrm-localization-chooser { flex-grow: 2; }
+.osrm-theme-dark .osrm-panel-toolbar .leaflet-osrm-tools-container > .leaflet-osrm-tools-version { margin-left: auto; border: 0; }
+.osrm-theme-dark .osrm-panel-toolbar .leaflet-osrm-tools-share { position: static; }
+.osrm-theme-dark .osrm-panel-toolbar .share-popup { top: calc(100% + 8px); bottom: auto; left: 0; right: auto; width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid var(--osrm-border); border-radius: 14px; padding: 12px; box-shadow: 0 12px 30px #0005; background: #193136; }
+
 .osrm-theme-dark .leaflet-osrm-tools-container .osrm-directions-icon { filter: brightness(0) invert(0.9); }
 .osrm-theme-dark .osrm-localization-chooser,
 .osrm-theme-dark .osrm-units-chooser { color: #d0dfe5; background-color: #1c353c; }
