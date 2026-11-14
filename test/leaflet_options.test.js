@@ -26,7 +26,7 @@ describe('leaflet_options — tileset migration', () => {
     });
 
     test('OSM.de layer uses openstreetmap.de', () => {
-      expect(leafletOptions.layer[0]['osm.de']._url).toContain('tile.openstreetmap.de');
+      expect(leafletOptions.layer[0]['OpenStreetMap.de']._url).toContain('tile.openstreetmap.de');
     });
   });
 

@@ -486,7 +486,7 @@ if (vector) {
 var baseLayers = {};
 if (vector) baseLayers[vectorName] = vector;
 baseLayers.OpenStreetMap = osm;
-baseLayers['osm.de'] = osm_de;
+baseLayers['OpenStreetMap.de'] = osm_de;
 baseLayers.Satellite = satellite;
 baseLayers.Outdoors = outdoors;
 if (custom) baseLayers[customName] = custom;
@@ -668,7 +668,7 @@ var leafletOptions = {
    * - **Outdoors** — OpenTopoMap (max zoom 17)
    * - **Satellite** — ESRI World Imagery (max zoom 19)
    * - **OpenStreetMap** — OpenStreetMap Shortbread vector layer
-   * - **osm.de** — German OSM tile layer
+   * - **OpenStreetMap.de** — German OSM tile layer
    * - **Custom** — only present when `OSRM_TILE_URL` names a tile server
    *   (labelled by `OSRM_TILE_NAME`)
    * - **Standard** — only present when `OSRM_VECTOR_STYLE` names a style JSON

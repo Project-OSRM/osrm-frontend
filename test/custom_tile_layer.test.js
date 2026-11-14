@@ -34,7 +34,7 @@ describe('OSRM_TILE_URL custom base layer', () => {
   test('leaves the layer control untouched when unconfigured', () => {
     const opts = loadWithConfig({});
     expect(Object.keys(opts.layer[0])).toEqual([
-      'OpenStreetMap', 'osm.de', 'Satellite', 'Outdoors'
+      'OpenStreetMap', 'OpenStreetMap.de', 'Satellite', 'Outdoors'
     ]);
   });
 
@@ -210,7 +210,7 @@ describe('OSRM_TILE_URL layer selection via URL and stored preference', () => {
     const opts = loadWithCustomLayer();
     expect(resolveLayerByName(opts.layer[0], 'Satellite')._url).toContain('arcgisonline.com');
     expect(Object.keys(opts.layer[0])).toEqual([
-      'OpenStreetMap', 'osm.de', 'Satellite', 'Outdoors', 'Local tiles'
+      'OpenStreetMap', 'OpenStreetMap.de', 'Satellite', 'Outdoors', 'Local tiles'
     ]);
   });
 

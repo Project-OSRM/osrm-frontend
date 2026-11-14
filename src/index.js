@@ -93,7 +93,7 @@ function resolveLayerByName(name) {
   if (lower === 'vector' && map.Standard) return map.Standard;
   if (lower === 'openstreetmap.org' || lower === 'osm.org') return map.OpenStreetMap;
   if (lower === 'streets') return map.Standard || map.OpenStreetMap;
-  if (lower === 'openstreetmap.de') return map['osm.de'];
+  if (lower === 'openstreetmap.de' || lower === 'osm.de') return map['OpenStreetMap.de'];
   // fallback: check id in options if available
   for (var j = 0; j < keys.length; j++) {
     var val = map[keys[j]];

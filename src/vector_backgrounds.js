@@ -14,7 +14,7 @@ function createBackgrounds(style, options, runtimeLoader) {
       L.setOptions(this, variantOptions);
     },
     getAttribution: function() {
-      return options.attribution;
+      return ''; // Credits belong to the shared renderer, once.
     },
     onAdd: function(map) {
       active = this;

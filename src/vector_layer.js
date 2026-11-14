@@ -57,7 +57,8 @@ function createLayer(style, options, runtimeLoader) {
       });
     },
     getAttribution: function() {
-      return this.options.attribution;
+      // The renderer owns both provider and configured credits.
+      return '';
     },
     _showStatus: function(message, retry) {
       if (!this._status) {
@@ -100,6 +101,7 @@ function createLayer(style, options, runtimeLoader) {
         if (this._generation !== generation || this._map !== map) return;
         try {
           var renderer = runtime.createLayer(style, this.options.theme || 'dark');
+          renderer.options = Object.assign({}, renderer.options, { additionalAttribution: this.options.attribution });
           this.addLayer(renderer);
           var loaded = false;
           renderer.getMaplibreMap().once('load', function() {

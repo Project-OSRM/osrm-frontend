@@ -73,7 +73,7 @@ docker run -p 9966:9966 \
 ```
 
 Standard uses the configured vector style with the selected theme. OpenStreetMap
-uses its own vector source. The layer menu lists Standard, OpenStreetMap, osm.de,
+uses its own vector source. The layer menu lists Standard, OpenStreetMap, OpenStreetMap.de,
 Satellite and Outdoors, in that order (Standard appears when configured).
 
 The renderer is loaded only when a vector background is selected. It starts
@@ -241,7 +241,7 @@ shown as radio buttons in the map's layer control (bottom-left corner).
 | Outdoors | [OpenTopoMap](https://opentopomap.org/) | 17 |
 | Satellite | [ESRI World Imagery](https://www.esri.com/) | 19 |
 | OpenStreetMap | [OSM Shortbread vector](https://vector.openstreetmap.org/styles/shortbread/) | 22 |
-| osm.de | [OSM.de](https://openstreetmap.de/) | 19 |
+| OpenStreetMap.de | [OSM.de](https://openstreetmap.de/) | 19 |
 
 **Changing the default layer for Docker deployments:**
 Set `OSRM_DEFAULT_LAYER` to one of: `standard`, `outdoors`, `satellite`, `osm`, `osm_de`. The legacy `streets` key selects Standard when configured, otherwise OpenStreetMap.

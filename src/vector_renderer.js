@@ -1,7 +1,13 @@
 'use strict';
 
+var vectorAttribution = require('./vector_attribution');
+
 function createBackgroundRenderer(MaplibreGL) {
   return MaplibreGL.extend({
+    getAttribution: function() {
+      return vectorAttribution(this.getMaplibreMap(), this.options && this.options.additionalAttribution);
+    },
+
     _pinchZoom: function(event) {
       MaplibreGL.prototype._pinchZoom.call(this, event);
       // jumpTo normally queues a separate animation frame. Draw now during

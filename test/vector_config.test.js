@@ -51,7 +51,7 @@ test('accepts standard as the default layer key', () => {
 
 test('orders backgrounds with Standard first and uses official OSM vector tiles', () => {
   const options = load({ OSRM_VECTOR_STYLE: '/style.json' });
-  expect(Object.keys(options.layer[0])).toEqual(['Standard', 'OpenStreetMap', 'osm.de', 'Satellite', 'Outdoors']);
+  expect(Object.keys(options.layer[0])).toEqual(['Standard', 'OpenStreetMap', 'OpenStreetMap.de', 'Satellite', 'Outdoors']);
   expect(options.layer[0]['OpenStreetMap'].style).toBe('https://vector.openstreetmap.org/styles/shortbread/colorful.json');
   expect(options.layer[0]['OpenStreetMap'].options.theme).toBe('original');
 });
