@@ -71,3 +71,14 @@ test('preserves highway shield contrast without adding the dark label halo', () 
   expect(result.layers.find(layer => layer.id === 'poi').paint['text-halo-width']).toBe(1.25);
   expect(validateStyleMin(result)).toEqual([]);
 });
+
+test('preserves CARTO road casing and major-road hierarchy in the dark palette', () => {
+  const original = styleFixture();
+  ['road_pri_case_noramp', 'road_mot_fill_noramp', 'road_minor_fill'].forEach(id => {
+    original.layers.push({ id, type: 'line', source: 'osm', 'source-layer': 'roads' });
+  });
+  const result = theme.transformStyle(null, original);
+  expect(result.layers.find(layer => layer.id === 'road_pri_case_noramp').paint['line-color']).toBe(theme.palette.roadCasing);
+  expect(result.layers.find(layer => layer.id === 'road_mot_fill_noramp').paint['line-color']).toBe(theme.palette.mainRoad);
+  expect(result.layers.find(layer => layer.id === 'road_minor_fill').paint['line-color']).toBe(theme.palette.street);
+});

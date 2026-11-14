@@ -134,7 +134,7 @@ function customVectorLayer() {
 var vectorBackgrounds = customVectorLayer();
 var vector = vectorBackgrounds && vectorBackgrounds.vector;
 if (vectorBackgrounds) streets = vectorBackgrounds.streets;
-var vectorName = (typeof config.OSRM_VECTOR_NAME === 'string' && config.OSRM_VECTOR_NAME.trim()) || 'Vector';
+var vectorName = (typeof config.OSRM_VECTOR_NAME === 'string' && config.OSRM_VECTOR_NAME.trim()) || 'Standard';
 
 /**
  * Parse center coordinates from the runtime config (`OSRM_CENTER` env var).
@@ -491,7 +491,10 @@ var layerMap = {
   osm_de: osm_de
 };
 if (custom) layerMap.custom = custom;
-if (vector) layerMap.vector = vector;
+if (vector) {
+  layerMap.vector = vector;
+  layerMap.standard = vector;
+}
 
 /**
  * Base tile layers keyed by the label they carry in the layer control.
@@ -619,7 +622,7 @@ function buildServices() {
  * | `OSRM_MODES`           | (public OSRM services)           | JSON array of `{name, url, path?, profile?, debugUrl?}` routing backends. `profile` defaults by position (driving → bike → foot). `debugUrl` overrides the debug map link for that mode. |
  * | `OSRM_BACKEND`         | —                                | **Deprecated.** Single backend URL. Use `OSRM_MODES` instead. |
  * | `OSRM_VECTOR_STYLE`    | —                                | MapLibre style JSON URL for an optional vector background. |
- * | `OSRM_VECTOR_NAME`     | `Vector`                         | Name of the vector background in the layer control. |
+ * | `OSRM_VECTOR_NAME`     | `Standard`                       | Name of the vector background in the layer control. |
  * | `OSRM_VECTOR_THEME`    | `dark`                           | Dark map palette and sidebar; `original` preserves the provider style and classic interface. |
  * | `OSRM_VECTOR_ATTRIBUTION` | OpenStreetMap credit          | Additional attribution for the vector background. |
  * | `OSRM_CENTER`          | `38.8995,-77.0269`               | Comma-separated "lat,lng" for the initial map center. |
@@ -693,7 +696,7 @@ var leafletOptions = {
    * - **openstreetmap.de** — German OSM tile layer
    * - **Custom** — only present when `OSRM_TILE_URL` names a tile server
    *   (labelled by `OSRM_TILE_NAME`)
-   * - **Vector** — only present when `OSRM_VECTOR_STYLE` names a style JSON
+   * - **Standard** — only present when `OSRM_VECTOR_STYLE` names a style JSON
    *   (labelled by `OSRM_VECTOR_NAME`); the renderer loads when selected
    *
    * **Customizing:** A self-hosted or offline deployment should point

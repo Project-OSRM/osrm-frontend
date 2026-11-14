@@ -89,6 +89,8 @@ function resolveLayerByName(name) {
   for (var i = 0; i < keys.length; i++) {
     if (keys[i] && keys[i].toLowerCase() === lower) return map[keys[i]];
   }
+  // Keep links to the previous default vector label working.
+  if (lower === 'vector' && map.Standard) return map.Standard;
   // fallback: check id in options if available
   for (var j = 0; j < keys.length; j++) {
     var val = map[keys[j]];

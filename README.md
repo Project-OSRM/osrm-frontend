@@ -55,9 +55,13 @@ docker run -p 9966:9966 \
 
 ### Vector backgrounds
 
+The static demo uses CARTO Voyager vector tiles: Standard applies the dark
+palette, and Streets retains Voyager's original colors. Docker deployments can
+configure their own source using `OSRM_VECTOR_STYLE`.
+
 Set `OSRM_VECTOR_STYLE` to an HTTP(S) or root-relative MapLibre style JSON URL.
 The style specifies vector tile sources, fonts, sprites and their attribution.
-`OSRM_VECTOR_NAME` names the layer in the layer control (default: `Vector`);
+`OSRM_VECTOR_NAME` names the layer in the layer control (default: `Standard`);
 `OSRM_VECTOR_ATTRIBUTION` adds any required provider credit. Set these keys in
 `window.osrmConfig` for a static deployment, or as Docker environment variables.
 
@@ -68,8 +72,8 @@ docker run -p 9966:9966 \
   ghcr.io/project-osrm/osrm-frontend:latest
 ```
 
-When a vector style is configured, Streets and Vector share one renderer and
-tile cache. Streets uses the provider’s original colors; Vector uses the configured
+When a vector style is configured, Streets and Standard share one renderer and
+tile cache. Streets uses the provider’s original colors; Standard uses the configured
 theme. Switching between them changes paint properties without reloading tiles.
 Without a vector style, Streets keeps its CARTO raster background.
 

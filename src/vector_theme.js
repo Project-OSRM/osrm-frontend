@@ -29,8 +29,8 @@ function fillColor(name) {
 
 function lineColor(name) {
   if (/water|river|stream/.test(name)) return '#2d6970';
-  if (/casing/.test(name)) return palette.roadCasing;
-  if (/motorway|trunk|primary/.test(name)) return palette.mainRoad;
+  if (/casing|_case(?:_|$)/.test(name)) return palette.roadCasing;
+  if (/motorway|trunk|primary|_(?:mot|pri)(?:_|$)/.test(name)) return palette.mainRoad;
   if (/boundary/.test(name)) return '#66788a';
   if (/rail|aeroway/.test(name)) return '#56677b';
   return palette.street;
