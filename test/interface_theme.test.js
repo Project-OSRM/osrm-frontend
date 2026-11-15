@@ -165,3 +165,13 @@ test('lets the pane scroll natively without bubbling wheel gestures to the map',
   expect(event.defaultPrevented).toBe(false);
   document.body.removeEventListener('wheel', outerWheel);
 });
+
+
+test('places the accessible OSRM logo above the localized Directions heading', () => {
+  const brand = panel.querySelector('.osrm-panel-brand');
+  const logo = brand.querySelector('img');
+  expect(logo.getAttribute('src')).toBe('images/osrm_logo.svg');
+  expect(logo.alt).toBe('OSRM');
+  expect(logo.nextElementSibling).toBe(brand.querySelector('h1'));
+  expect(logo.width).toBe(104);
+});

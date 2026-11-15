@@ -27,7 +27,13 @@ function attach(options) {
   var labels = L.layerGroup().addTo(map);
   var resizeFrame;
   var header = L.DomUtil.create('header', 'osrm-panel-header');
-  var title = L.DomUtil.create('h1', '', header);
+  var brand = L.DomUtil.create('div', 'osrm-panel-brand', header);
+  var logo = L.DomUtil.create('img', 'osrm-panel-logo', brand);
+  logo.src = 'images/osrm_logo.svg';
+  logo.alt = 'OSRM';
+  logo.width = 104;
+  logo.height = 46;
+  var title = L.DomUtil.create('h1', '', brand);
   var actions = L.DomUtil.create('div', 'osrm-panel-actions', header);
   var collapse = panel.querySelector('.leaflet-routing-collapse-btn');
   panel.insertBefore(header, panel.firstChild);
