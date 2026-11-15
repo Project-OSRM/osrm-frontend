@@ -57,13 +57,16 @@
   inset: auto;
   width: 36px;
   height: 36px;
+  flex: none;
+  padding: 0;
+  box-sizing: border-box;
   border-radius: 50%;
   background: #4a4a4a;
   color: white;
   cursor: pointer;
 }
-.osrm-theme-dark .leaflet-routing-collapse-btn:after { content: '\00d7'; font: 28px/1 sans-serif; font-weight: 300; }
-.osrm-theme-dark .leaflet-routing-container-hide .leaflet-routing-collapse-btn:after { content: '\2630'; font-size: 18px; }
+.osrm-theme-dark .leaflet-routing-collapse-btn:after { content: ''; display: block; flex: none; width: 24px; height: 24px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M4 4l16 16M20 4L4 20'/%3E%3C/svg%3E") center / 24px 24px no-repeat; }
+.osrm-theme-dark .leaflet-routing-container-hide .leaflet-routing-collapse-btn:after { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M5 6h14M5 12h14M5 18h14'/%3E%3C/svg%3E"); }
 .osrm-mode-section { flex: none; margin-bottom: 16px; }
 .osrm-mode-caption { display: block; margin-bottom: 7px; color: var(--osrm-muted); font-size: var(--osrm-type-caption); font-weight: 600; letter-spacing: 0; text-transform: none; }
 .osrm-theme-dark .leaflet-osrm-mode-selector { display: block; float: none; width: 100%; margin: 0; border: 1px solid #505050; border-radius: 12px; background: var(--osrm-surface); }
