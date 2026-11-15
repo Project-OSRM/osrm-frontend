@@ -50,6 +50,17 @@ function createLayer(style, options, runtimeLoader) {
       L.LayerGroup.prototype.initialize.call(this);
       this.options = Object.assign({}, options);
     },
+    setVisible: function(visible) {
+      this._visible = visible;
+      if (this._status) this._status.hidden = !visible;
+      if (this._map) {
+        if (visible) this._map._addZoomLimit(this);
+        else this._map._removeZoomLimit(this);
+      }
+      this.eachLayer(function(renderer) {
+        if (renderer.setVisible) renderer.setVisible(visible);
+      });
+    },
     setLanguage: function(language) {
       this.options.language = language;
       if (this._status) this._showStatus(this._statusMessage, this._statusRetry);
@@ -74,6 +85,7 @@ function createLayer(style, options, runtimeLoader) {
         L.DomEvent.disableClickPropagation(this._status);
         L.DomEvent.disableScrollPropagation(this._status);
       }
+      this._status.hidden = this._visible === false;
       this._status.classList.toggle('osrm-vector-status-error', !!retry);
       this._status.replaceChildren();
       var text = L.DomUtil.create('span', '', this._status);
@@ -110,6 +122,7 @@ function createLayer(style, options, runtimeLoader) {
           // Leaflet stores defaults on the options prototype; preserve them.
           L.setOptions(renderer, { additionalAttribution: this.options.attribution });
           this.addLayer(renderer);
+          if (this._visible === false && renderer.setVisible) renderer.setVisible(false);
           var loaded = false;
           renderer.getMaplibreMap().once('load', function() {
             if (this._generation !== generation || this._map !== map || !this.hasLayer(renderer)) return;

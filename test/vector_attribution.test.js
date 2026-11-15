@@ -33,9 +33,15 @@ test('Leaflet attribution tracks vector loading and removal without duplicate or
   document.body.appendChild(container);
   const map = L.map(container).setView([50, 8], 10);
   const events = new L.Evented();
+  events.resize = jest.fn();
+  events.redraw = jest.fn();
   let credits = [];
   const Base = L.Layer.extend({
     options: {},
+    getEvents: () => ({}),
+    getContainer: () => container,
+    _resizeContainer: () => {},
+    _zoomEnd: () => {},
     getMaplibreMap: () => Object.assign(events, sourceMap(credits)),
     onAdd: function(leafletMap) {
       const initial = this.getAttribution();
@@ -56,6 +62,13 @@ test('Leaflet attribution tracks vector loading and removal without duplicate or
   let text = map.attributionControl.getContainer().textContent;
   expect(text.match(/CARTO/g)).toHaveLength(1);
   expect(text.match(/OpenStreetMap/g)).toHaveLength(1);
+  const renderer = layer.getLayers()[0];
+  layer.setVisible(false);
+  expect(map.attributionControl.getContainer().textContent).not.toContain('CARTO');
+  expect(map.hasLayer(renderer)).toBe(true);
+  layer.setVisible(true);
+  expect(map.attributionControl.getContainer().textContent.match(/CARTO/g)).toHaveLength(1);
+  expect(layer.getLayers()[0]).toBe(renderer);
   map.removeLayer(layer);
   const next = L.tileLayer('https://tiles.example/{z}/{x}/{y}.png', { attribution: osm }).addTo(map);
   text = map.attributionControl.getContainer().textContent;

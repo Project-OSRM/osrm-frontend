@@ -57,7 +57,9 @@ docker run -p 9966:9966 \
 
 The static demo uses Shortbread vector tiles from `vector.openstreetmap.org`.
 Standard and OpenStreetMap share one renderer and tile cache: switching between
-them changes the palette without reloading tiles. Standard uses the dark palette;
+them changes the palette without reloading tiles. Switching to another provider
+hides and pauses the vector renderer, retaining its loaded tiles for the return
+trip. The cache lasts for the current page session. Standard uses the dark palette;
 OpenStreetMap uses the original light style. Docker deployments can configure
 their own source using `OSRM_VECTOR_STYLE`.
 

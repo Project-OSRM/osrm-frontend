@@ -4,7 +4,8 @@ var L = require('leaflet');
 var vectorLayers = require('./vector_layer');
 
 // Layer-control entries share one live renderer. Leaflet removes the previous
-// entry before adding the next; defer cleanup until that handoff completes.
+// entry before adding the next; hide it after a handoff to another provider.
+// Keep its WebGL map and loaded tiles until the Leaflet map itself is removed.
 function createBackgrounds(style, options, runtimeLoader) {
   var background = vectorLayers.createLayer(style, options, runtimeLoader);
   var active;
@@ -23,14 +24,14 @@ function createBackgrounds(style, options, runtimeLoader) {
       active = this;
       currentMap = map;
       background.setTheme(this.options.theme);
+      background.setVisible(true);
       if (!map.hasLayer(background)) background.addTo(map);
     },
     onRemove: function(map) {
       if (active === this) active = null;
       Promise.resolve().then(function() {
         if (!active && currentMap === map) {
-          map.removeLayer(background);
-          currentMap = null;
+          background.setVisible(false);
         }
       });
     }

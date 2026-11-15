@@ -52,3 +52,36 @@ test('removes the partial container safely after WebGL initialization failed', (
   expect(container.isConnected).toBe(false);
   expect(Base.prototype.onRemove).not.toHaveBeenCalled();
 });
+
+
+test('pauses a hidden renderer and resumes its existing map at the current viewport', () => {
+  const gl = { resize: jest.fn(), redraw: jest.fn(), getStyle: () => ({ sources: {} }) };
+  const { renderer, calls, container, Base } = createRenderer(gl);
+  Base.prototype._resizeContainer = jest.fn();
+  Base.prototype._zoomEnd = jest.fn();
+  Base.prototype._update = jest.fn();
+  Base.prototype._transitionEnd = jest.fn();
+  Base.prototype.getEvents = () => ({ move: Base.prototype._update, resize: Base.prototype._transitionEnd });
+  renderer._map = { attributionControl: { removeAttribution: jest.fn(), addAttribution: jest.fn() } };
+  const handlers = renderer.getEvents();
+  renderer.setVisible(false);
+  expect(container.style.visibility).toBe('hidden');
+  expect(renderer.getAttribution()).toBe('');
+  handlers.move.call(renderer, {});
+  handlers.resize.call(renderer, {});
+  renderer._update({});
+  renderer._transitionEnd({});
+  renderer._pinchZoom({ smoothWheel: true });
+  expect(Base.prototype._update).not.toHaveBeenCalled();
+  expect(Base.prototype._transitionEnd).not.toHaveBeenCalled();
+  expect(calls).toEqual([]);
+  renderer.setVisible(true);
+  expect(container.style.visibility).toBe('');
+  expect(gl.resize).toHaveBeenCalledTimes(1);
+  expect(Base.prototype._zoomEnd).toHaveBeenCalledTimes(1);
+  expect(gl.redraw).toHaveBeenCalledTimes(1);
+  handlers.move.call(renderer, {});
+  expect(Base.prototype._update).toHaveBeenCalledTimes(1);
+  expect(Base.prototype.onRemove).not.toHaveBeenCalled();
+  container.remove();
+});

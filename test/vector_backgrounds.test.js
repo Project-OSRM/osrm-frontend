@@ -12,6 +12,7 @@ test('Standard and OpenStreetMap retain one renderer and tile cache across repea
   renderer.onAdd = jest.fn();
   renderer.onRemove = jest.fn();
   renderer.setTheme = jest.fn();
+  renderer.setVisible = jest.fn();
   renderer.getMaplibreMap = () => events;
   const runtime = { createLayer: jest.fn(() => renderer) };
   const loader = jest.fn(() => Promise.resolve(runtime));
@@ -31,8 +32,15 @@ test('Standard and OpenStreetMap retain one renderer and tile cache across repea
   expect(runtime.createLayer).toHaveBeenCalledTimes(1);
   map.removeLayer(backgrounds.vector);
   await Promise.resolve();
-  expect(renderer.onRemove).toHaveBeenCalledTimes(1);
+  expect(renderer.onRemove).not.toHaveBeenCalled();
+  expect(renderer.setVisible).toHaveBeenLastCalledWith(false);
+  // A later return from a raster background reuses the loaded renderer too.
+  backgrounds.streets.addTo(map);
+  await Promise.resolve();
+  expect(renderer.setVisible).toHaveBeenLastCalledWith(true);
+  expect(runtime.createLayer).toHaveBeenCalledTimes(1);
   map.remove();
+  expect(renderer.onRemove).toHaveBeenCalledTimes(1);
   container.remove();
 });
 
@@ -68,5 +76,22 @@ test('forwards language changes to the shared loading status', () => {
   backgrounds.streets.addTo(map);
   backgrounds.streets.setLanguage('fr');
   expect(container.querySelector('[role=status]').textContent).toBe('Chargement de la carte vectorielle…');
+  map.remove();
+});
+
+
+test('keeps loading tiles cached while hidden without displaying status or imposing zoom limits', async () => {
+  const container = document.createElement('div');
+  const map = L.map(container).setView([50, 8], 10);
+  const backgrounds = createBackgrounds('/style.json', { theme: 'dark', minZoom: 1, maxZoom: 22 }, () => new Promise(() => {}));
+  backgrounds.vector.addTo(map);
+  expect(map.getMaxZoom()).toBe(22);
+  map.removeLayer(backgrounds.vector);
+  await Promise.resolve();
+  expect(container.querySelector('[role=status]').hidden).toBe(true);
+  expect(map.getMaxZoom()).toBe(Infinity);
+  backgrounds.streets.addTo(map);
+  expect(container.querySelector('[role=status]').hidden).toBe(false);
+  expect(map.getMaxZoom()).toBe(22);
   map.remove();
 });

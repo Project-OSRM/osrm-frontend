@@ -2,6 +2,8 @@
 .osrm-theme-dark {
   color-scheme: dark;
   --osrm-sidebar-width: 360px;
+  --osrm-map-control-size: 38px;
+  --osrm-map-control-gap: 14px;
   --osrm-type-heading: 24px;
   --osrm-type-body: 14px;
   --osrm-type-caption: 12px;
@@ -155,15 +157,16 @@
 .osrm-theme-dark .leaflet-bar { border: 1px solid #405a62; border-radius: 12px; box-shadow: 0 3px 16px #00151c26; overflow: hidden; }
 .osrm-theme-dark .leaflet-bar a { width: 36px; height: 36px; line-height: 36px; border-color: #ffffff14; background-color: #303030; color: #d2e0e5; }
 .osrm-theme-dark .leaflet-bar a:hover { background-color: #454545; }
-.osrm-theme-dark .leaflet-control-zoom { position: fixed; inset: auto 18px 36px auto; }
-.osrm-theme-dark .leaflet-control-locate { border: 0; box-shadow: none; position: fixed; left: auto; right: 18px; top: 68px; }
-.osrm-theme-dark .leaflet-control-locate.leaflet-bar a { width: 36px; height: 36px; }
-.osrm-theme-dark .leaflet-control-layers { background: transparent; border: 0; box-shadow: none; position: fixed; left: auto; right: 18px; top: 18px; bottom: auto; }
-.osrm-theme-dark .leaflet-control-layers-toggle { width: 38px; height: 38px; border-radius: 12px; background-color: #303030; box-shadow: none; }
+.osrm-theme-dark .leaflet-control-zoom { position: fixed; inset: calc(18px + 2 * (var(--osrm-map-control-size) + var(--osrm-map-control-gap))) 18px auto auto; width: var(--osrm-map-control-size); margin: 0; border: 0; }
+.osrm-theme-dark .leaflet-control-zoom a { width: 100%; height: var(--osrm-map-control-size); line-height: var(--osrm-map-control-size); box-sizing: border-box; }
+.osrm-theme-dark .leaflet-control-locate { border: 0; box-shadow: none; position: fixed; left: auto; right: 18px; top: calc(18px + var(--osrm-map-control-size) + var(--osrm-map-control-gap)); margin: 0; }
+.osrm-theme-dark .leaflet-control-locate.leaflet-bar a { width: var(--osrm-map-control-size); height: var(--osrm-map-control-size); }
+.osrm-theme-dark .leaflet-control-layers { background: transparent; border: 0; box-shadow: none; position: fixed; left: auto; right: 18px; top: 18px; bottom: auto; margin: 0; }
+.osrm-theme-dark .leaflet-control-layers-toggle { width: var(--osrm-map-control-size); height: var(--osrm-map-control-size); border-radius: 12px; background-color: #303030; box-shadow: none; }
 .osrm-theme-dark .leaflet-control-layers-expanded { padding: 12px; border-radius: 12px; color: var(--osrm-text); background: #303030ed; }
-.osrm-theme-dark .leaflet-control-attribution { border-radius: 6px 0 0; padding: 3px 8px; background: #292929d9; color: #a6bac4; font-size: 10px; }
+.osrm-theme-dark .leaflet-control-attribution { border-radius: 6px 0 0; padding: 3px 8px; background: #292929d9; color: #a6bac4; font-size: 10px; max-width: calc(100vw - 24px); box-sizing: border-box; }
 .osrm-theme-dark .leaflet-control-attribution a { color: #c6d8e4; }
-.osrm-theme-dark .leaflet-control-scale { position: fixed; right: 100px; bottom: 18px; margin: 0; transform: none; }
+.osrm-theme-dark .leaflet-control-scale { position: relative; inset: auto; float: right; clear: both; margin: 0 12px 8px 0; transform: none; }
 .osrm-theme-dark .leaflet-control-scale-line { color: #bacfd9; border-color: #bacfd9; background: #172d36a6; text-shadow: none; }
 .osrm-theme-dark .leaflet-osrm-tools-container { padding: 5px 8px; border: 1px solid #505050; border-radius: 10px; background: #292929eb; box-shadow: 0 3px 16px #00151c26; }
 .osrm-panel-toolbar { flex: none; margin: -8px 0 16px; }
@@ -214,8 +217,7 @@
   .osrm-theme-dark .leaflet-routing-alternatives-container { flex: none; max-height: none; min-height: 0; overflow: visible; }
   .osrm-theme-dark .osrm-directions-summary { padding: 15px; }
 
-  .osrm-theme-dark .leaflet-control-zoom { bottom: calc(var(--osrm-panel-height, 300px) + 22px); }
-  .osrm-theme-dark .leaflet-control-scale { bottom: calc(var(--osrm-panel-height, 300px) + 10px); right: 75px; }
+  .osrm-theme-dark .leaflet-bottom.leaflet-right { bottom: var(--osrm-panel-height, 60dvh); }
 }
 
 /* The pane is the only scroll surface; collapse it to a reachable reopen button. */
@@ -230,11 +232,10 @@
   .osrm-theme-dark { --osrm-sidebar-width: min(320px, 44vw); }
   .osrm-theme-dark .leaflet-routing-container.dark { inset: 0 auto 0 0; width: var(--osrm-sidebar-width); height: 100dvh; max-height: none; padding: 12px; border: 0; border-right: 1px solid #454545; border-radius: 0; }
   .osrm-theme-dark .leaflet-routing-container.dark.leaflet-routing-container-hide { inset: 12px auto auto 12px; }
-  .osrm-theme-dark .leaflet-control-zoom { bottom: 24px; }
-  .osrm-theme-dark .leaflet-control-scale { bottom: 8px; }
+  .osrm-theme-dark .leaflet-bottom.leaflet-right { bottom: 0; }
 }
 @media (pointer: coarse) {
-  .osrm-theme-dark { --osrm-type-body: 16px; }
+  .osrm-theme-dark { --osrm-type-body: 16px; --osrm-map-control-size: 44px; }
   .osrm-theme-dark .osrm-panel-header .leaflet-routing-collapse-btn { width: 44px; height: 44px; }
   .osrm-theme-dark .leaflet-routing-container.dark.leaflet-routing-container-hide { width: 64px; height: 64px; }
   .osrm-theme-dark .osrm-panel-toolbar .leaflet-osrm-tools-container { gap: 2px; }
@@ -244,8 +245,6 @@
   .osrm-theme-dark .osrm-panel-toolbar select,
   .osrm-theme-dark .leaflet-osrm-mode-selector .osrm-profile-chooser { height: 44px; }
   .osrm-theme-dark .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; }
-  .osrm-theme-dark .leaflet-control-locate.leaflet-bar a { width: 44px; height: 44px; }
-  .osrm-theme-dark .leaflet-control-layers-toggle { width: 44px; height: 44px; }
 }
 
 /* Vector startup never loads a raster basemap underneath the renderer. */
