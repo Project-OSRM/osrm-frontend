@@ -155,3 +155,13 @@ test('translates the actual pane labels and supports right-to-left reading', () 
   expect(panel.dir).toBe('ltr');
   expect(panel.querySelector('h1').textContent).toBe('Directions');
 });
+
+test('lets the pane scroll natively without bubbling wheel gestures to the map', () => {
+  const outerWheel = jest.fn();
+  document.body.addEventListener('wheel', outerWheel);
+  const event = new WheelEvent('wheel', { deltaY: 100, bubbles: true, cancelable: true });
+  panel.dispatchEvent(event);
+  expect(outerWheel).not.toHaveBeenCalled();
+  expect(event.defaultPrevented).toBe(false);
+  document.body.removeEventListener('wheel', outerWheel);
+});

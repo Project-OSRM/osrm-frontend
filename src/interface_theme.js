@@ -20,6 +20,8 @@ function attach(options) {
   var tools = options.tools;
   var panel = control.getContainer();
   var alternatives = control._altContainer;
+  // Keep native pane scrolling from also driving the map wheel handler.
+  L.DomEvent.disableScrollPropagation(panel);
   var language = options.language;
   var selectedRoute;
   var labels = L.layerGroup().addTo(map);
