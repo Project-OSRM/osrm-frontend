@@ -10,7 +10,7 @@ test('switches colors and restores original paint without replacing sources or s
   const map = { setPaintProperty: jest.fn() };
   applyPalette(map, original, 'dark');
   expect(map.setPaintProperty).toHaveBeenCalledWith('water', 'fill-pattern', null);
-  expect(map.setPaintProperty).toHaveBeenCalledWith('water', 'fill-color', '#294f75');
+  expect(map.setPaintProperty).toHaveBeenCalledWith('water', 'fill-color', '#3d6489');
   map.setPaintProperty.mockClear();
   applyPalette(map, original, 'original');
   expect(map.setPaintProperty).toHaveBeenCalledWith('water', 'fill-pattern', 'water');

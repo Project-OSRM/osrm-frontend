@@ -83,8 +83,9 @@ also be selected from the layer control. Styles hosted on another origin must al
 the style and its tile, font and sprite resources. A configured vector background
 is the default unless `OSRM_DEFAULT_LAYER` selects another layer.
 
-Vector maps use a dark slate and teal palette with a matching directions sidebar,
-blue route cards, expandable instructions and selectable duration labels on the map.
+Standard uses a dark slate palette with blue water and muted green land cover.
+The translucent grey directions sidebar has blue route cards, expandable
+instructions and selectable duration labels on the map.
 The sidebar stays beside the map on desktop and becomes a bottom sheet on smaller
 screens. The map extends behind the translucent panel; route and entrance fitting reserve
 the unobscured area beside the sidebar or above the mobile sheet.

@@ -2,9 +2,9 @@
 
 var palette = {
   background: '#303e50',
-  water: '#294f75',
-  waterway: '#467ca6',
-  waterShadow: '#233f5c',
+  water: '#3d6489',
+  waterway: '#6ca5d0',
+  waterShadow: '#315474',
   forest: '#345c48',
   park: '#456e52',
   grass: '#50755a',
@@ -88,7 +88,7 @@ function transformStyle(previousStyle, style) {
     // Shields include their own light sprite background. Keep the provider's
     // text contrast and halo instead of applying a dark street-label outline.
     if (layer.type === 'symbol' && layer.layout && layer.layout['text-field'] && !/shield/.test(name)) {
-      paint['text-color'] = /water/.test(name) ? '#91badb' : /transportation|highway|roadname|street_labels/.test(name) ? palette.mutedText : palette.text;
+      paint['text-color'] = /water/.test(name) ? '#a7cce8' : /transportation|highway|roadname|street_labels/.test(name) ? palette.mutedText : palette.text;
       if (/poi/.test(name)) {
         paint['text-color'] = ['match', ['coalesce', ['get', 'kind'], ['get', 'class'], ''],
           ['park', 'garden', 'playground'], '#a0c59b',
