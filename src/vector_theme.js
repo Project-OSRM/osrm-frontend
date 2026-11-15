@@ -2,10 +2,14 @@
 
 var palette = {
   background: '#303e50',
-  water: '#24575d',
-  forest: '#28504e',
-  park: '#345e52',
-  grass: '#3a6155',
+  water: '#294f75',
+  waterway: '#467ca6',
+  waterShadow: '#233f5c',
+  forest: '#345c48',
+  park: '#456e52',
+  grass: '#50755a',
+  farmland: '#4c6a4b',
+  orchard: '#41684f',
   residential: '#344355',
   buildingBase: '#344356',
   building: '#3e4e62',
@@ -20,18 +24,24 @@ var palette = {
   halo: '#2a3948'
 };
 
+var agriculturalKinds = ['farmland', 'farm', 'agriculture', 'cropland', 'crop', 'orchard', 'vineyard', 'plantation'];
+
 function fillColor(name, id) {
   if (/^landcover(?:_|$)/.test(id) || id === 'landuse') {
     return ['match', ['coalesce', ['get', 'kind'], ['get', 'class'], ''],
       ['wood', 'forest'], palette.forest,
       ['park', 'garden', 'recreation_ground', 'village_green', 'golf_course', 'cemetery', 'stadium'], palette.park,
       ['grass', 'grassland', 'meadow', 'allotments'], palette.grass,
-      ['scrub', 'heath'], '#33534d',
+      ['farmland', 'farm', 'agriculture', 'cropland', 'crop'], palette.farmland,
+      ['orchard', 'vineyard', 'plantation'], palette.orchard,
+      ['scrub', 'heath'], '#48664e',
       ['industrial', 'commercial'], '#394554',
       palette.background];
   }
+  if (/orchard|vineyard|plantation/.test(name)) return palette.orchard;
+  if (/farmland|agricultur|cropland|farm/.test(name)) return palette.farmland;
   if (/residential/.test(name)) return palette.residential;
-  if (/water_shadow/.test(name)) return '#1e464d';
+  if (/water_shadow/.test(name)) return palette.waterShadow;
   if (/water|ocean|lake/.test(name)) return palette.water;
   if (/wood|forest/.test(name)) return palette.forest;
   if (/park|pitch|cemetery|garden/.test(name)) return palette.park;
@@ -43,7 +53,7 @@ function fillColor(name, id) {
 }
 
 function lineColor(name) {
-  if (/water|river|stream/.test(name)) return '#2d6970';
+  if (/water|river|stream/.test(name)) return palette.waterway;
   if (/casing|_case(?:_|$)/.test(name)) return palette.roadCasing;
   if (/motorway|_(?:mot)(?:_|$)/.test(name)) return palette.highway;
   if (/trunk|primary|_(?:pri)(?:_|$)/.test(name)) return palette.mainRoad;
@@ -55,7 +65,8 @@ function lineColor(name) {
 }
 
 // Recolor the loaded style before its first frame. Geometry, label placement,
-// filters, fonts, sprites, source URLs and provider attribution stay intact.
+// fonts, sprites, source URLs and provider attribution stay intact. The CARTO
+// land-cover filter also includes agricultural areas already present in its tiles.
 function transformStyle(previousStyle, style) {
   var layers = (style.layers || []).filter(function(layer) {
     return layer.type !== 'raster';
@@ -65,6 +76,9 @@ function transformStyle(previousStyle, style) {
     var name = (layer.id + ' ' + (layer['source-layer'] || '')).toLowerCase();
     if (layer.type === 'background') paint['background-color'] = palette.background;
     if (layer.type === 'fill') {
+      if (layer.id === 'landcover' && layer['source-layer'] === 'landuse' && layer.filter) {
+        copy.filter = ['any', layer.filter, ['in', ['coalesce', ['get', 'kind'], ['get', 'class'], ''], ['literal', agriculturalKinds]]];
+      }
       delete paint['fill-pattern'];
       paint['fill-color'] = fillColor(name, layer.id.toLowerCase());
       if (paint['fill-outline-color']) paint['fill-outline-color'] = /building/.test(name) ? palette.buildingOutline : fillColor(name, layer.id.toLowerCase());
@@ -74,7 +88,7 @@ function transformStyle(previousStyle, style) {
     // Shields include their own light sprite background. Keep the provider's
     // text contrast and halo instead of applying a dark street-label outline.
     if (layer.type === 'symbol' && layer.layout && layer.layout['text-field'] && !/shield/.test(name)) {
-      paint['text-color'] = /water/.test(name) ? '#86b5c5' : /transportation|highway|roadname|street_labels/.test(name) ? palette.mutedText : palette.text;
+      paint['text-color'] = /water/.test(name) ? '#91badb' : /transportation|highway|roadname|street_labels/.test(name) ? palette.mutedText : palette.text;
       if (/poi/.test(name)) {
         paint['text-color'] = ['match', ['coalesce', ['get', 'kind'], ['get', 'class'], ''],
           ['park', 'garden', 'playground'], '#a0c59b',

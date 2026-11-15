@@ -109,3 +109,37 @@ test('keeps street labels quieter than place labels and preserves their layout',
   expect(result.layers.find(layer => layer.id === 'place_city').paint['text-color']).toBe(theme.palette.text);
   expect(result.layers.find(layer => layer.id === 'roadname_minor').layout).toEqual(original.layers.find(layer => layer.id === 'roadname_minor').layout);
 });
+
+test('uses a consistent blue palette for water areas, rivers and streams', () => {
+  const original = styleFixture();
+  ['waterway', 'river', 'stream'].forEach(id => {
+    original.layers.push({ id, type: 'line', source: 'osm', 'source-layer': 'waterway' });
+  });
+  original.layers.push({ id: 'water_shadow', type: 'fill', source: 'osm', 'source-layer': 'water' });
+  const result = theme.transformStyle(null, original);
+  ['waterway', 'river', 'stream'].forEach(id => {
+    expect(result.layers.find(layer => layer.id === id).paint['line-color']).toBe(theme.palette.waterway);
+  });
+  expect(result.layers.find(layer => layer.id === 'water').paint['fill-color']).toBe(theme.palette.water);
+  expect(result.layers.find(layer => layer.id === 'water_shadow').paint['fill-color']).toBe(theme.palette.waterShadow);
+  expect(validateStyleMin(result)).toEqual([]);
+});
+
+test('renders agricultural areas already present in CARTO tiles with distinct friendly greens', () => {
+  const original = styleFixture();
+  const landcover = { id: 'landcover', type: 'fill', source: 'osm', 'source-layer': 'landuse',
+    filter: ['in', ['get', 'kind'], ['literal', ['forest', 'grass', 'park']]] };
+  original.layers.push(landcover);
+  const result = theme.transformStyle(null, original);
+  const layer = result.layers.find(layer => layer.id === 'landcover');
+  const filter = require('@maplibre/maplibre-gl-style-spec').featureFilter(layer.filter, 'layers.landcover.filter');
+  ['farmland', 'orchard', 'vineyard', 'forest', 'grass', 'park'].forEach(kind => {
+    expect(filter.filter({ zoom: 13 }, { type: 3, properties: { kind } })).toBe(true);
+  });
+  expect(filter.filter({ zoom: 13 }, { type: 3, properties: { kind: 'industrial' } })).toBe(false);
+  expect(layer.paint['fill-color']).toContain(theme.palette.farmland);
+  expect(layer.paint['fill-color']).toContain(theme.palette.orchard);
+  expect(new Set([theme.palette.forest, theme.palette.park, theme.palette.grass, theme.palette.farmland]).size).toBe(4);
+  expect(original.layers.find(layer => layer.id === 'landcover').filter).toEqual(landcover.filter);
+  expect(validateStyleMin(result)).toEqual([]);
+});
