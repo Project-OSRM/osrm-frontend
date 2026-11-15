@@ -11,8 +11,7 @@ var palette = {
   farmland: '#4c6a4b',
   orchard: '#41684f',
   residential: '#344355',
-  pavement: '#747e8a',
-  runway: '#939aa3',
+  pavement: '#858e99',
   buildingBase: '#344356',
   building: '#3e4e62',
   buildingOutline: '#46586b',
@@ -60,8 +59,7 @@ function fillColor(name, id) {
 function lineColor(name) {
   if (/water|river|stream/.test(name)) return palette.waterway;
   if (/casing|_case(?:_|$)/.test(name)) return palette.roadCasing;
-  if (/runway/.test(name)) return palette.runway;
-  if (/taxiway|apron/.test(name)) return palette.pavement;
+  if (/runway|taxiway|apron/.test(name)) return palette.pavement;
   if (/motorway|_(?:mot)(?:_|$)/.test(name)) return palette.highway;
   if (/trunk|primary|_(?:pri)(?:_|$)/.test(name)) return palette.mainRoad;
   if (/secondary|tertiary|_sec(?:_|$)/.test(name)) return palette.secondaryRoad;
@@ -99,6 +97,7 @@ function transformStyle(previousStyle, style) {
       // Preserve paved surfaces at overview zooms instead of exposing grass
       // beneath them when the provider's runway/taxiway lines disappear.
       copy.minzoom = 10;
+      copy.layout = Object.assign({}, layer.layout, { 'line-cap': /taxiway/.test(layer.id) ? 'round' : 'butt', 'line-join': 'round' });
       paint['line-width'] = ['interpolate', ['exponential', 2], ['zoom'], 10, /runway/.test(layer.id) ? 1 : 0.5, 18, /runway/.test(layer.id) ? 256 : 128];
     }
     // Shields include their own light sprite background. Keep the provider's

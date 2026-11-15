@@ -154,7 +154,11 @@ test('keeps paved airport surfaces grey and visible at overview zooms while gras
   const result = theme.transformStyle(null, original);
   const runway = result.layers.find(layer => layer.id === 'aeroway-runway');
   const taxiway = result.layers.find(layer => layer.id === 'aeroway-taxiway');
-  expect(runway.paint['line-color']).toBe(theme.palette.runway);
+  expect(runway.paint['line-color']).toBe(theme.palette.pavement);
+  expect(runway.paint['line-color']).toBe(taxiway.paint['line-color']);
+  expect(taxiway.layout['line-cap']).toBe('round');
+  expect(taxiway.layout['line-join']).toBe('round');
+  expect(runway.layout['line-cap']).toBe('butt');
   expect(taxiway.paint['line-color']).toBe(theme.palette.pavement);
   expect(runway.minzoom).toBe(10);
   expect(taxiway.minzoom).toBe(10);
