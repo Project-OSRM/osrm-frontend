@@ -6,9 +6,9 @@ var L = require('leaflet');
 // starting an integer-level CSS zoom animation for each wheel-event batch.
 var SmoothWheelZoom = L.Handler.extend({
   options: {
-    pixelsPerZoomLevel: 120,
-    easingTime: 65,
-    idleTime: 140
+    pixelsPerZoomLevel: 80,
+    easingTime: 40,
+    idleTime: 100
   },
 
   initialize: function(map, options) {

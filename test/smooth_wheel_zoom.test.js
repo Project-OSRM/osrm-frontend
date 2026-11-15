@@ -42,7 +42,7 @@ function settle() { jest.advanceTimersByTime(1500); }
 test('zooms through small fractional steps instead of jumping to a whole zoom level', () => {
   const zooms = [];
   map.on('zoom', () => zooms.push(map.getZoom()));
-  expect(wheel(-6, { deltaMode: 1 }).defaultPrevented).toBe(true);
+  expect(wheel(-16).defaultPrevented).toBe(true);
   expect(map.getZoom()).toBe(10);
   jest.advanceTimersByTime(80);
   expect(zooms.length).toBeGreaterThan(2);
@@ -50,7 +50,7 @@ test('zooms through small fractional steps instead of jumping to a whole zoom le
   expect(map.getZoom()).toBeLessThan(11);
   expect(Math.max(...zooms.map((zoom, index) => zoom - (index ? zooms[index - 1] : 10)))).toBeLessThan(0.25);
   settle();
-  expect(map.getZoom()).toBeCloseTo(11, 4);
+  expect(map.getZoom()).toBeCloseTo(10.1, 4);
 });
 
 test('keeps the geographic point under the pointer fixed throughout the animation', () => {
@@ -173,4 +173,18 @@ test('uses elapsed time so the same gesture has the same speed at different refr
     settle();
   }
   expect(Math.max(...samples) - Math.min(...samples)).toBeLessThan(0.001);
+});
+
+
+test('responds quickly to a short wheel gesture while retaining fractional frames', () => {
+  const ends = jest.fn();
+  map.on('zoomend', ends);
+  wheel(-4, { deltaMode: 1 });
+  jest.advanceTimersByTime(128);
+  expect(map.getZoom()).toBeGreaterThan(10.95);
+  expect(map.getZoom()).toBeLessThan(11);
+  expect(ends).not.toHaveBeenCalled();
+  jest.advanceTimersByTime(400);
+  expect(map.getZoom()).toBeCloseTo(11, 4);
+  expect(ends).toHaveBeenCalledTimes(1);
 });
