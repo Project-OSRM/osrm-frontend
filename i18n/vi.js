@@ -1,4 +1,8 @@
 module.exports = {
+  "Loading small routing components…": "Đang tải các thành phần nhỏ của mạng đường…",
+  "Small Components unavailable for this routing mode.": "Không có thành phần nhỏ cho phương thức di chuyển này.",
+  "Zoom in to level 13 to see small routing components.": "Phóng to đến mức 13 để xem các thành phần nhỏ của mạng đường.",
+
   name: 'Tiếng Việt',
   key: 'vi',
   'Open in Debug Map': 'Mở trong Bản đồ Gỡ lỗi',

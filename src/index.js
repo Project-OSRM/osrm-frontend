@@ -181,7 +181,11 @@ if (_urlProfile !== undefined && _urlProfile !== null) {
   _initProfileIndex = 0;
 }
 
-var _initResult = initialLayers.determineInitialLayers(baselayer, overlay, services, _initProfileIndex, !!ls.get('getOverlay'));
+if (overlay['Small Components'] && overlay['Small Components'].setService) {
+  overlay['Small Components'].setService(services[_initProfileIndex] || services[0]);
+}
+var storedComponents = ls.get('smallComponents');
+var _initResult = initialLayers.determineInitialLayers(baselayer, overlay, services, _initProfileIndex, storedComponents === null || storedComponents === undefined ? !!ls.get('getOverlay') : !!storedComponents);
 var layers = _initResult.layers;
 var bikeOverlayAutoActivated = _initResult.bikeOverlayAutoActivated;
 var map = L.map('map', {
@@ -255,10 +259,10 @@ map.on('baselayerchange', function(e) {
 });
 // store overlay add or remove
 map.on('overlayadd', function(e) {
-  ls.set('getOverlay', true);
+  if (e.layer === overlay['Small Components']) ls.set('smallComponents', true);
 });
 map.on('overlayremove', function(e) {
-  ls.set('getOverlay', false);
+  if (e.layer === overlay['Small Components']) ls.set('smallComponents', false);
 });
 
 /* OSRM setup */
@@ -498,13 +502,16 @@ if (darkInterface) {
  *
  * @param {number} profileIndex — Index into `services`.
  */
-function applyDebugUrlForProfile(profileIndex) {
+function applyModeLayersForProfile(profileIndex) {
   var service = services[profileIndex];
+  if (overlay['Small Components'] && overlay['Small Components'].setService) {
+    overlay['Small Components'].setService(service);
+  }
   if (!toolsControl || typeof toolsControl.setDebugUrl !== 'function') return;
   toolsControl.setDebugUrl(service && service.debugUrl);
 }
 
-applyDebugUrlForProfile(activeProfileIndex);
+applyModeLayersForProfile(activeProfileIndex);
 
 var state = state(map, lrmControl, toolsControl, modeSelector, mergedOptions);
 var routeFitTracker = routeZoom.createRouteFitTracker();
@@ -584,7 +591,7 @@ if (urlState && urlState.listen) {
         if (!isNaN(profileIndex)) {
           try {
             routerPatches.setActiveService(router, profileIndex, services);
-            applyDebugUrlForProfile(profileIndex);
+            applyModeLayersForProfile(profileIndex);
             ls.set('profile', profileIndex);
             if (modeSelector && modeSelector.select) modeSelector.select.value = profileIndex;
             state.options.profile = profileIndex;
@@ -678,7 +685,7 @@ if (toolsControl && toolsControl.on) {
       var profileIndex = parseInt(event.target.value, 10);
       clearProfileSelectorSelection(event.target);
       routerPatches.setActiveService(router, profileIndex, services);
-      applyDebugUrlForProfile(profileIndex);
+      applyModeLayersForProfile(profileIndex);
       ls.set('profile', profileIndex);
       
       // Also update the state object so profile is preserved on language change

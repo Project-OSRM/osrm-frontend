@@ -1,4 +1,8 @@
 module.exports = {
+  "Loading small routing components…": "در حال بارگیری مؤلفه‌های کوچک شبکهٔ مسیر…",
+  "Small Components unavailable for this routing mode.": "مؤلفه‌های کوچک برای این شیوهٔ سفر در دسترس نیستند.",
+  "Zoom in to level 13 to see small routing components.": "برای دیدن مؤلفه‌های کوچک شبکه، تا سطح ۱۳ بزرگ‌نمایی کنید.",
+
   name: 'فارسی',
   key: 'fa',
   'Open in Debug Map': 'در اشکال‌زدایی نقشه باز کن',

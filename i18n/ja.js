@@ -1,4 +1,8 @@
 module.exports = {
+  "Loading small routing components…": "小さな経路ネットワークを読み込み中…",
+  "Small Components unavailable for this routing mode.": "この移動手段では小さな経路ネットワークを表示できません。",
+  "Zoom in to level 13 to see small routing components.": "小さな経路ネットワークを表示するにはズームレベル13まで拡大してください。",
+
   name: '日本語',
   key: 'ja',
   'Open in Debug Map': 'デバッグ地図で開く',

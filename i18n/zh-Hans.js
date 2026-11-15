@@ -1,4 +1,8 @@
 module.exports = {
+  "Loading small routing components…": "正在加载小型路网分量…",
+  "Small Components unavailable for this routing mode.": "此出行方式不支持显示小型路网分量。",
+  "Zoom in to level 13 to see small routing components.": "请放大到第13级以查看小型路网分量。",
+
   name: '中文（简体）',
   key: 'zh-Hans',
   'Open in Debug Map': '在调试地图中打开',

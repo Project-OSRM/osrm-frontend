@@ -1,4 +1,8 @@
 ﻿module.exports = {
+  "Loading small routing components…": "Kis úthálózati komponensek betöltése…",
+  "Small Components unavailable for this routing mode.": "A kis komponensek nem érhetők el ehhez a közlekedési módhoz.",
+  "Zoom in to level 13 to see small routing components.": "A kis úthálózati komponensek megjelenítéséhez nagyíts a 13. szintre.",
+
   name: 'Magyar',
   key: 'hu',
   'Open in Debug Map': 'Megnyitás a hibakereső térképen',

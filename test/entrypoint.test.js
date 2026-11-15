@@ -256,3 +256,12 @@ test('configures the dark vector theme by default and permits original provider 
   expect(generateConfig({ OSRM_VECTOR_STYLE: '/style.json' }).OSRM_VECTOR_THEME).toBe('dark');
   expect(generateConfig({ OSRM_VECTOR_STYLE: '/style.json', OSRM_VECTOR_THEME: 'original' }).OSRM_VECTOR_THEME).toBe('original');
 });
+
+test('passes per-mode component tile templates and explicit disabled capability through Docker config', () => {
+  const modes = [
+    { name: 'Car', url: '/proxy', path: '/custom/routes', tileUrl: '/proxy/tile/v1/{profile}/tile({x},{y},{z}).mvt' },
+    { name: 'Foot', url: '/foot', tileUrl: false }
+  ];
+  const config = generateConfig({ OSRM_MODES: JSON.stringify(modes) });
+  expect(JSON.parse(config.OSRM_MODES)).toEqual(modes);
+});

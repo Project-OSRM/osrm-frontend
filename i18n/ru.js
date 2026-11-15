@@ -1,4 +1,8 @@
 module.exports = {
+  "Loading small routing components…": "Загрузка малых компонентов дорожной сети…",
+  "Small Components unavailable for this routing mode.": "Малые компоненты недоступны для этого способа передвижения.",
+  "Zoom in to level 13 to see small routing components.": "Увеличьте масштаб до уровня 13, чтобы увидеть малые компоненты сети.",
+
   name: 'Русский',
   key: 'ru',
   'Open in Debug Map': 'Открыть в отладочной карте',

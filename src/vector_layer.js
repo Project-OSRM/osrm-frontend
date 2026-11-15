@@ -108,11 +108,11 @@ function createLayer(style, options, runtimeLoader) {
     _loadRenderer: function(map) {
       var generation = this._generation = (this._generation || 0) + 1;
       this.clearLayers();
-      this._showStatus('Loading vector map…');
+      this._showStatus(this.options.loadingMessage || 'Loading vector map…');
       var failed = function(error) {
         if (this._generation !== generation || this._map !== map) return;
         this.clearLayers();
-        this._showStatus('Vector map could not load. Try again or choose another background.', true);
+        this._showStatus(this.options.errorMessage || 'Vector map could not load. Try again or choose another background.', true);
         this.fire('tileerror', { error: error });
       }.bind(this);
       (runtimeLoader || loadRuntime)().then(function(runtime) {
@@ -121,6 +121,7 @@ function createLayer(style, options, runtimeLoader) {
           var renderer = runtime.createLayer(style, this.options.theme || 'dark');
           // Leaflet stores defaults on the options prototype; preserve them.
           L.setOptions(renderer, { additionalAttribution: this.options.attribution });
+          if (this.options.pane) L.setOptions(renderer, { pane: this.options.pane });
           this.addLayer(renderer);
           if (this._visible === false && renderer.setVisible) renderer.setVisible(false);
           var loaded = false;
@@ -131,7 +132,7 @@ function createLayer(style, options, runtimeLoader) {
           }.bind(this));
           renderer.getMaplibreMap().on('error', function(event) {
             if (this._generation !== generation || this._map !== map) return;
-            if (!loaded) failed(event.error);
+            if (!loaded || this.options.overlay) failed(event.error);
             else this.fire('tileerror', { error: event.error });
           }.bind(this));
         } catch (error) {
@@ -140,7 +141,7 @@ function createLayer(style, options, runtimeLoader) {
       }.bind(this)).catch(failed);
     },
     onAdd: function(map) {
-      map._addZoomLimit(this);
+      if (!this.options.overlay) map._addZoomLimit(this);
       L.LayerGroup.prototype.onAdd.call(this, map);
       this._loadRenderer(map);
     },

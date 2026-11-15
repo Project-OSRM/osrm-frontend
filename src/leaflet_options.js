@@ -44,7 +44,7 @@ var outdoors = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
   bike = L.tileLayer('https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png', {
     attribution: waymarkedtrailsAttribution
   }),
-  small_components = L.tileLayer('https://tools.geofabrik.de/osmi/tiles/routing/{z}/{x}/{y}.png', {});
+  small_components = require('./small_components').createLayer();
 
 /**
  * Build the custom base layer described by `OSRM_TILE_URL`, if one is configured.
@@ -164,7 +164,7 @@ function getLabel() {
  * Parse routing modes from the runtime config.
  *
  * **Precedence (highest to lowest):**
- * 1. `OSRM_MODES` — preferred JSON array of `{name, url, path?, profile?, debugUrl?}` objects.
+ * 1. `OSRM_MODES` — preferred JSON array of `{name, url, path?, profile?, debugUrl?, tileUrl?}` objects.
  *    Also accepts a plain array of URL strings (auto-named "Mode 1", "Mode 2", …).
  *    When `profile` is not specified it defaults by position: index 0 → `'driving'`,
  *    index 1 → `'bike'`, index 2 → `'foot'`, index ≥ 3 → `'driving'`.
@@ -244,6 +244,7 @@ function parseModes() {
             profile: mode.profile || profileNames[index] || 'driving'  // Honor explicit profile, fall back to positional
           };
           if (mode.path) result.path = mode.path;  // preserve explicit path (e.g. routed-bike/route/v1)
+          if (Object.prototype.hasOwnProperty.call(mode, 'tileUrl')) result.tileUrl = mode.tileUrl;
           if (mode.debugUrl) result.debugUrl = mode.debugUrl;  // preserve per-mode debug map link
           return result;
         });
@@ -571,9 +572,10 @@ function buildServices() {
     var service = {
       label: label,
       labelKey: labelKey,
-      path: mode.path || (mode.url + '/route/v1'),
+      path: mode.path || (mode.url.replace(/\/+$/, '') + '/route/v1'),
       profile: mode.profile
     };
+    if (Object.prototype.hasOwnProperty.call(mode, 'tileUrl')) service.tileUrl = mode.tileUrl;
     if (mode.debugUrl) service.debugUrl = mode.debugUrl;
     return service;
   });
@@ -600,7 +602,7 @@ function buildServices() {
  *
  * | Variable               | Default                          | Description |
  * |------------------------|----------------------------------|-------------|
- * | `OSRM_MODES`           | (public OSRM services)           | JSON array of `{name, url, path?, profile?, debugUrl?}` routing backends. `profile` defaults by position (driving → bike → foot). `debugUrl` overrides the debug map link for that mode. |
+ * | `OSRM_MODES`           | (public OSRM services)           | JSON array of `{name, url, path?, profile?, debugUrl?, tileUrl?}` routing backends. `profile` defaults by position (driving → bike → foot). `debugUrl` overrides the debug map link for that mode. |
  * | `OSRM_BACKEND`         | —                                | **Deprecated.** Single backend URL. Use `OSRM_MODES` instead. |
  * | `OSRM_VECTOR_STYLE`    | —                                | MapLibre style JSON URL for an optional vector background. |
  * | `OSRM_VECTOR_NAME`     | `Standard`                       | Name of the vector background in the layer control. |
@@ -700,8 +702,8 @@ var leafletOptions = {
    * - **Bike** — Waymarked Trails cycling routes
    *   ([waymarkedtrails.org](https://waymarkedtrails.org/), CC-BY-SA).
    *   *Auto-activated* when a bike-type profile is selected.
-   * - **Small Components** — GeoFabrik OSM Inspector routing debug tiles
-   *   ([tools.geofabrik.de](https://tools.geofabrik.de/osmi/tiles/routing/)).
+   * - **Small Components** — active OSRM backend vector tiles, filtered by
+   *   boolean `is_small` in the `speeds` layer (Leaflet zoom 13 and above).
    *   Highlights small disconnected road segments. Stored overlay preference
    *   is restored from localStorage on reload for non-bike profiles.
    *

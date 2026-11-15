@@ -1,5 +1,7 @@
 'use strict';
 
+jest.mock('../src/small_components', () => ({ createLayer: () => ({ _url: 'OSRM component tiles', setService: jest.fn() }) }));
+
 jest.mock('../src/vector_layer', () => ({ createLayer: (style, options) => ({ _url: style, style, options, _options: options }) }));
 
 // Mock leaflet so this test runs in the node environment without a DOM
@@ -110,7 +112,7 @@ describe('leaflet_options — tileset migration', () => {
 
     test('Small Components overlay still present', () => {
       expect(leafletOptions.overlay['Small Components']).toBeDefined();
-      expect(leafletOptions.overlay['Small Components']._url).toContain('geofabrik.de');
+      expect(leafletOptions.overlay['Small Components'].setService).toBeDefined();
     });
   });
 });
@@ -501,4 +503,16 @@ describe('leaflet_options — runtime configuration overrides', () => {
       delete global.window;
     });
   });
+});
+
+
+test('preserves explicit component tile configuration for each routing mode', () => {
+  global.window = { osrmConfig: { OSRM_MODES: [
+    { name: 'Custom', url: 'https://router.example', path: '/custom', profile: 'car', tileUrl: '/tiles/{z}/{x}/{y}.mvt' },
+    { name: 'No tiles', url: 'https://router.example', tileUrl: false }
+  ] } };
+  try {
+    expect(leafletOptions.services[0].tileUrl).toBe('/tiles/{z}/{x}/{y}.mvt');
+    expect(leafletOptions.services[1].tileUrl).toBe(false);
+  } finally { delete global.window; }
 });

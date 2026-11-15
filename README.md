@@ -29,6 +29,7 @@ with the following fields:
 | `url`      | yes      | Backend base URL. `/route/v1` is appended unless `path` is set. |
 | `path`     | no       | Explicit routing path, e.g. `https://routing.openstreetmap.de/routed-bike/route/v1`. |
 | `profile`  | no       | Internal profile (`driving`, `bike`, `foot`). Defaults by position: 0 → driving, 1 → bike, 2 → foot. |
+| `tileUrl` | no | Component vector tile URL template with `{x}`, `{y}`, `{z}` and optional `{profile}`. Set `false` to disable tiles for this mode. Standard `/route/v1` paths infer the sibling `/tile/v1` endpoint; custom paths require this field. |
 | `debugUrl` | no       | Debug map opened by the "Open in Debug Map" tool button while this mode is active. Defaults to the bundled `debug/`. |
 
 ```bash
@@ -304,9 +305,27 @@ appear as checkboxes in the layer control.
 |---------|--------|-------------|
 | Hiking | [Waymarked Trails](https://waymarkedtrails.org/) | Hiking routes overlay (CC-BY-SA) |
 | Bike | [Waymarked Trails](https://waymarkedtrails.org/) | Cycling routes overlay (CC-BY-SA). **Auto-activated** when a bike profile is selected. |
-| Small Components | [GeoFabrik OSM Inspector](https://tools.geofabrik.de/osmi/tiles/routing/) | Debug overlay highlighting small disconnected road segments. Useful for checking OSM data quality. |
+| Small Components | Active OSRM backend, `speeds` vector layer | Highlights only segments with boolean `is_small: true`, using the selected mode’s graph and extraction threshold. Available at Leaflet zoom 13 and above (OSRM tile zoom 12). |
 
-The user's overlay preference is saved in localStorage and restored on reload.
+The Small Components checkbox is saved separately from the trail overlays and
+restored on reload, including when Bike is auto-enabled. Changing modes or
+restoring a mode from browser history updates the tile source without changing
+the checkbox. This layer does not use OSM Inspector diagnostics: legitimate
+connected dead ends are not highlighted merely for having an endpoint.
+
+For a reverse proxy, `/proxy/route/v1` resolves to
+`/proxy/tile/v1/{profile}/tile({x},{y},{z}).mvt`. Custom routing paths should set
+an explicit per-mode template, for example:
+
+```json
+[{"name":"Car","url":"https://router.example/proxy","path":"https://router.example/custom/route","profile":"driving","tileUrl":"https://router.example/proxy/tile/v1/{profile}/tile({x},{y},{z}).mvt"}]
+```
+
+The same `OSRM_MODES` JSON works in `window.osrmConfig`, the Docker environment,
+or a mounted `modes.json`; Docker passes through `tileUrl` without rewriting it.
+Use `"tileUrl": false` when a backend does not expose vector tiles. Unsupported
+or failing tile services display an unavailable message, with no external
+fallback. A mode's `debugUrl` is independent of its `tileUrl`.
 
 **Adding custom overlays:** Define a `L.tileLayer` and add an entry to the
 `overlay` object in `src/leaflet_options.js`:

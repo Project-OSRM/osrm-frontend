@@ -1,4 +1,8 @@
 module.exports = {
+  "Loading small routing components…": "Chargement des petites composantes du réseau…",
+  "Small Components unavailable for this routing mode.": "Les petites composantes ne sont pas disponibles pour ce mode de déplacement.",
+  "Zoom in to level 13 to see small routing components.": "Zoomez au niveau 13 pour voir les petites composantes du réseau.",
+
   name: 'Français',
   key: 'fr',
   'Open in editor': 'Ouvrir dans l\'éditeur',

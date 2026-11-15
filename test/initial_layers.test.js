@@ -23,7 +23,7 @@ describe('determineInitialLayers', function() {
 
   it('should show Bike overlay when profile is bike even if stored overlay is true', function() {
     var result = initialLayers.determineInitialLayers(baselayer, overlay, services, 1, true);
-    expect(result.layers).toEqual([baselayer, overlay['Bike']]);
+    expect(result.layers).toEqual([baselayer, overlay['Small Components'], overlay['Bike']]);
     expect(result.bikeOverlayAutoActivated).toBe(true);
   });
 

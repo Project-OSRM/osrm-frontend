@@ -14,15 +14,11 @@
 function determineInitialLayers(baselayer, overlay, services, profileIndex, hasStoredOverlay) {
   var profile = services[profileIndex] && services[profileIndex].profile;
 
-  if (profile === 'bike' && overlay['Bike']) {
-    return { layers: [baselayer, overlay['Bike']], bikeOverlayAutoActivated: true };
-  }
-
-  if (hasStoredOverlay) {
-    return { layers: [baselayer, overlay['Small Components']], bikeOverlayAutoActivated: false };
-  }
-
-  return { layers: [baselayer], bikeOverlayAutoActivated: false };
+  var layers = [baselayer];
+  if (hasStoredOverlay && overlay['Small Components']) layers.push(overlay['Small Components']);
+  var bike = profile === 'bike' && !!overlay.Bike;
+  if (bike) layers.push(overlay.Bike);
+  return { layers: layers, bikeOverlayAutoActivated: bike };
 }
 
 module.exports = { determineInitialLayers: determineInitialLayers };

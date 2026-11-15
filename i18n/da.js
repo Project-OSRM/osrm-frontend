@@ -1,4 +1,8 @@
 module.exports = {
+  "Loading small routing components…": "Indlæser små komponenter i vejnettet…",
+  "Small Components unavailable for this routing mode.": "Små komponenter er ikke tilgængelige for denne transportform.",
+  "Zoom in to level 13 to see small routing components.": "Zoom ind til niveau 13 for at se små komponenter i vejnettet.",
+
   name: 'Dansk',
   key: 'da',
   'Open in Debug Map': 'Åbn i Debug Map',

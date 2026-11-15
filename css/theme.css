@@ -254,3 +254,5 @@
 @keyframes osrm-vector-loading { to { transform: rotate(360deg); } }
 @media (max-width: 720px) { .osrm-vector-status { top: 66px; } }
 @media (prefers-reduced-motion: reduce) { .osrm-vector-status:before { animation: none; } }
+
+.osrm-components-status:not(.osrm-vector-status-error):before { display: none; }
