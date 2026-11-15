@@ -26,7 +26,7 @@ var outdoors = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
     attribution: esriAttribution,
     maxZoom: 19
   }),
-  osm = require('./vector_layer').createLayer('https://vector.openstreetmap.org/styles/shortbread/colorful.json', {
+  osm = require('./vector_layer').createLayer('images/openstreetmap/style.json', {
     theme: 'original',
     language: getLanguage(),
     attribution: osmAttribution,

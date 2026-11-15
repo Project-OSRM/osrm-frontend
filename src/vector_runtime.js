@@ -5,6 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import createBackgroundRenderer from './vector_renderer';
 import vectorTheme from './vector_theme';
 import vectorPalette from './vector_palette';
+import resolveStyleAssets from './vector_style_assets';
 
 setWorkerUrl(workerUrl);
 
@@ -17,7 +18,8 @@ export function createLayer(style, theme) {
     style: style,
     interactive: false,
     transformStyle: function(previous, next) {
-      original = vectorPalette.vectorStyle(next);
+      var styleUrl = typeof style === 'string' ? new URL(style, document.baseURI).href : document.baseURI;
+      original = vectorPalette.vectorStyle(resolveStyleAssets(next, styleUrl));
       return currentTheme === 'original' ? original : vectorTheme.transformStyle(previous, original);
     }
   });

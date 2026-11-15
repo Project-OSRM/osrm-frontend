@@ -22,7 +22,7 @@ describe('leaflet_options — tileset migration', () => {
     });
 
     test('OSM layer uses openstreetmap.org', () => {
-      expect(leafletOptions.layer[0]['OpenStreetMap']._url).toContain('vector.openstreetmap.org/styles/shortbread/colorful.json');
+      expect(leafletOptions.layer[0]['OpenStreetMap']._url).toContain('images/openstreetmap/style.json');
     });
 
     test('OSM.de layer uses openstreetmap.de', () => {
@@ -80,7 +80,7 @@ describe('leaflet_options — tileset migration', () => {
 
   describe('default state', () => {
     test('default layer is the streets (CartoDB) tile layer', () => {
-      expect(leafletOptions.defaultState.layer._url).toContain('vector.openstreetmap.org');
+      expect(leafletOptions.defaultState.layer._url).toContain('images/openstreetmap/style.json');
     });
 
     test('default zoom is 13', () => {
@@ -276,7 +276,7 @@ describe('leaflet_options — runtime configuration overrides', () => {
     test('falls back to streets layer for unknown layer name', () => {
       global.window = { osrmConfig: { OSRM_DEFAULT_LAYER: 'unknown' } };
       const leafletOptions = require('../src/leaflet_options');
-      expect(leafletOptions.defaultState.layer._url).toContain('vector.openstreetmap.org');
+      expect(leafletOptions.defaultState.layer._url).toContain('images/openstreetmap/style.json');
       delete global.window;
     });
   });

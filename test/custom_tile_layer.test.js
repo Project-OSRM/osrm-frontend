@@ -145,13 +145,13 @@ describe('OSRM_TILE_URL and the default layer', () => {
 
   test('OSRM_DEFAULT_LAYER=custom without a tile URL falls back to streets', () => {
     const opts = loadWithConfig({ OSRM_DEFAULT_LAYER: 'custom' });
-    expect(opts.defaultState.layer._url).toContain('vector.openstreetmap.org');
+    expect(opts.defaultState.layer._url).toContain('images/openstreetmap/style.json');
   });
 
   test('a rejected tile URL leaves streets as the default', () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
     const opts = loadWithConfig({ OSRM_TILE_URL: 'ftp://tiles.example.com/{z}/{x}/{y}.png' });
-    expect(opts.defaultState.layer._url).toContain('vector.openstreetmap.org');
+    expect(opts.defaultState.layer._url).toContain('images/openstreetmap/style.json');
     warnSpy.mockRestore();
   });
 });
