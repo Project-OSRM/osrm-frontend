@@ -779,13 +779,14 @@ lrmControl.on('routingerror', function() {
 
 /* Entrance picker — see src/entrance_waypoints.js for what it does and why. */
 
-function directionsPaneWidth() {
-  // The themed layout gives the map its own unobscured viewport beside the
-  // sidebar (or above the mobile sheet), so it needs no overlay padding.
-  if (darkInterface) return 0;
+function directionsPaneInsets() {
   var pane = document.querySelector('.leaflet-routing-container');
-  if (!pane || pane.classList.contains('leaflet-routing-container-hide')) return 0;
-  return pane.offsetWidth;
+  var size = pane && !pane.classList.contains('leaflet-routing-container-hide') ? pane.getBoundingClientRect() : null;
+  return routeZoom.getPaneInsets(map.getSize(), size, darkInterface);
+}
+
+function directionsPaneWidth() {
+  return directionsPaneInsets().right;
 }
 
 var entranceWaypoints = createEntranceWaypoints({
@@ -797,6 +798,7 @@ var entranceWaypoints = createEntranceWaypoints({
   },
   fetchOutline: routingGeocoder.fetchOutline,
   paneWidth: directionsPaneWidth,
+  viewInsets: directionsPaneInsets,
   // Read live: a door forbidden to cars may be fine on foot, so the offer has to
   // follow whatever profile is selected right now.
   mode: function() {
@@ -960,11 +962,7 @@ lrmControl.on('routeselected', function(e) {
     return;
   }
 
-  var container = document.querySelector('.leaflet-routing-container');
-  var paneWidth = 0;
-  if (!darkInterface && container && !container.classList.contains('leaflet-routing-container-hide')) {
-    paneWidth = container.offsetWidth;
-  }
+  var paneInsets = directionsPaneInsets();
 
   // A picker that has just framed the doors it offers keeps the view: the route
   // that follows the geocode must not fit itself over them. Only that route
@@ -980,7 +978,7 @@ lrmControl.on('routeselected', function(e) {
     var containerPoints = boundsCoordinates.map(function(coordinate) {
       return map.latLngToContainerPoint(coordinate);
     });
-    if (!routeZoom.isRouteUnderPane(containerPoints, map.getSize(), paneWidth)) return;
+    if (!routeZoom.isRouteUnderPane(containerPoints, map.getSize(), paneInsets)) return;
   }
   routeFitTracker.clearFitPending();
 
@@ -989,14 +987,14 @@ lrmControl.on('routeselected', function(e) {
   var currentZoom = map.getZoom();
   var fitPadding = 20;
   var paddingOpts = {
-    paddingTopLeft: L.point(fitPadding, fitPadding),
-    paddingBottomRight: L.point(paneWidth + fitPadding, fitPadding)
+    paddingTopLeft: L.point(paneInsets.left + fitPadding, paneInsets.top + fitPadding),
+    paddingBottomRight: L.point(paneInsets.right + fitPadding, paneInsets.bottom + fitPadding)
   };
 
   if (currentZoom >= 13) {
     var mapSize = map.getSize();
-    var availableWidth = mapSize.x - paneWidth - 2 * fitPadding;
-    var availableHeight = mapSize.y - 2 * fitPadding;
+    var availableWidth = mapSize.x - paneInsets.left - paneInsets.right - 2 * fitPadding;
+    var availableHeight = mapSize.y - paneInsets.top - paneInsets.bottom - 2 * fitPadding;
 
     var sw = map.project(bounds.getSouthWest(), currentZoom);
     var ne = map.project(bounds.getNorthEast(), currentZoom);
@@ -1006,7 +1004,8 @@ lrmControl.on('routeselected', function(e) {
     if (routePixelWidth <= availableWidth && routePixelHeight <= availableHeight) {
       var center = bounds.getCenter();
       var centerPixel = map.project(center, currentZoom);
-      centerPixel.x += paneWidth / 2;
+      centerPixel.x += (paneInsets.right - paneInsets.left) / 2;
+      centerPixel.y += (paneInsets.bottom - paneInsets.top) / 2;
       var newMapCenter = map.unproject(centerPixel, currentZoom);
       map.panTo(newMapCenter);
     } else {

@@ -1,5 +1,7 @@
 'use strict';
 
+var normalizePaneInsets = require('./route_zoom').normalizePaneInsets;
+
 var L = require('leaflet');
 
 // Which OSM `entrance=*` values can serve as a routing endpoint, and in which
@@ -345,9 +347,9 @@ function shouldZoomToExtent(extent, viewport, clear) {
 // part of the map the directions pane does not cover. Anything under the pane
 // is as good as off screen.
 function isExtentClear(sw, ne, mapSize, paneWidth) {
-  var usableWidth = mapSize.x - (paneWidth || 0);
-  return Math.min(sw.x, ne.x) >= 0 && Math.max(sw.x, ne.x) <= usableWidth &&
-    Math.min(sw.y, ne.y) >= 0 && Math.max(sw.y, ne.y) <= mapSize.y;
+  var insets = normalizePaneInsets(paneWidth);
+  return Math.min(sw.x, ne.x) >= insets.left && Math.max(sw.x, ne.x) <= mapSize.x - insets.right &&
+    Math.min(sw.y, ne.y) >= insets.top && Math.max(sw.y, ne.y) <= mapSize.y - insets.bottom;
 }
 
 // The door positions: every choice is a door.
@@ -738,7 +740,8 @@ function createEntrancePicker(map, options) {
     // others stay on the map, they simply do not pull the view around.
     var offer = activeOffer();
     if (!offer) return false;
-    var padRight = paneWidth();
+    var insets = normalizePaneInsets(options.viewInsets ? options.viewInsets() : paneWidth());
+    var padRight = insets.left + insets.right;
     var bounds = framingBounds(padRight, offer);
     if (!bounds || !bounds.isValid()) return false;
 
@@ -748,17 +751,17 @@ function createEntrancePicker(map, options) {
     var extent = {width: Math.abs(ne.x - sw.x), height: Math.abs(sw.y - ne.y)};
     var viewport = {
       width: mapSize.x - padRight - 2 * FIT_PADDING,
-      height: mapSize.y - 2 * FIT_PADDING
+      height: mapSize.y - insets.top - insets.bottom - 2 * FIT_PADDING
     };
     // Already framed and legible: moving the map would be disruption for its
     // own sake.
-    var clear = isExtentClear(sw, ne, mapSize, padRight);
+    var clear = isExtentClear(sw, ne, mapSize, insets);
     if (!shouldZoomToExtent(extent, viewport, clear)) return false;
 
     map.fitBounds(bounds, {
       maxZoom: MAX_PICKER_ZOOM,
-      paddingTopLeft: L.point(FIT_PADDING, FIT_PADDING),
-      paddingBottomRight: L.point(padRight + FIT_PADDING, FIT_PADDING)
+      paddingTopLeft: L.point(insets.left + FIT_PADDING, insets.top + FIT_PADDING),
+      paddingBottomRight: L.point(insets.right + FIT_PADDING, insets.bottom + FIT_PADDING)
     });
     return true;
   }

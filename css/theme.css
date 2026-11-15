@@ -16,8 +16,8 @@
 }
 .osrm-theme-dark body { margin: 0; }
 .osrm-theme-dark .map {
-  left: var(--osrm-sidebar-width);
-  width: calc(100% - var(--osrm-sidebar-width));
+  left: 0;
+  width: 100%;
   background: #303e50;
 }
 .osrm-theme-dark .leaflet-container { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
@@ -29,6 +29,7 @@
   position: fixed;
   inset: 0 auto 0 0;
   width: var(--osrm-sidebar-width);
+  box-sizing: border-box;
   min-width: 0;
   max-width: none;
   height: 100dvh;
@@ -193,7 +194,7 @@
   .osrm-theme-dark { --osrm-sidebar-width: 320px; }
 }
 @media (max-width: 720px) {
-  .osrm-theme-dark .map { left: 0; width: 100%; height: auto; bottom: var(--osrm-panel-height, 300px); }
+  .osrm-theme-dark .map { left: 0; width: 100%; height: 100%; bottom: 0; }
   .osrm-theme-dark .leaflet-routing-container.dark { inset: auto 0 0; width: 100%; height: auto; max-height: 56dvh; padding: 14px 16px 10px; border: 0; border-top: 1px solid #505050; border-radius: 22px 22px 0 0; }
   .osrm-panel-header { margin-bottom: 10px; }
 
