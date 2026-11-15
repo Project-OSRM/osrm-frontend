@@ -101,7 +101,8 @@ function createLayer(style, options, runtimeLoader) {
         if (this._generation !== generation || this._map !== map) return;
         try {
           var renderer = runtime.createLayer(style, this.options.theme || 'dark');
-          renderer.options = Object.assign({}, renderer.options, { additionalAttribution: this.options.attribution });
+          // Leaflet stores defaults on the options prototype; preserve them.
+          L.setOptions(renderer, { additionalAttribution: this.options.attribution });
           this.addLayer(renderer);
           var loaded = false;
           renderer.getMaplibreMap().once('load', function() {

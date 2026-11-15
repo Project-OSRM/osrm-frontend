@@ -159,3 +159,27 @@ test('loads local module and CSS assets on demand, retries a failed load, and re
   script.remove();
   document.querySelector('link[href*="vector.css"]').remove();
 });
+
+test('preserves inherited renderer sizing and pane defaults when adding attribution', async () => {
+  Object.defineProperties(container, { clientWidth: { value: 1000 }, clientHeight: { value: 700 } });
+  map.invalidateSize();
+  const events = new L.Evented();
+  const Renderer = L.Layer.extend({
+    options: { padding: 0.1, pane: 'tilePane', updateInterval: 32 },
+    initialize: function() { L.setOptions(this, { interactive: false }); },
+    onAdd: function(leafletMap) {
+      this.size = leafletMap.getSize().multiplyBy(1 + this.options.padding * 2);
+    },
+    onRemove: function() {},
+    getMaplibreMap: () => events
+  });
+  const renderer = new Renderer();
+  const options = renderer.options;
+  addVector(() => Promise.resolve({ createLayer: () => renderer }));
+  await flush();
+  expect(renderer.options).toBe(options);
+  expect(renderer.options.additionalAttribution).toBe('Local map');
+  expect(renderer.options.pane).toBe('tilePane');
+  expect(renderer.options.updateInterval).toBe(32);
+  expect(renderer.size).toEqual(L.point(1200, 840));
+});
