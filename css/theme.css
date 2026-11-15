@@ -5,14 +5,14 @@
   --osrm-type-heading: 24px;
   --osrm-type-body: 14px;
   --osrm-type-caption: 12px;
-  --osrm-panel: #102526;
-  --osrm-surface: #24363b;
-  --osrm-card: #091b1e;
-  --osrm-text: #f1f5f6;
-  --osrm-muted: #9bafb6;
-  --osrm-border: #355057;
+  --osrm-panel: #292929;
+  --osrm-surface: #363636;
+  --osrm-card: #1e1e1e;
+  --osrm-text: #f1f2f3;
+  --osrm-muted: #adafb3;
+  --osrm-border: #505050;
   --osrm-accent: #3482ff;
-  background: var(--osrm-panel);
+  background: #303e50;
 }
 .osrm-theme-dark body { margin: 0; }
 .osrm-theme-dark .map {
@@ -35,9 +35,9 @@
   margin: 0 !important;
   padding: 22px 20px 16px;
   border: 0;
-  border-right: 1px solid #233c40;
+  border-right: 1px solid #454545;
   border-radius: 0;
-  background: var(--osrm-panel);
+  background: rgb(41 41 41 / 80%);
   color: var(--osrm-text);
   box-shadow: 6px 0 24px #00141620;
   overflow-x: hidden;
@@ -56,7 +56,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #3b5256;
+  background: #4a4a4a;
   color: white;
   cursor: pointer;
 }
@@ -64,7 +64,7 @@
 .osrm-theme-dark .leaflet-routing-container-hide .leaflet-routing-collapse-btn:after { content: '\2630'; font-size: 18px; }
 .osrm-mode-section { flex: none; margin-bottom: 16px; }
 .osrm-mode-caption { display: block; margin-bottom: 7px; color: var(--osrm-muted); font-size: var(--osrm-type-caption); font-weight: 600; letter-spacing: 0; text-transform: none; }
-.osrm-theme-dark .leaflet-osrm-mode-selector { display: block; float: none; width: 100%; margin: 0; border: 1px solid #355057; border-radius: 12px; background: var(--osrm-surface); }
+.osrm-theme-dark .leaflet-osrm-mode-selector { display: block; float: none; width: 100%; margin: 0; border: 1px solid #505050; border-radius: 12px; background: var(--osrm-surface); }
 .osrm-theme-dark .leaflet-osrm-mode-selector .osrm-profile-chooser { width: 100%; height: 44px; padding: 0 12px; color: var(--osrm-text); font: inherit; font-size: var(--osrm-type-body); border-radius: 12px; }
 .osrm-theme-dark .osrm-profile-chooser option { color: var(--osrm-text); background: var(--osrm-surface); }
 .osrm-theme-dark .osrm-directions-inputs {
@@ -82,7 +82,7 @@
   overflow: auto;
 }
 .osrm-theme-dark .leaflet-routing-geocoders .leaflet-routing-geocoder { min-height: 54px; padding: 2px 0; background: transparent; border-bottom: 1px solid #ffffff12; border-radius: 8px; }
-.osrm-theme-dark .leaflet-routing-geocoder:focus-within { background: #30474d; box-shadow: inset 2px 0 var(--osrm-accent); }
+.osrm-theme-dark .leaflet-routing-geocoder:focus-within { background: #444444; box-shadow: inset 2px 0 var(--osrm-accent); }
 .osrm-theme-dark .osrm-directions-inputs .leaflet-routing-geocoder input { height: 48px; padding: 8px; color: var(--osrm-text); font: inherit; font-size: var(--osrm-type-body); outline: none; }
 .osrm-theme-dark .osrm-directions-inputs input::placeholder { color: #a1b3b9; opacity: 1; }
 .osrm-theme-dark .leaflet-routing-waypoint-pin { margin-left: 5px; }
@@ -94,10 +94,10 @@
 .osrm-theme-dark .leaflet-routing-add-waypoint:after { content: none; }
 .osrm-theme-dark .leaflet-routing-reverse-waypoints { width: 40px; margin-left: 8px !important; }
 .osrm-theme-dark .osrm-route-preferences { margin-top: 12px; padding: 0 4px 4px; font-size: var(--osrm-type-body); }
-.osrm-theme-dark .osrm-route-preferences > summary { width: fit-content; padding: 7px 12px; border: 1px solid #536d74; border-radius: 18px; color: #d4e2e6; list-style-position: inside; }
+.osrm-theme-dark .osrm-route-preferences > summary { width: fit-content; padding: 7px 12px; border: 1px solid #606060; border-radius: 18px; color: #d4e2e6; list-style-position: inside; }
 .osrm-theme-dark .osrm-route-preferences[open] > summary { margin-bottom: 10px; }
 .osrm-theme-dark .osrm-route-preferences label { color: #c0d0d6; }
-.osrm-theme-dark .osrm-route-preferences input[type="text"] { height: 36px; margin-top: 6px; padding: 7px 9px; border: 1px solid #526b74; border-radius: 7px; background: #172d32; color: white; font-size: var(--osrm-type-body); }
+.osrm-theme-dark .osrm-route-preferences input[type="text"] { height: 36px; margin-top: 6px; padding: 7px 9px; border: 1px solid #606060; border-radius: 7px; background: #292929; color: white; font-size: var(--osrm-type-body); }
 .osrm-theme-dark .osrm-route-preferences input[type="checkbox"] { accent-color: var(--osrm-accent); margin-right: 7px; vertical-align: -2px; }
 .osrm-theme-dark .osrm-route-preferences small { margin-top: 5px; color: #9aafb7; font-size: var(--osrm-type-caption); line-height: 1.5; }
 .osrm-theme-dark .leaflet-routing-alternatives-container {
@@ -116,7 +116,7 @@
   transition: none;
 }
 .osrm-theme-dark .leaflet-routing-container-hide .leaflet-routing-alternatives-container { display: none; }
-.osrm-theme-dark .leaflet-routing-alt.osrm-directions-instructions { display: block; margin: 0 0 12px; padding: 0; border: 1px solid #29444b; border-radius: 16px; color: var(--osrm-text); background: var(--osrm-card); overflow: hidden; }
+.osrm-theme-dark .leaflet-routing-alt.osrm-directions-instructions { display: block; margin: 0 0 12px; padding: 0; border: 1px solid #454545; border-radius: 16px; color: var(--osrm-text); background: var(--osrm-card); overflow: hidden; }
 .osrm-theme-dark .leaflet-routing-alt:not(.leaflet-routing-alt-minimized) { border-color: #4c94ff; }
 .osrm-theme-dark .osrm-directions-summary { margin: 0; padding: 20px; color: var(--osrm-text); background: none; cursor: pointer; }
 .osrm-theme-dark .leaflet-routing-alt:not(.leaflet-routing-alt-minimized) .osrm-directions-summary { color: white; background: linear-gradient(135deg, #347ef5, #2469de); }
@@ -145,19 +145,19 @@
 .osrm-route-label { display: flex; flex-direction: column; align-items: center; width: max-content; transform: translate(-50%, -50%); padding: 8px 12px; border: 1px solid #7897b333; border-radius: 9px; background: #182b3ded; box-shadow: 0 3px 12px #00101a28; color: #a7c8fc; cursor: pointer; font: 14px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 .osrm-route-label.selected { background: #3482ff; color: white; border-color: #81b2ff; }
 .osrm-theme-dark .leaflet-bar { border: 1px solid #405a62; border-radius: 12px; box-shadow: 0 3px 16px #00151c26; overflow: hidden; }
-.osrm-theme-dark .leaflet-bar a { width: 36px; height: 36px; line-height: 36px; border-color: #ffffff14; background-color: #1e3439; color: #d2e0e5; }
-.osrm-theme-dark .leaflet-bar a:hover { background-color: #2a464e; }
+.osrm-theme-dark .leaflet-bar a { width: 36px; height: 36px; line-height: 36px; border-color: #ffffff14; background-color: #303030; color: #d2e0e5; }
+.osrm-theme-dark .leaflet-bar a:hover { background-color: #454545; }
 .osrm-theme-dark .leaflet-control-zoom { position: fixed; inset: auto 18px 36px auto; }
 .osrm-theme-dark .leaflet-control-locate { border: 0; box-shadow: none; position: fixed; left: auto; right: 18px; top: 68px; }
 .osrm-theme-dark .leaflet-control-locate.leaflet-bar a { width: 36px; height: 36px; }
 .osrm-theme-dark .leaflet-control-layers { background: transparent; border: 0; box-shadow: none; position: fixed; left: auto; right: 18px; top: 18px; bottom: auto; }
-.osrm-theme-dark .leaflet-control-layers-toggle { width: 38px; height: 38px; border-radius: 12px; background-color: #1e3439; box-shadow: none; }
-.osrm-theme-dark .leaflet-control-layers-expanded { padding: 12px; border-radius: 12px; color: var(--osrm-text); background: #1d353bed; }
-.osrm-theme-dark .leaflet-control-attribution { border-radius: 6px 0 0; padding: 3px 8px; background: #10262dd9; color: #a6bac4; font-size: 10px; }
+.osrm-theme-dark .leaflet-control-layers-toggle { width: 38px; height: 38px; border-radius: 12px; background-color: #303030; box-shadow: none; }
+.osrm-theme-dark .leaflet-control-layers-expanded { padding: 12px; border-radius: 12px; color: var(--osrm-text); background: #303030ed; }
+.osrm-theme-dark .leaflet-control-attribution { border-radius: 6px 0 0; padding: 3px 8px; background: #292929d9; color: #a6bac4; font-size: 10px; }
 .osrm-theme-dark .leaflet-control-attribution a { color: #c6d8e4; }
 .osrm-theme-dark .leaflet-control-scale { position: fixed; right: 100px; bottom: 18px; margin: 0; transform: none; }
 .osrm-theme-dark .leaflet-control-scale-line { color: #bacfd9; border-color: #bacfd9; background: #172d36a6; text-shadow: none; }
-.osrm-theme-dark .leaflet-osrm-tools-container { padding: 5px 8px; border: 1px solid #3d565e; border-radius: 10px; background: #193036eb; box-shadow: 0 3px 16px #00151c26; }
+.osrm-theme-dark .leaflet-osrm-tools-container { padding: 5px 8px; border: 1px solid #505050; border-radius: 10px; background: #292929eb; box-shadow: 0 3px 16px #00151c26; }
 .osrm-panel-toolbar { flex: none; margin: -8px 0 16px; }
 .osrm-theme-dark .osrm-panel-toolbar .leaflet-osrm-tools-container { position: relative; inset: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; float: none; width: 100%; height: auto; min-height: 38px; max-width: none; margin: 0 !important; box-sizing: border-box; box-shadow: none; }
 /* Keep actions together and give language and units a dedicated second row. */
@@ -167,19 +167,19 @@
 .osrm-theme-dark .osrm-panel-toolbar .osrm-localization-chooser { flex-grow: 2; }
 .osrm-theme-dark .osrm-panel-toolbar .leaflet-osrm-tools-container > .leaflet-osrm-tools-version { margin-left: auto; border: 0; }
 .osrm-theme-dark .osrm-panel-toolbar .leaflet-osrm-tools-share { position: static; }
-.osrm-theme-dark .osrm-panel-toolbar .share-popup { top: calc(100% + 8px); bottom: auto; left: 0; right: auto; width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid var(--osrm-border); border-radius: 14px; padding: 12px; box-shadow: 0 12px 30px #0005; background: #193136; }
+.osrm-theme-dark .osrm-panel-toolbar .share-popup { top: calc(100% + 8px); bottom: auto; left: 0; right: auto; width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid var(--osrm-border); border-radius: 14px; padding: 12px; box-shadow: 0 12px 30px #0005; background: #303030; }
 
 .osrm-theme-dark .leaflet-osrm-tools-container .osrm-directions-icon { filter: brightness(0) invert(0.9); }
 .osrm-theme-dark .osrm-localization-chooser,
-.osrm-theme-dark .osrm-units-chooser { color: #d0dfe5; background-color: #1c353c; }
+.osrm-theme-dark .osrm-units-chooser { color: #d0dfe5; background-color: #303030; }
 .osrm-theme-dark .leaflet-routing-geocoder-result { z-index: 3000; }
-.osrm-theme-dark .leaflet-routing-geocoder-result table { border: 1px solid #4c6a74; border-radius: 10px; color: #edf4f6; background: #1d373e; box-shadow: 0 8px 20px #00101444; }
+.osrm-theme-dark .leaflet-routing-geocoder-result table { border: 1px solid #606060; border-radius: 10px; color: #edf4f6; background: #303030; box-shadow: 0 8px 20px #00101444; }
 .osrm-theme-dark .leaflet-routing-geocoder-selected,
-.osrm-theme-dark .leaflet-routing-geocoder-result tr:hover { background: #2f5562; }
+.osrm-theme-dark .leaflet-routing-geocoder-result tr:hover { background: #454545; }
 .osrm-theme-dark :focus-visible { outline: 2px solid #8bbaff; outline-offset: 3px; }
 .osrm-theme-dark * { scrollbar-width: thin; scrollbar-color: #4c6872 transparent; }
 .osrm-theme-dark .leaflet-popup-content-wrapper,
-.osrm-theme-dark .leaflet-popup-tip { background: #1b343b; color: #e1edf1; }
+.osrm-theme-dark .leaflet-popup-tip { background: #303030; color: #e1edf1; }
 .osrm-theme-dark .leaflet-popup-content-wrapper { border: 1px solid #45616b; border-radius: 14px; box-shadow: 0 6px 22px #00141e44; }
 .osrm-theme-dark .leaflet-popup-content a,
 .osrm-theme-dark .leaflet-popup-close-button { color: #9dc3ff; }
@@ -194,7 +194,7 @@
 }
 @media (max-width: 720px) {
   .osrm-theme-dark .map { left: 0; width: 100%; height: auto; bottom: var(--osrm-panel-height, 300px); }
-  .osrm-theme-dark .leaflet-routing-container.dark { inset: auto 0 0; width: 100%; height: auto; max-height: 56dvh; padding: 14px 16px 10px; border: 0; border-top: 1px solid #355158; border-radius: 22px 22px 0 0; }
+  .osrm-theme-dark .leaflet-routing-container.dark { inset: auto 0 0; width: 100%; height: auto; max-height: 56dvh; padding: 14px 16px 10px; border: 0; border-top: 1px solid #505050; border-radius: 22px 22px 0 0; }
   .osrm-panel-header { margin-bottom: 10px; }
 
   .osrm-mode-section { margin-bottom: 10px; }
