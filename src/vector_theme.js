@@ -11,6 +11,8 @@ var palette = {
   farmland: '#4c6a4b',
   orchard: '#41684f',
   residential: '#344355',
+  pavement: '#747e8a',
+  runway: '#939aa3',
   buildingBase: '#344356',
   building: '#3e4e62',
   buildingOutline: '#46586b',
@@ -24,6 +26,7 @@ var palette = {
   halo: '#2a3948'
 };
 
+var pavedAirportKinds = ['apron', 'runway', 'taxiway'];
 var agriculturalKinds = ['farmland', 'farm', 'agriculture', 'cropland', 'crop', 'orchard', 'vineyard', 'plantation'];
 
 function fillColor(name, id) {
@@ -35,9 +38,11 @@ function fillColor(name, id) {
       ['farmland', 'farm', 'agriculture', 'cropland', 'crop'], palette.farmland,
       ['orchard', 'vineyard', 'plantation'], palette.orchard,
       ['scrub', 'heath'], '#48664e',
+      pavedAirportKinds, palette.pavement,
       ['industrial', 'commercial'], '#394554',
       palette.background];
   }
+  if (/apron|runway|taxiway/.test(name)) return palette.pavement;
   if (/orchard|vineyard|plantation/.test(name)) return palette.orchard;
   if (/farmland|agricultur|cropland|farm/.test(name)) return palette.farmland;
   if (/residential/.test(name)) return palette.residential;
@@ -55,6 +60,8 @@ function fillColor(name, id) {
 function lineColor(name) {
   if (/water|river|stream/.test(name)) return palette.waterway;
   if (/casing|_case(?:_|$)/.test(name)) return palette.roadCasing;
+  if (/runway/.test(name)) return palette.runway;
+  if (/taxiway|apron/.test(name)) return palette.pavement;
   if (/motorway|_(?:mot)(?:_|$)/.test(name)) return palette.highway;
   if (/trunk|primary|_(?:pri)(?:_|$)/.test(name)) return palette.mainRoad;
   if (/secondary|tertiary|_sec(?:_|$)/.test(name)) return palette.secondaryRoad;
@@ -79,12 +86,21 @@ function transformStyle(previousStyle, style) {
       if (layer.id === 'landcover' && layer['source-layer'] === 'landuse' && layer.filter) {
         copy.filter = ['any', layer.filter, ['in', ['coalesce', ['get', 'kind'], ['get', 'class'], ''], ['literal', agriculturalKinds]]];
       }
+      if (layer.id === 'landuse' && layer['source-layer'] === 'landuse' && layer.filter) {
+        copy.filter = ['any', layer.filter, ['in', ['get', 'kind'], ['literal', pavedAirportKinds]]];
+      }
       delete paint['fill-pattern'];
       paint['fill-color'] = fillColor(name, layer.id.toLowerCase());
       if (paint['fill-outline-color']) paint['fill-outline-color'] = /building/.test(name) ? palette.buildingOutline : fillColor(name, layer.id.toLowerCase());
     }
     if (layer.type === 'fill-extrusion') paint['fill-extrusion-color'] = palette.building;
     if (layer.type === 'line') paint['line-color'] = lineColor(name);
+    if (layer.type === 'line' && /^aeroway-(runway|taxiway)$/.test(layer.id)) {
+      // Preserve paved surfaces at overview zooms instead of exposing grass
+      // beneath them when the provider's runway/taxiway lines disappear.
+      copy.minzoom = 10;
+      paint['line-width'] = ['interpolate', ['exponential', 2], ['zoom'], 10, /runway/.test(layer.id) ? 1 : 0.5, 18, /runway/.test(layer.id) ? 256 : 128];
+    }
     // Shields include their own light sprite background. Keep the provider's
     // text contrast and halo instead of applying a dark street-label outline.
     if (layer.type === 'symbol' && layer.layout && layer.layout['text-field'] && !/shield/.test(name)) {

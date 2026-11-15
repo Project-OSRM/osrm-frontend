@@ -143,3 +143,27 @@ test('renders agricultural areas already present in CARTO tiles with distinct fr
   expect(original.layers.find(layer => layer.id === 'landcover').filter).toEqual(landcover.filter);
   expect(validateStyleMin(result)).toEqual([]);
 });
+
+test('keeps paved airport surfaces grey and visible at overview zooms while grass remains green', () => {
+  const original = styleFixture();
+  ['runway', 'taxiway'].forEach(kind => original.layers.push({
+    id: 'aeroway-' + kind, type: 'line', source: 'osm', 'source-layer': 'roads', minzoom: kind === 'runway' ? 12 : 13,
+    filter: ['==', ['get', 'kind_detail'], kind], paint: { 'line-width': 1 }
+  }));
+  original.layers.push({ id: 'landuse', type: 'fill', source: 'osm', 'source-layer': 'landuse', filter: ['==', ['get', 'kind'], 'cemetery'] });
+  const result = theme.transformStyle(null, original);
+  const runway = result.layers.find(layer => layer.id === 'aeroway-runway');
+  const taxiway = result.layers.find(layer => layer.id === 'aeroway-taxiway');
+  expect(runway.paint['line-color']).toBe(theme.palette.runway);
+  expect(taxiway.paint['line-color']).toBe(theme.palette.pavement);
+  expect(runway.minzoom).toBe(10);
+  expect(taxiway.minzoom).toBe(10);
+  expect(runway.filter).toEqual(original.layers.find(layer => layer.id === 'aeroway-runway').filter);
+  const landuse = result.layers.find(layer => layer.id === 'landuse');
+  const filter = require('@maplibre/maplibre-gl-style-spec').featureFilter(landuse.filter, 'layers.landuse.filter');
+  expect(filter.filter({ zoom: 12 }, { type: 3, properties: { kind: 'apron' } })).toBe(true);
+  expect(filter.filter({ zoom: 12 }, { type: 3, properties: { kind: 'aerodrome' } })).toBe(false);
+  expect(landuse.paint['fill-color']).toContain(theme.palette.pavement);
+  expect(theme.palette.grass).not.toBe(theme.palette.pavement);
+  expect(validateStyleMin(result)).toEqual([]);
+});
