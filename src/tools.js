@@ -338,7 +338,41 @@ var Control = L.Control.extend({
   },
 
   updateLocalization: function(localization) {
-    this._local = localization;
+    this._local = localization || {};
+    var fallback = require('./localization').get('en');
+    var strings = this._local;
+    function translate(key) {
+      return strings[key] || fallback[key] || key;
+    }
+    var container = this._container;
+    if (!container) return;
+    var titles = { editor: 'Open in editor', josm: 'Open in JOSM', debug: 'Open in Debug Map', mapillary: 'Open in Mapillary', share: 'Share Route', gpx: 'GPX' };
+    Object.keys(titles).forEach(function(name) {
+      var button = container.querySelector('.leaflet-osrm-tools-' + name + ' span');
+      if (button) {
+        button.title = translate(titles[name]);
+        button.setAttribute('aria-label', button.title);
+      }
+    });
+    var languageSelect = container.querySelector('.leaflet-osrm-tools-localization select');
+    if (languageSelect) {
+      languageSelect.title = translate('Select language');
+      languageSelect.setAttribute('aria-label', languageSelect.title);
+      if (strings.key) languageSelect.value = strings.key;
+    }
+    var unitsSelect = container.querySelectorAll('.leaflet-osrm-tools-localization select')[1];
+    if (unitsSelect) {
+      unitsSelect.title = translate('Select units');
+      unitsSelect.setAttribute('aria-label', unitsSelect.title);
+      Array.prototype.forEach.call(unitsSelect.options, function(option) {
+        option.textContent = translate(option.value === 'metric' ? 'Metric' : 'Imperial');
+      });
+    }
+    var shareButtons = container.querySelectorAll('.share-type');
+    if (shareButtons[0]) shareButtons[0].textContent = translate('Link');
+    if (shareButtons[1]) shareButtons[1].textContent = translate('Shortlink');
+    var info = container.querySelector('.osrm-info-icon');
+    if (info) info.setAttribute('data-tooltip', translate('Build').replace(/[:\s]+$/, '') + ': ' + version.getVersionInfo().timestamp);
   }
 });
 

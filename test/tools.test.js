@@ -257,3 +257,21 @@ describe('tools share popup', () => {
     expect(container.querySelector('.share-url')).toBeNull();
   });
 });
+
+test('updates toolbar labels without resetting selected units', () => {
+  const tools = loadTools(true);
+  const localization = require('../src/localization');
+  const control = tools.control(localization.get('en'), localization.getLanguages(), { initialUnits: 'imperial' });
+  const container = control.onAdd();
+  control.updateLocalization(localization.get('de'));
+  const selects = container.querySelectorAll('.leaflet-osrm-tools-localization select');
+  expect(selects[0].value).toBe('de');
+  expect(selects[0].title).toBe('Sprache auswählen');
+  expect(selects[1].value).toBe('imperial');
+  expect(selects[1].querySelector('[value="metric"]').textContent).toBe('Metrisch');
+  expect(container.querySelector('.leaflet-osrm-tools-editor span').title).toBe('Im Editor öffnen');
+  expect(container.querySelector('.leaflet-osrm-tools-share span').title).toBe('Route teilen');
+  control.updateLocalization(localization.get('fr'));
+  expect(selects[1].value).toBe('imperial');
+  expect(selects[1].querySelector('[value="metric"]').textContent).toBe('Métrique');
+});

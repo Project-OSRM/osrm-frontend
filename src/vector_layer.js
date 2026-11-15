@@ -50,6 +50,10 @@ function createLayer(style, options, runtimeLoader) {
       L.LayerGroup.prototype.initialize.call(this);
       this.options = Object.assign({}, options);
     },
+    setLanguage: function(language) {
+      this.options.language = language;
+      if (this._status) this._showStatus(this._statusMessage, this._statusRetry);
+    },
     setTheme: function(theme) {
       this.options.theme = theme;
       this.eachLayer(function(renderer) {
@@ -61,6 +65,8 @@ function createLayer(style, options, runtimeLoader) {
       return '';
     },
     _showStatus: function(message, retry) {
+      this._statusMessage = message;
+      this._statusRetry = retry;
       if (!this._status) {
         this._status = L.DomUtil.create('div', 'osrm-vector-status', this._map.getContainer());
         this._status.setAttribute('role', 'status');

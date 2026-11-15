@@ -46,5 +46,17 @@ module.exports = {
   'Loading vector map…': 'Loading vector map…',
   'Vector map could not load. Try again or choose another background.': 'Vector map could not load. Try again or choose another background.',
   'Try again': 'Try again',
-  'Map tools': 'Map tools'
+  'Map tools': 'Map tools',
+  "Select profile": "Select profile",
+  "Select units": "Select units",
+  "Metric": "Metric",
+  "Imperial": "Imperial",
+  "Zoom in": "Zoom in",
+  "Zoom out": "Zoom out",
+  "Layers": "Layers",
+  "Show my location": "Show my location",
+  "Satellite": "Satellite",
+  "Outdoors": "Outdoors",
+  "Hiking": "Hiking",
+  "Small Components": "Small Components"
 };

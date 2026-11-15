@@ -794,7 +794,7 @@ var entranceWaypoints = createEntranceWaypoints({
   plan: plan,
   routeFitTracker: routeFitTracker,
   translate: function(key) {
-    return localization.t(mergedOptions.language, key);
+    return localization.t(state.options.language, key);
   },
   fetchOutline: routingGeocoder.fetchOutline,
   paneWidth: directionsPaneWidth,
@@ -1030,7 +1030,7 @@ plan.on('waypointschanged', function(e) {
   }
 });
 
-locate.locate({
+var locationControl = locate.locate({
   follow: false,
   setView: true,
   remainActive: false,
@@ -1045,6 +1045,16 @@ locate.locate({
   showPopup: false,
   locateOptions: {}
 }).addTo(map);
+
+var updateMapControlLanguage = require('./map_control_localization');
+function refreshMapControlLanguage() {
+  updateMapControlLanguage(map, layersControl, locationControl, state.options.language);
+}
+toolsControl.on('languagechanged', function(event) {
+  updateMapControlLanguage(map, layersControl, locationControl, event.language);
+});
+map.on('baselayerchange overlayadd overlayremove', refreshMapControlLanguage);
+refreshMapControlLanguage();
 
 // Zoom to z14 when the user's location is found, but only if no route is computed.
 var createLocationFoundHandler = require('./location_handler');

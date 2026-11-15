@@ -139,3 +139,19 @@ test('does not create map labels for empty or invalid route geometry', () => {
   expect(interfaceTheme.routeLabelCoordinate([null, { lat: NaN, lng: 1 }], 0.5)).toBeNull();
   expect(interfaceTheme.routeLabelCoordinate([{ lat: 1, lng: 2 }], 0.5)).toEqual({ lat: 1, lng: 2 });
 });
+
+test('translates the actual pane labels and supports right-to-left reading', () => {
+  showRoutes();
+  tools.fire('languagechanged', { language: 'de' });
+  expect(panel.querySelector('h1').textContent).toBe('Wegbeschreibung');
+  expect(panel.querySelector('.osrm-mode-caption').textContent).toBe('Verkehrsmittel');
+  expect(panel.querySelector('.leaflet-routing-add-waypoint').textContent).toBe('Zwischenstopp hinzufügen');
+  expect(panel.querySelector('.osrm-route-badge').textContent).toBe('Schnellste Route');
+  expect(panel.querySelector('.osrm-turn-list summary').textContent).toBe('Abbiegehinweise');
+  tools.fire('languagechanged', { language: 'fa' });
+  expect(panel.dir).toBe('rtl');
+  expect(panel.querySelector('h1').textContent).toBe('راهنمای مسیر');
+  tools.fire('languagechanged', { language: 'en' });
+  expect(panel.dir).toBe('ltr');
+  expect(panel.querySelector('h1').textContent).toBe('Directions');
+});

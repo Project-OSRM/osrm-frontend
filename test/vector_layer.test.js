@@ -183,3 +183,17 @@ test('preserves inherited renderer sizing and pane defaults when adding attribut
   expect(renderer.options.updateInterval).toBe(32);
   expect(renderer.size).toEqual(L.point(1200, 840));
 });
+
+test('translates an active vector loading message without restarting the renderer', async () => {
+  const runtime = fakeRuntime();
+  const loader = jest.fn(() => Promise.resolve(runtime));
+  const layer = addVector(loader);
+  layer.setLanguage('de');
+  expect(container.querySelector('[role=status]').textContent).toBe('Vektorkarte wird geladen…');
+  await flush();
+  runtime.events.fire('error', { error: new Error('Style unavailable') });
+  expect(container.querySelector('.osrm-vector-status button').textContent).toBe('Erneut versuchen');
+  layer.setLanguage('fr');
+  expect(container.querySelector('.osrm-vector-status button').textContent).toBe('Réessayer');
+  expect(loader).toHaveBeenCalledTimes(1);
+});

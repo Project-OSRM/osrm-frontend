@@ -167,6 +167,8 @@ function attach(options) {
 
   function updateLocalization(nextLanguage) {
     language = nextLanguage || language;
+    localization.setDocumentLanguage(language);
+    panel.dir = language === 'fa' ? 'rtl' : 'ltr';
     title.textContent = translate('Directions');
     if (toolbarFooter) toolbarFooter.setAttribute('aria-label', translate('Map tools'));
     if (modeLabel) modeLabel.textContent = translate('Travel mode');
