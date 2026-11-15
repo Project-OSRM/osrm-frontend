@@ -117,7 +117,7 @@ var vectorBackgrounds = customVectorLayer();
 var vector = vectorBackgrounds && vectorBackgrounds.vector;
 // Both entries keep the same renderer and tile cache when using the built-in OSM style.
 if (vectorBackgrounds && config.OSRM_VECTOR_STYLE.trim() === osmVectorStyle) osm = vectorBackgrounds.streets;
-var vectorName = (typeof config.OSRM_VECTOR_NAME === 'string' && config.OSRM_VECTOR_NAME.trim()) || 'Standard';
+var vectorName = (typeof config.OSRM_VECTOR_NAME === 'string' && config.OSRM_VECTOR_NAME.trim()) || 'Dark Vector';
 
 /**
  * Parse center coordinates from the runtime config (`OSRM_CENTER` env var).
@@ -448,16 +448,16 @@ function getLanguage() {
  * Get the default base tile layer name from the runtime config (`OSRM_DEFAULT_LAYER` env var).
  *
  * Returns the configured value; when unset it falls back to `'vector'` if
- * `OSRM_VECTOR_STYLE` supplied a vector background, otherwise `'custom'` if
+ * `OSRM_VECTOR_STYLE` supplied a custom vector background, otherwise `'custom'` if
  * `OSRM_TILE_URL` supplied one — a deployment that names its own tile server
  * usually cannot reach the public providers either — and to `'osm'`
- * (OpenStreetMap vector) otherwise. Key validation (and fallback for unrecognized
+ * (OpenStreetMap vector, including the built-in shared style) otherwise. Key validation (and fallback for unrecognized
  * values) happens at the call site via `layerMap[getDefaultLayer()] || vector || osm`.
  *
  * @returns {string} The default layer key (default `'osm'`).
  */
 function getDefaultLayer() {
-  return config.OSRM_DEFAULT_LAYER || (vector ? 'vector' : (custom ? 'custom' : 'osm'));
+  return config.OSRM_DEFAULT_LAYER || (vector && config.OSRM_VECTOR_STYLE.trim() !== osmVectorStyle ? 'vector' : (custom ? 'custom' : 'osm'));
 }
 
 /**
@@ -477,7 +477,8 @@ var layerMap = {
 if (custom) layerMap.custom = custom;
 if (vector) {
   layerMap.vector = vector;
-  layerMap.standard = vector;
+  layerMap.standard = vector; // Legacy links and deployment configuration.
+  layerMap.dark_vector = vector;
 }
 
 /**
@@ -489,8 +490,8 @@ if (vector) {
  * @type {Object<string, L.TileLayer>}
  */
 var baseLayers = {};
-if (vector) baseLayers[vectorName] = vector;
 baseLayers.OpenStreetMap = osm;
+if (vector) baseLayers[vectorName] = vector;
 baseLayers['OpenStreetMap.de'] = osm_de;
 baseLayers.Satellite = satellite;
 baseLayers.Outdoors = outdoors;
@@ -605,7 +606,7 @@ function buildServices() {
  * | `OSRM_MODES`           | (public OSRM services)           | JSON array of `{name, url, path?, profile?, debugUrl?, tileUrl?}` routing backends. `profile` defaults by position (driving → bike → foot). `debugUrl` overrides the debug map link for that mode. |
  * | `OSRM_BACKEND`         | —                                | **Deprecated.** Single backend URL. Use `OSRM_MODES` instead. |
  * | `OSRM_VECTOR_STYLE`    | —                                | MapLibre style JSON URL for an optional vector background. |
- * | `OSRM_VECTOR_NAME`     | `Standard`                       | Name of the vector background in the layer control. |
+ * | `OSRM_VECTOR_NAME`     | `Dark Vector`                    | Name of the vector background in the layer control. |
  * | `OSRM_VECTOR_THEME`    | `dark`                           | Dark map palette and sidebar; `original` preserves the provider style and classic interface. |
  * | `OSRM_VECTOR_ATTRIBUTION` | OpenStreetMap credit          | Additional attribution for the vector background. |
  * | `OSRM_CENTER`          | `38.8995,-77.0269`               | Comma-separated "lat,lng" for the initial map center. |
@@ -677,7 +678,7 @@ var leafletOptions = {
    * - **OpenStreetMap.de** — German OSM tile layer
    * - **Custom** — only present when `OSRM_TILE_URL` names a tile server
    *   (labelled by `OSRM_TILE_NAME`)
-   * - **Standard** — only present when `OSRM_VECTOR_STYLE` names a style JSON
+   * - **Dark Vector** — only present when `OSRM_VECTOR_STYLE` names a style JSON
    *   (labelled by `OSRM_VECTOR_NAME`); the renderer loads when selected
    *
    * **Customizing:** A self-hosted or offline deployment should point

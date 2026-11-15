@@ -54,3 +54,15 @@ describe('handleBaselayerChange', function() {
     expect(state.update).not.toHaveBeenCalled();
   });
 });
+
+
+test('keeps old Standard and Vector links pointing to Dark Vector', () => {
+  const dark = {}, osm = {}, german = {};
+  const layers = { OpenStreetMap: osm, 'Dark Vector': dark, 'OpenStreetMap.de': german };
+  for (const name of ['Standard', 'standard', 'Vector', 'streets', 'Dark Vector', 'dark vector']) {
+    expect(layerUtils.resolveLayerByName(layers, name)).toBe(dark);
+  }
+  expect(layerUtils.resolveLayerByName(layers, 'osm.org')).toBe(osm);
+  expect(layerUtils.resolveLayerByName(layers, 'osm.de')).toBe(german);
+  expect(layerUtils.resolveLayerByName(layers, 'unknown')).toBeUndefined();
+});

@@ -81,25 +81,7 @@ var bikeOverlayOriginallyActive = false;
 var baselayer;
 // Helper to resolve a layer object by name (case-insensitive) from the mapLayer[0] map
 function resolveLayerByName(name) {
-  if (!name || !mapLayer || !mapLayer[0]) return undefined;
-  var map = mapLayer[0];
-  if (map[name]) return map[name];
-  var lower = String(name).toLowerCase();
-  var keys = Object.keys(map);
-  for (var i = 0; i < keys.length; i++) {
-    if (keys[i] && keys[i].toLowerCase() === lower) return map[keys[i]];
-  }
-  // Keep links to the previous default vector label working.
-  if (lower === 'vector' && map.Standard) return map.Standard;
-  if (lower === 'openstreetmap.org' || lower === 'osm.org') return map.OpenStreetMap;
-  if (lower === 'streets') return map.Standard || map.OpenStreetMap;
-  if (lower === 'openstreetmap.de' || lower === 'osm.de') return map['OpenStreetMap.de'];
-  // fallback: check id in options if available
-  for (var j = 0; j < keys.length; j++) {
-    var val = map[keys[j]];
-    if (val && val.options && typeof val.options.id === 'string' && val.options.id === name) return val;
-  }
-  return undefined;
+  return layerUtils.resolveLayerByName(mapLayer && mapLayer[0], name);
 }
 
 // Prefer the layer coming from the URL (parsedOptions.layer) over localStorage

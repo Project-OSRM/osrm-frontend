@@ -57,17 +57,17 @@ docker run -p 9966:9966 \
 ### Vector backgrounds
 
 The static demo uses Shortbread vector tiles from `vector.openstreetmap.org`.
-Standard and OpenStreetMap share one renderer and tile cache: switching between
+OpenStreetMap and Dark Vector share one renderer and tile cache: switching between
 them changes the palette without reloading tiles. Switching to another provider
 hides and pauses the vector renderer, retaining its loaded tiles for the return
-trip. The cache lasts for the current page session. Standard uses the dark palette;
+trip. The cache lasts for the current page session. Dark Vector uses the dark palette;
 OpenStreetMap uses the original light style. Docker deployments can configure
 their own source using `OSRM_VECTOR_STYLE`.
 
 Set `OSRM_VECTOR_STYLE` to an HTTP(S) or root-relative MapLibre style JSON URL,
 or `images/openstreetmap/style.json` for the built-in shared OSM backgrounds.
 The style specifies vector tile sources, fonts, sprites and their attribution.
-`OSRM_VECTOR_NAME` names the layer in the layer control (default: `Standard`);
+`OSRM_VECTOR_NAME` names the layer in the layer control (default: `Dark Vector`);
 `OSRM_VECTOR_ATTRIBUTION` adds any required provider credit. Set these keys in
 `window.osrmConfig` for a static deployment, or as Docker environment variables.
 
@@ -78,9 +78,10 @@ docker run -p 9966:9966 \
   ghcr.io/project-osrm/osrm-frontend:latest
 ```
 
-Standard uses the configured vector style with the selected theme. OpenStreetMap
-uses its own vector source. The layer menu lists Standard, OpenStreetMap, OpenStreetMap.de,
-Satellite and Outdoors, in that order (Standard appears when configured).
+Dark Vector uses the configured vector style with the selected theme. OpenStreetMap
+shares the built-in Shortbread source with Dark Vector in the static demo. The
+layer menu lists OpenStreetMap, Dark Vector, OpenStreetMap.de, Satellite and Outdoors,
+in that order (Dark Vector appears when configured). OpenStreetMap is the demo default.
 
 The renderer is loaded only when a vector background is selected. It starts
 directly on a plain background without loading raster tiles underneath. If the
@@ -89,7 +90,7 @@ also be selected from the layer control. Styles hosted on another origin must al
 the style and its tile, font and sprite resources. A configured vector background
 is the default unless `OSRM_DEFAULT_LAYER` selects another layer.
 
-Standard uses a dark slate palette with blue water and muted green land cover.
+Dark Vector uses a dark slate palette with blue water and muted green land cover.
 The translucent grey directions sidebar has blue route cards, expandable
 instructions and selectable duration labels on the map.
 The sidebar stays beside the map on desktop and becomes a bottom sheet on smaller
@@ -245,14 +246,14 @@ shown as radio buttons in the map's layer control (bottom-left corner).
 
 | Label | Source | Max zoom |
 |-------|--------|----------|
-| Standard | [OSM Shortbread vector](https://vector.openstreetmap.org/) with dark palette (static demo) | 22 |
-| Outdoors | [OpenTopoMap](https://opentopomap.org/) | 17 |
-| Satellite | [ESRI World Imagery](https://www.esri.com/) | 19 |
-| OpenStreetMap | [OSM Shortbread vector](https://vector.openstreetmap.org/styles/shortbread/) | 22 |
+| OpenStreetMap | [OSM Shortbread vector](https://vector.openstreetmap.org/styles/shortbread/) (demo default) | 22 |
+| Dark Vector | [OSM Shortbread vector](https://vector.openstreetmap.org/) with dark palette (static demo) | 22 |
 | OpenStreetMap.de | [OSM.de](https://openstreetmap.de/) | 19 |
+| Satellite | [ESRI World Imagery](https://www.esri.com/) | 19 |
+| Outdoors | [OpenTopoMap](https://www.opentopomap.org/) | 17 |
 
 **Changing the default layer for Docker deployments:**
-Set `OSRM_DEFAULT_LAYER` to one of: `standard`, `outdoors`, `satellite`, `osm`, `osm_de`. The legacy `streets` key selects Standard when configured, otherwise OpenStreetMap.
+Set `OSRM_DEFAULT_LAYER` to one of: `osm` (demo default), `dark_vector`, `standard` (legacy alias), `outdoors`, `satellite`, `osm_de`. The legacy `streets` key selects Dark Vector when configured, otherwise OpenStreetMap.
 ```bash
 docker run -p 9966:9966 -e OSRM_DEFAULT_LAYER=satellite ghcr.io/project-osrm/osrm-frontend:latest
 ```

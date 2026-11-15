@@ -3,7 +3,7 @@
 const L = require('leaflet');
 const { createBackgrounds } = require('../src/vector_backgrounds');
 
-test('Standard and OpenStreetMap retain one renderer and tile cache across repeated switches', async () => {
+test('Dark Vector and OpenStreetMap retain one renderer and tile cache across repeated switches', async () => {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const map = L.map(container).setView([50, 8], 10);

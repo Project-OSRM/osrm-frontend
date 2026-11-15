@@ -25,14 +25,14 @@ test('adds a named vector base layer and makes it the default', () => {
 
 test('preserves explicit raster defaults and all built-in background choices', () => {
   const options = load({ OSRM_VECTOR_STYLE: 'https://tiles.example/style.json', OSRM_DEFAULT_LAYER: 'osm' });
-  expect(options.layer[0].Standard).toBeDefined();
+  expect(options.layer[0]['Dark Vector']).toBeDefined();
   expect(options.defaultState.layer).toBe(options.layer[0]['OpenStreetMap']);
 });
 
 test('does not offer an unconfigured or invalid vector style', () => {
   const warn = jest.spyOn(console, 'warn').mockImplementation();
   for (const style of [undefined, '', 42, 'javascript:alert(1)', 'file:///style.json']) {
-    expect(load({ OSRM_VECTOR_STYLE: style }).layer[0].Standard).toBeUndefined();
+    expect(load({ OSRM_VECTOR_STYLE: style }).layer[0]['Dark Vector']).toBeUndefined();
   }
   expect(warn).toHaveBeenCalledTimes(2);
   warn.mockRestore();
@@ -42,18 +42,18 @@ test('enables the dark vector theme by default and preserves an original-style o
   expect(load({ OSRM_VECTOR_STYLE: '/style.json' }).vectorTheme).toBe('dark');
   const original = load({ OSRM_VECTOR_STYLE: '/style.json', OSRM_VECTOR_THEME: 'original' });
   expect(original.vectorTheme).toBe('original');
-  expect(original.layer[0].Standard.options.theme).toBe('original');
+  expect(original.layer[0]['Dark Vector'].options.theme).toBe('original');
 });
 
 test('accepts standard as the default layer key', () => {
   const options = load({ OSRM_VECTOR_STYLE: '/style.json', OSRM_DEFAULT_LAYER: 'standard' });
-  expect(options.defaultState.layer).toBe(options.layer[0].Standard);
+  expect(options.defaultState.layer).toBe(options.layer[0]['Dark Vector']);
   expect(options.layer[0].Vector).toBeUndefined();
 });
 
-test('orders backgrounds with Standard first and uses official OSM vector tiles', () => {
+test('orders backgrounds with OpenStreetMap first and Dark Vector second and uses official OSM vector tiles', () => {
   const options = load({ OSRM_VECTOR_STYLE: '/style.json' });
-  expect(Object.keys(options.layer[0])).toEqual(['Standard', 'OpenStreetMap', 'OpenStreetMap.de', 'Satellite', 'Outdoors']);
+  expect(Object.keys(options.layer[0])).toEqual(['OpenStreetMap', 'Dark Vector', 'OpenStreetMap.de', 'Satellite', 'Outdoors']);
   expect(options.layer[0]['OpenStreetMap'].style).toBe('images/openstreetmap/style.json');
   expect(options.layer[0]['OpenStreetMap'].options.theme).toBe('original');
 });
@@ -61,9 +61,15 @@ test('orders backgrounds with Standard first and uses official OSM vector tiles'
 
 test('uses the shared original variant for the built-in Shortbread style', () => {
   const options = load({ OSRM_VECTOR_STYLE: 'images/openstreetmap/style.json' });
-  expect(options.layer[0].Standard.style).toBe('images/openstreetmap/style.json');
-  expect(options.layer[0].OpenStreetMap.style).toBe(options.layer[0].Standard.style);
-  expect(options.layer[0].OpenStreetMap).not.toBe(options.layer[0].Standard);
+  expect(options.layer[0]['Dark Vector'].style).toBe('images/openstreetmap/style.json');
+  expect(options.layer[0].OpenStreetMap.style).toBe(options.layer[0]['Dark Vector'].style);
+  expect(options.layer[0].OpenStreetMap).not.toBe(options.layer[0]['Dark Vector']);
   expect(options.layer[0].OpenStreetMap.options.theme).toBe('original');
-  expect(options.defaultState.layer).toBe(options.layer[0].Standard);
+  expect(options.defaultState.layer).toBe(options.layer[0].OpenStreetMap);
+});
+
+
+test('accepts the dark_vector deployment key', () => {
+  const options = load({ OSRM_VECTOR_STYLE: 'images/openstreetmap/style.json', OSRM_DEFAULT_LAYER: 'dark_vector' });
+  expect(options.defaultState.layer).toBe(options.layer[0]['Dark Vector']);
 });
