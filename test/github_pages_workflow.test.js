@@ -12,6 +12,7 @@ test('production deployment is restricted to gh-pages, including manual runs', (
     expect(workflow.jobs.build.if).toBe("github.ref == 'refs/heads/gh-pages'");
     expect(workflow.jobs.deploy.if).toBe("github.ref == 'refs/heads/gh-pages'");
     expect(workflow.permissions).toEqual({ contents: 'read' });
+    expect(workflow.concurrency.group).toBe('pages-${{ github.ref }}');
     expect(workflow.concurrency['cancel-in-progress']).toBe(false);
 });
 
