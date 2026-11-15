@@ -3,7 +3,7 @@
 const L = require('leaflet');
 const { createBackgrounds } = require('../src/vector_backgrounds');
 
-test('Streets and Vector retain one renderer and tile cache across repeated switches', async () => {
+test('Standard and OpenStreetMap retain one renderer and tile cache across repeated switches', async () => {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const map = L.map(container).setView([50, 8], 10);
@@ -54,4 +54,19 @@ test('switching while the runtime loads applies the latest palette', async () =>
   expect(createLayer).toHaveBeenCalledWith('/style.json', 'original');
   map.remove();
   await Promise.resolve();
+});
+
+
+test('forwards language changes to the shared loading status', () => {
+  const container = document.createElement('div');
+  const map = L.map(container).setView([50, 8], 10);
+  const backgrounds = createBackgrounds('/style.json', { theme: 'dark' }, () => new Promise(() => {}));
+  backgrounds.vector.addTo(map);
+  backgrounds.vector.setLanguage('de');
+  expect(container.querySelector('[role=status]').textContent).toBe('Vektorkarte wird geladen…');
+  map.removeLayer(backgrounds.vector);
+  backgrounds.streets.addTo(map);
+  backgrounds.streets.setLanguage('fr');
+  expect(container.querySelector('[role=status]').textContent).toBe('Chargement de la carte vectorielle…');
+  map.remove();
 });

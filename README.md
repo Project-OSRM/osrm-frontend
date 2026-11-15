@@ -55,11 +55,14 @@ docker run -p 9966:9966 \
 
 ### Vector backgrounds
 
-The static demo uses CARTO Voyager vector tiles: Standard applies the dark
-palette. OpenStreetMap uses OSM's official Shortbread vector style. Docker deployments can
-configure their own source using `OSRM_VECTOR_STYLE`.
+The static demo uses Shortbread vector tiles from `vector.openstreetmap.org`.
+Standard and OpenStreetMap share one renderer and tile cache: switching between
+them changes the palette without reloading tiles. Standard uses the dark palette;
+OpenStreetMap uses the original light style. Docker deployments can configure
+their own source using `OSRM_VECTOR_STYLE`.
 
-Set `OSRM_VECTOR_STYLE` to an HTTP(S) or root-relative MapLibre style JSON URL.
+Set `OSRM_VECTOR_STYLE` to an HTTP(S) or root-relative MapLibre style JSON URL,
+or `images/openstreetmap/style.json` for the built-in shared OSM backgrounds.
 The style specifies vector tile sources, fonts, sprites and their attribution.
 `OSRM_VECTOR_NAME` names the layer in the layer control (default: `Standard`);
 `OSRM_VECTOR_ATTRIBUTION` adds any required provider credit. Set these keys in
@@ -239,7 +242,7 @@ shown as radio buttons in the map's layer control (bottom-left corner).
 
 | Label | Source | Max zoom |
 |-------|--------|----------|
-| Standard | [CARTO Voyager vector](https://carto.com/basemaps/) with dark palette (static demo) | 22 |
+| Standard | [OSM Shortbread vector](https://vector.openstreetmap.org/) with dark palette (static demo) | 22 |
 | Outdoors | [OpenTopoMap](https://opentopomap.org/) | 17 |
 | Satellite | [ESRI World Imagery](https://www.esri.com/) | 19 |
 | OpenStreetMap | [OSM Shortbread vector](https://vector.openstreetmap.org/styles/shortbread/) | 22 |

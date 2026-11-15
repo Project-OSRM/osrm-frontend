@@ -18,6 +18,8 @@ var osmAttribution = '© <a href="https://www.openstreetmap.org/copyright">OpenS
   esriAttribution = 'Tiles © <a href="https://www.esri.com/">Esri</a> — Source: Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community',
   waymarkedtrailsAttribution = '© <a href="https://waymarkedtrails.org/">Sarah Hoffmann</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)';
 
+var osmVectorStyle = 'images/openstreetmap/style.json';
+
 var outdoors = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
     attribution: osmAttribution + ', <a href="https://opentopomap.org/">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
     maxZoom: 17
@@ -26,7 +28,7 @@ var outdoors = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
     attribution: esriAttribution,
     maxZoom: 19
   }),
-  osm = require('./vector_layer').createLayer('images/openstreetmap/style.json', {
+  osm = require('./vector_layer').createLayer(osmVectorStyle, {
     theme: 'original',
     language: getLanguage(),
     attribution: osmAttribution,
@@ -98,7 +100,7 @@ function customVectorLayer() {
   var style = config.OSRM_VECTOR_STYLE;
   if (typeof style !== 'string' || !style.trim()) return null;
   style = style.trim();
-  if (!/^(https?:)?\/\/|^\/(?!\/)/.test(style)) {
+  if (style !== osmVectorStyle && !/^(https?:)?\/\/|^\/(?!\/)/.test(style)) {
     console.warn('Ignoring OSRM_VECTOR_STYLE: expected an http(s) or root-relative style URL.');
     return null;
   }
@@ -113,6 +115,8 @@ function customVectorLayer() {
 
 var vectorBackgrounds = customVectorLayer();
 var vector = vectorBackgrounds && vectorBackgrounds.vector;
+// Both entries keep the same renderer and tile cache when using the built-in OSM style.
+if (vectorBackgrounds && config.OSRM_VECTOR_STYLE.trim() === osmVectorStyle) osm = vectorBackgrounds.streets;
 var vectorName = (typeof config.OSRM_VECTOR_NAME === 'string' && config.OSRM_VECTOR_NAME.trim()) || 'Standard';
 
 /**

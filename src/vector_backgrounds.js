@@ -13,6 +13,9 @@ function createBackgrounds(style, options, runtimeLoader) {
     initialize: function(variantOptions) {
       L.setOptions(this, variantOptions);
     },
+    setLanguage: function(language) {
+      background.setLanguage(language);
+    },
     getAttribution: function() {
       return ''; // Credits belong to the shared renderer, once.
     },

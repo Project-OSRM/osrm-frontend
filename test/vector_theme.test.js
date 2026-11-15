@@ -171,3 +171,23 @@ test('keeps paved airport surfaces grey and visible at overview zooms while gras
   expect(theme.palette.grass).not.toBe(theme.palette.pavement);
   expect(validateStyleMin(result)).toEqual([]);
 });
+
+
+test('styles the real Shortbread data without changing the shared geometry or sources', () => {
+  const original = require('../images/openstreetmap/style.json');
+  const result = theme.transformStyle(null, original);
+  expect(validateStyleMin(result)).toEqual([]);
+  expect(result.sources).toEqual(original.sources);
+  expect(Object.values(result.sources)[0].tiles[0]).toContain('vector.openstreetmap.org/shortbread_v1/');
+  result.layers.forEach((layer, index) => {
+    const { paint, ...geometry } = layer;
+    const { paint: originalPaint, ...originalGeometry } = original.layers[index];
+    expect(geometry).toEqual(originalGeometry);
+  });
+  const paint = id => result.layers.find(layer => layer.id === id).paint;
+  expect(paint('land-agriculture')['fill-color']).toBe(theme.palette.farmland);
+  expect(paint('land-forest')['fill-color']).toBe(theme.palette.forest);
+  expect(paint('airport-area')['fill-color']).toBe(theme.palette.pavement);
+  expect(paint('water-stream')['line-color']).toBe(theme.palette.waterway);
+  expect(paint('street-primary:outline')['line-color']).toBe(theme.palette.roadCasing);
+});

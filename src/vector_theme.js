@@ -41,24 +41,25 @@ function fillColor(name, id) {
       ['industrial', 'commercial'], '#394554',
       palette.background];
   }
-  if (/apron|runway|taxiway/.test(name)) return palette.pavement;
+  if (/airport|apron|runway|taxiway/.test(name)) return palette.pavement;
   if (/orchard|vineyard|plantation/.test(name)) return palette.orchard;
   if (/farmland|agricultur|cropland|farm/.test(name)) return palette.farmland;
   if (/residential/.test(name)) return palette.residential;
   if (/water_shadow/.test(name)) return palette.waterShadow;
   if (/water|ocean|lake/.test(name)) return palette.water;
   if (/wood|forest/.test(name)) return palette.forest;
-  if (/park|pitch|cemetery|garden/.test(name)) return palette.park;
-  if (/grass|wetland|landcover/.test(name)) return palette.grass;
+  if (/park|pitch|cemetery|garden|burial|leisure/.test(name)) return palette.park;
+  if (/grass|wetland|vegetation|landcover/.test(name)) return palette.grass;
   if (/building/.test(name)) return /(?:top|roof)/.test(name) ? palette.building : palette.buildingBase;
-  if (/sand|beach/.test(name)) return '#655f50';
+  if (/bridge|pier|pedestrian-zone/.test(name)) return palette.street;
+  if (/sand|beach|rock/.test(name)) return '#655f50';
   if (/hospital/.test(name)) return '#444453';
   return palette.background;
 }
 
 function lineColor(name) {
   if (/water|river|stream/.test(name)) return palette.waterway;
-  if (/casing|_case(?:_|$)/.test(name)) return palette.roadCasing;
+  if (/casing|:outline|:bridge|_case(?:_|$)/.test(name)) return palette.roadCasing;
   if (/runway|taxiway|apron/.test(name)) return palette.pavement;
   if (/motorway|_(?:mot)(?:_|$)/.test(name)) return palette.highway;
   if (/trunk|primary|_(?:pri)(?:_|$)/.test(name)) return palette.mainRoad;

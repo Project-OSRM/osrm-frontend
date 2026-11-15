@@ -24,18 +24,9 @@
         OSRM_CENTER: '38.8995,-77.0269',
         OSRM_ZOOM: 13,
         OSRM_DEFAULT_LAYER: 'standard',
-        OSRM_VECTOR_STYLE: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json?key=cb1_2qvg_1_8e87c8903d178ccf6f862d52',
+        OSRM_VECTOR_STYLE: 'images/openstreetmap/style.json',
         OSRM_VECTOR_NAME: 'Standard',
-        OSRM_VECTOR_ATTRIBUTION: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attribution">CARTO</a>',
-        // CARTO basemap key for project-osrm.org. Public by necessity: it is
-        // sent with every tile request. Without it CARTO watermarks the tiles,
-        // which still render.
-        //
-        // A fork serving its own domain wants its own key. Editing it here
-        // covers a static deployment; in Docker this whole object is replaced
-        // by config.json, so set the OSRM_CARTO_KEY environment variable
-        // instead and the entrypoint will pass it through.
-        OSRM_CARTO_KEY: 'cb1_2qvg_1_8e87c8903d178ccf6f862d52'
+        OSRM_VECTOR_ATTRIBUTION: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         // A deployment with its own tile server adds OSRM_TILE_URL here (plus
         // optional OSRM_TILE_NAME and OSRM_TILE_ATTRIBUTION); in Docker set the
         // matching environment variables instead.

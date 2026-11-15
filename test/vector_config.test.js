@@ -55,3 +55,13 @@ test('orders backgrounds with Standard first and uses official OSM vector tiles'
   expect(options.layer[0]['OpenStreetMap'].style).toBe('images/openstreetmap/style.json');
   expect(options.layer[0]['OpenStreetMap'].options.theme).toBe('original');
 });
+
+
+test('uses the shared original variant for the built-in Shortbread style', () => {
+  const options = load({ OSRM_VECTOR_STYLE: 'images/openstreetmap/style.json' });
+  expect(options.layer[0].Standard.style).toBe('images/openstreetmap/style.json');
+  expect(options.layer[0].OpenStreetMap.style).toBe(options.layer[0].Standard.style);
+  expect(options.layer[0].OpenStreetMap).not.toBe(options.layer[0].Standard);
+  expect(options.layer[0].OpenStreetMap.options.theme).toBe('original');
+  expect(options.defaultState.layer).toBe(options.layer[0].Standard);
+});
