@@ -27,6 +27,7 @@ function add(value) { return factory(value, { styles }).addTo(map); }
 test('sweeps short and long routes together and completes both in 750 ms', () => {
   const short = add(route(0.001)), long = add(route(2));
   expect(container.querySelectorAll('mask')).toHaveLength(4);
+  jest.advanceTimersByTime(20); // Two quiet frames after camera centering.
   jest.advanceTimersByTime(300);
   container.querySelectorAll('mask path').forEach(path => {
     expect(path.getAttribute('pathLength')).toBe('1000');
@@ -47,7 +48,7 @@ test('sweeps short and long routes together and completes both in 750 ms', () =>
 test('does not replay an existing route when alternatives are selected or the map moves', async () => {
   const value = route(0.02), line = add(value);
   await Promise.resolve();
-  jest.advanceTimersByTime(750);
+  jest.advanceTimersByTime(770);
   map.setView([50.21, 8.6], 14, { animate: false });
   expect(container.querySelectorAll('mask')).toHaveLength(0);
   map.removeLayer(line);
@@ -88,6 +89,28 @@ test('still reveals the final line when initial alternative restoration replaces
   map.removeLayer(first);
   add(value);
   expect(container.querySelectorAll('mask')).toHaveLength(2);
-  jest.advanceTimersByTime(750);
+  jest.advanceTimersByTime(770);
   expect(container.querySelectorAll('mask')).toHaveLength(0);
+});
+
+
+test('waits for centering to finish before starting the full 750 ms reveal', () => {
+  add(route(0.02));
+  map.fire('movestart');
+  jest.advanceTimersByTime(1000);
+  container.querySelectorAll('mask path').forEach(path => expect(path.getAttribute('stroke-dasharray')).toBe('0 1000'));
+  map.fire('moveend');
+  jest.advanceTimersByTime(20);
+  jest.advanceTimersByTime(300);
+  container.querySelectorAll('mask path').forEach(path => expect(path.getAttribute('stroke-dasharray')).toBe('400 1000'));
+  jest.advanceTimersByTime(450);
+  expect(container.querySelectorAll('mask')).toHaveLength(0);
+});
+
+test('interrupting an active sweep exposes the full route instead of competing with camera motion', () => {
+  add(route(0.02));
+  jest.advanceTimersByTime(200);
+  map.fire('movestart');
+  expect(container.querySelectorAll('mask')).toHaveLength(0);
+  expect(() => jest.advanceTimersByTime(1000)).not.toThrow();
 });

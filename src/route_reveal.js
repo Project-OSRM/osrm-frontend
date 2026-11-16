@@ -50,11 +50,32 @@ function revealLine(line, duration) {
   });
   if (!masks.length) return;
   var frame;
-  var started = Date.now();
+  var map = line._map;
+  var moving = !!(map._animatingZoom || map._panAnim && map._panAnim._inProgress);
+  var settledFrame = false;
+  var started;
+  function schedule() {
+    if (!moving && frame === undefined) frame = L.Util.requestAnimFrame(animate);
+  }
+  function pauseForCentering() {
+    // A user gesture during the reveal should immediately expose the full route.
+    if (started !== undefined) return finish();
+    moving = true;
+    if (frame !== undefined) L.Util.cancelAnimFrame(frame);
+    frame = undefined;
+    settledFrame = false;
+  }
+  function resumeAfterCentering() {
+    moving = false;
+    settledFrame = false;
+    schedule();
+  }
   function finish() {
     if (frame !== undefined) L.Util.cancelAnimFrame(frame);
     frame = undefined;
     line.off('remove', finish);
+    map.off('movestart zoomstart', pauseForCentering);
+    map.off('moveend zoomend', resumeAfterCentering);
     masks.forEach(function(item) {
       item.observer.disconnect();
       if (item.previousMask === null) item.path.removeAttribute('mask');
@@ -67,15 +88,27 @@ function revealLine(line, duration) {
   }
   function animate() {
     frame = undefined;
+    if (moving) return;
+    if (started === undefined) {
+      // Let the final camera projection reach the SVG before drawing the route.
+      if (!settledFrame) {
+        settledFrame = true;
+        schedule();
+        return;
+      }
+      started = Date.now();
+    }
     var progress = Math.min(1, (Date.now() - started) / duration);
     if (progress >= 1) return finish();
     masks.forEach(function(item) {
       item.sweep.setAttribute('stroke-dasharray', (progress * 1000) + ' 1000');
     });
-    frame = L.Util.requestAnimFrame(animate);
+    schedule();
   }
   line.once('remove', finish);
-  frame = L.Util.requestAnimFrame(animate);
+  map.on('movestart zoomstart', pauseForCentering);
+  map.on('moveend zoomend', resumeAfterCentering);
+  schedule();
 }
 
 function createRouteLineFactory(createLine) {
