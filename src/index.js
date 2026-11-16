@@ -365,6 +365,7 @@ var controlOptions = {
   plan: plan,
   fitSelectedRoutes: false,
   routeWhileDragging: options.lrm.routeWhileDragging,
+  routeLine: require('./route_reveal').createRouteLineFactory(),
   lineOptions: options.lrm.lineOptions,
   altLineOptions: options.lrm.altLineOptions,
   summaryTemplate: options.lrm.summaryTemplate,
