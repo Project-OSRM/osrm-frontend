@@ -5,6 +5,54 @@ This frontend builds heavily on top of [Leaflet Routing Machine](https://github.
 If you need a simple OSRM integration in your webpage, you should start from there.
 
 
+## Deploying the demo to GitHub Pages
+
+The `Deploy demo to GitHub Pages` workflow builds and publishes `dist/` on each
+push to `gh-pages`, including every pull request merge. Lint, build and tests must
+pass before the site is uploaded and deployed. You can also run it from the
+Actions tab with `gh-pages` selected;
+other branches are skipped. Deployment runs are serialized, and the published
+URL appears in the `github-pages` deployment environment.
+
+This hosts the static demo, including `debug/`; routing, geocoding and tiles
+still use the public services configured in the frontend. Build output is
+uploaded as an artifact, without committing generated files to `gh-pages`.
+
+### One-time setup
+
+1. In repository **Settings → Pages → Build and deployment**, set **Source** to
+   **GitHub Actions** (rather than deploying directly from a branch).
+2. Ensure the `github-pages` environment permits deployments from `gh-pages`.
+   For fully automatic deployment, do not require manual reviewer approval on
+   that environment.
+3. Merge the workflow into `gh-pages` through a pull request. Pushes then deploy
+   automatically; use the manual trigger to retry a deployment.
+
+No additional secrets or API tokens are needed. The deploy job uses GitHub's
+built-in token with `pages: write` and `id-token: write` permissions; the build
+job has read-only repository access. See GitHub's
+[custom Pages workflow documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
+
+### Custom domain with external DNS
+
+Keep your existing DNS provider and configure a subdomain such as
+`map.example.com`:
+
+1. In repository **Settings → Pages → Custom domain**, enter the hostname and
+   save it before updating DNS.
+2. At your DNS provider, create a CNAME from the hostname (e.g. `map`) to
+   `<owner>.github.io` — for this repository, `project-osrm.github.io`. Do not
+   include the repository name, `https://`, or a path. Replace any conflicting
+   records for that hostname.
+3. Wait for GitHub's DNS check and certificate provisioning to finish, then
+   enable **Enforce HTTPS** and verify the demo and `debug/` on the custom domain.
+
+A `CNAME` file is not required when publishing with a custom Actions workflow;
+configure the domain in repository settings. Apex domains such as `example.com`
+also work with external DNS, using GitHub's documented A/AAAA records or an
+ALIAS/ANAME record. See the
+[custom domain instructions](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site).
+
 ## Using Docker
 
 The easiest and quickest way to setup your own routing engine backend is to use Docker images we provide.
