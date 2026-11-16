@@ -1,13 +1,11 @@
 /** @jest-environment jsdom */
 'use strict';
 const L = require('leaflet');
-const { createRouteLineFactory } = require('../src/route_reveal');
+const { createRouteLineFactory, createSweepGeometry } = require('../src/route_reveal');
 let map, container, originalSvg, factory;
 const styles = [{ weight: 9, color: 'white' }, { weight: 6, color: 'blue', dashArray: '3,9' }];
 beforeEach(() => {
-  jest.useFakeTimers();
-  originalSvg = L.Browser.svg;
-  L.Browser.svg = true;
+  jest.useFakeTimers(); originalSvg = L.Browser.svg; L.Browser.svg = true;
   window.matchMedia = jest.fn(() => ({ matches: false }));
   jest.spyOn(L.Util, 'requestAnimFrame').mockImplementation(fn => window.setTimeout(fn, 10));
   jest.spyOn(L.Util, 'cancelAnimFrame').mockImplementation(id => window.clearTimeout(id));
@@ -23,94 +21,103 @@ afterEach(() => {
 });
 function route(length) { return { coordinates: [[50.2, 8.58], [50.2, 8.58 + length]] }; }
 function add(value) { return factory(value, { styles }).addTo(map); }
+function path(line) { return line.getLayers()[0].getElement(); }
+function expectProgress(line, progress) {
+  const points = line.getLayers()[0]._parts[0];
+  const numbers = path(line).getAttribute('d').match(/-?[\d.]+/g).map(Number);
+  const eased = progress * progress * (3 - 2 * progress);
+  expect(numbers.at(-2)).toBeCloseTo(points[0].x + (points.at(-1).x - points[0].x) * eased, 5);
+  expect(line.getLayers()[1].getElement().getAttribute('d')).toBe(path(line).getAttribute('d'));
+}
 
-test('sweeps short and long routes together and completes both in 750 ms', () => {
-  const short = add(route(0.001)), long = add(route(2));
-  expect(container.querySelectorAll('mask')).toHaveLength(4);
-  jest.advanceTimersByTime(20); // Two quiet frames after camera centering.
-  jest.advanceTimersByTime(300);
-  container.querySelectorAll('mask path').forEach(path => {
-    expect(path.getAttribute('pathLength')).toBe('1000');
-    expect(path.getAttribute('stroke-dasharray')).toBe('400 1000');
-  });
-  jest.advanceTimersByTime(449);
-  expect(container.querySelectorAll('mask')).toHaveLength(4);
-  jest.advanceTimersByTime(1);
-  expect(container.querySelectorAll('mask')).toHaveLength(0);
-  for (const line of [short, long]) {
-    expect(line.getLayers()[1].getElement().getAttribute('stroke-dasharray')).toBe('3,9');
-    expect(line.getLayers()[0].getElement().getAttribute('stroke-width')).toBe('9');
-    expect(line.getLayers()[0].getElement().getAttribute('mask')).toBeNull();
-    expect(line.getLayers()[0].options.noClip).toBe(false);
-  }
+test('continuously interpolates sparse segments and uneven vertex spacing', () => {
+  const drawing = createSweepGeometry([[L.point(0, 0), L.point(10, 0), L.point(10, 90)]]);
+  expect(drawing(0)).toBe('M0 0L0 0');
+  expect(drawing(0.05)).toBe('M0 0L5 0');
+  expect(drawing(0.25)).toBe('M0 0L10 0L10 15');
+  expect(drawing(0.255)).toBe('M0 0L10 0L10 15.5');
+  expect(drawing(1)).toBe('M0 0L10 0L10 90');
 });
 
-test('does not replay an existing route when alternatives are selected or the map moves', async () => {
+test('draws short and long routes continuously with the same 750 ms duration', () => {
+  const lines = [add(route(0.001)), add(route(2))];
+  lines.forEach(line => expect(path(line).style.visibility).toBe('hidden'));
+  jest.advanceTimersByTime(20);
+  jest.advanceTimersByTime(300);
+  lines.forEach(line => expectProgress(line, 0.4));
+  jest.advanceTimersByTime(449);
+  lines.forEach(line => expect(line.getLayers()[0].options.noClip).toBe(true));
+  jest.advanceTimersByTime(1);
+  lines.forEach(line => {
+    expect(line.getLayers()[0].options.noClip).toBe(false);
+    expect(path(line).style.visibility).toBe('');
+    expect(path(line).getAttribute('stroke-width')).toBe('9');
+    expect(line.getLayers()[1].getElement().getAttribute('stroke-dasharray')).toBe('3,9');
+  });
+  expect(container.querySelectorAll('mask')).toHaveLength(0);
+});
+
+test('does not replay completed routes on selection or ordinary map moves', async () => {
   const value = route(0.02), line = add(value);
   await Promise.resolve();
   jest.advanceTimersByTime(770);
   map.setView([50.21, 8.6], 14, { animate: false });
-  expect(container.querySelectorAll('mask')).toHaveLength(0);
   map.removeLayer(line);
-  add(value);
-  expect(container.querySelectorAll('mask')).toHaveLength(0);
-  add(route(0.02));
-  expect(container.querySelectorAll('mask')).toHaveLength(2);
+  const selected = add(value);
+  expect(path(selected).style.visibility).toBe('');
+  expect(selected.getLayers()[0].options.noClip).toBe(false);
+  expect(path(add(route(0.02))).style.visibility).toBe('hidden');
 });
 
-test('keeps masks synchronized when route geometry is reprojected during the sweep', async () => {
+test('projects geometry after centering and then reveals it in the final viewport', () => {
   const line = add(route(0.02));
-  const path = line.getLayers()[0].getElement();
-  const maskId = path.getAttribute('mask').slice(5, -1);
   map.setView([50.21, 8.6], 14, { animate: false });
-  await Promise.resolve();
-  expect(container.querySelector('#' + maskId + ' path').getAttribute('d')).toBe(path.getAttribute('d'));
+  expect(path(line).style.visibility).toBe('hidden');
+  jest.advanceTimersByTime(320);
+  expectProgress(line, 0.4);
 });
 
-test('removes masks and cancels animation when a route is replaced early', () => {
+test('cancels an interrupted reveal and restores the original route', () => {
   const line = add(route(0.02));
   jest.advanceTimersByTime(200);
-  map.removeLayer(line);
-  expect(container.querySelectorAll('mask')).toHaveLength(0);
-  expect(L.Util.cancelAnimFrame).toHaveBeenCalled();
+  map.fire('movestart');
+  expect(line.getLayers()[0].options.noClip).toBe(false);
+  expect(path(line).style.visibility).toBe('');
   expect(() => jest.advanceTimersByTime(1000)).not.toThrow();
 });
 
-test('shows the complete route immediately when reduced motion is requested', () => {
+test('cleans up when the route is replaced before revealing', () => {
+  const line = add(route(0.02));
+  map.removeLayer(line);
+  expect(path(line).style.visibility).toBe('');
+  expect(line.getLayers()[0].options.noClip).toBe(false);
+  expect(L.Util.cancelAnimFrame).toHaveBeenCalled();
+});
+
+test('respects reduced motion', () => {
   window.matchMedia.mockReturnValue({ matches: true });
   const line = add(route(0.02));
-  expect(container.querySelectorAll('mask')).toHaveLength(0);
+  expect(path(line).style.visibility).toBe('');
   expect(line.getLayers()[0].options.noClip).toBe(false);
 });
 
-
-test('still reveals the final line when initial alternative restoration replaces it synchronously', () => {
+test('reveals the final line after synchronous initial alternative restoration', () => {
   const value = route(0.02), first = add(value);
   map.removeLayer(first);
-  add(value);
-  expect(container.querySelectorAll('mask')).toHaveLength(2);
+  const final = add(value);
+  expect(path(final).style.visibility).toBe('hidden');
   jest.advanceTimersByTime(770);
-  expect(container.querySelectorAll('mask')).toHaveLength(0);
+  expect(final.getLayers()[0].options.noClip).toBe(false);
 });
 
-
-test('waits for centering to finish before starting the full 750 ms reveal', () => {
-  add(route(0.02));
+test('waits for centering to end before its 750 ms sweep', () => {
+  const line = add(route(0.02));
   map.fire('movestart');
   jest.advanceTimersByTime(1000);
-  container.querySelectorAll('mask path').forEach(path => expect(path.getAttribute('stroke-dasharray')).toBe('0 1000'));
+  expect(path(line).style.visibility).toBe('hidden');
   map.fire('moveend');
-  jest.advanceTimersByTime(20);
-  jest.advanceTimersByTime(300);
-  container.querySelectorAll('mask path').forEach(path => expect(path.getAttribute('stroke-dasharray')).toBe('400 1000'));
+  jest.advanceTimersByTime(320);
+  expectProgress(line, 0.4);
   jest.advanceTimersByTime(450);
-  expect(container.querySelectorAll('mask')).toHaveLength(0);
-});
-
-test('interrupting an active sweep exposes the full route instead of competing with camera motion', () => {
-  add(route(0.02));
-  jest.advanceTimersByTime(200);
-  map.fire('movestart');
-  expect(container.querySelectorAll('mask')).toHaveLength(0);
-  expect(() => jest.advanceTimersByTime(1000)).not.toThrow();
+  expect(line.getLayers()[0].options.noClip).toBe(false);
 });

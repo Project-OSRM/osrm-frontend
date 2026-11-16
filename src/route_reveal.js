@@ -1,64 +1,59 @@
 'use strict';
 
 var L = require('leaflet');
-var nextMaskId = 0;
 
-// Mask the existing strokes, preserving their widths, colors and dash patterns.
-// Normalized SVG path lengths give every route the same 750 ms duration.
+// Advance by screen distance, interpolating between vertices instead of revealing
+// whole segments. Each completed vertex is appended only once during the sweep.
+function createSweepGeometry(parts) {
+  var steps = [];
+  var distance = 0;
+  parts.forEach(function(points) {
+    points.forEach(function(point, index) {
+      if (index) distance += point.distanceTo(points[index - 1]);
+      steps.push({ point: point, distance: distance, move: index === 0 });
+    });
+  });
+  var cursor = 0;
+  var completed = '';
+  return function(progress) {
+    var target = distance * progress;
+    while (cursor < steps.length && steps[cursor].distance <= target) {
+      var step = steps[cursor++];
+      completed += (step.move ? 'M' : 'L') + step.point.x + ' ' + step.point.y;
+    }
+    var next = steps[cursor];
+    if (!next || next.move || !cursor) return completed || 'M0 0';
+    var previous = steps[cursor - 1];
+    var fraction = (target - previous.distance) / (next.distance - previous.distance);
+    var tip = previous.point.add(next.point.subtract(previous.point).multiplyBy(fraction));
+    return completed + 'L' + tip.x + ' ' + tip.y;
+  };
+}
+
 function revealLine(line, duration) {
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  var paths = line.getLayers().slice(-line.options.styles.length);
-  var masks = [];
-  paths.forEach(function(layer) {
+  var paths = [];
+  line.getLayers().slice(-line.options.styles.length).forEach(function(layer) {
     var path = layer.getElement && layer.getElement();
     if (!path || path.namespaceURI !== 'http://www.w3.org/2000/svg') return;
     var originalClip = layer.options.noClip;
+    var visibility = path.style.visibility;
+    path.style.visibility = 'hidden';
     layer.options.noClip = true;
     layer.redraw();
-    var defs = L.SVG.create('defs');
-    var mask = L.SVG.create('mask');
-    var sweep = L.SVG.create('path');
-    var id = 'osrm-route-reveal-' + (++nextMaskId);
-    mask.id = id;
-    mask.setAttribute('maskUnits', 'userSpaceOnUse');
-    sweep.setAttribute('fill', 'none');
-    sweep.setAttribute('stroke', 'white');
-    sweep.setAttribute('stroke-width', (layer.options.weight || 3) + 4);
-    sweep.setAttribute('stroke-linecap', 'butt');
-    sweep.setAttribute('stroke-linejoin', 'round');
-    sweep.setAttribute('vector-effect', 'non-scaling-stroke');
-    sweep.setAttribute('pathLength', '1000');
-    sweep.setAttribute('stroke-dasharray', '0 1000');
-    mask.appendChild(sweep);
-    defs.appendChild(mask);
-    layer._renderer._container.appendChild(defs);
-    var previousMask = path.getAttribute('mask');
-    path.setAttribute('mask', 'url(#' + id + ')');
-    function updateGeometry() {
-      sweep.setAttribute('d', path.getAttribute('d') || 'M0 0');
-      var bounds = layer._renderer._bounds;
-      var size = bounds.getSize();
-      mask.setAttribute('x', bounds.min.x - 16);
-      mask.setAttribute('y', bounds.min.y - 16);
-      mask.setAttribute('width', size.x + 32);
-      mask.setAttribute('height', size.y + 32);
-    }
-    updateGeometry();
-    var observer = new MutationObserver(updateGeometry);
-    observer.observe(path, { attributes: true, attributeFilter: ['d'] });
-    masks.push({ layer: layer, path: path, sweep: sweep, defs: defs, observer: observer, previousMask: previousMask, originalClip: originalClip });
+    paths.push({ layer: layer, path: path, visibility: visibility, originalClip: originalClip });
   });
-  if (!masks.length) return;
+  if (!paths.length) return;
   var frame;
   var map = line._map;
-  var moving = !!(map._animatingZoom || map._panAnim && map._panAnim._inProgress);
+  var moving = !!(map._animatingZoom || map._panAnim && map._panAnim._inProgress || map.smoothWheelZoom && map.smoothWheelZoom._active);
   var settledFrame = false;
   var started;
+  var geometry;
   function schedule() {
     if (!moving && frame === undefined) frame = L.Util.requestAnimFrame(animate);
   }
   function pauseForCentering() {
-    // A user gesture during the reveal should immediately expose the full route.
     if (started !== undefined) return finish();
     moving = true;
     if (frame !== undefined) L.Util.cancelAnimFrame(frame);
@@ -76,32 +71,34 @@ function revealLine(line, duration) {
     line.off('remove', finish);
     map.off('movestart zoomstart', pauseForCentering);
     map.off('moveend zoomend', resumeAfterCentering);
-    masks.forEach(function(item) {
-      item.observer.disconnect();
-      if (item.previousMask === null) item.path.removeAttribute('mask');
-      else item.path.setAttribute('mask', item.previousMask);
-      item.defs.remove();
+    paths.forEach(function(item) {
       if (item.originalClip === undefined) delete item.layer.options.noClip;
       else item.layer.options.noClip = item.originalClip;
       if (item.layer._map) item.layer.redraw();
+      item.path.style.visibility = item.visibility;
     });
   }
   function animate() {
     frame = undefined;
     if (moving) return;
     if (started === undefined) {
-      // Let the final camera projection reach the SVG before drawing the route.
       if (!settledFrame) {
         settledFrame = true;
         schedule();
         return;
       }
-      started = Date.now();
+      // Centering has finished: reuse Leaflet's projected, simplified geometry.
+      // All stroke styles share this geometry, keeping their edges aligned.
+      geometry = createSweepGeometry(paths[0].layer._parts);
+      started = window.performance.now();
     }
-    var progress = Math.min(1, (Date.now() - started) / duration);
+    var progress = Math.min(1, (window.performance.now() - started) / duration);
     if (progress >= 1) return finish();
-    masks.forEach(function(item) {
-      item.sweep.setAttribute('stroke-dasharray', (progress * 1000) + ' 1000');
+    var eased = progress * progress * (3 - 2 * progress);
+    var drawing = geometry(eased);
+    paths.forEach(function(item) {
+      item.path.setAttribute('d', drawing);
+      item.path.style.visibility = item.visibility;
     });
     schedule();
   }
@@ -118,7 +115,6 @@ function createRouteLineFactory(createLine) {
     if (!revealedRoutes.has(route)) {
       line.once('add', function() {
         revealLine(line, 750);
-        // Initial alternative restoration may replace this line synchronously.
         Promise.resolve().then(function() {
           if (line._map) revealedRoutes.add(route);
         });
@@ -128,4 +124,4 @@ function createRouteLineFactory(createLine) {
   };
 }
 
-module.exports = { createRouteLineFactory: createRouteLineFactory };
+module.exports = { createRouteLineFactory: createRouteLineFactory, createSweepGeometry: createSweepGeometry };
