@@ -1,4 +1,9 @@
 module.exports = {
+  "Shortest": "کوتاه‌ترین",
+  "Similar arrival time": "زمان رسیدن مشابه",
+  "Fewer turns": "پیچ‌های کمتر",
+  "Compared with the displayed routes": "در مقایسه با مسیرهای نمایش‌داده‌شده",
+
   "Loading small routing components…": "در حال بارگیری مؤلفه‌های کوچک شبکهٔ مسیر…",
   "Small Components unavailable for this routing mode.": "مؤلفه‌های کوچک برای این شیوهٔ سفر در دسترس نیستند.",
   "Zoom in to level 13 to see small routing components.": "برای دیدن مؤلفه‌های کوچک شبکه، تا سطح ۱۳ بزرگ‌نمایی کنید.",

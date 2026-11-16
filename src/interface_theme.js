@@ -2,6 +2,7 @@
 
 var L = require('leaflet');
 var localization = require('./localization');
+var routeProperties = require('./route_properties');
 
 function initialize(enabled) {
   document.documentElement.classList.toggle('osrm-theme-dark', !!enabled);
@@ -90,9 +91,7 @@ function attach(options) {
   function renderLabels() {
     labels.clearLayers();
     var routes = control._routes || [];
-    var fastest = routes.reduce(function(time, route) {
-      return route.summary ? Math.min(time, route.summary.totalTime) : time;
-    }, Infinity);
+    var properties = routeProperties.describeRoutes(routes);
     routes.forEach(function(route, index) {
       if (!alternatives.querySelector('.leaflet-routing-alt')) return;
       var position = routeLabelCoordinate(route.coordinates, [0.48, 0.68, 0.3][index % 3]);
@@ -104,9 +103,9 @@ function attach(options) {
       var content = L.DomUtil.create('div', 'osrm-route-label' + (active ? ' selected' : ''));
       var duration = L.DomUtil.create('strong', '', content);
       duration.textContent = control._formatter.formatTime(route.summary.totalTime);
-      if (route.summary.totalTime === fastest) {
+      if (properties[index][0] !== 'Alternative') {
         var description = L.DomUtil.create('span', '', content);
-        description.textContent = translate('Fastest');
+        description.textContent = translate(properties[index][0]);
       }
       var marker = L.marker(position, {
         icon: L.divIcon({ className: 'osrm-route-label-marker', html: content, iconSize: [0, 0], iconAnchor: [0, 0] }),
@@ -128,9 +127,7 @@ function attach(options) {
   function decorateRoutes() {
     var cards = Array.prototype.slice.call(alternatives.querySelectorAll('.leaflet-routing-alt'));
     var routes = control._routes || [];
-    var fastest = routes.reduce(function(time, route) {
-      return route.summary ? Math.min(time, route.summary.totalTime) : time;
-    }, Infinity);
+    var properties = routeProperties.describeRoutes(routes);
     cards.forEach(function(card, index) {
       var summary = card.querySelector('.osrm-directions-summary');
       if (!summary) return;
@@ -145,8 +142,13 @@ function attach(options) {
           }
         });
       }
-      var badge = summary.querySelector('.osrm-route-badge') || L.DomUtil.create('span', 'osrm-route-badge', summary);
-      badge.textContent = translate(routes[index] && routes[index].summary && routes[index].summary.totalTime === fastest ? 'Fastest' : 'Alternative');
+      var badges = summary.querySelector('.osrm-route-badges') || L.DomUtil.create('div', 'osrm-route-badges', summary);
+      badges.replaceChildren();
+      (properties[index] || ['Alternative']).forEach(function(property) {
+        var badge = L.DomUtil.create('span', 'osrm-route-badge', badges);
+        badge.textContent = translate(property);
+        if (property !== 'Alternative') badge.title = translate('Compared with the displayed routes');
+      });
       var table = card.querySelector('table');
       if (table && !card.querySelector('.osrm-turn-list')) {
         var details = L.DomUtil.create('details', 'osrm-turn-list');

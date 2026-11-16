@@ -1,4 +1,9 @@
 module.exports = {
+  "Shortest": "Shortest",
+  "Similar arrival time": "Similar arrival time",
+  "Fewer turns": "Fewer turns",
+  "Compared with the displayed routes": "Compared with the displayed routes",
+
   "Loading small routing components…": "Loading small routing components…",
   "Small Components unavailable for this routing mode.": "Small Components unavailable for this routing mode.",
   "Zoom in to level 13 to see small routing components.": "Zoom in to level 13 to see small routing components.",

@@ -1,4 +1,9 @@
 module.exports = {
+  "Shortest": "Kortast",
+  "Similar arrival time": "Liknande ankomsttid",
+  "Fewer turns": "Färre svängar",
+  "Compared with the displayed routes": "Jämfört med de visade rutterna",
+
   "Loading small routing components…": "Laddar små komponenter i vägnätet…",
   "Small Components unavailable for this routing mode.": "Små komponenter är inte tillgängliga för detta färdsätt.",
   "Zoom in to level 13 to see small routing components.": "Zooma in till nivå 13 för att se små komponenter i vägnätet.",

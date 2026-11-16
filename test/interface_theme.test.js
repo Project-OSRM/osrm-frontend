@@ -175,3 +175,17 @@ test('places the accessible OSRM logo above the localized Directions heading', (
   expect(logo.nextElementSibling).toBe(brand.querySelector('h1'));
   expect(logo.width).toBe(104);
 });
+
+test('shows multiple property badges, keeps them stable on refresh, and translates them', () => {
+  showRoutes();
+  control._routes[0].summary.totalDistance = 10000;
+  control._routes[1].summary = { totalTime: 870, totalDistance: 8000 };
+  theme.decorateRoutes();
+  const badges = () => [...panel.querySelectorAll('.leaflet-routing-alt')[1].querySelectorAll('.osrm-route-badge')].map(badge => badge.textContent);
+  expect(badges()).toEqual(['Shortest', 'Similar arrival time']);
+  theme.decorateRoutes();
+  expect(badges()).toEqual(['Shortest', 'Similar arrival time']);
+  expect(panel.querySelectorAll('.osrm-route-badges')).toHaveLength(2);
+  tools.fire('languagechanged', { language: 'de' });
+  expect(badges()).toEqual(['Kürzeste Route', 'Ähnliche Ankunftszeit']);
+});

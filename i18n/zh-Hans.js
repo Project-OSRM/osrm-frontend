@@ -1,4 +1,9 @@
 module.exports = {
+  "Shortest": "距离最短",
+  "Similar arrival time": "到达时间相近",
+  "Fewer turns": "转弯更少",
+  "Compared with the displayed routes": "与显示的路线相比",
+
   "Loading small routing components…": "正在加载小型路网分量…",
   "Small Components unavailable for this routing mode.": "此出行方式不支持显示小型路网分量。",
   "Zoom in to level 13 to see small routing components.": "请放大到第13级以查看小型路网分量。",

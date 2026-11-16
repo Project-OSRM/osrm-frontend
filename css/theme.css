@@ -136,7 +136,8 @@
 .osrm-theme-dark .osrm-route-distance { margin: 7px 0 0; color: #b8cbd3; font-size: var(--osrm-type-body); line-height: 1.4; }
 .osrm-theme-dark .leaflet-routing-alt:not(.leaflet-routing-alt-minimized) .osrm-route-distance { color: #ecf3ff; }
 .osrm-theme-dark .osrm-directions-summary .osrm-route-name { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin: 7px 0 0; padding: 0; color: inherit; font-size: var(--osrm-type-body); line-height: 1.5; font-weight: 400; opacity: 0.85; }
-.osrm-theme-dark .osrm-route-badge { display: inline-block; margin-top: 12px; padding: 3px 8px; border: 1px solid #7398ad55; border-radius: 6px; color: #b8cdd8; font-size: var(--osrm-type-caption); line-height: 1.5; font-weight: 600; }
+.osrm-theme-dark .osrm-route-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.osrm-theme-dark .osrm-route-badge { display: inline-block; margin-top: 0; padding: 3px 8px; border: 1px solid #7398ad55; border-radius: 6px; color: #b8cdd8; font-size: var(--osrm-type-caption); line-height: 1.5; font-weight: 600; }
 .osrm-theme-dark .leaflet-routing-alt:not(.leaflet-routing-alt-minimized) .osrm-route-badge { border-color: #ffffff55; color: white; }
 .osrm-theme-dark .osrm-turn-list > summary { padding: 12px 16px; color: #c5d8df; cursor: pointer; font-size: var(--osrm-type-body); }
 .osrm-theme-dark .osrm-turn-list[open] > summary { border-bottom: 1px solid #ffffff12; }

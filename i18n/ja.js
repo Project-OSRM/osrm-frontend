@@ -1,4 +1,9 @@
 module.exports = {
+  "Shortest": "最短距離",
+  "Similar arrival time": "到着時刻がほぼ同じ",
+  "Fewer turns": "曲がる回数が少ない",
+  "Compared with the displayed routes": "表示されているルートとの比較",
+
   "Loading small routing components…": "小さな経路ネットワークを読み込み中…",
   "Small Components unavailable for this routing mode.": "この移動手段では小さな経路ネットワークを表示できません。",
   "Zoom in to level 13 to see small routing components.": "小さな経路ネットワークを表示するにはズームレベル13まで拡大してください。",
