@@ -33,3 +33,11 @@ test('compares meaningful turns without counting departure, arrival, or straight
   ]);
   expect(describeRoutes([route(600, 10000, easy), route(650)])).toEqual([['Fastest'], ['Similar arrival time']]);
 });
+
+
+test('shows Fewer turns for a single-turn advantage and omits it when turn counts tie', () => {
+  const one = [{ type: 'Head' }, { type: 'Left' }, { type: 'DestinationReached' }];
+  const two = [...one.slice(0, -1), { type: 'Right' }, one.at(-1)];
+  expect(describeRoutes([route(600, 10000, one), route(650, 10000, two)])[0]).toContain('Fewer turns');
+  expect(describeRoutes([route(600, 10000, one), route(650, 10000, one)]).flat()).not.toContain('Fewer turns');
+});

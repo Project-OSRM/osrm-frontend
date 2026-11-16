@@ -39,7 +39,7 @@ function describeRoutes(routes) {
   var fewerTurns = turns.length > 1 && turns.every(function(value) {
     return value !== null;
   }) &&
-    Math.max.apply(Math, turns) - Math.min.apply(Math, turns) >= 2;
+    Math.max.apply(Math, turns) > Math.min.apply(Math, turns);
   return routes.map(function(route, index) {
     var badges = [];
     if (comparableTimes && times[index] !== null && times[index] <= fastest + 1) badges.push('Fastest');

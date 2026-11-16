@@ -189,3 +189,14 @@ test('shows multiple property badges, keeps them stable on refresh, and translat
   tools.fire('languagechanged', { language: 'de' });
   expect(badges()).toEqual(['Kürzeste Route', 'Ähnliche Ankunftszeit']);
 });
+
+
+test('displays the Fewer turns shield for a route with one fewer turn', () => {
+  showRoutes();
+  control._routes[0].instructions = [{ type: 'Head' }, { type: 'Left' }, { type: 'DestinationReached' }];
+  control._routes[1].instructions = [{ type: 'Head' }, { type: 'Left' }, { type: 'Right' }, { type: 'DestinationReached' }];
+  theme.decorateRoutes();
+  const cards = panel.querySelectorAll('.leaflet-routing-alt');
+  expect([...cards[0].querySelectorAll('.osrm-route-badge')].map(badge => badge.textContent)).toContain('Fewer turns');
+  expect(cards[1].textContent).not.toContain('Fewer turns');
+});
