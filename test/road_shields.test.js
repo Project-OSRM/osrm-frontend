@@ -1,5 +1,5 @@
 'use strict';
-const { registerRoadShields, shieldImage, IMAGE_ID } = require('../src/road_shields');
+const { registerRoadShields, shieldImage, exitShieldImage, IMAGE_ID, EXIT_IMAGE_ID } = require('../src/road_shields');
 const { validateStyleMin, featureFilter } = require('@maplibre/maplibre-gl-style-spec');
 const style = require('../images/openstreetmap/style.json');
 const theme = require('../src/vector_theme');
@@ -45,6 +45,29 @@ test('restores a shield after the style image registry is reset', () => {
   resolveMissingImage(IMAGE_ID);
   expect(images.has(IMAGE_ID)).toBe(true);
   expect(map.addImage).toHaveBeenCalledTimes(2);
+});
+
+test('resolves distinct exit badges with an unstretched branching-road symbol on the first request', async () => {
+  const images = new Map();
+  let resolveMissingImage;
+  registerRoadShields({
+    setMissingStyleImageResolver: resolver => { resolveMissingImage = resolver; },
+    hasImage: id => images.has(id),
+    addImage: (id, image, options) => images.set(id, { image, options })
+  });
+  await Promise.all([resolveMissingImage(EXIT_IMAGE_ID), resolveMissingImage(IMAGE_ID), resolveMissingImage(EXIT_IMAGE_ID)]);
+  expect(images.size).toBe(2);
+  const exit = images.get(EXIT_IMAGE_ID);
+  expect(exit.image.width).toBe(96);
+  expect(exit.options.content[0]).toBeGreaterThan(30);
+  expect(exit.options.stretchX[0][0]).toBeGreaterThan(exit.options.content[0]);
+  expect(exit.options.stretchY.every(([start, end]) => end <= 8 || start >= 32)).toBe(true);
+  const pixel = (image, x, y) => [...image.data.slice((y * image.width + x) * 4, (y * image.width + x) * 4 + 4)];
+  expect(pixel(exit.image, 14, 28)).toEqual([248, 248, 248, 255]);
+  expect(pixel(exit.image, 28, 10)).toEqual([248, 248, 248, 255]);
+  expect(pixel(exit.image, 60, 20)).toEqual([36, 89, 111, 255]);
+  expect(pixel(exit.image, 60, 20)).not.toEqual(pixel(images.get(IMAGE_ID).image, 32, 20));
+  expect(pixel(exitShieldImage(), 0, 0)[3]).toBe(0);
 });
 
 test('labels motorway and main-road references at usable zooms and excludes empty references', () => {

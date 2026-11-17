@@ -19,7 +19,7 @@ test('shows exit references only for numbered motorway junctions', () => {
   expect(accepts(referenceLayer, { kind: 'motorway', ref: 'A 661' })).toBe(false);
   const expression = createExpression(referenceLayer.layout['text-field'], 'layers[0].layout.text-field');
   expect(expression.result).toBe('success');
-  expect(expression.value.evaluate({ zoom: 14 }, { properties: { ref: '7A' } })).toBe('↗ 7A');
+  expect(expression.value.evaluate({ zoom: 14 }, { properties: { ref: '7A' } })).toBe('7A');
 });
 
 test('adds names at closer zooms and supports junctions with a name but no reference', () => {
@@ -34,7 +34,8 @@ test('adds names at closer zooms and supports junctions with a name but no refer
 });
 
 test('keeps compact exit shields readable in both palettes using the shared tile source', () => {
-  expect(referenceLayer.layout['icon-image']).toBe('osrm-road-shield');
+  expect(referenceLayer.layout['icon-image']).toBe('osrm-exit-shield');
+  expect(referenceLayer.paint['text-color']).toBe('#f8f8f8');
   expect(referenceLayer.layout['icon-text-fit']).toBe('both');
   expect(referenceLayer.layout['icon-text-fit-padding']).toEqual([1, 2, 1, 2]);
   const dark = theme.transformStyle(null, style);
