@@ -118,7 +118,13 @@ function createLayer(style, options, runtimeLoader) {
       (runtimeLoader || loadRuntime)().then(function(runtime) {
         if (this._generation !== generation || this._map !== map) return;
         try {
-          var renderer = runtime.createLayer(style, this.options.theme || 'dark');
+          var renderStyle = style;
+          if (style === 'images/openstreetmap/style.json') {
+            var localStyle = new window.URL(style, assetBase);
+            localStyle.searchParams.set('v', buildTimestamp);
+            renderStyle = localStyle.href;
+          }
+          var renderer = runtime.createLayer(renderStyle, this.options.theme || 'dark');
           // Leaflet stores defaults on the options prototype; preserve them.
           L.setOptions(renderer, { additionalAttribution: this.options.attribution });
           if (this.options.pane) L.setOptions(renderer, { pane: this.options.pane });

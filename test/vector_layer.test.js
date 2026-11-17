@@ -197,3 +197,14 @@ test('translates an active vector loading message without restarting the rendere
   expect(container.querySelector('.osrm-vector-status button').textContent).toBe('Réessayer');
   expect(loader).toHaveBeenCalledTimes(1);
 });
+
+
+test('versions the bundled OpenStreetMap style so an older cached style cannot hide updated shields', async () => {
+  const runtime = fakeRuntime();
+  vectorLayers.createLayer('images/openstreetmap/style.json', { theme: 'original' }, () => Promise.resolve(runtime)).addTo(map);
+  await flush();
+  const url = new URL(runtime.createLayer.mock.calls[0][0]);
+  expect(url.pathname).toBe('/images/openstreetmap/style.json');
+  expect(url.searchParams.get('v')).toBeTruthy();
+  expect(runtime.createLayer.mock.calls[0][1]).toBe('original');
+});

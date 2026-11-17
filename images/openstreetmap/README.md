@@ -11,3 +11,7 @@ from OpenStreetMap. Noto Sans Regular and Bold glyphs use the CORS-enabled
 https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf endpoint; the style's
 font stack names are mapped to that service's names. Relative sprite URLs are
 resolved against the style file at runtime for subdirectory deployments.
+
+Local adaptations add reference shields for motorways and main roads at overview
+zooms. `src/road_shields.js` supplies their stretchable neutral background at
+runtime; the original tile source, fonts and attribution are retained.

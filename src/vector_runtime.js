@@ -6,6 +6,7 @@ import createBackgroundRenderer from './vector_renderer';
 import vectorTheme from './vector_theme';
 import vectorPalette from './vector_palette';
 import resolveStyleAssets from './vector_style_assets';
+import roadShields from './road_shields';
 
 setWorkerUrl(workerUrl);
 
@@ -22,6 +23,9 @@ export function createLayer(style, theme) {
       original = vectorPalette.vectorStyle(resolveStyleAssets(next, styleUrl));
       return currentTheme === 'original' ? original : vectorTheme.transformStyle(previous, original);
     }
+  });
+  renderer.on('add', function() {
+    roadShields.registerRoadShields(renderer.getMaplibreMap());
   });
   renderer.setTheme = function(nextTheme) {
     if (currentTheme === nextTheme) return;
