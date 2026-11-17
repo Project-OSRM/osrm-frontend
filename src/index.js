@@ -9,6 +9,7 @@ var geocoderPatches = require('./geocoder_patches');
 geocoderPatches();
 var LRM = require('leaflet-routing-machine');
 var resolveWaypointSlot = require('./waypoint_placement').resolveWaypointSlot;
+var approachForSlot = require('./waypoint_placement').approachForSlot;
 
 // Register app languages that LRM does not have built-in so LRM does not throw
 // "No localization for language" when they are selected. We reuse English
@@ -848,13 +849,17 @@ map.on('click', function (e) {
   addWaypoint(e);
 });
 function addWaypoint(evt) {
-  var waypoint = evt && evt.latlng ? evt.latlng : evt;
+  var latlng = evt && evt.latlng ? evt.latlng : evt;
   var waypoints = lrmControl.getWaypoints();
   var modifierPressed = evt && evt.originalEvent && (evt.originalEvent.ctrlKey || evt.originalEvent.metaKey);
 
   var action = resolveWaypointSlot(waypoints, modifierPressed);
   if (action) {
     routeFitTracker.waypointPlaced();
+    // A new waypoint rather than the bare LatLng, so the approach chosen for an
+    // empty slot survives LRM replacing it. Only the approach is carried over:
+    // the slot's name may be an address that failed to geocode.
+    var waypoint = approaches.setApproach(L.Routing.waypoint(latlng), approachForSlot(waypoints, action));
     lrmControl.spliceWaypoints(action.index, action.deleteCount, waypoint);
   }
 }
