@@ -5,7 +5,9 @@ var approaches = require('./approaches');
 
 // The plain waypoints this module hands out are {lat, lng}, plus `approach`
 // when the waypoint is restricted, so a waypoint without one is the object it
-// always was.
+// always was. An empty slot is undefined, or {approach} when it is restricted,
+// so a link such as `loc=&loc=3,4&ap=curb;` keeps the restriction of the slot
+// that has no place yet.
 function withApproach(plain, approach) {
   var normalized = approaches.normalizeApproach(approach);
   if (normalized !== approaches.UNRESTRICTED) plain.approach = normalized;
@@ -42,7 +44,9 @@ function parse(q) {
           if (wp && typeof wp.lat === 'number' && typeof wp.lng === 'number') {
             return withApproach({ lat: wp.lat, lng: wp.lng }, wp.approach);
           }
-          return undefined;
+          // An empty slot: only its approach, if it has one, is worth keeping.
+          var emptySlot = withApproach({}, approaches.approachOf(wp));
+          return emptySlot.approach ? emptySlot : undefined;
         });
       }
     }
@@ -70,6 +74,11 @@ function format(options) {
         var lat = Number(wp[0]);
         var lng = Number(wp[1]);
         if (!isNaN(lat) && !isNaN(lng)) return { latLng: { lat: lat, lng: lng } };
+      }
+      // An empty slot that carries an approach: an empty loc entry, with the
+      // approach in its place in ap.
+      if (!Array.isArray(wp) && typeof wp.approach === 'string') {
+        return withOptions({ latLng: null }, wp.approach);
       }
       return wp;
     });
