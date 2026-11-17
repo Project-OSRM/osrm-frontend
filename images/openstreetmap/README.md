@@ -35,6 +35,11 @@ roads follow at zoom 16. These labels follow the way geometry, use a smaller typ
 size than ordinary street names, and have lower collision priority. Unnamed ways
 retain their existing rendering without additional labels.
 
+Named pedestrian areas, including squares and station forecourts, receive small
+point labels from tile zoom 15. They fade in over half a zoom level, allow normal
+collision handling, and give existing street and place names priority. These
+labels use the tile source's dedicated `streets_polygons_labels` points.
+
 At tile zoom 15 and above, access markings follow the selected routing profile:
 red short dashes indicate an explicit `no`, amber longer dashes indicate
 `limited`. Driving uses `motorcar`, cycling uses `bicycle`, and walking uses

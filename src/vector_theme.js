@@ -107,7 +107,7 @@ function transformStyle(previousStyle, style) {
     // Shields include their own light sprite background. Keep the provider's
     // text contrast and halo instead of applying a dark street-label outline.
     if (layer.type === 'symbol' && layer.layout && layer.layout['text-field'] && !/shield/.test(name)) {
-      paint['text-color'] = /water/.test(name) ? '#a7cce8' : /transportation|highway|roadname|street_labels/.test(name) ? palette.mutedText : palette.text;
+      paint['text-color'] = /water/.test(name) ? '#a7cce8' : /transportation|highway|roadname|street_labels|streets_polygons_labels/.test(name) ? palette.mutedText : palette.text;
       if (layer['source-layer'] === 'public_transport') paint['icon-color'] = palette.mutedText;
       if (/poi/.test(name)) {
         paint['text-color'] = ['match', ['coalesce', ['get', 'kind'], ['get', 'class'], ['get', 'amenity'], ['get', 'leisure'], ['get', 'tourism'], ''],
