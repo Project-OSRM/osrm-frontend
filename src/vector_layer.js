@@ -77,6 +77,9 @@ function createLayer(style, options, runtimeLoader) {
     },
     setLanguage: function(language) {
       this.options.language = language;
+      this.eachLayer(function(renderer) {
+        if (renderer.setLanguage) renderer.setLanguage(language);
+      });
       if (this._status) this._showStatus(this._statusMessage, this._statusRetry);
     },
     setTheme: function(theme) {
@@ -139,6 +142,7 @@ function createLayer(style, options, runtimeLoader) {
             renderStyle = localStyle.href;
           }
           var renderer = runtime.createLayer(renderStyle, this.options.theme || 'dark');
+          if (renderer.setLanguage) renderer.setLanguage(this.options.language);
           if (renderer.setRoutingProfile) renderer.setRoutingProfile(this.options.routingProfile);
           // Leaflet stores defaults on the options prototype; preserve them.
           L.setOptions(renderer, { additionalAttribution: this.options.attribution });

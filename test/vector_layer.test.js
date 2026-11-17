@@ -54,6 +54,21 @@ test('loads the vector renderer directly without requesting raster tiles', async
   expect(map.hasLayer(runtime.renderer)).toBe(false);
 });
 
+test('passes the latest initial language and live changes to the existing renderer', async () => {
+  const runtime = fakeRuntime();
+  runtime.renderer.setLanguage = jest.fn();
+  const loader = jest.fn(() => Promise.resolve(runtime));
+  const layer = addVector(loader);
+  layer.setLanguage('fr');
+  await flush();
+  expect(runtime.renderer.setLanguage).toHaveBeenLastCalledWith('fr');
+  runtime.events.fire('load');
+  layer.setLanguage('de');
+  expect(runtime.renderer.setLanguage).toHaveBeenLastCalledWith('de');
+  expect(runtime.createLayer).toHaveBeenCalledTimes(1);
+  expect(runtime.renderer.onRemove).not.toHaveBeenCalled();
+});
+
 test('does not attach a late renderer after the user selects another background', async () => {
   let resolveRuntime;
   const runtime = fakeRuntime();

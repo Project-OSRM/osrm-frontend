@@ -20,6 +20,13 @@ switches keep the existing map visible.
 Water polygons classified as `canal` use the same fill as reservoirs, basins and
 docks. Canals classified as ordinary `water` retain their existing appearance.
 
+Map labels follow the selected UI language when the tiles provide a `name_xx`
+translation. A regional or script-specific name takes priority over the base
+language, followed by the local `name`. Empty translations also fall back.
+Language changes update name text on the existing renderer; palette switches
+preserve that language. Road references and house numbers retain their own
+fields. Translations come from the vector tiles, without a translation service.
+
 Local adaptations add reference shields for motorways and main roads at overview
 zooms. `src/road_shields.js` supplies their stretchable neutral background at
 runtime; the original tile source, fonts and attribution are retained.
