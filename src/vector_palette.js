@@ -15,6 +15,40 @@ function vectorStyle(style) {
   return Object.assign({}, style, { layers: layers, sources: sources });
 }
 
+// Leave features visible while the first view loads; clear only the background.
+function transparentBackground(style) {
+  return Object.assign({}, style, { layers: style.layers.map(function(layer) {
+    if (layer.type !== 'background') return layer;
+    return Object.assign({}, layer, { paint: Object.assign({}, layer.paint, { 'background-color': 'transparent' }) });
+  }) });
+}
+
+function configureLoadingBackground(renderer) {
+  var transformStyle = renderer.options.transformStyle;
+  var backgrounds = [];
+  var loading = true;
+  renderer.options.transformStyle = function(previous, next) {
+    var style = transformStyle(previous, next);
+    backgrounds = style.layers.filter(function(layer) {
+      return layer.type === 'background';
+    });
+    return loading ? transparentBackground(style) : style;
+  };
+  renderer.on('add', function() {
+    var map = renderer.getMaplibreMap();
+    map.once('load', function() {
+      if (renderer.getMaplibreMap() !== map) return;
+      loading = false;
+      backgrounds.forEach(function(layer) {
+        map.setPaintProperty(layer.id, 'background-color', layer.paint && layer.paint['background-color'] || null);
+      });
+    });
+  });
+  return function() {
+    return loading;
+  };
+}
+
 // Only paint changes: geometry, sources, sprites and label placement stay live.
 function applyPalette(map, original, theme) {
   var dark = vectorTheme.transformStyle(null, original);
@@ -27,4 +61,4 @@ function applyPalette(map, original, theme) {
   });
 }
 
-module.exports = { vectorStyle: vectorStyle, applyPalette: applyPalette };
+module.exports = { vectorStyle: vectorStyle, configureLoadingBackground: configureLoadingBackground, applyPalette: applyPalette };

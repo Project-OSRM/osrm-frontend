@@ -12,9 +12,10 @@ https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf endpoint; the style'
 font stack names are mapped to that service's names. Relative sprite URLs are
 resolved against the style file at runtime for subdirectory deployments.
 
-The initial canvas stays hidden against a plain neutral background until
-MapLibre finishes its first map view. Later tile requests and palette switches
-keep the existing map visible.
+The page, map container and initial vector background are transparent while the
+first view loads. Features remain visible as they arrive. Once ready, the vector
+background uses its normal palette color. Later tile requests and palette
+switches keep the existing map visible.
 
 Local adaptations add reference shields for motorways and main roads at overview
 zooms. `src/road_shields.js` supplies their stretchable neutral background at

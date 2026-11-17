@@ -25,6 +25,7 @@ export function createLayer(style, theme) {
       return currentTheme === 'original' ? original : vectorTheme.transformStyle(previous, original);
     }
   });
+  var isBackgroundLoading = vectorPalette.configureLoadingBackground(renderer);
   vectorAccess.configureRenderer(renderer);
   renderer.on('add', function() {
     vectorImages.registerVectorImages(renderer.getMaplibreMap());
@@ -37,7 +38,7 @@ export function createLayer(style, theme) {
     function apply() {
       vectorPalette.applyPalette(map, original, currentTheme);
     }
-    if (map.isStyleLoaded()) apply();
+    if (!isBackgroundLoading() && map.isStyleLoaded()) apply();
     else map.once('load', apply);
   };
   return renderer;
