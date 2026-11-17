@@ -48,6 +48,7 @@ var localization = require('./localization');
 var initialLayers = require('./initial_layers');
 var vectorAccess = require('./vector_access');
 var layerUtils = require('./layer_utils');
+var createLayersControl = require('./layers_control');
 var routeZoom = require('./route_zoom');
 var smoothWheelZoom = require('./smooth_wheel_zoom');
 var resolveInitialAlternative = require('./route_alternative');
@@ -190,7 +191,7 @@ mapLayer = mapLayer.reduce(function(title, layer) {
 });
 
 /* Leaflet Controls */
-var layersControl = L.control.layers(mapLayer, overlay, {
+var layersControl = createLayersControl(mapLayer, overlay, {
   position: 'bottomleft'
 }).addTo(map);
 
