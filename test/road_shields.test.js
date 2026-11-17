@@ -11,7 +11,7 @@ test('provides crisp, stretchable road plates on demand without duplicate regist
   handlers.styleimagemissing({ id: 'unrelated' });
   expect(map.addImage).not.toHaveBeenCalled();
   handlers.styleimagemissing({ id: IMAGE_ID });
-  expect(map.addImage).toHaveBeenCalledWith(IMAGE_ID, expect.objectContaining({ width: 64, height: 40 }), expect.objectContaining({ pixelRatio: 2, content: [10, 6, 54, 34] }));
+  expect(map.addImage).toHaveBeenCalledWith(IMAGE_ID, expect.objectContaining({ width: 64, height: 40 }), expect.objectContaining({ pixelRatio: 2, content: [2, 2, 62, 38] }));
   map.hasImage.mockReturnValue(true);
   handlers.styleimagemissing({ id: IMAGE_ID });
   expect(map.addImage).toHaveBeenCalledTimes(1);
@@ -29,6 +29,7 @@ test('labels motorway and main-road references at usable zooms and excludes empt
     expect(filter({ zoom: 14 }, { type: 2, properties: { kind, ref: '' } })).toBe(false);
     expect(filter({ zoom: 14 }, { type: 2, properties: { kind } })).toBe(false);
     expect(layers[index].layout['icon-text-fit']).toBe('both');
+    expect(layers[index].layout['icon-text-fit-padding']).toEqual([1, 2, 1, 2]);
   }
   expect(validateStyleMin(style)).toEqual([]);
   const dark = theme.transformStyle(null, style);

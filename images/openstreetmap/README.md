@@ -15,3 +15,9 @@ resolved against the style file at runtime for subdirectory deployments.
 Local adaptations add reference shields for motorways and main roads at overview
 zooms. `src/road_shields.js` supplies their stretchable neutral background at
 runtime; the original tile source, fonts and attribution are retained.
+
+Shield content bounds leave a one-pixel border inset, with compact text padding.
+Shortbread 1.1 road labels expose references and road classes, but no country
+code or route-network identifier. National shield styling needs additional
+metadata; the current style uses neutral plates. See
+https://shortbread-tiles.org/schema/1.1/#layer-street_labels .

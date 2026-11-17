@@ -25,7 +25,7 @@ function registerRoadShields(map) {
   map.on('styleimagemissing', function(event) {
     if (event.id !== IMAGE_ID || map.hasImage(IMAGE_ID)) return;
     map.addImage(IMAGE_ID, shieldImage(), {
-      pixelRatio: 2, content: [10, 6, 54, 34], stretchX: [[16, 48]], stretchY: [[12, 28]]
+      pixelRatio: 2, content: [2, 2, 62, 38], stretchX: [[16, 48]], stretchY: [[12, 28]]
     });
   });
 }
