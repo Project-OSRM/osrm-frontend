@@ -4,20 +4,47 @@ const { validateStyleMin, featureFilter } = require('@maplibre/maplibre-gl-style
 const style = require('../images/openstreetmap/style.json');
 const theme = require('../src/vector_theme');
 
-test('provides crisp, stretchable road plates on demand without duplicate registration', () => {
-  const handlers = {};
-  const map = { on: (event, handler) => { handlers[event] = handler; }, hasImage: jest.fn(() => false), addImage: jest.fn() };
+test('resolves road plates for the first image request across tiles without late registration', async () => {
+  const images = new Map();
+  let resolveMissingImage;
+  const map = {
+    setMissingStyleImageResolver: resolver => { resolveMissingImage = resolver; },
+    hasImage: id => images.has(id),
+    addImage: jest.fn((id, image, options) => images.set(id, { image, options }))
+  };
   registerRoadShields(map);
-  handlers.styleimagemissing({ id: 'unrelated' });
+  await resolveMissingImage('unrelated');
   expect(map.addImage).not.toHaveBeenCalled();
-  handlers.styleimagemissing({ id: IMAGE_ID });
+  // Each tile must receive the image in its first response. An event listener
+  // that adds it after the response has been built cannot satisfy this request.
+  async function requestTileImages() {
+    if (!images.has(IMAGE_ID)) await resolveMissingImage(IMAGE_ID);
+    return images.get(IMAGE_ID);
+  }
+  const responses = await Promise.all([requestTileImages(), requestTileImages(), requestTileImages()]);
+  expect(responses.every(response => response && response.image.width === 64)).toBe(true);
   expect(map.addImage).toHaveBeenCalledWith(IMAGE_ID, expect.objectContaining({ width: 64, height: 40 }), expect.objectContaining({ pixelRatio: 2, content: [2, 2, 62, 38] }));
-  map.hasImage.mockReturnValue(true);
-  handlers.styleimagemissing({ id: IMAGE_ID });
+  await resolveMissingImage(IMAGE_ID);
   expect(map.addImage).toHaveBeenCalledTimes(1);
   const image = shieldImage();
   expect(image.data[3]).toBe(0);
   expect([...image.data.slice((20 * 64 + 32) * 4, (20 * 64 + 32) * 4 + 4)]).toEqual([248, 247, 243, 255]);
+});
+
+test('restores a shield after the style image registry is reset', () => {
+  const images = new Set();
+  let resolveMissingImage;
+  const map = {
+    setMissingStyleImageResolver: resolver => { resolveMissingImage = resolver; },
+    hasImage: id => images.has(id),
+    addImage: jest.fn(id => images.add(id))
+  };
+  registerRoadShields(map);
+  resolveMissingImage(IMAGE_ID);
+  images.clear();
+  resolveMissingImage(IMAGE_ID);
+  expect(images.has(IMAGE_ID)).toBe(true);
+  expect(map.addImage).toHaveBeenCalledTimes(2);
 });
 
 test('labels motorway and main-road references at usable zooms and excludes empty references', () => {
