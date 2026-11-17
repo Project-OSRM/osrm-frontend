@@ -17,6 +17,9 @@ first view loads. Features remain visible as they arrive. Once ready, the vector
 background uses its normal palette color. Later tile requests and palette
 switches keep the existing map visible.
 
+Water polygons classified as `canal` use the same fill as reservoirs, basins and
+docks. Canals classified as ordinary `water` retain their existing appearance.
+
 Local adaptations add reference shields for motorways and main roads at overview
 zooms. `src/road_shields.js` supplies their stretchable neutral background at
 runtime; the original tile source, fonts and attribution are retained.
