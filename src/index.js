@@ -784,8 +784,10 @@ plan.on('waypointsreorder', function() {
 });
 
 // Choosing another approach re-routes the same places; the view stays too.
+// The tracker ignores the change when the plan has an empty slot, as no route
+// follows it then.
 plan.on('waypointapproachchange', function() {
-  routeFitTracker.waypointApproachChanged();
+  routeFitTracker.waypointApproachChanged(plan.getWaypoints());
 });
 
 lrmControl.on('routingerror', function() {
