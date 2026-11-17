@@ -133,3 +133,39 @@ describe('resolveWaypointSlot', function () {
     expect(action).toBeNull();
   });
 });
+
+var approachForSlot = require('../src/waypoint_placement').approachForSlot;
+
+describe('approachForSlot', function () {
+  function emptyWith(approach) {
+    return { latLng: null, options: { approach: approach } };
+  }
+
+  it('takes the approach of the empty slot it fills', function () {
+    var waypoints = [emptyWith('curb'), dest];
+    var action = resolveWaypointSlot(waypoints, false);
+    expect(approachForSlot(waypoints, action)).toBe('curb');
+  });
+
+  it('is unrestricted for an empty slot without an approach', function () {
+    var waypoints = [empty, dest];
+    var action = resolveWaypointSlot(waypoints, false);
+    expect(approachForSlot(waypoints, action)).toBe('unrestricted');
+  });
+
+  it('is unrestricted for a via point inserted with the modifier', function () {
+    var restrictedDest = { latLng: dest.latLng, options: { approach: 'opposite' } };
+    var waypoints = [start, restrictedDest];
+    var action = resolveWaypointSlot(waypoints, true);
+    expect(action).toEqual({ index: 1, deleteCount: 0 });
+    expect(approachForSlot(waypoints, action)).toBe('unrestricted');
+  });
+
+  it('is unrestricted when the click replaces a placed waypoint', function () {
+    var restrictedStart = { latLng: start.latLng, options: { approach: 'curb' } };
+    var waypoints = [restrictedStart];
+    var action = resolveWaypointSlot(waypoints, false);
+    expect(action).toEqual({ index: 0, deleteCount: 1 });
+    expect(approachForSlot(waypoints, action)).toBe('unrestricted');
+  });
+});

@@ -157,3 +157,81 @@ describe('links.format — coordinate wrapping (issues #206, #307)', () => {
     expect(output).toContain('loc=48.800000%2C2.300000');
   });
 });
+
+
+describe('links — per-waypoint approaches (ap)', () => {
+  const L = require('leaflet');
+  const base = { zoom: 13, center: L.latLng(52.5, 13.4), language: 'en', alternative: 0 };
+
+  function waypoint(lat, lng, approach) {
+    const wp = { latLng: L.latLng(lat, lng) };
+    if (approach) wp.options = { approach: approach };
+    return wp;
+  }
+
+  test('format writes ap in loc order, with empty entries for unrestricted waypoints', () => {
+    const output = links.format(Object.assign({}, base, {
+      waypoints: [waypoint(1, 2, 'curb'), waypoint(3, 4), waypoint(5, 6, 'opposite')]
+    }));
+    expect(require('qs').parse(output).ap).toBe('curb;;opposite');
+  });
+
+  test('format leaves ap out when no waypoint is restricted', () => {
+    const output = links.format(Object.assign({}, base, {
+      waypoints: [waypoint(1, 2), waypoint(3, 4)]
+    }));
+    expect(output).not.toContain('ap=');
+  });
+
+  test('format output without approaches is unchanged', () => {
+    const output = links.format(Object.assign({}, base, {
+      waypoints: [waypoint(1, 2), waypoint(3, 4, 'unrestricted')]
+    }));
+    expect(output).toBe(links.format(Object.assign({}, base, {
+      waypoints: [{ latLng: L.latLng(1, 2) }, { latLng: L.latLng(3, 4) }]
+    })));
+  });
+
+  test('parse puts each ap entry on the waypoint at its position', () => {
+    const result = links.parse('loc=1,2&loc=3,4&loc=5,6&ap=curb%3B%3Bopposite');
+    expect(result.waypoints.map(wp => wp.options && wp.options.approach)).toEqual(['curb', undefined, 'opposite']);
+  });
+
+  test('parse accepts ap with a raw semicolon', () => {
+    const result = links.parse('loc=1,2&loc=3,4&ap=;curb');
+    expect(result.waypoints.map(wp => wp.options && wp.options.approach)).toEqual([undefined, 'curb']);
+  });
+
+  test('a link without ap gives waypoints without options', () => {
+    const result = links.parse('loc=1,2&loc=3,4');
+    expect(result.waypoints[0].options).toBeUndefined();
+    expect(result.waypoints[1].options).toBeUndefined();
+  });
+
+  test('unknown values become unrestricted', () => {
+    const result = links.parse('loc=1,2&loc=3,4&ap=sideways%3Bcurb');
+    expect(result.waypoints.map(wp => wp.options && wp.options.approach)).toEqual([undefined, 'curb']);
+  });
+
+  test('too many entries are cut and too few are padded', () => {
+    const many = links.parse('loc=1,2&loc=3,4&ap=curb%3Bcurb%3Bcurb%3Bcurb');
+    expect(many.waypoints).toHaveLength(2);
+    expect(many.waypoints.map(wp => wp.options.approach)).toEqual(['curb', 'curb']);
+    const few = links.parse('loc=1,2&loc=3,4&loc=5,6&ap=opposite');
+    expect(few.waypoints.map(wp => wp.options && wp.options.approach)).toEqual(['opposite', undefined, undefined]);
+  });
+
+  test('ap without waypoints, or repeated, does not throw', () => {
+    expect(() => links.parse('ap=curb')).not.toThrow();
+    expect(() => links.parse('loc=1,2&loc=3,4&ap=curb&ap=opposite')).not.toThrow();
+    expect(links.parse('ap=curb').waypoints).toBeUndefined();
+  });
+
+  test('format then parse restores the approaches', () => {
+    const output = links.format(Object.assign({}, base, {
+      waypoints: [waypoint(1, 2, 'opposite'), waypoint(3, 4), waypoint(5, 6, 'curb')]
+    }));
+    const result = links.parse(output);
+    expect(result.waypoints.map(wp => wp.options && wp.options.approach)).toEqual(['opposite', undefined, 'curb']);
+  });
+});

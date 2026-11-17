@@ -9,6 +9,7 @@ var geocoderPatches = require('./geocoder_patches');
 geocoderPatches();
 var LRM = require('leaflet-routing-machine');
 var resolveWaypointSlot = require('./waypoint_placement').resolveWaypointSlot;
+var approachForSlot = require('./waypoint_placement').approachForSlot;
 
 // Register app languages that LRM does not have built-in so LRM does not throw
 // "No localization for language" when they are selected. We reuse English
@@ -47,6 +48,8 @@ var routeZoom = require('./route_zoom');
 var resolveInitialAlternative = require('./route_alternative');
 var waypointMarker = require('./waypoint_marker');
 var waypointReorder = require('./waypoint_reorder');
+var approachControl = require('./approach_control');
+var approaches = require('./approaches');
 var entranceWaypointsModule = require('./entrance_waypoints');
 var createEntranceWaypoints = entranceWaypointsModule.createEntranceWaypoints;
 require('./polyfill');
@@ -279,17 +282,18 @@ var ReversablePlan = L.Routing.Plan.extend({
     }
     return container;
   },
-  // The rows are rebuilt on every waypoint change, so the reorder grips are
-  // wired again after each rebuild.
+  // The rows are rebuilt on every waypoint change, so the reorder grips and the
+  // approach toggles are wired again after each rebuild.
   _updateGeocoders: function() {
     L.Routing.Plan.prototype._updateGeocoders.call(this);
     waypointReorder.attachToPlan(this);
+    approachControl.attachToPlan(this);
   }
 });
 
 /* Setup markers */
-function makeIcon(i, n) {
-  return L.icon(waypointMarker.waypointIconOptions(i, n));
+function makeIcon(i, n, approach) {
+  return L.icon(waypointMarker.waypointIconOptions(i, n, approach));
 }
 
 // The deployment decides which geocoders exist; the first one is used. An entry
@@ -327,7 +331,7 @@ plan = new ReversablePlan([], {
   createMarker: function(i, wp, n) {
     var options = {
       draggable: this.draggableWaypoints,
-      icon: makeIcon(i, n)
+      icon: makeIcon(i, n, approaches.approachOf(wp))
     };
     // Choosing an entrance routes to the door but leaves the pin on the place
     // that was searched for, so the pin is drawn where the place is, not where
@@ -731,6 +735,13 @@ plan.on('waypointsreorder', function() {
   routeFitTracker.waypointsReordered();
 });
 
+// Choosing another approach re-routes the same places; the view stays too.
+// The tracker ignores the change when the plan has an empty slot, as no route
+// follows it then.
+plan.on('waypointapproachchange', function() {
+  routeFitTracker.waypointApproachChanged(plan.getWaypoints());
+});
+
 lrmControl.on('routingerror', function() {
   routeFitTracker.routingFailed();
 });
@@ -840,13 +851,17 @@ map.on('click', function (e) {
   addWaypoint(e);
 });
 function addWaypoint(evt) {
-  var waypoint = evt && evt.latlng ? evt.latlng : evt;
+  var latlng = evt && evt.latlng ? evt.latlng : evt;
   var waypoints = lrmControl.getWaypoints();
   var modifierPressed = evt && evt.originalEvent && (evt.originalEvent.ctrlKey || evt.originalEvent.metaKey);
 
   var action = resolveWaypointSlot(waypoints, modifierPressed);
   if (action) {
     routeFitTracker.waypointPlaced();
+    // A new waypoint rather than the bare LatLng, so the approach chosen for an
+    // empty slot survives LRM replacing it. Only the approach is carried over:
+    // the slot's name may be an address that failed to geocode.
+    var waypoint = approaches.setApproach(L.Routing.waypoint(latlng), approachForSlot(waypoints, action));
     lrmControl.spliceWaypoints(action.index, action.deleteCount, waypoint);
   }
 }

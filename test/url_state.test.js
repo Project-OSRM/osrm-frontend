@@ -74,3 +74,88 @@ describe('url_state.parse/format and history helpers', () => {
     expect(cb).not.toHaveBeenCalled();
   });
 });
+
+describe('url_state — per-waypoint approaches', () => {
+  beforeEach(() => {
+    window.history.replaceState({}, '', '/');
+  });
+
+  test('parse() carries a restricted waypoint\'s approach as a plain property', () => {
+    const parsed = urlState.parse('loc=1,2&loc=3,4&loc=5,6&ap=curb%3B%3Bopposite');
+    expect(parsed.waypoints).toEqual([
+      { lat: 1, lng: 2, approach: 'curb' },
+      { lat: 3, lng: 4 },
+      { lat: 5, lng: 6, approach: 'opposite' }
+    ]);
+  });
+
+  test('parse() of a link without ap gives the same plain waypoints as before', () => {
+    const parsed = urlState.parse('loc=1,2&loc=3,4');
+    expect(parsed.waypoints).toEqual([{ lat: 1, lng: 2 }, { lat: 3, lng: 4 }]);
+  });
+
+  test('format() writes ap for plain waypoints that carry an approach', () => {
+    const out = urlState.format({
+      zoom: 9,
+      waypoints: [{ lat: 1, lng: 2, approach: 'opposite' }, { lat: 3, lng: 4 }],
+      language: 'en'
+    });
+    expect(qs.parse(out).ap).toBe('opposite;');
+  });
+
+  test('format() ignores an unknown approach', () => {
+    const out = urlState.format({
+      zoom: 9,
+      waypoints: [{ lat: 1, lng: 2, approach: 'sideways' }, { lat: 3, lng: 4 }],
+      language: 'en'
+    });
+    expect(qs.parse(out).ap).toBeUndefined();
+  });
+
+  test('parse() then format() round-trips the approaches', () => {
+    const out = urlState.format(urlState.parse('loc=1,2&loc=3,4&loc=5,6&ap=curb%3B%3Bopposite'));
+    expect(qs.parse(out).ap).toBe('curb;;opposite');
+  });
+
+  test('replace() puts ap in the address bar', () => {
+    // replace() takes what State holds: waypoints with a latLng and options.
+    urlState.replace({ waypoints: [
+      { latLng: { lat: 1, lng: 2 }, options: { approach: 'curb' } },
+      { latLng: { lat: 3, lng: 4 } }
+    ] });
+    expect(qs.parse(window.location.search.slice(1)).ap).toBe('curb;');
+  });
+
+  test('parse() keeps the approach of an empty start', () => {
+    const parsed = urlState.parse('loc=&loc=3,4&ap=curb%3B');
+    expect(parsed.waypoints).toEqual([{ approach: 'curb' }, { lat: 3, lng: 4 }]);
+  });
+
+  test('parse() keeps the approach of an empty via', () => {
+    const parsed = urlState.parse('loc=1,2&loc=&loc=5,6&ap=%3Bopposite%3B');
+    expect(parsed.waypoints).toEqual([
+      { lat: 1, lng: 2 },
+      { approach: 'opposite' },
+      { lat: 5, lng: 6 }
+    ]);
+  });
+
+  test('parse() still gives undefined for an empty unrestricted slot', () => {
+    const parsed = urlState.parse('loc=&loc=3,4&ap=%3Bcurb');
+    expect(parsed.waypoints).toEqual([undefined, { lat: 3, lng: 4, approach: 'curb' }]);
+  });
+
+  test('format() writes an empty loc and its ap entry for an empty restricted slot', () => {
+    const out = urlState.format({ waypoints: [{ approach: 'curb' }, { lat: 3, lng: 4 }] });
+    const parsed = qs.parse(out);
+    expect(parsed.loc).toEqual(['', '3.000000,4.000000']);
+    expect(parsed.ap).toBe('curb;');
+  });
+
+  test('parse() then format() round-trips an empty restricted slot', () => {
+    const out = urlState.format(urlState.parse('loc=&loc=3,4&ap=curb%3B'));
+    const parsed = qs.parse(out);
+    expect(parsed.loc).toEqual(['', '3.000000,4.000000']);
+    expect(parsed.ap).toBe('curb;');
+  });
+});

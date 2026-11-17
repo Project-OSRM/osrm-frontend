@@ -1,5 +1,7 @@
 'use strict';
 
+var approaches = require('./approaches');
+
 /**
  * Given the current waypoints array, determine which slot a new map-click
  * waypoint should fill.
@@ -47,4 +49,26 @@ function resolveWaypointSlot(waypoints, modifierPressed) {
   return { index: Math.max(0, waypoints.length - 1), deleteCount: 1 };
 }
 
-module.exports = { resolveWaypointSlot: resolveWaypointSlot };
+/**
+ * The approach a map-click waypoint should take for the slot it fills.
+ *
+ * An empty slot can already carry an approach, chosen in its row before the
+ * place was picked; the clicked waypoint replaces that slot and so takes its
+ * approach over. Inserting a via point or replacing a placed waypoint starts
+ * from the default.
+ *
+ * @param {Array} waypoints - array of { latLng, options } objects
+ * @param {{ index: number, deleteCount: number }} action - from resolveWaypointSlot
+ * @returns {string} one of approaches.APPROACH_VALUES
+ */
+function approachForSlot(waypoints, action) {
+  if (!action || action.deleteCount !== 1) return approaches.UNRESTRICTED;
+  var slot = waypoints && waypoints[action.index];
+  if (!slot || slot.latLng) return approaches.UNRESTRICTED;
+  return approaches.approachOf(slot);
+}
+
+module.exports = {
+  resolveWaypointSlot: resolveWaypointSlot,
+  approachForSlot: approachForSlot
+};
