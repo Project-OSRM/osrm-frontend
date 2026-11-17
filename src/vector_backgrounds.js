@@ -10,6 +10,44 @@ function createBackgrounds(style, options, runtimeLoader) {
   var background = vectorLayers.createLayer(style, options, runtimeLoader);
   var active;
   var currentMap;
+  var satelliteStreetsEnabled = false;
+  var refreshPending = false;
+  var listeningMap;
+  function refresh() {
+    refreshPending = false;
+    if (!currentMap) return;
+    var satelliteActive = satelliteStreetsEnabled && options.satelliteLayer && currentMap.hasLayer(options.satelliteLayer);
+    var theme = active ? active.options.theme : satelliteActive ? 'satellite' : null;
+    if (!theme) {
+      if (currentMap.hasLayer(background)) background.setVisible(false);
+      return;
+    }
+    background.options.maxZoom = theme === 'satellite' ? options.satelliteLayer.options.maxZoom : options.maxZoom;
+    if (background.options.theme !== theme) background.setTheme(theme);
+    background.setVisible(true);
+    if (!currentMap.hasLayer(background)) background.addTo(currentMap);
+  }
+  function scheduleRefresh() {
+    if (refreshPending) return;
+    refreshPending = true;
+    Promise.resolve().then(refresh);
+  }
+  function satelliteChanged(event) {
+    if (event.layer === options.satelliteLayer) scheduleRefresh();
+  }
+  function attach(map) {
+    currentMap = map;
+    if (listeningMap === map) return;
+    listeningMap = map;
+    map.on('layeradd layerremove', satelliteChanged);
+    map.on('unload', function() {
+      map.off('layeradd layerremove', satelliteChanged);
+      currentMap = null;
+      listeningMap = null;
+      active = null;
+      satelliteStreetsEnabled = false;
+    });
+  }
   var Variant = L.Layer.extend({
     initialize: function(variantOptions) {
       L.setOptions(this, variantOptions);
@@ -28,23 +66,36 @@ function createBackgrounds(style, options, runtimeLoader) {
     },
     onAdd: function(map) {
       active = this;
-      currentMap = map;
-      background.setTheme(this.options.theme);
-      background.setVisible(true);
-      if (!map.hasLayer(background)) background.addTo(map);
+      attach(map);
+      refresh();
     },
     onRemove: function(map) {
       if (active === this) active = null;
-      Promise.resolve().then(function() {
-        if (!active && currentMap === map) {
-          background.setVisible(false);
-        }
-      });
+      scheduleRefresh();
+    }
+  });
+  var SatelliteStreets = L.Layer.extend({
+    options: { overlayBaseLayer: options.satelliteLayer },
+    setLanguage: function(language) {
+      background.setLanguage(language);
+    },
+    setRoutingProfile: function(profile) {
+      background.setRoutingProfile(profile);
+    },
+    onAdd: function(map) {
+      attach(map);
+      satelliteStreetsEnabled = true;
+      refresh();
+    },
+    onRemove: function() {
+      satelliteStreetsEnabled = false;
+      scheduleRefresh();
     }
   });
   return {
     vector: new Variant({ theme: options.theme || 'dark' }),
-    streets: new Variant({ theme: 'original' })
+    streets: new Variant({ theme: 'original' }),
+    satelliteStreets: new SatelliteStreets()
   };
 }
 

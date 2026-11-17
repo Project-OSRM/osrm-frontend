@@ -36,6 +36,8 @@
     left: 0;
 }
 
+.leaflet-control-layers label[hidden] { display: none; }
+
 /* tool colors and divs */
 .fill-osrm {
   background-color: rgba(37,72,127, 0.8);

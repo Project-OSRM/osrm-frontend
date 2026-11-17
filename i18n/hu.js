@@ -57,5 +57,6 @@
   "Satellite": "Műhold",
   "Outdoors": "Domborzat",
   "Hiking": "Túraútvonalak",
-  "Small Components": "Kis komponensek"
+  "Small Components": "Kis komponensek",
+  "Street overlay": "Úthálózati réteg"
 };

@@ -29,5 +29,9 @@ module.exports = function(map, layersControl, locationControl, language) {
     });
     // Keep canonical layer names untouched for links and stored preferences.
     if (entry && input.nextSibling) input.nextSibling.textContent = ' ' + translate(entry.name);
+    if (entry && entry.layer.options && entry.layer.options.overlayBaseLayer) {
+      var row = input.closest('label');
+      if (row) row.hidden = !map.hasLayer(entry.layer.options.overlayBaseLayer);
+    }
   });
 };

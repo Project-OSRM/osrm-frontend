@@ -1,6 +1,7 @@
 'use strict';
 
 var vectorTheme = require('./vector_theme');
+var vectorSatellite = require('./vector_satellite');
 
 function vectorStyle(style) {
   var layers = style.layers.filter(function(layer) {
@@ -49,16 +50,29 @@ function configureLoadingBackground(renderer) {
   };
 }
 
-// Only paint changes: geometry, sources, sprites and label placement stay live.
-function applyPalette(map, original, theme) {
+function styleForTheme(original, theme) {
+  if (theme === 'original') return original;
+  if (theme === 'satellite') return vectorSatellite.transformStyle(original);
+  return vectorTheme.transformStyle(null, original);
+}
+
+// Paint and optional overlay visibility changes retain the sources and geometry.
+function applyPalette(map, original, theme, previousTheme) {
   var dark = vectorTheme.transformStyle(null, original);
-  var target = theme === 'original' ? original : dark;
+  var satellite = theme === 'satellite' || previousTheme === 'satellite' ? vectorSatellite.transformStyle(original) : null;
+  var target = theme === 'original' ? original : theme === 'satellite' ? satellite : dark;
   target.layers.forEach(function(layer, index) {
-    var properties = Object.assign({}, original.layers[index].paint, dark.layers[index].paint);
+    var properties = Object.assign({}, original.layers[index].paint, dark.layers[index].paint, satellite && satellite.layers[index].paint);
     Object.keys(properties).forEach(function(property) {
       map.setPaintProperty(layer.id, property, layer.paint && layer.paint[property] !== undefined ? layer.paint[property] : null);
     });
+    if (satellite) {
+      var initial = original.layers[index].layout && original.layers[index].layout.visibility;
+      if ((satellite.layers[index].layout && satellite.layers[index].layout.visibility) !== initial) {
+        map.setLayoutProperty(layer.id, 'visibility', layer.layout && layer.layout.visibility || null);
+      }
+    }
   });
 }
 
-module.exports = { vectorStyle: vectorStyle, configureLoadingBackground: configureLoadingBackground, applyPalette: applyPalette };
+module.exports = { vectorStyle: vectorStyle, configureLoadingBackground: configureLoadingBackground, styleForTheme: styleForTheme, applyPalette: applyPalette };

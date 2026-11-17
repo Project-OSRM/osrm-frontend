@@ -15,6 +15,15 @@ var services = [
 ];
 
 describe('determineInitialLayers', function() {
+  it('restores satellite streets independently from component and bike overlays', function() {
+    var available = Object.assign({}, overlay, { 'Street overlay': {} });
+    expect(initialLayers.determineInitialLayers(baselayer, available, services, 0, false, true).layers)
+      .toEqual([baselayer, available['Street overlay']]);
+    expect(initialLayers.determineInitialLayers(baselayer, available, services, 1, true, true).layers)
+      .toEqual([baselayer, available['Street overlay'], overlay['Small Components'], overlay.Bike]);
+    expect(initialLayers.determineInitialLayers(baselayer, available, services, 0, false, false).layers)
+      .toEqual([baselayer]);
+  });
   it('should show Bike overlay when profile is bike', function() {
     var result = initialLayers.determineInitialLayers(baselayer, overlay, services, 1, false);
     expect(result.layers).toEqual([baselayer, overlay['Bike']]);

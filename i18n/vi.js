@@ -57,5 +57,6 @@ module.exports = {
   "Satellite": "Vệ tinh",
   "Outdoors": "Địa hình",
   "Hiking": "Đi bộ đường dài",
-  "Small Components": "Thành phần nhỏ"
+  "Small Components": "Thành phần nhỏ",
+  "Street overlay": "Lớp đường phố"
 };

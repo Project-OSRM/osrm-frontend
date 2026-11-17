@@ -60,5 +60,6 @@ module.exports = {
   "Satellite": "卫星影像",
   "Outdoors": "地形",
   "Hiking": "徒步路线",
-  "Small Components": "小型连通分量"
+  "Small Components": "小型连通分量",
+  "Street overlay": "道路叠加"
 };

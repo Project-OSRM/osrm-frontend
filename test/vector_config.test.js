@@ -7,7 +7,7 @@ jest.mock('leaflet', () => ({
   tileLayer: (url, options) => ({ url, options }),
   latLng: (lat, lng) => ({ lat, lng })
 }));
-jest.mock('../src/vector_backgrounds', () => ({ createBackgrounds: (style, options) => ({ vector: { style, options }, streets: { style, options: Object.assign({}, options, { theme: 'original' }) } }) }));
+jest.mock('../src/vector_backgrounds', () => require('./__vector_backgrounds'));
 
 function load(config) {
   jest.resetModules();

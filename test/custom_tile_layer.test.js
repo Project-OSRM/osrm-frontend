@@ -3,6 +3,7 @@
 jest.mock('../src/small_components', () => ({ createLayer: () => ({ _url: 'OSRM component tiles', setService: jest.fn() }) }));
 
 jest.mock('../src/vector_layer', () => ({ createLayer: (style, options) => ({ _url: style, style, options, _options: options }) }));
+jest.mock('../src/vector_backgrounds', () => require('./__vector_backgrounds'));
 
 // Mock leaflet so this test runs in the node environment without a DOM
 jest.mock('leaflet', () => ({
@@ -218,6 +219,6 @@ describe('OSRM_TILE_URL layer selection via URL and stored preference', () => {
 
   test('overlays are untouched by a custom base layer', () => {
     const opts = loadWithCustomLayer();
-    expect(Object.keys(opts.overlay)).toEqual(['Hiking', 'Bike', 'Small Components']);
+    expect(Object.keys(opts.overlay)).toEqual(['Street overlay', 'Hiking', 'Bike', 'Small Components']);
   });
 });

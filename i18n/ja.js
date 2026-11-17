@@ -57,5 +57,6 @@ module.exports = {
   "Satellite": "衛星画像",
   "Outdoors": "地形",
   "Hiking": "ハイキング",
-  "Small Components": "小さな接続成分"
+  "Small Components": "小さな接続成分",
+  "Street overlay": "道路を重ねて表示"
 };

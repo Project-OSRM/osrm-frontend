@@ -3,6 +3,7 @@
 jest.mock('../src/small_components', () => ({ createLayer: () => ({ _url: 'OSRM component tiles', setService: jest.fn() }) }));
 
 jest.mock('../src/vector_layer', () => ({ createLayer: (style, options) => ({ _url: style, style, options, _options: options }) }));
+jest.mock('../src/vector_backgrounds', () => require('./__vector_backgrounds'));
 
 // Mock leaflet so this test runs in the node environment without a DOM
 jest.mock('leaflet', () => ({

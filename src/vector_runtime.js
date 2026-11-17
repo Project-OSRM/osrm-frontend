@@ -3,7 +3,6 @@ import { setWorkerUrl } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import createBackgroundRenderer from './vector_renderer';
-import vectorTheme from './vector_theme';
 import vectorPalette from './vector_palette';
 import resolveStyleAssets from './vector_style_assets';
 import vectorImages from './vector_images';
@@ -17,6 +16,7 @@ var BackgroundRenderer = createBackgroundRenderer(MaplibreGL);
 export function createLayer(style, theme) {
   var original;
   var currentTheme = theme;
+  var renderedTheme = theme;
   var currentLanguage = 'en';
   var languageUpdatePending = false;
   var renderer = new BackgroundRenderer({
@@ -25,13 +25,19 @@ export function createLayer(style, theme) {
     transformStyle: function(previous, next) {
       var styleUrl = typeof style === 'string' ? new URL(style, document.baseURI).href : document.baseURI;
       original = vectorPalette.vectorStyle(resolveStyleAssets(next, styleUrl));
-      var themed = currentTheme === 'original' ? original : vectorTheme.transformStyle(previous, original);
+      renderedTheme = currentTheme;
+      var themed = vectorPalette.styleForTheme(original, currentTheme);
       return vectorLabels.localizeStyle(themed, currentLanguage);
     }
   });
   var isBackgroundLoading = vectorPalette.configureLoadingBackground(renderer);
   vectorAccess.configureRenderer(renderer);
+  function updateLayerOrder() {
+    var container = renderer.getContainer();
+    if (container) container.style.zIndex = currentTheme === 'satellite' ? '100' : '';
+  }
   renderer.on('add', function() {
+    updateLayerOrder();
     vectorImages.registerVectorImages(renderer.getMaplibreMap());
   });
   renderer.setLanguage = function(nextLanguage) {
@@ -53,10 +59,13 @@ export function createLayer(style, theme) {
   renderer.setTheme = function(nextTheme) {
     if (currentTheme === nextTheme) return;
     currentTheme = nextTheme;
+    updateLayerOrder();
     var map = renderer.getMaplibreMap();
     if (!original || !map) return;
     function apply() {
-      vectorPalette.applyPalette(map, original, currentTheme);
+      if (renderer.getMaplibreMap() !== map) return;
+      vectorPalette.applyPalette(map, original, currentTheme, renderedTheme);
+      renderedTheme = currentTheme;
     }
     if (!isBackgroundLoading() && map.isStyleLoaded()) apply();
     else map.once('load', apply);

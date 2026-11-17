@@ -57,5 +57,6 @@ module.exports = {
   "Satellite": "Спутник",
   "Outdoors": "Рельеф",
   "Hiking": "Пешие тропы",
-  "Small Components": "Малые компоненты"
+  "Small Components": "Малые компоненты",
+  "Street overlay": "Слой улиц"
 };

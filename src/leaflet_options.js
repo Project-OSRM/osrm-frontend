@@ -28,13 +28,15 @@ var outdoors = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
     attribution: esriAttribution,
     maxZoom: 19
   }),
-  osm = require('./vector_layer').createLayer(osmVectorStyle, {
-    theme: 'original',
+  osmBackgrounds = require('./vector_backgrounds').createBackgrounds(osmVectorStyle, {
+    theme: config.OSRM_VECTOR_THEME === 'original' ? 'original' : 'dark',
     language: getLanguage(),
-    attribution: osmAttribution,
+    attribution: typeof config.OSRM_VECTOR_STYLE === 'string' && config.OSRM_VECTOR_STYLE.trim() === osmVectorStyle && typeof config.OSRM_VECTOR_ATTRIBUTION === 'string' ? config.OSRM_VECTOR_ATTRIBUTION : osmAttribution,
+    satelliteLayer: satellite,
     minZoom: 1,
     maxZoom: 22
   }),
+  osm = osmBackgrounds.streets,
   osm_de = L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
     attribution: osmAttribution
   }),
@@ -104,6 +106,7 @@ function customVectorLayer() {
     console.warn('Ignoring OSRM_VECTOR_STYLE: expected an http(s) or root-relative style URL.');
     return null;
   }
+  if (style === osmVectorStyle) return osmBackgrounds;
   return require('./vector_backgrounds').createBackgrounds(style, {
     theme: config.OSRM_VECTOR_THEME === 'original' ? 'original' : 'dark',
     language: getLanguage(),
@@ -115,8 +118,6 @@ function customVectorLayer() {
 
 var vectorBackgrounds = customVectorLayer();
 var vector = vectorBackgrounds && vectorBackgrounds.vector;
-// Both entries keep the same renderer and tile cache when using the built-in OSM style.
-if (vectorBackgrounds && config.OSRM_VECTOR_STYLE.trim() === osmVectorStyle) osm = vectorBackgrounds.streets;
 var vectorName = (typeof config.OSRM_VECTOR_NAME === 'string' && config.OSRM_VECTOR_NAME.trim()) || 'Dark Vector';
 
 /**
@@ -698,6 +699,8 @@ var leafletOptions = {
    * independently shown or hidden by the user via checkboxes.
    *
    * **Built-in overlays:**
+   * - **Street overlay** — translucent roads and labels over Satellite imagery.
+   *   Uses the same cached OpenStreetMap renderer as the vector backgrounds.
    * - **Hiking** — Waymarked Trails hiking routes
    *   ([waymarkedtrails.org](https://waymarkedtrails.org/), CC-BY-SA)
    * - **Bike** — Waymarked Trails cycling routes
@@ -711,6 +714,7 @@ var leafletOptions = {
    * @type {Object<string, L.TileLayer>}
    */
   overlay: {
+    'Street overlay': osmBackgrounds.satelliteStreets,
     'Hiking': hiking,
     'Bike': bike,
     'Small Components': small_components

@@ -69,5 +69,6 @@ module.exports = {
   "Satellite": "Satellite",
   "Outdoors": "Outdoors",
   "Hiking": "Hiking",
-  "Small Components": "Small Components"
+  "Small Components": "Small Components",
+  "Street overlay": "Street overlay"
 };

@@ -57,5 +57,6 @@ module.exports = {
   "Satellite": "ماهواره",
   "Outdoors": "ناهمواری‌ها",
   "Hiking": "پیاده‌روی",
-  "Small Components": "بخش‌های کوچک"
+  "Small Components": "بخش‌های کوچک",
+  "Street overlay": "نمایش خیابان‌ها"
 };
