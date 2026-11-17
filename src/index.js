@@ -46,6 +46,7 @@ var tools = require('./tools');
 var state = require('./state');
 var localization = require('./localization');
 var initialLayers = require('./initial_layers');
+var vectorAccess = require('./vector_access');
 var layerUtils = require('./layer_utils');
 var routeZoom = require('./route_zoom');
 var smoothWheelZoom = require('./smooth_wheel_zoom');
@@ -166,6 +167,7 @@ if (_urlProfile !== undefined && _urlProfile !== null) {
 if (overlay['Small Components'] && overlay['Small Components'].setService) {
   overlay['Small Components'].setService(services[_initProfileIndex] || services[0]);
 }
+vectorAccess.applyProfile(mapLayer[0], services[_initProfileIndex] || services[0]);
 var storedComponents = ls.get('smallComponents');
 var _initResult = initialLayers.determineInitialLayers(baselayer, overlay, services, _initProfileIndex, storedComponents === null || storedComponents === undefined ? !!ls.get('getOverlay') : !!storedComponents);
 var layers = _initResult.layers;
@@ -477,16 +479,22 @@ var toolsControl = tools.control(localization.get(mergedOptions.language), local
 if (darkInterface) {
   interfaceTheme.attach({ map: map, control: lrmControl, tools: toolsControl, modeSelector: modeSelector, language: language });
 }
+if (modeSelector) {
+  var accessLegend = require('./access_legend').createLegend(map, modeSelector.container, language);
+  toolsControl.on('languagechanged', function(event) {
+    accessLegend.updateLocalization(event.language);
+  });
+}
 
 /**
- * Point the tools control's debug map button at the debug map configured for a
- * routing mode. Modes without an explicit `debugUrl` fall back to the bundled
- * debug map at `debug/`.
+ * Apply the routing mode to access markings, small components and the tools
+ * control's debug map button. Modes without `debugUrl` use the bundled debug map.
  *
  * @param {number} profileIndex — Index into `services`.
  */
 function applyModeLayersForProfile(profileIndex) {
   var service = services[profileIndex];
+  vectorAccess.applyProfile(mapLayer, service);
   if (overlay['Small Components'] && overlay['Small Components'].setService) {
     overlay['Small Components'].setService(service);
   }

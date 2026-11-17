@@ -1,4 +1,6 @@
 module.exports = {
+  "Not permitted": "Không được phép",
+  "Limited access": "Hạn chế đi lại",
   "Shortest": "Ngắn nhất",
   "Similar arrival time": "Giờ đến tương tự",
   "Fewer turns": "Ít chỗ rẽ hơn",

@@ -13,6 +13,7 @@ test('Dark Vector and OpenStreetMap retain one renderer and tile cache across re
   renderer.onRemove = jest.fn();
   renderer.setTheme = jest.fn();
   renderer.setVisible = jest.fn();
+  renderer.setRoutingProfile = jest.fn();
   renderer.getMaplibreMap = () => events;
   const runtime = { createLayer: jest.fn(() => renderer) };
   const loader = jest.fn(() => Promise.resolve(runtime));
@@ -20,16 +21,20 @@ test('Dark Vector and OpenStreetMap retain one renderer and tile cache across re
   backgrounds.vector.addTo(map);
   await Promise.resolve();
   events.fire('load');
+  backgrounds.vector.setRoutingProfile('driving');
+  expect(backgrounds.vector.getAccessProperty()).toBeNull(); // Custom style has no access layers.
   for (const [previous, next] of [[backgrounds.vector, backgrounds.streets], [backgrounds.streets, backgrounds.vector]]) {
     map.removeLayer(previous);
     next.addTo(map);
     await Promise.resolve();
+    next.setRoutingProfile('bike');
     expect(map.hasLayer(renderer)).toBe(true);
     expect(renderer.onRemove).not.toHaveBeenCalled();
   }
   expect(renderer.setTheme.mock.calls).toEqual([['original'], ['dark']]);
   expect(loader).toHaveBeenCalledTimes(1);
   expect(runtime.createLayer).toHaveBeenCalledTimes(1);
+  expect(renderer.setRoutingProfile).toHaveBeenLastCalledWith('bike');
   map.removeLayer(backgrounds.vector);
   await Promise.resolve();
   expect(renderer.onRemove).not.toHaveBeenCalled();

@@ -30,6 +30,16 @@ roads follow at zoom 16. These labels follow the way geometry, use a smaller typ
 size than ordinary street names, and have lower collision priority. Unnamed ways
 retain their existing rendering without additional labels.
 
+At tile zoom 15 and above, access markings follow the selected routing profile:
+red short dashes indicate an explicit `no`, amber longer dashes indicate
+`limited`. Driving uses `motorcar`, cycling uses `bicycle`, and walking uses
+`foot`. Missing flags and unrecognized profiles receive no access markings.
+The mode selector shows a localized legend when these markings are visible.
+Mode changes update only MapLibre global paint state, preserving the tile cache.
+These colors use the background tile metadata and do not alter routing requests.
+The old `bicycle=designated` accent layers are removed: this tile source reduces
+that value to `yes`, which also covers ordinary permission to cycle.
+
 Shield content bounds leave a one-pixel border inset, with compact text padding.
 Shortbread 1.1 road labels expose references and road classes, but no country
 code or route-network identifier. National shield styling needs additional

@@ -1,4 +1,6 @@
 ﻿module.exports = {
+  "Not permitted": "Nem megengedett",
+  "Limited access": "Korlátozott hozzáférés",
   "Shortest": "Legrövidebb",
   "Similar arrival time": "Hasonló érkezési idő",
   "Fewer turns": "Kevesebb kanyar",

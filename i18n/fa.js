@@ -1,4 +1,6 @@
 module.exports = {
+  "Not permitted": "مجاز نیست",
+  "Limited access": "دسترسی محدود",
   "Shortest": "کوتاه‌ترین",
   "Similar arrival time": "زمان رسیدن مشابه",
   "Fewer turns": "پیچ‌های کمتر",

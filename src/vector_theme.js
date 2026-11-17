@@ -58,6 +58,8 @@ function fillColor(name, id) {
 }
 
 function lineColor(name) {
+  if (/road-access-restricted/.test(name)) return '#d19398';
+  if (/road-access-limited/.test(name)) return '#d0b784';
   if (/water|river|stream/.test(name)) return palette.waterway;
   if (/casing|:outline|:bridge|_case(?:_|$)/.test(name)) return palette.roadCasing;
   if (/runway|taxiway|apron/.test(name)) return palette.pavement;

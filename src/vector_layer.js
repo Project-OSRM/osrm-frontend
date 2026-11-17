@@ -2,6 +2,7 @@
 
 var L = require('leaflet');
 var buildTimestamp = require('./version').buildTimestamp;
+var vectorAccess = require('./vector_access');
 var runtimePromise;
 // Resolve assets beside bundle.js, including deployments served from a subpath.
 var scriptUrl = document.currentScript && document.currentScript.src;
@@ -60,6 +61,19 @@ function createLayer(style, options, runtimeLoader) {
       this.eachLayer(function(renderer) {
         if (renderer.setVisible) renderer.setVisible(visible);
       });
+      if (this._map) this._map.fire('accessstylechange');
+    },
+    setRoutingProfile: function(profile) {
+      if (this.options.routingProfile === profile) return;
+      this.options.routingProfile = profile;
+      this.eachLayer(function(renderer) {
+        if (renderer.setRoutingProfile) renderer.setRoutingProfile(profile);
+      });
+      if (this._map) this._map.fire('accessstylechange');
+    },
+    getAccessProperty: function() {
+      return this._map && this._visible !== false && style === 'images/openstreetmap/style.json'
+        ? vectorAccess.propertyForProfile(this.options.routingProfile) : null;
     },
     setLanguage: function(language) {
       this.options.language = language;
@@ -125,6 +139,7 @@ function createLayer(style, options, runtimeLoader) {
             renderStyle = localStyle.href;
           }
           var renderer = runtime.createLayer(renderStyle, this.options.theme || 'dark');
+          if (renderer.setRoutingProfile) renderer.setRoutingProfile(this.options.routingProfile);
           // Leaflet stores defaults on the options prototype; preserve them.
           L.setOptions(renderer, { additionalAttribution: this.options.attribution });
           if (this.options.pane) L.setOptions(renderer, { pane: this.options.pane });

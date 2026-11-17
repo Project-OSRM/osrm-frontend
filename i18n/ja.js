@@ -1,4 +1,6 @@
 module.exports = {
+  "Not permitted": "通行不可",
+  "Limited access": "通行制限あり",
   "Shortest": "最短距離",
   "Similar arrival time": "到着時刻がほぼ同じ",
   "Fewer turns": "曲がる回数が少ない",

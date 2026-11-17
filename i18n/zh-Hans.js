@@ -1,4 +1,6 @@
 module.exports = {
+  "Not permitted": "禁止通行",
+  "Limited access": "限制通行",
   "Shortest": "距离最短",
   "Similar arrival time": "到达时间相近",
   "Fewer turns": "转弯更少",

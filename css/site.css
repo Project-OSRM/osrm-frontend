@@ -449,6 +449,13 @@
     box-sizing: border-box;
 }
 
+.osrm-access-legend { display: flex; flex-wrap: wrap; clear: both; gap: 4px 12px; padding: 7px 2px 0; font-size: 11px; line-height: 1.4; }
+.osrm-access-legend[hidden] { display: none; }
+.osrm-access-legend-entry { display: inline-flex; align-items: center; gap: 5px; }
+.osrm-access-swatch { display: inline-block; flex: none; width: 18px; height: 2px; }
+.osrm-access-swatch.restricted { background: repeating-linear-gradient(to right, #d19398 0 2px, transparent 2px 8px); }
+.osrm-access-swatch.limited { background: repeating-linear-gradient(to right, #d0b784 0 5px, transparent 5px 10px); }
+
 .leaflet-osrm-mode-selector .osrm-profile-chooser {
     background: transparent;
     border: none;

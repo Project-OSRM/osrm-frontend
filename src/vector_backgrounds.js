@@ -17,6 +17,12 @@ function createBackgrounds(style, options, runtimeLoader) {
     setLanguage: function(language) {
       background.setLanguage(language);
     },
+    setRoutingProfile: function(profile) {
+      background.setRoutingProfile(profile);
+    },
+    getAccessProperty: function() {
+      return this._map ? background.getAccessProperty() : null;
+    },
     getAttribution: function() {
       return ''; // Credits belong to the shared renderer, once.
     },

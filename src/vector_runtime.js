@@ -7,6 +7,7 @@ import vectorTheme from './vector_theme';
 import vectorPalette from './vector_palette';
 import resolveStyleAssets from './vector_style_assets';
 import vectorImages from './vector_images';
+import vectorAccess from './vector_access';
 
 setWorkerUrl(workerUrl);
 
@@ -24,6 +25,7 @@ export function createLayer(style, theme) {
       return currentTheme === 'original' ? original : vectorTheme.transformStyle(previous, original);
     }
   });
+  vectorAccess.configureRenderer(renderer);
   renderer.on('add', function() {
     vectorImages.registerVectorImages(renderer.getMaplibreMap());
   });

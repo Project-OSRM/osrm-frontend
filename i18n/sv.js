@@ -1,4 +1,6 @@
 module.exports = {
+  "Not permitted": "Inte tillåtet",
+  "Limited access": "Begränsad tillgång",
   "Shortest": "Kortast",
   "Similar arrival time": "Liknande ankomsttid",
   "Fewer turns": "Färre svängar",

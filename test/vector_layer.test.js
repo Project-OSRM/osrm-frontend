@@ -208,3 +208,27 @@ test('versions the bundled OpenStreetMap style so an older cached style cannot h
   expect(url.searchParams.get('v')).toBeTruthy();
   expect(runtime.createLayer.mock.calls[0][1]).toBe('original');
 });
+
+test('retains mode changes during loading and hides access capability for suspended or custom backgrounds', async () => {
+  let resolve;
+  const runtime = fakeRuntime();
+  runtime.renderer.setRoutingProfile = jest.fn();
+  const layer = vectorLayers.createLayer('images/openstreetmap/style.json', {}, () => new Promise(done => { resolve = done; }));
+  layer.setRoutingProfile('bike');
+  layer.addTo(map);
+  layer.setRoutingProfile('foot');
+  resolve(runtime);
+  await flush();
+  expect(runtime.renderer.setRoutingProfile).toHaveBeenLastCalledWith('foot');
+  expect(layer.getAccessProperty()).toBe('foot');
+  layer.setVisible(false);
+  expect(layer.getAccessProperty()).toBeNull();
+  layer.setRoutingProfile('driving');
+  layer.setVisible(true);
+  expect(layer.getAccessProperty()).toBe('motorcar');
+  layer.setRoutingProfile('unknown');
+  expect(layer.getAccessProperty()).toBeNull();
+  const custom = addVector(() => Promise.resolve(fakeRuntime()));
+  custom.setRoutingProfile('driving');
+  expect(custom.getAccessProperty()).toBeNull();
+});

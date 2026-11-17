@@ -1,4 +1,6 @@
 module.exports = {
+  "Not permitted": "Non consentito",
+  "Limited access": "Accesso limitato",
   "Shortest": "Più breve",
   "Similar arrival time": "Orario di arrivo simile",
   "Fewer turns": "Meno svolte",
