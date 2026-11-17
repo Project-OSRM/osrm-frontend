@@ -16,6 +16,15 @@ Local adaptations add reference shields for motorways and main roads at overview
 zooms. `src/road_shields.js` supplies their stretchable neutral background at
 runtime; the original tile source, fonts and attribution are retained.
 
+Selected destinations show names alongside their icons: hospitals start at tile
+zoom 14; clinics, pharmacies, fuel stations and lodging start at zoom 15. Other
+POI categories retain their existing thresholds. Unnamed destinations keep their
+category symbol, and collision handling hides text where space is tight.
+`src/poi_icons.js` generates local fuel and lodging distance-field symbols so
+their colors adapt to both palettes. `src/vector_images.js` resolves these and
+the road plates together before the first tile image response, without another
+image service.
+
 Shield content bounds leave a one-pixel border inset, with compact text padding.
 Shortbread 1.1 road labels expose references and road classes, but no country
 code or route-network identifier. National shield styling needs additional

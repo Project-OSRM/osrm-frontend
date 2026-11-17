@@ -106,11 +106,14 @@ function transformStyle(previousStyle, style) {
     if (layer.type === 'symbol' && layer.layout && layer.layout['text-field'] && !/shield/.test(name)) {
       paint['text-color'] = /water/.test(name) ? '#a7cce8' : /transportation|highway|roadname|street_labels/.test(name) ? palette.mutedText : palette.text;
       if (/poi/.test(name)) {
-        paint['text-color'] = ['match', ['coalesce', ['get', 'kind'], ['get', 'class'], ''],
+        paint['text-color'] = ['match', ['coalesce', ['get', 'kind'], ['get', 'class'], ['get', 'amenity'], ['get', 'leisure'], ['get', 'tourism'], ''],
           ['park', 'garden', 'playground'], '#a0c59b',
           ['restaurant', 'cafe', 'bar', 'fast_food'], '#d4af8e',
           ['school', 'college', 'university'], '#c0af9b',
+          ['hospital', 'clinic', 'pharmacy'], '#e4a9b3',
+          ['hotel', 'motel', 'hostel', 'guest_house', 'bed_and_breakfast'], '#c3b5df',
           palette.mutedText];
+        if (layer.layout['icon-image']) paint['icon-color'] = paint['text-color'];
       }
       paint['text-halo-color'] = palette.halo;
       paint['text-halo-width'] = 1;

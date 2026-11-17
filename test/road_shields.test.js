@@ -1,5 +1,6 @@
 'use strict';
-const { registerRoadShields, shieldImage, exitShieldImage, IMAGE_ID, EXIT_IMAGE_ID } = require('../src/road_shields');
+const { shieldImage, exitShieldImage, IMAGE_ID, EXIT_IMAGE_ID } = require('../src/road_shields');
+const { registerVectorImages } = require('../src/vector_images');
 const { validateStyleMin, featureFilter } = require('@maplibre/maplibre-gl-style-spec');
 const style = require('../images/openstreetmap/style.json');
 const theme = require('../src/vector_theme');
@@ -12,7 +13,7 @@ test('resolves road plates for the first image request across tiles without late
     hasImage: id => images.has(id),
     addImage: jest.fn((id, image, options) => images.set(id, { image, options }))
   };
-  registerRoadShields(map);
+  registerVectorImages(map);
   await resolveMissingImage('unrelated');
   expect(map.addImage).not.toHaveBeenCalled();
   // Each tile must receive the image in its first response. An event listener
@@ -39,7 +40,7 @@ test('restores a shield after the style image registry is reset', () => {
     hasImage: id => images.has(id),
     addImage: jest.fn(id => images.add(id))
   };
-  registerRoadShields(map);
+  registerVectorImages(map);
   resolveMissingImage(IMAGE_ID);
   images.clear();
   resolveMissingImage(IMAGE_ID);
@@ -50,7 +51,7 @@ test('restores a shield after the style image registry is reset', () => {
 test('resolves distinct exit badges with an unstretched branching-road symbol on the first request', async () => {
   const images = new Map();
   let resolveMissingImage;
-  registerRoadShields({
+  registerVectorImages({
     setMissingStyleImageResolver: resolver => { resolveMissingImage = resolver; },
     hasImage: id => images.has(id),
     addImage: (id, image, options) => images.set(id, { image, options })

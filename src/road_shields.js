@@ -52,19 +52,14 @@ function exitShieldImage() {
   return { width: width, height: height, data: data };
 }
 
-function registerRoadShields(map) {
-  // MapLibre 6 snapshots the image response before firing styleimagemissing.
-  // Resolve the image during the request so every initial tile gets its plate.
-  map.setMissingStyleImageResolver(function(id) {
-    if ((id !== IMAGE_ID && id !== EXIT_IMAGE_ID) || map.hasImage(id)) return;
-    var exit = id === EXIT_IMAGE_ID;
-    var options = exit ? {
-      pixelRatio: 2, content: [38, 2, 94, 38], stretchX: [[42, 84]], stretchY: [[2, 8], [32, 38]]
-    } : {
-      pixelRatio: 2, content: [2, 2, 62, 38], stretchX: [[16, 48]], stretchY: [[12, 28]]
-    };
-    map.addImage(id, exit ? exitShieldImage() : shieldImage(), options);
-  });
+function imageDefinition(id) {
+  if (id !== IMAGE_ID && id !== EXIT_IMAGE_ID) return null;
+  var exit = id === EXIT_IMAGE_ID;
+  return { image: exit ? exitShieldImage() : shieldImage(), options: exit ? {
+    pixelRatio: 2, content: [38, 2, 94, 38], stretchX: [[42, 84]], stretchY: [[2, 8], [32, 38]]
+  } : {
+    pixelRatio: 2, content: [2, 2, 62, 38], stretchX: [[16, 48]], stretchY: [[12, 28]]
+  } };
 }
 
-module.exports = { registerRoadShields: registerRoadShields, shieldImage: shieldImage, exitShieldImage: exitShieldImage, IMAGE_ID: IMAGE_ID, EXIT_IMAGE_ID: EXIT_IMAGE_ID };
+module.exports = { imageDefinition: imageDefinition, shieldImage: shieldImage, exitShieldImage: exitShieldImage, IMAGE_ID: IMAGE_ID, EXIT_IMAGE_ID: EXIT_IMAGE_ID };
