@@ -24,7 +24,7 @@ function transparentBackground(style) {
   }) });
 }
 
-function configureLoadingBackground(renderer) {
+function configureLoadingBackground(renderer, currentStyle) {
   var transformStyle = renderer.options.transformStyle;
   var backgrounds = [];
   var loading = true;
@@ -40,7 +40,11 @@ function configureLoadingBackground(renderer) {
     map.once('load', function() {
       if (renderer.getMaplibreMap() !== map) return;
       loading = false;
-      backgrounds.forEach(function(layer) {
+      var readyStyle = currentStyle && currentStyle();
+      var readyBackgrounds = readyStyle ? readyStyle.layers.filter(function(layer) {
+        return layer.type === 'background';
+      }) : backgrounds;
+      readyBackgrounds.forEach(function(layer) {
         map.setPaintProperty(layer.id, 'background-color', layer.paint && layer.paint['background-color'] || null);
       });
     });
@@ -57,14 +61,16 @@ function styleForTheme(original, theme) {
 }
 
 // Paint and optional overlay visibility changes retain the sources and geometry.
-function applyPalette(map, original, theme, previousTheme) {
+function applyPalette(map, original, theme, previousTheme, loading) {
   var dark = vectorTheme.transformStyle(null, original);
   var satellite = theme === 'satellite' || previousTheme === 'satellite' ? vectorSatellite.transformStyle(original) : null;
   var target = theme === 'original' ? original : theme === 'satellite' ? satellite : dark;
   target.layers.forEach(function(layer, index) {
     var properties = Object.assign({}, original.layers[index].paint, dark.layers[index].paint, satellite && satellite.layers[index].paint);
     Object.keys(properties).forEach(function(property) {
-      map.setPaintProperty(layer.id, property, layer.paint && layer.paint[property] !== undefined ? layer.paint[property] : null);
+      var value = layer.paint && layer.paint[property] !== undefined ? layer.paint[property] : null;
+      if (loading && layer.type === 'background' && property === 'background-color') value = 'transparent';
+      map.setPaintProperty(layer.id, property, value);
     });
     if (satellite) {
       var initial = original.layers[index].layout && original.layers[index].layout.visibility;

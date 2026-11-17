@@ -54,3 +54,15 @@ test('restores the full map without replacing sources or overwriting localized n
   expect(map.removeSource).not.toHaveBeenCalled();
   expect(original.layers.find(layer => layer.id === 'land-forest').layout).toBeUndefined();
 });
+
+test('can clear an in-progress full map immediately without making the loading background opaque', () => {
+  const map = { setPaintProperty: jest.fn(), setLayoutProperty: jest.fn() };
+  applyPalette(map, original, 'satellite', 'original', true);
+  expect(map.setLayoutProperty).toHaveBeenCalledWith('land-forest', 'visibility', 'none');
+  expect(map.setPaintProperty).toHaveBeenCalledWith('background', 'background-color', 'transparent');
+  expect(map.setPaintProperty).toHaveBeenCalledWith('background', 'background-opacity', 0);
+  map.setPaintProperty.mockClear();
+  applyPalette(map, original, 'original', 'satellite', true);
+  expect(map.setPaintProperty).toHaveBeenCalledWith('background', 'background-color', 'transparent');
+  expect(map.setLayoutProperty).toHaveBeenCalledWith('land-forest', 'visibility', null);
+});

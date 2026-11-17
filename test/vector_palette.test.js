@@ -78,3 +78,16 @@ test('supports transparent overlays without background layers', () => {
   expect(isLoading()).toBe(false);
   expect(map.setPaintProperty).not.toHaveBeenCalled();
 });
+
+test('restores the latest palette background after a switch during initial loading', () => {
+  const initial = { layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#333' } }] };
+  let current = initial;
+  const map = Object.assign(new EventEmitter(), { setPaintProperty: jest.fn() });
+  const renderer = Object.assign(new EventEmitter(), { options: { transformStyle: (previous, next) => next }, getMaplibreMap: () => map });
+  configureLoadingBackground(renderer, () => current);
+  renderer.emit('add');
+  renderer.options.transformStyle(null, initial);
+  current = { layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#eee' } }] };
+  map.emit('load');
+  expect(map.setPaintProperty).toHaveBeenCalledWith('background', 'background-color', '#eee');
+});

@@ -19,6 +19,7 @@ export function createLayer(style, theme) {
   var renderedTheme = theme;
   var currentLanguage = 'en';
   var languageUpdatePending = false;
+  var themeUpdatePending = false;
   var renderer = new BackgroundRenderer({
     style: style,
     interactive: false,
@@ -30,7 +31,9 @@ export function createLayer(style, theme) {
       return vectorLabels.localizeStyle(themed, currentLanguage);
     }
   });
-  var isBackgroundLoading = vectorPalette.configureLoadingBackground(renderer);
+  var isBackgroundLoading = vectorPalette.configureLoadingBackground(renderer, function() {
+    return original && vectorPalette.styleForTheme(original, currentTheme);
+  });
   vectorAccess.configureRenderer(renderer);
   function updateLayerOrder() {
     var container = renderer.getContainer();
@@ -63,12 +66,16 @@ export function createLayer(style, theme) {
     var map = renderer.getMaplibreMap();
     if (!original || !map) return;
     function apply() {
+      themeUpdatePending = false;
       if (renderer.getMaplibreMap() !== map) return;
-      vectorPalette.applyPalette(map, original, currentTheme, renderedTheme);
+      vectorPalette.applyPalette(map, original, currentTheme, renderedTheme, isBackgroundLoading());
       renderedTheme = currentTheme;
     }
-    if (!isBackgroundLoading() && map.isStyleLoaded()) apply();
-    else map.once('load', apply);
+    if (map.isStyleLoaded() || original.layers.length && map.getLayer && map.getLayer(original.layers[0].id)) apply();
+    else if (!themeUpdatePending) {
+      themeUpdatePending = true;
+      map.once('style.load', apply);
+    }
   };
   return renderer;
 }
