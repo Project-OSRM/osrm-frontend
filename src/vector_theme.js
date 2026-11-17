@@ -48,7 +48,7 @@ function fillColor(name, id) {
   if (/water_shadow/.test(name)) return palette.waterShadow;
   if (/water|ocean|lake/.test(name)) return palette.water;
   if (/wood|forest/.test(name)) return palette.forest;
-  if (/park|pitch|cemetery|garden|burial|leisure/.test(name)) return palette.park;
+  if (/park|pitch|cemetery|garden|burial|leisure|sports-centre/.test(name)) return palette.park;
   if (/grass|wetland|vegetation|landcover/.test(name)) return palette.grass;
   if (/building/.test(name)) return /(?:top|roof)/.test(name) ? palette.building : palette.buildingBase;
   if (/bridge|pier|pedestrian-zone/.test(name)) return palette.street;

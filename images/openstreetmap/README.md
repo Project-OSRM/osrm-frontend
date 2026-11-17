@@ -40,6 +40,11 @@ point labels from tile zoom 15. They fade in over half a zoom level, allow norma
 collision handling, and give existing street and place names priority. These
 labels use the tile source's dedicated `streets_polygons_labels` points.
 
+Sports-centre footprints fade in between tile zooms 13 and 14 with a translucent
+green tint. This marks the facility boundary without assuming every surface is
+grass. Water, parking areas, buildings and roads draw above the tint. The dark
+palette uses its existing park green, and both palettes share the same tiles.
+
 At tile zoom 15 and above, access markings follow the selected routing profile:
 red short dashes indicate an explicit `no`, amber longer dashes indicate
 `limited`. Driving uses `motorcar`, cycling uses `bicycle`, and walking uses
