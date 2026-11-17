@@ -151,6 +151,22 @@ describe('State — per-waypoint approaches', function() {
     });
   });
 
+  it('gives the plan an empty waypoint that keeps the approach of an empty slot', function() {
+    var built = buildState([{ approach: 'curb' }, { lat: 3, lng: 4 }]);
+    var first = built.applied()[0];
+    expect(first.latLng).toBeNull();
+    expect(first.options).toEqual({ approach: 'curb' });
+  });
+
+  it('still gives an unrestricted empty slot for an undefined slot', function() {
+    var built = buildState([undefined, { lat: 3, lng: 4 }]);
+    var first = built.applied()[0];
+    // Without LRM loaded the slot is passed through as it is; either way it
+    // has no place and no approach.
+    expect(first && first.latLng).toBeFalsy();
+    expect(first && first.options && first.options.approach).toBeFalsy();
+  });
+
   it('writes ap to the address bar when the waypoints change', function() {
     var built = buildState([{ lat: 1, lng: 2 }, { lat: 3, lng: 4 }]);
     built.applied()[1].options = { approach: 'curb' };

@@ -125,4 +125,37 @@ describe('url_state — per-waypoint approaches', () => {
     ] });
     expect(qs.parse(window.location.search.slice(1)).ap).toBe('curb;');
   });
+
+  test('parse() keeps the approach of an empty start', () => {
+    const parsed = urlState.parse('loc=&loc=3,4&ap=curb%3B');
+    expect(parsed.waypoints).toEqual([{ approach: 'curb' }, { lat: 3, lng: 4 }]);
+  });
+
+  test('parse() keeps the approach of an empty via', () => {
+    const parsed = urlState.parse('loc=1,2&loc=&loc=5,6&ap=%3Bopposite%3B');
+    expect(parsed.waypoints).toEqual([
+      { lat: 1, lng: 2 },
+      { approach: 'opposite' },
+      { lat: 5, lng: 6 }
+    ]);
+  });
+
+  test('parse() still gives undefined for an empty unrestricted slot', () => {
+    const parsed = urlState.parse('loc=&loc=3,4&ap=%3Bcurb');
+    expect(parsed.waypoints).toEqual([undefined, { lat: 3, lng: 4, approach: 'curb' }]);
+  });
+
+  test('format() writes an empty loc and its ap entry for an empty restricted slot', () => {
+    const out = urlState.format({ waypoints: [{ approach: 'curb' }, { lat: 3, lng: 4 }] });
+    const parsed = qs.parse(out);
+    expect(parsed.loc).toEqual(['', '3.000000,4.000000']);
+    expect(parsed.ap).toBe('curb;');
+  });
+
+  test('parse() then format() round-trips an empty restricted slot', () => {
+    const out = urlState.format(urlState.parse('loc=&loc=3,4&ap=curb%3B'));
+    const parsed = qs.parse(out);
+    expect(parsed.loc).toEqual(['', '3.000000,4.000000']);
+    expect(parsed.ap).toBe('curb;');
+  });
 });

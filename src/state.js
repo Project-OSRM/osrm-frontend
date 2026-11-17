@@ -167,6 +167,13 @@ var State = L.Class.extend({
             return { latLng: { lat: lat, lng: lng } };
           }
         }
+        // An empty slot that carries an approach, as url_state.parse gives it
+        if (typeof wp.approach === 'string') {
+          if (typeof L.Routing !== 'undefined' && typeof L.Routing.waypoint === 'function') {
+            return approaches.setApproach(L.Routing.waypoint(null), wp.approach);
+          }
+          return approaches.setApproach({ latLng: null }, wp.approach);
+        }
         return wp;
       });
     }
