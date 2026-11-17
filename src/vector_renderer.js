@@ -4,14 +4,35 @@ var vectorAttribution = require('./vector_attribution');
 
 function createBackgroundRenderer(MaplibreGL) {
   return MaplibreGL.extend({
+    _updateVisibility: function() {
+      var container = this.getContainer();
+      if (container) container.style.visibility = this._suspended || this._loading ? 'hidden' : '';
+    },
+
+    _initContainer: function() {
+      MaplibreGL.prototype._initContainer.call(this);
+      this._updateVisibility();
+    },
+
+    onAdd: function(map) {
+      this._loading = true;
+      this._updateVisibility();
+      MaplibreGL.prototype.onAdd.call(this, map);
+      var gl = this.getMaplibreMap();
+      gl.once('load', function() {
+        if (this._map !== map || this.getMaplibreMap() !== gl) return;
+        this._loading = false;
+        this._updateVisibility();
+      }.bind(this));
+    },
+
     setVisible: function(visible) {
       if (this._suspended === !visible) return;
       var map = this._map;
       var attribution = map && map.attributionControl;
       if (attribution) attribution.removeAttribution(this.getAttribution());
       this._suspended = !visible;
-      var container = this.getContainer();
-      if (container) container.style.visibility = visible ? '' : 'hidden';
+      this._updateVisibility();
       var gl = this.getMaplibreMap();
       if (visible && gl && map) {
         this._resizeContainer();
