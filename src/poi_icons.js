@@ -26,9 +26,47 @@ function lodgingDistance(x, y) {
     Math.hypot(x - 10, y - 15) - 3);
 }
 
+function polygonDistance(x, y, points) {
+  var distance = Infinity, inside = false;
+  for (var i = 0, previous = points.length - 1; i < points.length; previous = i++) {
+    var a = points[i], b = points[previous];
+    distance = Math.min(distance, segmentDistance(x, y, a[0], a[1], b[0], b[1]) + 1);
+    if ((a[1] > y) !== (b[1] > y) && x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0]) inside = !inside;
+  }
+  return inside ? -distance : distance;
+}
+
+function ferryDistance(x, y) {
+  var cabin = Math.max(rectangleDistance(x, y, 9, 9, 23, 18), -rectangleDistance(x, y, 11, 11, 21, 15));
+  return Math.min(cabin, rectangleDistance(x, y, 14, 5, 17, 10),
+    polygonDistance(x, y, [[5, 18], [27, 18], [22, 25], [10, 25]]),
+    segmentDistance(x, y, 5, 28, 10, 27), segmentDistance(x, y, 10, 27, 16, 28),
+    segmentDistance(x, y, 16, 28, 22, 27), segmentDistance(x, y, 22, 27, 27, 28));
+}
+
+function helipadDistance(x, y) {
+  return Math.min(Math.abs(Math.hypot(x - 16, y - 16) - 11) - 1,
+    rectangleDistance(x, y, 10, 10, 12, 22), rectangleDistance(x, y, 20, 10, 22, 22),
+    rectangleDistance(x, y, 12, 15, 20, 17));
+}
+
+function cableCarDistance(x, y) {
+  var cabin = Math.max(rectangleDistance(x, y, 7, 12, 25, 26),
+    -rectangleDistance(x, y, 9, 14, 15, 20), -rectangleDistance(x, y, 17, 14, 23, 20));
+  return Math.min(cabin, segmentDistance(x, y, 4, 6, 28, 6), segmentDistance(x, y, 16, 6, 16, 12));
+}
+
+var distanceFields = {
+  'osrm-poi-fuel': fuelDistance,
+  'osrm-poi-lodging': lodgingDistance,
+  'osrm-poi-ferry': ferryDistance,
+  'osrm-poi-helipad': helipadDistance,
+  'osrm-poi-cable-car': cableCarDistance
+};
+
 function imageDefinition(id) {
-  var distance = id === 'osrm-poi-fuel' ? fuelDistance : id === 'osrm-poi-lodging' ? lodgingDistance : null;
-  if (!distance) return null;
+  if (!Object.prototype.hasOwnProperty.call(distanceFields, id)) return null;
+  var distance = distanceFields[id];
   var width = 32, height = 32, data = new Uint8Array(width * height * 4);
   for (var y = 0; y < height; y++) {
     for (var x = 0; x < width; x++) {

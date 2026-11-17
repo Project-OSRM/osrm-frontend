@@ -40,6 +40,14 @@ These colors use the background tile metadata and do not alter routing requests.
 The old `bicycle=designated` accent layers are removed: this tile source reduces
 that value to `yes`, which also covers ordinary permission to cycle.
 
+Transport details include bus stations and ferry terminals from tile zoom 13,
+aerialway stations from zoom 14, and helipads from zoom 15. Names can give way to
+icons in dense areas. Local distance-field symbols cover ferries, helipads and
+cable cars. Aerialway lines appear from zoom 13. Narrow-gauge and subway service
+tracks use the rail and light-rail service rules, with the main-track styling
+preserved, including separate bridge and tunnel treatment.
+All of these features use the existing vector tiles and shared image resolver.
+
 Shield content bounds leave a one-pixel border inset, with compact text padding.
 Shortbread 1.1 road labels expose references and road classes, but no country
 code or route-network identifier. National shield styling needs additional

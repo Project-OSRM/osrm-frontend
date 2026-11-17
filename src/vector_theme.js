@@ -60,6 +60,7 @@ function fillColor(name, id) {
 function lineColor(name) {
   if (/road-access-restricted/.test(name)) return '#d19398';
   if (/road-access-limited/.test(name)) return '#d0b784';
+  if (/aerialway/.test(name)) return '#8692ad';
   if (/water|river|stream/.test(name)) return palette.waterway;
   if (/casing|:outline|:bridge|_case(?:_|$)/.test(name)) return palette.roadCasing;
   if (/runway|taxiway|apron/.test(name)) return palette.pavement;
@@ -107,6 +108,7 @@ function transformStyle(previousStyle, style) {
     // text contrast and halo instead of applying a dark street-label outline.
     if (layer.type === 'symbol' && layer.layout && layer.layout['text-field'] && !/shield/.test(name)) {
       paint['text-color'] = /water/.test(name) ? '#a7cce8' : /transportation|highway|roadname|street_labels/.test(name) ? palette.mutedText : palette.text;
+      if (layer['source-layer'] === 'public_transport') paint['icon-color'] = palette.mutedText;
       if (/poi/.test(name)) {
         paint['text-color'] = ['match', ['coalesce', ['get', 'kind'], ['get', 'class'], ['get', 'amenity'], ['get', 'leisure'], ['get', 'tourism'], ''],
           ['park', 'garden', 'playground'], '#a0c59b',
