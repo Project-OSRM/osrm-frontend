@@ -25,6 +25,11 @@ their colors adapt to both palettes. `src/vector_images.js` resolves these and
 the road plates together before the first tile image response, without another
 image service.
 
+Named footpaths, cycleways, steps and paths fade in at tile zoom 15; named service
+roads follow at zoom 16. These labels follow the way geometry, use a smaller type
+size than ordinary street names, and have lower collision priority. Unnamed ways
+retain their existing rendering without additional labels.
+
 Shield content bounds leave a one-pixel border inset, with compact text padding.
 Shortbread 1.1 road labels expose references and road classes, but no country
 code or route-network identifier. National shield styling needs additional
