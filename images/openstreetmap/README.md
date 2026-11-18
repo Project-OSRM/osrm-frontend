@@ -155,6 +155,13 @@ language when available and yield to street and settlement labels. Parks use
 their area fill and name in place of the generic sports icon. Park labels are
 hidden on the Satellite street overlay.
 
+Named sports centres and stadiums use the existing sports and stadium icons.
+They fade in between style zooms 15 and 15.4, with playgrounds following between
+16 and 16.4 using the playground icon. Text and outlines use the park-label
+contrast in both palettes and respect the selected language. Street, park and
+settlement names have priority. Unnamed features retain the regular leisure
+icons. These labels are hidden on the Satellite street overlay.
+
 Named footpaths, cycleways, steps and paths fade in at tile zoom 15; named service
 roads follow at zoom 16. These labels follow the way geometry, use a smaller type
 size than ordinary street names, and have lower collision priority. Unnamed ways

@@ -315,6 +315,55 @@ test('labels named parks and keeps other leisure symbols distinct', () => {
   ]) expect(matches(layer, properties)).toBe(false);
 });
 
+test.each([
+  ['sports_centre', 'sports', 'icon-sports', 15],
+  ['stadium', 'sports', 'icon-stadium', 15],
+  ['playground', 'playground', 'icon-playground', 16]
+])('labels named %s features with the matching sprite and keeps unnamed icons', (leisure, kind, icon, minzoom) => {
+  const id = 'poi-destination-' + kind;
+  const generic = style.layers.find(layer => layer.id === 'poi-leisure');
+  const layer = style.layers.find(candidate => candidate.id === id);
+  const named = { leisure, name: 'Recreation destination' };
+  const matching = style.layers.filter(candidate => candidate['source-layer'] === 'pois' && matches(candidate, named));
+  expect(matching.map(candidate => candidate.id)).toEqual([id]);
+  expect(evaluate(layer.layout['text-field'], named)).toBe(named.name);
+  expect(evaluate(layer.layout['icon-image'], named)).toBe('basics:' + icon);
+  expect(sprites[icon].sdf).toBe(true);
+  expect(layer.minzoom).toBe(minzoom);
+  expect(matches(layer, { leisure })).toBe(false);
+  expect(matches(layer, { leisure, name: '' })).toBe(false);
+  expect(matches(generic, { leisure })).toBe(true);
+  expect(matches(generic, { leisure, name: '' })).toBe(true);
+  expect(matches(layer, { leisure: 'pitch', name: 'Field' })).toBe(false);
+  expect(matches(layer, { leisure: 'park', name: 'Park' })).toBe(false);
+});
+
+test('keeps the recreation labels legible and below park, street and settlement labels', () => {
+  const dark = theme.transformStyle(null, style);
+  const overlay = satellite.transformStyle(style);
+  for (const palette of [style, dark, overlay]) {
+    expect(validateStyleMin(palette)).toEqual([]);
+    expect(palette.sources).toEqual(style.sources);
+  }
+  for (const kind of ['sports', 'playground']) {
+    const id = 'poi-destination-' + kind;
+    const layer = style.layers.find(candidate => candidate.id === id);
+    for (const higher of ['label-park-name', 'label-street-primary', 'label-place-neighbourhood']) {
+      expect(style.layers.indexOf(layer)).toBeLessThan(style.layers.findIndex(candidate => candidate.id === higher));
+    }
+    expect(layer.layout['text-allow-overlap']).not.toBe(true);
+    expect(layer.layout['icon-allow-overlap']).not.toBe(true);
+    expect(layer.layout['text-ignore-placement']).not.toBe(true);
+    expect(layer.paint['text-color']).toBe('#2c482e');
+    expect(layer.paint['text-halo-width']).toBe(1);
+    expect(dark.layers.find(candidate => candidate.id === id).paint).toMatchObject({
+      'text-color': '#e0f1d5', 'icon-color': '#e0f1d5',
+      'text-halo-color': '#263a2a', 'text-halo-width': 1, 'text-halo-blur': 0
+    });
+    expect(overlay.layers.find(candidate => candidate.id === id).layout.visibility).toBe('none');
+  }
+});
+
 test('fades compact park names in below street and place labels in both palettes', () => {
   const id = 'label-park-name';
   const layer = style.layers.find(candidate => candidate.id === id);
@@ -388,6 +437,7 @@ test('keeps readable category colors and the same sources and layout in both pal
     const counterpart = dark.layers.find(candidate => candidate.id === layer.id);
     expect(counterpart.layout).toEqual(layer.layout);
     expect(counterpart.filter).toEqual(layer.filter);
+    if (['poi-destination-sports', 'poi-destination-playground'].includes(layer.id)) continue;
     const properties = layer.id.endsWith('lodging') ? { tourism: 'hotel' } : { amenity: 'hospital' };
     const color = evaluate(counterpart.paint['text-color'], properties);
     expect(color).toBe(properties.tourism ? '#c3b5df' : '#e4a9b3');

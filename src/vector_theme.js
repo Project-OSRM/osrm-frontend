@@ -122,8 +122,9 @@ function transformStyle(previousStyle, style) {
       paint['text-halo-color'] = palette.halo;
       paint['text-halo-width'] = 1;
       paint['text-halo-blur'] = 0.2;
-      if (layer.id === 'label-park-name') {
+      if (layer.id === 'label-park-name' || /^poi-destination-(playground|sports)$/.test(layer.id)) {
         paint['text-color'] = '#e0f1d5';
+        if (layer.layout['icon-image']) paint['icon-color'] = paint['text-color'];
         paint['text-halo-color'] = '#263a2a';
         paint['text-halo-blur'] = 0;
       }
