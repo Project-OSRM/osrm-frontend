@@ -56,12 +56,26 @@ function cableCarDistance(x, y) {
   return Math.min(cabin, segmentDistance(x, y, 4, 6, 28, 6), segmentDistance(x, y, 16, 6, 16, 12));
 }
 
+function campsiteDistance(x, y) {
+  return Math.max(polygonDistance(x, y, [[4, 26], [16, 5], [28, 26]]),
+    -polygonDistance(x, y, [[12, 27], [16, 15], [20, 27]]));
+}
+
+function caravanDistance(x, y) {
+  var body = Math.max(rectangleDistance(x, y, 5, 8, 25, 22),
+    -rectangleDistance(x, y, 8, 11, 14, 16), -rectangleDistance(x, y, 18, 11, 22, 20));
+  return Math.min(body, Math.hypot(x - 11, y - 24) - 3,
+    segmentDistance(x, y, 25, 21, 29, 24));
+}
+
 var distanceFields = {
   'osrm-poi-fuel': fuelDistance,
   'osrm-poi-lodging': lodgingDistance,
   'osrm-poi-ferry': ferryDistance,
   'osrm-poi-helipad': helipadDistance,
-  'osrm-poi-cable-car': cableCarDistance
+  'osrm-poi-cable-car': cableCarDistance,
+  'osrm-poi-campsite': campsiteDistance,
+  'osrm-poi-caravan': caravanDistance
 };
 
 function imageDefinition(id) {

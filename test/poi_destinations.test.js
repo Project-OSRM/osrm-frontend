@@ -27,7 +27,9 @@ test.each([
   ['tourism', 'motel', 'poi-destination-lodging'],
   ['tourism', 'hostel', 'poi-destination-lodging'],
   ['tourism', 'guest_house', 'poi-destination-lodging'],
-  ['tourism', 'bed_and_breakfast', 'poi-destination-lodging']
+  ['tourism', 'bed_and_breakfast', 'poi-destination-lodging'],
+  ['tourism', 'camp_site', 'poi-destination-camping'],
+  ['tourism', 'caravan_site', 'poi-destination-camping']
 ])('labels %s=%s once with a resolvable icon', (field, kind, id) => {
   const properties = { [field]: kind, name: 'Destination' };
   const layers = style.layers.filter(layer => layer['source-layer'] === 'pois' && matches(layer, properties));
@@ -55,6 +57,18 @@ test('retains generic amenities while keeping destination detail at street zooms
     .toBeLessThan(selected.find(layer => layer.id.endsWith('lodging')).minzoom);
 });
 
+test.each(['camp_site', 'caravan_site'])('uses a green camping accent for %s without adding a second icon', tourism => {
+  const layer = style.layers.find(candidate => candidate.id === 'poi-destination-camping');
+  const generic = style.layers.find(candidate => candidate.id === 'poi-tourism');
+  expect(matches(generic, { tourism })).toBe(false);
+  expect(layer.minzoom).toBe(14);
+  expect(layer.paint['text-color']).toBe('#4f7751');
+  const dark = theme.transformStyle(null, style).layers.find(candidate => candidate.id === layer.id);
+  expect(evaluate(dark.paint['text-color'], { tourism })).toBe('#a0c59b');
+  expect(evaluate(dark.paint['icon-color'], { tourism })).toBe('#a0c59b');
+  expect(evaluate(layer.layout['icon-image'], { tourism })).toBe(tourism === 'camp_site' ? 'osrm-poi-campsite' : 'osrm-poi-caravan');
+});
+
 test('shares one first-request resolver for road plates, exits, and local POI symbols', async () => {
   const images = new Map();
   let resolveMissingImage;
@@ -63,10 +77,10 @@ test('shares one first-request resolver for road plates, exits, and local POI sy
     setMissingStyleImageResolver: resolver => { resolveMissingImage = resolver; },
     hasImage: id => images.has(id), addImage
   });
-  const ids = ['osrm-road-shield', 'osrm-exit-shield', 'osrm-poi-fuel', 'osrm-poi-lodging'];
+  const ids = ['osrm-road-shield', 'osrm-exit-shield', 'osrm-poi-fuel', 'osrm-poi-lodging', 'osrm-poi-campsite', 'osrm-poi-caravan'];
   await Promise.all([...ids, ...ids, 'unrelated'].map(resolveMissingImage));
   expect([...images.keys()]).toEqual(ids);
-  expect(addImage).toHaveBeenCalledTimes(4);
+  expect(addImage).toHaveBeenCalledTimes(ids.length);
   for (const id of ids.slice(2)) {
     expect(images.get(id).options.sdf).toBe(true);
     expect(images.get(id).image.data.length).toBe(32 * 32 * 4);
@@ -78,6 +92,12 @@ test('shares one first-request resolver for road plates, exits, and local POI sy
   const lodging = images.get('osrm-poi-lodging').image;
   expect(alpha(lodging, 20, 17)).toBeGreaterThan(191);
   expect(alpha(lodging, 20, 6)).toBeLessThan(191);
+  const tent = images.get('osrm-poi-campsite').image;
+  expect(alpha(tent, 10, 23)).toBeGreaterThan(191);
+  expect(alpha(tent, 16, 23)).toBeLessThan(191);
+  const caravan = images.get('osrm-poi-caravan').image;
+  expect(alpha(caravan, 11, 25)).toBeGreaterThan(191);
+  expect(alpha(caravan, 11, 13)).toBeLessThan(191);
   expect(imageDefinition('unrelated')).toBeNull();
 });
 

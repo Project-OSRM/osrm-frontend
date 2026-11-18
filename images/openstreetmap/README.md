@@ -53,6 +53,11 @@ their colors adapt to both palettes. `src/vector_images.js` resolves these and
 the road plates together before the first tile image response, without another
 image service.
 
+Campsites and caravan sites use distinct local tent and caravan symbols, with
+names fading in alongside the icons between style zooms 14 and 14.4. They use
+subtle green accents in both palettes and ordinary collision handling; names
+may yield to icons in dense areas. Unnamed sites retain the category symbol.
+
 Named footpaths, cycleways, steps and paths fade in at tile zoom 15; named service
 roads follow at zoom 16. These labels follow the way geometry, use a smaller type
 size than ordinary street names, and have lower collision priority. Unnamed ways
