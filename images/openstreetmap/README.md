@@ -146,8 +146,9 @@ huts retain their symbol; the style does not infer opening hours or current
 availability. Day shelters and holiday chalets keep their existing treatment.
 These POIs remain hidden on the Satellite street overlay.
 
-Named parks classified as `leisure=park` use compact green labels in both vector
-palettes, fading in between style zooms 14 and 14.5. Names use the selected
+Named parks classified as `leisure=park` use compact green labels that fade in
+between style zooms 14 and 14.5. OpenStreetMap uses dark text with a pale outline
+and Dark Vector uses pale text with a dark outline. Names use the selected
 language when available and yield to street and settlement labels. Parks use
 their area fill and name in place of the generic sports icon. Park labels are
 hidden on the Satellite street overlay.

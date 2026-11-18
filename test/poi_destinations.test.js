@@ -323,15 +323,25 @@ test('fades compact park names in below street and place labels in both palettes
   expect(layer.layout['text-allow-overlap']).not.toBe(true);
   expect(layer.layout['text-ignore-placement']).not.toBe(true);
   expect(evaluate(layer.paint['text-opacity'], {}, 14)).toBe(0);
-  expect(evaluate(layer.paint['text-opacity'], {}, 14.25)).toBeCloseTo(0.45);
-  expect(evaluate(layer.paint['text-opacity'], {}, 14.5)).toBe(0.9);
+  expect(evaluate(layer.paint['text-opacity'], {}, 14.25)).toBeCloseTo(0.5);
+  expect(evaluate(layer.paint['text-opacity'], {}, 14.5)).toBe(1);
   for (const label of ['label-street-residential', 'label-street-primary', 'label-place-neighbourhood']) {
     expect(style.layers.indexOf(layer)).toBeLessThan(style.layers.findIndex(candidate => candidate.id === label));
   }
-  expect(layer.paint['text-color']).toBe('#4f7751');
+  expect(layer.paint).toMatchObject({
+    'text-color': '#2c482e',
+    'text-halo-color': '#f8f7eb',
+    'text-halo-width': 1
+  });
   const dark = theme.transformStyle(null, style);
   const darkPark = dark.layers.find(candidate => candidate.id === id);
-  expect(evaluate(darkPark.paint['text-color'], { leisure: 'park' })).toBe('#a0c59b');
+  expect(darkPark.paint).toMatchObject({
+    'text-color': '#e0f1d5',
+    'text-halo-color': '#263a2a',
+    'text-halo-width': 1,
+    'text-halo-blur': 0,
+    'text-opacity': layer.paint['text-opacity']
+  });
   expect(darkPark.filter).toEqual(layer.filter);
   expect(dark.sources).toEqual(style.sources);
   expect(satellite.transformStyle(style).layers.find(candidate => candidate.id === id).layout.visibility).toBe('none');

@@ -122,6 +122,11 @@ function transformStyle(previousStyle, style) {
       paint['text-halo-color'] = palette.halo;
       paint['text-halo-width'] = 1;
       paint['text-halo-blur'] = 0.2;
+      if (layer.id === 'label-park-name') {
+        paint['text-color'] = '#e0f1d5';
+        paint['text-halo-color'] = '#263a2a';
+        paint['text-halo-blur'] = 0;
+      }
     }
     if (layer.type === 'hillshade') {
       paint['hillshade-shadow-color'] = '#163c42';
