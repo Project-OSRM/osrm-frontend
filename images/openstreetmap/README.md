@@ -27,10 +27,10 @@ Language changes update name text on the existing renderer; palette switches
 preserve that language. Road references and house numbers retain their own
 fields. Translations come from the vector tiles, without a translation service.
 
-Satellite offers an optional Street overlay with translucent roads, pedestrian
+Satellite enables a Street overlay by default, with translucent roads, pedestrian
 areas, street and place names, reference shields and exit badges. Other ground
 fills and POI layers stay hidden so the imagery remains visible. The checkbox
-appears only for Satellite; its saved preference is independent of the trail
+appears only for Satellite; turning it off is remembered independently of the trail
 and component overlays. It shares the OpenStreetMap renderer and tile cache,
 including language and access markings. Disabling it keeps that cache alive.
 

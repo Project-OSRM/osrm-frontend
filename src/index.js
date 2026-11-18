@@ -170,7 +170,7 @@ if (overlay['Small Components'] && overlay['Small Components'].setService) {
 }
 vectorAccess.applyProfile(mapLayer[0], services[_initProfileIndex] || services[0]);
 var storedComponents = ls.get('smallComponents');
-var _initResult = initialLayers.determineInitialLayers(baselayer, overlay, services, _initProfileIndex, storedComponents === null || storedComponents === undefined ? !!ls.get('getOverlay') : !!storedComponents, !!ls.get('satelliteStreets'));
+var _initResult = initialLayers.determineInitialLayers(baselayer, overlay, services, _initProfileIndex, storedComponents === null || storedComponents === undefined ? !!ls.get('getOverlay') : !!storedComponents, ls.get('satelliteStreets'));
 var layers = _initResult.layers;
 var bikeOverlayAutoActivated = _initResult.bikeOverlayAutoActivated;
 var map = L.map('map', {

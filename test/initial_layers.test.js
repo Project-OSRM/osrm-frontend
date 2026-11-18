@@ -15,6 +15,12 @@ var services = [
 ];
 
 describe('determineInitialLayers', function() {
+  it.each([undefined, null])('enables satellite streets when no preference is saved (%s)', function(preference) {
+    var available = Object.assign({}, overlay, { 'Street overlay': {} });
+    expect(initialLayers.determineInitialLayers(baselayer, available, services, 0, false, preference).layers)
+      .toEqual([baselayer, available['Street overlay']]);
+  });
+
   it('restores satellite streets independently from component and bike overlays', function() {
     var available = Object.assign({}, overlay, { 'Street overlay': {} });
     expect(initialLayers.determineInitialLayers(baselayer, available, services, 0, false, true).layers)
