@@ -29,7 +29,10 @@ test.each([
   ['tourism', 'guest_house', 'poi-destination-lodging'],
   ['tourism', 'bed_and_breakfast', 'poi-destination-lodging'],
   ['tourism', 'camp_site', 'poi-destination-camping'],
-  ['tourism', 'caravan_site', 'poi-destination-camping']
+  ['tourism', 'caravan_site', 'poi-destination-camping'],
+  ['amenity', 'courthouse', 'poi-destination-civic'],
+  ['amenity', 'embassy', 'poi-destination-civic'],
+  ['office', 'diplomatic', 'poi-destination-civic']
 ])('labels %s=%s once with a resolvable icon', (field, kind, id) => {
   const properties = { [field]: kind, name: 'Destination' };
   const layers = style.layers.filter(layer => layer['source-layer'] === 'pois' && matches(layer, properties));
@@ -67,6 +70,25 @@ test.each(['camp_site', 'caravan_site'])('uses a green camping accent for %s wit
   expect(evaluate(dark.paint['text-color'], { tourism })).toBe('#a0c59b');
   expect(evaluate(dark.paint['icon-color'], { tourism })).toBe('#a0c59b');
   expect(evaluate(layer.layout['icon-image'], { tourism })).toBe(tourism === 'camp_site' ? 'osrm-poi-campsite' : 'osrm-poi-caravan');
+});
+
+test.each([
+  [{ amenity: 'courthouse' }, 'basics:icon-town_hall'],
+  [{ amenity: 'embassy' }, 'basics:icon-embassy'],
+  [{ office: 'diplomatic' }, 'basics:icon-embassy'],
+  [{ amenity: 'embassy', office: 'diplomatic' }, 'basics:icon-embassy']
+])('uses one civic symbol with neutral colors for %j', (properties, icon) => {
+  const layers = style.layers.filter(layer => layer['source-layer'] === 'pois' && matches(layer, properties));
+  expect(layers.map(layer => layer.id)).toEqual(['poi-destination-civic']);
+  const layer = layers[0];
+  expect(layer.minzoom).toBe(15);
+  expect(evaluate(layer.layout['icon-image'], properties)).toBe(icon);
+  expect(sprites[icon.slice(7)]).toBeTruthy();
+  expect(layer.paint['text-color']).toBe('#5a6874');
+  const dark = theme.transformStyle(null, style).layers.find(candidate => candidate.id === layer.id);
+  expect(evaluate(dark.paint['text-color'], properties)).toBe('#a8bacb');
+  expect(evaluate(dark.paint['icon-color'], properties)).toBe('#a8bacb');
+  expect(style.layers.indexOf(layer)).toBeLessThan(style.layers.findIndex(candidate => candidate.id === 'label-street-primary'));
 });
 
 test('shares one first-request resolver for road plates, exits, and local POI symbols', async () => {

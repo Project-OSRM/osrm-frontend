@@ -58,6 +58,12 @@ names fading in alongside the icons between style zooms 14 and 14.4. They use
 subtle green accents in both palettes and ordinary collision handling; names
 may yield to icons in dense areas. Unnamed sites retain the category symbol.
 
+Courthouses, embassies and diplomatic offices use the bundled civic-building and
+flag symbols, with neutral blue-grey names. Icons and names fade in between
+style zooms 15 and 15.4. Street and place labels retain priority, and names may
+yield to symbols in crowded areas. Features tagged as both an embassy and a
+diplomatic office get one civic symbol rather than two overlapping icons.
+
 Named footpaths, cycleways, steps and paths fade in at tile zoom 15; named service
 roads follow at zoom 16. These labels follow the way geometry, use a smaller type
 size than ordinary street names, and have lower collision priority. Unnamed ways
