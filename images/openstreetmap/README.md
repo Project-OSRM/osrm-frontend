@@ -102,6 +102,12 @@ also tagged as viewpoints use one viewpoint symbol, and ordinary towers keep
 their existing treatment. These POIs remain hidden on the Satellite street
 overlay.
 
+Destinations classified as `tourism=zoo` show compact names beside the bundled
+zoo symbol. They fade in between style zooms 15 and 15.4 with the same green
+accents as viewpoints. Names follow the selected language and yield to street
+and settlement names; unnamed sites retain their symbol. Other parks keep their
+existing treatment. These POIs remain hidden on the Satellite street overlay.
+
 Named footpaths, cycleways, steps and paths fade in at tile zoom 15; named service
 roads follow at zoom 16. These labels follow the way geometry, use a smaller type
 size than ordinary street names, and have lower collision priority. Unnamed ways

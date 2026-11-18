@@ -37,7 +37,8 @@ test.each([
   ['office', 'diplomatic', 'poi-destination-civic'],
   ['historic', 'castle', 'poi-destination-historic'],
   ['historic', 'fort', 'poi-destination-historic'],
-  ['tourism', 'viewpoint', 'poi-destination-viewpoint']
+  ['tourism', 'viewpoint', 'poi-destination-viewpoint'],
+  ['tourism', 'zoo', 'poi-destination-zoo']
 ])('labels %s=%s once with a resolvable icon', (field, kind, id) => {
   const properties = { [field]: kind, name: 'Destination' };
   const layers = style.layers.filter(layer => layer['source-layer'] === 'pois' && matches(layer, properties));
@@ -169,7 +170,7 @@ test('keeps ordinary towers and other tourism symbols without promoting them to 
     expect(matches(manMade, properties)).toBe(true);
     expect(matches(viewpoint, properties)).toBe(false);
   }
-  for (const kind of ['zoo', 'picnic_site', 'information']) {
+  for (const kind of ['chalet', 'picnic_site', 'information']) {
     expect(matches(tourism, { tourism: kind })).toBe(true);
     expect(matches(viewpoint, { tourism: kind })).toBe(false);
   }
@@ -188,6 +189,58 @@ test('uses the tile-provided Spanish viewpoint name and falls back to local name
   expect(evaluate(french.layout['text-field'], properties)).toBe('Domturm');
   expect(evaluate(spanish.layout['text-field'], { ...properties, name_es: '' })).toBe('Domturm');
   expect(evaluate(spanish.layout['text-field'], { tourism: 'viewpoint' })).toBe('');
+});
+
+test('labels zoo destinations at detail zooms while leaving other parks and animal facilities unchanged', () => {
+  const layer = style.layers.find(candidate => candidate.id === 'poi-destination-zoo');
+  const generic = style.layers.find(candidate => candidate.id === 'poi-tourism');
+  expect(matches(generic, { tourism: 'zoo' })).toBe(false);
+  for (const properties of [
+    { leisure: 'park', name: 'Wildlife park' },
+    { leisure: 'playground', name: 'Zoo playground' },
+    { amenity: 'animal_shelter' },
+    { tourism: 'theme_park' },
+    { name: 'Zoo road' }
+  ]) expect(matches(layer, properties)).toBe(false);
+  expect(matches(generic, { tourism: 'picnic_site' })).toBe(true);
+  expect(layer.layout['icon-image']).toBe('basics:icon-zoo');
+  expect(sprites['icon-zoo'].sdf).toBe(true);
+  expect(layer.minzoom).toBe(15);
+  expect(layer.layout['text-size']).toBe(11);
+  expect(layer.layout['icon-optional']).toBe(false);
+  expect(layer.layout['text-ignore-placement']).not.toBe(true);
+  for (const id of ['label-street-primary', 'label-place-city', 'label-place-hamlet']) {
+    expect(style.layers.indexOf(layer)).toBeLessThan(style.layers.findIndex(candidate => candidate.id === id));
+  }
+});
+
+test('uses the tile-provided French zoo name, with local fallback and an icon for unnamed sites', () => {
+  const id = 'poi-destination-zoo';
+  const properties = { name: 'Zoo Frankfurt', name_de: 'Zoo Frankfurt', name_fr: 'Jardin Zoologique de Francfort', tourism: 'zoo', housenumber: '1' };
+  const french = localizeStyle(style, 'fr-CA').layers.find(layer => layer.id === id);
+  expect(evaluate(french.layout['text-field'], properties)).toBe('Jardin Zoologique de Francfort');
+  const english = localizeStyle(style, 'en').layers.find(layer => layer.id === id);
+  expect(evaluate(english.layout['text-field'], properties)).toBe('Zoo Frankfurt');
+  expect(evaluate(french.layout['text-field'], { ...properties, name_fr: '' })).toBe('Zoo Frankfurt');
+  expect(evaluate(french.layout['text-field'], { tourism: 'zoo' })).toBe('');
+  expect(evaluate(french.layout['icon-image'], { tourism: 'zoo' })).toBe('basics:icon-zoo');
+});
+
+test('keeps zoo symbols and names green in both palettes without adding another source or Satellite POIs', () => {
+  const id = 'poi-destination-zoo';
+  const original = style.layers.find(layer => layer.id === id);
+  const dark = theme.transformStyle(null, style);
+  const darkZoo = dark.layers.find(layer => layer.id === id);
+  expect(original.paint['text-color']).toBe('#4f7751');
+  expect(evaluate(darkZoo.paint['text-color'], { tourism: 'zoo' })).toBe('#a0c59b');
+  expect(evaluate(darkZoo.paint['icon-color'], { tourism: 'zoo' })).toBe('#a0c59b');
+  const overlay = satellite.transformStyle(style);
+  for (const palette of [style, dark, overlay]) {
+    expect(validateStyleMin(palette)).toEqual([]);
+    expect(palette.sources).toEqual(style.sources);
+    expect(palette.layers.find(layer => layer.id === id).filter).toEqual(original.filter);
+  }
+  expect(overlay.layers.find(layer => layer.id === id).layout.visibility).toBe('none');
 });
 
 test('shares one first-request resolver for road plates, exits, and local POI symbols', async () => {
