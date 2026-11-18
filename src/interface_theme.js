@@ -4,6 +4,7 @@ var L = require('leaflet');
 var localization = require('./localization');
 var routeProperties = require('./route_properties');
 var mobilePanel = require('./mobile_panel');
+var mobileViewport = require('./mobile_viewport');
 
 function initialize(enabled) {
   document.documentElement.classList.toggle('osrm-theme-dark', !!enabled);
@@ -29,6 +30,8 @@ function attach(options) {
   var labels = L.layerGroup().addTo(map);
   var resizeFrame;
   var paneResizer;
+  var viewport = mobileViewport.attach(map, panel);
+  var directionsFocus = require('./directions_focus').attach(map, control, panel);
   var header = L.DomUtil.create('header', 'osrm-panel-header');
   var brand = L.DomUtil.create('div', 'osrm-panel-brand', header);
   var logo = L.DomUtil.create('img', 'osrm-panel-logo', brand);
@@ -83,14 +86,13 @@ function attach(options) {
   function updatePanelSize() {
     if (collapse) collapse.setAttribute('aria-expanded', String(!panel.classList.contains('leaflet-routing-container-hide')));
     document.documentElement.style.setProperty('--osrm-panel-height', Math.ceil(panel.getBoundingClientRect().height) + 'px');
-    if (resizeFrame !== undefined) L.Util.cancelAnimFrame(resizeFrame);
-    resizeFrame = undefined;
-    // The pane overlays the map. Moving it should not invalidate the renderer
-    // on every drag or snap-animation frame.
-    if (panel.classList.contains('osrm-panel-resizing')) return;
+    if (resizeFrame !== undefined) return;
     resizeFrame = L.Util.requestAnimFrame(function() {
       resizeFrame = undefined;
-      map.invalidateSize({ pan: false, debounceMoveend: true });
+      // Follow the visible area's center during a drag or snap, without
+      // repeatedly resizing the renderer or changing the zoom.
+      if (!panel.classList.contains('osrm-panel-resizing')) map.invalidateSize({ pan: true, debounceMoveend: true });
+      viewport.update();
     });
   }
 
@@ -239,6 +241,8 @@ function attach(options) {
     updateLocalization(event.language);
   });
   map.on('unload', function() {
+    directionsFocus.destroy();
+    viewport.destroy();
     paneResizer.destroy();
     routeObserver.disconnect();
     panelObserver.disconnect();

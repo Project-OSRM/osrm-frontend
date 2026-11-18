@@ -50,6 +50,7 @@ var vectorAccess = require('./vector_access');
 var layerUtils = require('./layer_utils');
 var createLayersControl = require('./layers_control');
 var routeZoom = require('./route_zoom');
+var mobileViewport = require('./mobile_viewport');
 var smoothWheelZoom = require('./smooth_wheel_zoom');
 var resolveInitialAlternative = require('./route_alternative');
 var waypointMarker = require('./waypoint_marker');
@@ -837,7 +838,7 @@ plan.on('waypointgeocoded', function(e) {
   if (plan._waypoints.filter(function(wp) {
     return !!wp.latLng;
   }).length < 2) {
-    map.panTo(e.waypoint.latLng);
+    map.panTo(mobileViewport.centerForTarget(map, e.waypoint.latLng, map.getZoom()));
   }
 });
 
@@ -977,6 +978,7 @@ lrmControl.on('routeselected', function(e) {
   }
   routeFitTracker.clearFitPending();
 
+  mobileViewport.synchronize(map);
   var bounds = L.latLngBounds(boundsCoordinates);
 
   var currentZoom = map.getZoom();
@@ -1023,7 +1025,7 @@ plan.on('waypointschanged', function(e) {
 
 var locationControl = locate.locate({
   follow: false,
-  setView: true,
+  setView: 'once',
   remainActive: false,
   keepCurrentZoomLevel: true,
   stopFollowingOnDrag: false,
@@ -1037,6 +1039,7 @@ var locationControl = locate.locate({
   locateOptions: {}
 }).addTo(map);
 
+mobileViewport.configureLocationControl(map, locationControl);
 var updateMapControlLanguage = require('./map_control_localization');
 function refreshMapControlLanguage() {
   updateMapControlLanguage(map, layersControl, locationControl, state.options.language);

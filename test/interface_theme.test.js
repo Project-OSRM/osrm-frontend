@@ -175,6 +175,32 @@ test('lets the pane scroll natively without bubbling wheel gestures to the map',
   document.body.removeEventListener('wheel', outerWheel);
 });
 
+test('moves the map with the mobile grip while retaining the visible focus and zoom', async () => {
+  const previousWidth = window.innerWidth;
+  const previousHeight = window.innerHeight;
+  Object.defineProperties(mapContainer, { clientWidth: { value: 390 }, clientHeight: { value: 844 } });
+  map.invalidateSize({ pan: true });
+  panel.getBoundingClientRect = () => ({ width: 390, height: parseFloat(panel.style.getPropertyValue('--osrm-sheet-height')) || 506 });
+  const viewport = require('../src/mobile_viewport');
+  try {
+    window.innerWidth = 390;
+    window.innerHeight = 844;
+    window.dispatchEvent(new Event('resize'));
+    await new Promise(resolve => setTimeout(resolve, 40));
+    const focus = viewport.getCenter(map);
+    const zoom = map.getZoom();
+    panel.querySelector('.osrm-panel-resizer').dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true, cancelable: true }));
+    await new Promise(resolve => setTimeout(resolve, 40));
+    const point = map.latLngToContainerPoint(focus);
+    expect(Math.abs(point.y - (844 - 169) / 2)).toBeLessThanOrEqual(1);
+    expect(map.getZoom()).toBe(zoom);
+  } finally {
+    window.innerWidth = previousWidth;
+    window.innerHeight = previousHeight;
+    window.dispatchEvent(new Event('resize'));
+  }
+});
+
 
 test('places the accessible OSRM logo above the localized Directions heading', () => {
   const brand = panel.querySelector('.osrm-panel-brand');

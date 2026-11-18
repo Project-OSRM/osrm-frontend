@@ -4,6 +4,7 @@ var L = require('leaflet');
 var links = require('./links');
 var urlState = require('./url_state');
 var waypointReorder = require('./waypoint_reorder');
+var mobileViewport = require('./mobile_viewport');
 
 var State = L.Class.extend({
   options: { },
@@ -29,7 +30,7 @@ var State = L.Class.extend({
       this.options.zoom = this._map.getZoom();  this.update();
     }.bind(this));
     this._map.on('moveend', function() {
-      this.options.center = this._map.getCenter(); this.update();
+      this.options.center = mobileViewport.getCenter(this._map); this.update();
     }.bind(this));
     this._tools.on('languagechanged', function(e) {
       this.options.language = e.language;
@@ -177,7 +178,7 @@ var State = L.Class.extend({
     }
     if (this.options.center) {
       try {
-        this._map.setView(this.options.center, this.options.zoom);
+        this._map.setView(mobileViewport.centerForTarget(this._map, this.options.center, this.options.zoom), this.options.zoom);
       } catch (e) {
         console.error('Error setting map view:', e);
       }

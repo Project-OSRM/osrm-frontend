@@ -150,6 +150,17 @@ test('allows taps and keyboard arrows to choose the three pane sizes', () => {
   expect(key('Tab').defaultPrevented).toBe(false);
 });
 
+test('limits resize animation to deliberate size changes so opening the pane has a stable camera inset', () => {
+  expect(panel.classList.contains('osrm-panel-resizing')).toBe(false);
+  panel.classList.add('leaflet-routing-container-hide');
+  panel.classList.remove('leaflet-routing-container-hide');
+  expect(panel.classList.contains('osrm-panel-resizing')).toBe(false);
+  key('Home');
+  expect(panel.classList.contains('osrm-panel-resizing')).toBe(true);
+  jest.advanceTimersByTime(200);
+  expect(panel.classList.contains('osrm-panel-resizing')).toBe(false);
+});
+
 test('keeps ordinary pane scrolling separate and prevents grip gestures from reaching the map', () => {
   const outsidePointer = jest.fn();
   const outsideClick = jest.fn();
