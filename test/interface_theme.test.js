@@ -140,6 +140,14 @@ test('does not create map labels for empty or invalid route geometry', () => {
   expect(interfaceTheme.routeLabelCoordinate([{ lat: 1, lng: 2 }], 0.5)).toEqual({ lat: 1, lng: 2 });
 });
 
+test('returns to the planning prompt when waypoint removal makes the route incomplete', () => {
+  control.fire('routingstart');
+  expect(panel.querySelector('.osrm-route-empty h2').textContent).toBe('Finding route…');
+  control.fire('waypointschanged', { waypoints: [{ latLng: L.latLng(50.2, 8.5) }, { latLng: null }] });
+  expect(panel.querySelector('.osrm-route-empty h2').textContent).toBe('Plan your route');
+  expect(panel.classList.contains('leaflet-routing-container-hide')).toBe(false);
+});
+
 test('translates the actual pane labels and supports right-to-left reading', () => {
   showRoutes();
   tools.fire('languagechanged', { language: 'de' });

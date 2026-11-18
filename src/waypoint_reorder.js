@@ -57,6 +57,10 @@ function createGeocoder(i, nWps, options) {
   var handle = L.DomUtil.create('span', HANDLE_CLASS, container);
   var remove = options.addWaypoints ? L.DomUtil.create('span', 'leaflet-routing-remove-waypoint', container) : undefined;
 
+  // Deleting a waypoint rebuilds and detaches its row before the click reaches
+  // the map. Stop it on the button so it cannot place a replacement waypoint.
+  if (remove) L.DomEvent.on(remove, 'click', L.DomEvent.stop);
+
   input.disabled = !options.addWaypoints;
 
   handle.setAttribute('role', 'button');

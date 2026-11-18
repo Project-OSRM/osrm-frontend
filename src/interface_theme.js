@@ -218,6 +218,15 @@ function attach(options) {
     status = 'Route unavailable';
     decorateRoutes();
   });
+  control.on('waypointschanged', function(event) {
+    var waypoints = event.waypoints || [];
+    if (waypoints.length < 2 || waypoints.some(function(waypoint) {
+      return !waypoint || !waypoint.latLng;
+    })) {
+      status = 'Plan your route';
+      decorateRoutes();
+    }
+  });
   tools.on('languagechanged', function(event) {
     updateLocalization(event.language);
   });

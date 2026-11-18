@@ -745,12 +745,6 @@ if (modeSelector && modeSelector.select) {
   });
 }
 
-// Hide directions pane by default
-var routingContainer = document.querySelector('.leaflet-routing-container');
-if (routingContainer && !darkInterface) {
-  routingContainer.classList.add('leaflet-routing-container-hide');
-}
-
 // Decides whether the next route or geocode result may move the map view
 
 // Show pane when route is computed
@@ -1024,10 +1018,6 @@ plan.on('waypointschanged', function(e) {
   }).length : 0;
   if (validCount < 2) {
     toolsControl.setRouteGeoJSON(null);
-    var container = document.querySelector('.leaflet-routing-container');
-    if (container) {
-      container.classList.add('leaflet-routing-container-hide');
-    }
   }
 });
 
