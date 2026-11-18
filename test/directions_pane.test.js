@@ -81,3 +81,32 @@ test('closes only through the close button and keeps that choice while clearing 
   close.click();
   expect(panel.classList.contains('leaflet-routing-container-hide')).toBe(false);
 });
+
+test('resizes the mobile pane without changing waypoints or requesting the route again', () => {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  try {
+    window.innerWidth = 390;
+    window.innerHeight = 800;
+    window.dispatchEvent(new Event('resize'));
+    const waypoints = control.getWaypoints().map(waypoint => waypoint.latLng);
+    const requests = control.route.mock.calls.length;
+    const handle = panel.querySelector('.osrm-panel-resizer');
+    handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+    expect(panel.style.getPropertyValue('--osrm-sheet-height')).toBe('160px');
+    expect(panel.classList.contains('leaflet-routing-container-hide')).toBe(false);
+    expect(control.getWaypoints().map(waypoint => waypoint.latLng)).toEqual(waypoints);
+    expect(control.route).toHaveBeenCalledTimes(requests);
+    handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }));
+    expect(panel.style.getPropertyValue('--osrm-sheet-height')).toBe('480px');
+    panel.querySelector('.leaflet-routing-collapse-btn').click();
+    expect(panel.classList.contains('leaflet-routing-container-hide')).toBe(true);
+    panel.querySelector('.leaflet-routing-collapse-btn').click();
+    expect(panel.classList.contains('leaflet-routing-container-hide')).toBe(false);
+    expect(panel.style.getPropertyValue('--osrm-sheet-height')).toBe('480px');
+  } finally {
+    window.innerWidth = width;
+    window.innerHeight = height;
+    window.dispatchEvent(new Event('resize'));
+  }
+});

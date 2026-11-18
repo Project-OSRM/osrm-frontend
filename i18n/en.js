@@ -1,4 +1,5 @@
 module.exports = {
+  "Resize directions pane": "Resize directions pane",
   "Not permitted": "Not permitted",
   "Limited access": "Limited access",
   "Shortest": "Shortest",

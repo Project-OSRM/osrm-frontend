@@ -1,4 +1,5 @@
 module.exports = {
+  "Resize directions pane": "Đổi kích thước bảng chỉ đường",
   "Not permitted": "Không được phép",
   "Limited access": "Hạn chế đi lại",
   "Shortest": "Ngắn nhất",

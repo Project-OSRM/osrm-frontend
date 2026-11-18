@@ -1,4 +1,5 @@
 module.exports = {
+  "Resize directions pane": "経路案内パネルのサイズを変更",
   "Not permitted": "通行不可",
   "Limited access": "通行制限あり",
   "Shortest": "最短距離",

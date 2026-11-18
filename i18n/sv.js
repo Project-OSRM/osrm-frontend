@@ -1,4 +1,5 @@
 module.exports = {
+  "Resize directions pane": "Ändra storlek på vägbeskrivningen",
   "Not permitted": "Inte tillåtet",
   "Limited access": "Begränsad tillgång",
   "Shortest": "Kortast",

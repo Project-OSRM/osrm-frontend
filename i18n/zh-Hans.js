@@ -1,4 +1,5 @@
 module.exports = {
+  "Resize directions pane": "调整路线面板大小",
   "Not permitted": "禁止通行",
   "Limited access": "限制通行",
   "Shortest": "距离最短",

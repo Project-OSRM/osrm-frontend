@@ -1,4 +1,5 @@
 module.exports = {
+  "Resize directions pane": "Redimensionar painel de rotas",
   "Not permitted": "Não permitido",
   "Limited access": "Acesso limitado",
   "Shortest": "Mais curta",

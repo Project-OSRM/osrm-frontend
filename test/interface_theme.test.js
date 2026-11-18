@@ -152,6 +152,7 @@ test('translates the actual pane labels and supports right-to-left reading', () 
   showRoutes();
   tools.fire('languagechanged', { language: 'de' });
   expect(panel.querySelector('h1').textContent).toBe('Wegbeschreibung');
+  expect(panel.querySelector('.osrm-panel-resizer').getAttribute('aria-label')).toBe('Größe der Wegbeschreibung ändern');
   expect(panel.querySelector('.osrm-mode-caption').textContent).toBe('Verkehrsmittel');
   expect(panel.querySelector('.leaflet-routing-add-waypoint').textContent).toBe('Zwischenstopp hinzufügen');
   expect(panel.querySelector('.osrm-route-badge').textContent).toBe('Schnellste Route');

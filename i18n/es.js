@@ -1,4 +1,5 @@
 module.exports = {
+  "Resize directions pane": "Cambiar tamaño del panel de indicaciones",
   "Not permitted": "No permitido",
   "Limited access": "Acceso limitado",
   "Shortest": "Más corta",

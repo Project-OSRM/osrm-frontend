@@ -52,6 +52,7 @@
   transition: none;
 }
 .osrm-panel-header { display: flex; align-items: center; justify-content: space-between; flex: none; gap: 12px; margin-bottom: 22px; }
+.osrm-panel-resizer, .osrm-panel-resizer[hidden] { display: none; }
 .osrm-panel-brand { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .osrm-panel-logo { display: block; width: 104px; height: auto; max-width: 100%; filter: brightness(0) invert(0.95); }
 .osrm-panel-header h1 { margin: 0; color: var(--osrm-text); font-size: var(--osrm-type-heading); line-height: 36px; font-weight: 600; letter-spacing: -0.3px; }
@@ -215,7 +216,11 @@
 }
 @media (max-width: 900px) {
   .osrm-theme-dark .map { left: 0; width: 100%; height: 100%; bottom: 0; }
-  .osrm-theme-dark .leaflet-routing-container.dark { inset: auto 0 0; width: 100%; height: auto; max-height: 60dvh; padding: 14px 16px max(12px, env(safe-area-inset-bottom)); border: 0; border-top: 1px solid #505050; border-radius: 22px 22px 0 0; }
+  .osrm-theme-dark .leaflet-routing-container.dark { inset: auto 0 0; width: 100%; height: var(--osrm-sheet-height, 60dvh); max-height: 90dvh; padding: 14px 16px max(12px, env(safe-area-inset-bottom)); border: 0; border-top: 1px solid #505050; border-radius: 22px 22px 0 0; transition: height 180ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .osrm-panel-resizer { display: flex; position: sticky; top: -14px; z-index: 1100; flex: none; align-items: center; justify-content: center; height: 44px; margin: -14px -16px 8px; border-radius: 22px 22px 0 0; background: var(--osrm-panel); touch-action: none; cursor: ns-resize; }
+  .osrm-panel-resizer:before { content: ''; width: 40px; height: 4px; border-radius: 2px; background: var(--osrm-muted); }
+  .osrm-panel-resizer:focus-visible { outline: 2px solid #9dc3ff; outline-offset: -6px; border-radius: 16px; }
+  .osrm-theme-dark .leaflet-routing-container.dark.osrm-panel-dragging { transition: none; user-select: none; }
   .osrm-panel-header { margin-bottom: 10px; }
 
   .osrm-mode-section { margin-bottom: 10px; }
@@ -231,7 +236,7 @@
 }
 
 /* The pane is the only scroll surface; collapse it to a reachable reopen button. */
-.osrm-theme-dark .leaflet-routing-container.dark.leaflet-routing-container-hide { inset: 12px auto auto 12px; width: 56px; height: 56px; max-height: none; padding: 10px; border: 0; border-radius: 14px; overflow: visible; }
+.osrm-theme-dark .leaflet-routing-container.dark.leaflet-routing-container-hide { inset: 12px auto auto 12px; width: 56px; height: 56px; max-height: none; padding: 10px; border: 0; border-radius: 14px; overflow: visible; transition: none; }
 .osrm-theme-dark .leaflet-routing-container-hide > :not(.osrm-panel-header) { display: none; }
 .osrm-theme-dark .leaflet-routing-container-hide .osrm-panel-header { margin: 0; }
 .osrm-theme-dark .leaflet-routing-container-hide .osrm-panel-brand { display: none; }
@@ -242,6 +247,7 @@
   .osrm-theme-dark { --osrm-sidebar-width: min(320px, 44vw); }
   .osrm-theme-dark .leaflet-routing-container.dark { inset: 0 auto 0 0; width: var(--osrm-sidebar-width); height: 100dvh; max-height: none; padding: 12px; border: 0; border-right: 1px solid #454545; border-radius: 0; }
   .osrm-theme-dark .leaflet-routing-container.dark.leaflet-routing-container-hide { inset: 12px auto auto 12px; }
+  .osrm-panel-resizer { display: none; }
   .osrm-theme-dark .leaflet-bottom.leaflet-right { bottom: 0; }
 }
 @media (pointer: coarse) {
@@ -264,5 +270,6 @@
 @keyframes osrm-vector-loading { to { transform: rotate(360deg); } }
 @media (max-width: 720px) { .osrm-vector-status { top: 66px; } }
 @media (prefers-reduced-motion: reduce) { .osrm-vector-status:before { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .osrm-theme-dark .leaflet-routing-container.dark { transition: none; } }
 
 .osrm-components-status:not(.osrm-vector-status-error):before { display: none; }

@@ -1,4 +1,5 @@
 module.exports = {
+  "Resize directions pane": "تغییر اندازهٔ پنل راهنمای مسیر",
   "Not permitted": "مجاز نیست",
   "Limited access": "دسترسی محدود",
   "Shortest": "کوتاه‌ترین",

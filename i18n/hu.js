@@ -1,4 +1,5 @@
 ﻿module.exports = {
+  "Resize directions pane": "Útvonaltervező panel átméretezése",
   "Not permitted": "Nem megengedett",
   "Limited access": "Korlátozott hozzáférés",
   "Shortest": "Legrövidebb",

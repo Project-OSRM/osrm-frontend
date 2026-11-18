@@ -3,6 +3,7 @@
 var L = require('leaflet');
 var localization = require('./localization');
 var routeProperties = require('./route_properties');
+var mobilePanel = require('./mobile_panel');
 
 function initialize(enabled) {
   document.documentElement.classList.toggle('osrm-theme-dark', !!enabled);
@@ -27,6 +28,7 @@ function attach(options) {
   var selectedRoute;
   var labels = L.layerGroup().addTo(map);
   var resizeFrame;
+  var paneResizer;
   var header = L.DomUtil.create('header', 'osrm-panel-header');
   var brand = L.DomUtil.create('div', 'osrm-panel-brand', header);
   var logo = L.DomUtil.create('img', 'osrm-panel-logo', brand);
@@ -82,6 +84,10 @@ function attach(options) {
     if (collapse) collapse.setAttribute('aria-expanded', String(!panel.classList.contains('leaflet-routing-container-hide')));
     document.documentElement.style.setProperty('--osrm-panel-height', Math.ceil(panel.getBoundingClientRect().height) + 'px');
     if (resizeFrame !== undefined) L.Util.cancelAnimFrame(resizeFrame);
+    resizeFrame = undefined;
+    // The pane overlays the map. Moving it should not invalidate the renderer
+    // on every drag or snap-animation frame.
+    if (panel.classList.contains('osrm-panel-resizing')) return;
     resizeFrame = L.Util.requestAnimFrame(function() {
       resizeFrame = undefined;
       map.invalidateSize({ pan: false, debounceMoveend: true });
@@ -180,6 +186,7 @@ function attach(options) {
     localization.setDocumentLanguage(language);
     panel.dir = language === 'fa' ? 'rtl' : 'ltr';
     title.textContent = translate('Directions');
+    if (paneResizer) paneResizer.updateLocalization();
     if (toolbarFooter) toolbarFooter.setAttribute('aria-label', translate('Map tools'));
     if (modeLabel) modeLabel.textContent = translate('Travel mode');
     if (collapse) {
@@ -196,6 +203,7 @@ function attach(options) {
     decorateRoutes();
   }
 
+  paneResizer = mobilePanel.attach(panel, { onResize: updatePanelSize, translate: translate });
   var routeObserver = new window.MutationObserver(decorateRoutes);
   routeObserver.observe(alternatives, { childList: true });
   var panelObserver = new window.MutationObserver(updatePanelSize);
@@ -231,6 +239,7 @@ function attach(options) {
     updateLocalization(event.language);
   });
   map.on('unload', function() {
+    paneResizer.destroy();
     routeObserver.disconnect();
     panelObserver.disconnect();
     if (resizeObserver) resizeObserver.disconnect();

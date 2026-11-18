@@ -1,4 +1,5 @@
 module.exports = {
+  "Resize directions pane": "Redimensionner le panneau d’itinéraire",
   "Not permitted": "Non autorisé",
   "Limited access": "Accès limité",
   "Shortest": "La plus courte",
