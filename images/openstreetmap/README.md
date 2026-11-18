@@ -29,6 +29,11 @@ fields. Translations come from the vector tiles, without a translation service.
 Live language changes apply once style layers exist, including while new tiles
 are loading. Early changes wait for the style and use the latest selection.
 
+Named localities use small mixed-case labels that fade in between style zooms
+13 and 13.5, with street, POI and settlement names taking priority. They use the
+existing `place_labels` features, follow the selected language and remain
+available on the Satellite street overlay without adding settlement symbols.
+
 Satellite enables a Street overlay by default, with translucent roads, pedestrian
 areas, street and place names, reference shields and exit badges. Other ground
 fills and POI layers stay hidden so the imagery remains visible. The checkbox
