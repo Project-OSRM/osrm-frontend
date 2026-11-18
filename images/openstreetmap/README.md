@@ -136,8 +136,8 @@ overlay.
 Destinations classified as `tourism=zoo` show compact names beside the bundled
 zoo symbol. They fade in between style zooms 15 and 15.4 with the same green
 accents as viewpoints. Names follow the selected language and yield to street
-and settlement names; unnamed sites retain their symbol. Other parks keep their
-existing treatment. These POIs remain hidden on the Satellite street overlay.
+and settlement names, and unnamed sites retain their symbol. These POIs remain
+hidden on the Satellite street overlay.
 
 Alpine huts classified as `tourism=alpine_hut` use the bundled chalet symbol and
 compact green names, fading in between style zooms 14 and 14.4. Names follow the
@@ -145,6 +145,12 @@ selected language, with street and settlement labels taking priority. Unnamed
 huts retain their symbol; the style does not infer opening hours or current
 availability. Day shelters and holiday chalets keep their existing treatment.
 These POIs remain hidden on the Satellite street overlay.
+
+Named parks classified as `leisure=park` use compact green labels in both vector
+palettes, fading in between style zooms 14 and 14.5. Names use the selected
+language when available and yield to street and settlement labels. Parks use
+their area fill and name in place of the generic sports icon. Park labels are
+hidden on the Satellite street overlay.
 
 Named footpaths, cycleways, steps and paths fade in at tile zoom 15; named service
 roads follow at zoom 16. These labels follow the way geometry, use a smaller type

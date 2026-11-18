@@ -296,6 +296,47 @@ test('keeps alpine huts green in both palettes and hidden on the Satellite stree
   expect(overlay.layers.find(layer => layer.id === id).layout.visibility).toBe('none');
 });
 
+test('labels named parks and keeps other leisure symbols distinct', () => {
+  const layer = style.layers.find(candidate => candidate.id === 'label-park-name');
+  const generic = style.layers.find(candidate => candidate.id === 'poi-leisure');
+  const park = { leisure: 'park', name: 'Bethmannpark' };
+  expect(layer['source-layer']).toBe('pois');
+  expect(matches(layer, park)).toBe(true);
+  expect(evaluate(layer.layout['text-field'], park)).toBe(park.name);
+  expect(layer.layout['icon-image']).toBeUndefined();
+  expect(matches(generic, park)).toBe(false);
+  expect(matches(generic, { leisure: 'park' })).toBe(false);
+  expect(matches(generic, { leisure: 'playground' })).toBe(true);
+  for (const properties of [
+    { leisure: 'park' },
+    { leisure: 'park', name: '' },
+    { leisure: 'playground', name: 'Playground' },
+    { tourism: 'zoo', name: 'Zoo Frankfurt' }
+  ]) expect(matches(layer, properties)).toBe(false);
+});
+
+test('fades compact park names in below street and place labels in both palettes', () => {
+  const id = 'label-park-name';
+  const layer = style.layers.find(candidate => candidate.id === id);
+  expect(layer.minzoom).toBe(14);
+  expect(layer.layout['text-size']).toBe(11);
+  expect(layer.layout['text-allow-overlap']).not.toBe(true);
+  expect(layer.layout['text-ignore-placement']).not.toBe(true);
+  expect(evaluate(layer.paint['text-opacity'], {}, 14)).toBe(0);
+  expect(evaluate(layer.paint['text-opacity'], {}, 14.25)).toBeCloseTo(0.45);
+  expect(evaluate(layer.paint['text-opacity'], {}, 14.5)).toBe(0.9);
+  for (const label of ['label-street-residential', 'label-street-primary', 'label-place-neighbourhood']) {
+    expect(style.layers.indexOf(layer)).toBeLessThan(style.layers.findIndex(candidate => candidate.id === label));
+  }
+  expect(layer.paint['text-color']).toBe('#4f7751');
+  const dark = theme.transformStyle(null, style);
+  const darkPark = dark.layers.find(candidate => candidate.id === id);
+  expect(evaluate(darkPark.paint['text-color'], { leisure: 'park' })).toBe('#a0c59b');
+  expect(darkPark.filter).toEqual(layer.filter);
+  expect(dark.sources).toEqual(style.sources);
+  expect(satellite.transformStyle(style).layers.find(candidate => candidate.id === id).layout.visibility).toBe('none');
+});
+
 test('shares one first-request resolver for road plates, exits, and local POI symbols', async () => {
   const images = new Map();
   let resolveMissingImage;
