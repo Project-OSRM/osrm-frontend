@@ -108,6 +108,13 @@ accents as viewpoints. Names follow the selected language and yield to street
 and settlement names; unnamed sites retain their symbol. Other parks keep their
 existing treatment. These POIs remain hidden on the Satellite street overlay.
 
+Alpine huts classified as `tourism=alpine_hut` use the bundled chalet symbol and
+compact green names, fading in between style zooms 14 and 14.4. Names follow the
+selected language, with street and settlement labels taking priority. Unnamed
+huts retain their symbol; the style does not infer opening hours or current
+availability. Day shelters and holiday chalets keep their existing treatment.
+These POIs remain hidden on the Satellite street overlay.
+
 Named footpaths, cycleways, steps and paths fade in at tile zoom 15; named service
 roads follow at zoom 16. These labels follow the way geometry, use a smaller type
 size than ordinary street names, and have lower collision priority. Unnamed ways

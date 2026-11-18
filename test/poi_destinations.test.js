@@ -38,7 +38,8 @@ test.each([
   ['historic', 'castle', 'poi-destination-historic'],
   ['historic', 'fort', 'poi-destination-historic'],
   ['tourism', 'viewpoint', 'poi-destination-viewpoint'],
-  ['tourism', 'zoo', 'poi-destination-zoo']
+  ['tourism', 'zoo', 'poi-destination-zoo'],
+  ['tourism', 'alpine_hut', 'poi-destination-alpine-hut']
 ])('labels %s=%s once with a resolvable icon', (field, kind, id) => {
   const properties = { [field]: kind, name: 'Destination' };
   const layers = style.layers.filter(layer => layer['source-layer'] === 'pois' && matches(layer, properties));
@@ -234,6 +235,58 @@ test('keeps zoo symbols and names green in both palettes without adding another 
   expect(original.paint['text-color']).toBe('#4f7751');
   expect(evaluate(darkZoo.paint['text-color'], { tourism: 'zoo' })).toBe('#a0c59b');
   expect(evaluate(darkZoo.paint['icon-color'], { tourism: 'zoo' })).toBe('#a0c59b');
+  const overlay = satellite.transformStyle(style);
+  for (const palette of [style, dark, overlay]) {
+    expect(validateStyleMin(palette)).toEqual([]);
+    expect(palette.sources).toEqual(style.sources);
+    expect(palette.layers.find(layer => layer.id === id).filter).toEqual(original.filter);
+  }
+  expect(overlay.layers.find(layer => layer.id === id).layout.visibility).toBe('none');
+});
+
+test('marks alpine huts without classifying chalets or day shelters as mountain accommodation', () => {
+  const layer = style.layers.find(candidate => candidate.id === 'poi-destination-alpine-hut');
+  const generic = style.layers.find(candidate => candidate.id === 'poi-tourism');
+  expect(matches(generic, { tourism: 'alpine_hut' })).toBe(false);
+  for (const properties of [
+    { tourism: 'chalet', name: 'Mountain hut' },
+    { amenity: 'shelter', name: 'Mountain hut' },
+    { tourism: 'wilderness_hut' },
+    { building: 'cabin' },
+    { name: 'Mountain hut' }
+  ]) expect(matches(layer, properties)).toBe(false);
+  expect(matches(generic, { tourism: 'chalet' })).toBe(true);
+  expect(layer.layout['icon-image']).toBe('basics:icon-chalet');
+  expect(sprites['icon-chalet'].sdf).toBe(true);
+  expect(layer.minzoom).toBe(14);
+  expect(layer.layout['text-size']).toBe(11);
+  expect(layer.layout['icon-optional']).toBe(false);
+  expect(layer.layout['text-ignore-placement']).not.toBe(true);
+  for (const id of ['label-street-primary', 'label-place-city', 'label-place-hamlet']) {
+    expect(style.layers.indexOf(layer)).toBeLessThan(style.layers.findIndex(candidate => candidate.id === id));
+  }
+});
+
+test('uses the tile-provided English alpine hut name with local fallback and unnamed symbols', () => {
+  const id = 'poi-destination-alpine-hut';
+  const properties = { name: 'Monte Rosa Hütte', name_en: 'Monte Rosa Hut', tourism: 'alpine_hut' };
+  const english = localizeStyle(style, 'en-GB').layers.find(layer => layer.id === id);
+  expect(evaluate(english.layout['text-field'], properties)).toBe('Monte Rosa Hut');
+  const german = localizeStyle(style, 'de').layers.find(layer => layer.id === id);
+  expect(evaluate(german.layout['text-field'], properties)).toBe('Monte Rosa Hütte');
+  expect(evaluate(english.layout['text-field'], { ...properties, name_en: '' })).toBe('Monte Rosa Hütte');
+  expect(evaluate(english.layout['text-field'], { tourism: 'alpine_hut' })).toBe('');
+  expect(evaluate(english.layout['icon-image'], { tourism: 'alpine_hut' })).toBe('basics:icon-chalet');
+});
+
+test('keeps alpine huts green in both palettes and hidden on the Satellite street overlay', () => {
+  const id = 'poi-destination-alpine-hut';
+  const original = style.layers.find(layer => layer.id === id);
+  const dark = theme.transformStyle(null, style);
+  const darkHut = dark.layers.find(layer => layer.id === id);
+  expect(original.paint['text-color']).toBe('#4f7751');
+  expect(evaluate(darkHut.paint['text-color'], { tourism: 'alpine_hut' })).toBe('#a0c59b');
+  expect(evaluate(darkHut.paint['icon-color'], { tourism: 'alpine_hut' })).toBe('#a0c59b');
   const overlay = satellite.transformStyle(style);
   for (const palette of [style, dark, overlay]) {
     expect(validateStyleMin(palette)).toEqual([]);

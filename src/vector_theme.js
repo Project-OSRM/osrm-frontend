@@ -111,7 +111,7 @@ function transformStyle(previousStyle, style) {
       if (layer['source-layer'] === 'public_transport') paint['icon-color'] = palette.mutedText;
       if (/poi/.test(name) && !/^label-address-/.test(layer.id)) {
         paint['text-color'] = ['match', ['coalesce', ['get', 'kind'], ['get', 'class'], ['get', 'amenity'], ['get', 'leisure'], ['get', 'tourism'], ''],
-          ['park', 'garden', 'playground', 'camp_site', 'caravan_site', 'viewpoint', 'zoo'], '#a0c59b',
+          ['park', 'garden', 'playground', 'camp_site', 'caravan_site', 'viewpoint', 'zoo', 'alpine_hut'], '#a0c59b',
           ['restaurant', 'cafe', 'bar', 'fast_food'], '#d4af8e',
           ['school', 'college', 'university'], '#c0af9b',
           ['hospital', 'clinic', 'pharmacy'], '#e4a9b3',
