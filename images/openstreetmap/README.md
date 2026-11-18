@@ -82,6 +82,12 @@ style zooms 15 and 15.4. Street and place labels retain priority, and names may
 yield to symbols in crowded areas. Features tagged as both an embassy and a
 diplomatic office get one civic symbol rather than two overlapping icons.
 
+Castles and forts show compact names beside the bundled castle symbol, fading
+in between style zooms 15 and 15.4. Names follow the selected language and yield
+to symbols, street names and settlement names when space is tight. Other historic
+features keep their existing icon-only treatment. These landmark POIs remain
+hidden on the Satellite street overlay.
+
 Named footpaths, cycleways, steps and paths fade in at tile zoom 15; named service
 roads follow at zoom 16. These labels follow the way geometry, use a smaller type
 size than ordinary street names, and have lower collision priority. Unnamed ways

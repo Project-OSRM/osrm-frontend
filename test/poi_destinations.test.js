@@ -6,6 +6,8 @@ const theme = require('../src/vector_theme');
 const { imageDefinition } = require('../src/poi_icons');
 const { registerVectorImages } = require('../src/vector_images');
 const sprites = require('../images/openstreetmap/sprites.json');
+const { localizeStyle } = require('../src/vector_labels');
+const satellite = require('../src/vector_satellite');
 
 function matches(layer, properties) {
   return featureFilter(layer.filter, 'layers[0].filter').filter({ zoom: 17 }, { type: 1, properties });
@@ -32,7 +34,9 @@ test.each([
   ['tourism', 'caravan_site', 'poi-destination-camping'],
   ['amenity', 'courthouse', 'poi-destination-civic'],
   ['amenity', 'embassy', 'poi-destination-civic'],
-  ['office', 'diplomatic', 'poi-destination-civic']
+  ['office', 'diplomatic', 'poi-destination-civic'],
+  ['historic', 'castle', 'poi-destination-historic'],
+  ['historic', 'fort', 'poi-destination-historic']
 ])('labels %s=%s once with a resolvable icon', (field, kind, id) => {
   const properties = { [field]: kind, name: 'Destination' };
   const layers = style.layers.filter(layer => layer['source-layer'] === 'pois' && matches(layer, properties));
@@ -89,6 +93,50 @@ test.each([
   expect(evaluate(dark.paint['text-color'], properties)).toBe('#a8bacb');
   expect(evaluate(dark.paint['icon-color'], properties)).toBe('#a8bacb');
   expect(style.layers.indexOf(layer)).toBeLessThan(style.layers.findIndex(candidate => candidate.id === 'label-street-primary'));
+});
+
+test('labels castles and forts without promoting every historic feature into a named destination', () => {
+  const destination = style.layers.find(layer => layer.id === 'poi-destination-historic');
+  const generic = style.layers.find(layer => layer.id === 'poi-historic');
+  for (const historic of ['monument', 'memorial', 'ruins', 'archaeological_site', 'wayside_shrine']) {
+    expect(matches(destination, { historic, name: 'Historic place' })).toBe(false);
+    expect(matches(generic, { historic })).toBe(true);
+  }
+  expect(matches(destination, { name: 'Unclassified place' })).toBe(false);
+  expect(destination.layout['icon-image']).toBe('basics:icon-castle');
+  expect(sprites['icon-castle'].sdf).toBe(true);
+  expect(destination.minzoom).toBe(15);
+  expect(destination.layout['text-size']).toBe(11);
+  expect(destination.layout['text-optional']).toBe(true);
+  expect(destination.layout['icon-optional']).toBe(false);
+  expect(destination.layout['text-ignore-placement']).not.toBe(true);
+  for (const id of ['label-street-primary', 'label-place-city', 'label-place-hamlet']) {
+    expect(style.layers.indexOf(destination)).toBeLessThan(style.layers.findIndex(layer => layer.id === id));
+  }
+});
+
+test('uses translated historic landmark names and falls back to the local name', () => {
+  const destination = style.layers.find(layer => layer.id === 'poi-destination-historic');
+  const french = localizeStyle(style, 'fr-CA').layers.find(layer => layer.id === destination.id);
+  expect(evaluate(french.layout['text-field'], { historic: 'castle', name: 'Local name', name_fr: 'Château' })).toBe('Château');
+  expect(evaluate(french.layout['text-field'], { historic: 'castle', name: 'Fort Konstantin' })).toBe('Fort Konstantin');
+  expect(evaluate(french.layout['text-field'], { historic: 'castle', name: 'Local name', name_fr: '' })).toBe('Local name');
+  expect(evaluate(french.layout['text-field'], { historic: 'fort' })).toBe('');
+});
+
+test('keeps historic destinations readable in both palettes and out of the Satellite street overlay', () => {
+  const original = style.layers.find(layer => layer.id === 'poi-destination-historic');
+  const dark = theme.transformStyle(null, style);
+  const darkDestination = dark.layers.find(layer => layer.id === original.id);
+  expect(original.paint['text-color']).toBe('#806957');
+  for (const historic of ['castle', 'fort']) {
+    expect(evaluate(darkDestination.paint['text-color'], { historic })).toBe('#a8bacb');
+    expect(evaluate(darkDestination.paint['icon-color'], { historic })).toBe('#a8bacb');
+  }
+  const overlay = satellite.transformStyle(style);
+  expect(validateStyleMin(overlay)).toEqual([]);
+  expect(overlay.sources).toEqual(style.sources);
+  expect(overlay.layers.find(layer => layer.id === original.id).layout.visibility).toBe('none');
 });
 
 test('shares one first-request resolver for road plates, exits, and local POI symbols', async () => {
