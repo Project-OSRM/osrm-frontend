@@ -34,6 +34,11 @@ Named localities use small mixed-case labels that fade in between style zooms
 existing `place_labels` features, follow the selected language and remain
 available on the Satellite street overlay without adding settlement symbols.
 
+Named farms and isolated dwellings fade in over the same zoom range, with slightly
+larger mixed-case labels than localities. They yield to street, POI and settlement
+names, follow the selected language and appear on the Satellite street overlay.
+They use existing place features without adding icons or another tile source.
+
 Satellite enables a Street overlay by default, with translucent roads, pedestrian
 areas, street and place names, reference shields and exit badges. Other ground
 fills and POI layers stay hidden so the imagery remains visible. The checkbox
