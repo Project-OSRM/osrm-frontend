@@ -12,11 +12,13 @@ https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf endpoint; the style'
 font stack names are mapped to that service's names. Relative sprite URLs are
 resolved against the style file at runtime for subdirectory deployments.
 
-The selected bundled vector map starts downloading its style and the matching
-local sprite JSON/PNG alongside the renderer module. MapLibre receives the parsed
-style directly, with absolute sprite paths, so it does not request the style a
-second time. Custom styles keep their existing loader. This only warms local
-rendering assets; MapLibre selects and requests tiles for the visible map.
+The page preconnects to the default vector tile and routing services. The built
+index preloads the MapLibre worker by its generated filename and starts the
+high-density sprite JSON and PNG on displays that use them. The selected bundled
+map loads its style and any remaining sprites alongside the renderer module.
+MapLibre receives the parsed style directly with absolute sprite paths. Custom
+styles keep their existing loader, and MapLibre selects and requests the tiles
+for the visible map.
 
 Official OSM tile requests keep their original URLs and the browser's real
 User-Agent, with normal HTTP caching and a `strict-origin-when-cross-origin`

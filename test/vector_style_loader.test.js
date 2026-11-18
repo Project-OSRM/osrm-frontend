@@ -57,6 +57,30 @@ test('retries network and JSON failures rather than keeping a rejected style cac
   await expect(loader.loadBundledStyle(styleUrl)).resolves.toHaveProperty('version', 8);
 });
 
+test('preconnects to the default service origins and reuses the HTML sprite preloads', async () => {
+  const html = new DOMParser().parseFromString(fs.readFileSync(require.resolve('../index.html'), 'utf8'), 'text/html');
+  const connections = [...html.querySelectorAll('head link[rel="preconnect"]')];
+  expect(connections.map(link => link.href)).toEqual([
+    'https://vector.openstreetmap.org/', 'https://router.project-osrm.org/'
+  ]);
+  expect(connections.every(link => link.crossOrigin === 'anonymous')).toBe(true);
+
+  window.devicePixelRatio = 2;
+  const sprites = [...html.querySelectorAll('head link[data-osrm-sprite-preload]')];
+  expect(sprites.map(link => link.getAttribute('href'))).toEqual([
+    'images/openstreetmap/sprites@2x.json', 'images/openstreetmap/sprites@2x.png'
+  ]);
+  for (const link of sprites) {
+    expect(link.rel).toBe('preload');
+    expect(link.getAttribute('as')).toBe('fetch');
+    expect(link.crossOrigin).toBe('anonymous');
+    expect(link.media).toBe('(resolution > 1dppx)');
+    document.head.appendChild(link);
+  }
+  await loader.loadBundledStyle(new URL('images/openstreetmap/style.json', document.baseURI).href);
+  expect([...document.querySelectorAll('link[data-osrm-sprite-preload]')]).toEqual(sprites);
+});
+
 test.each(['../index.html', '../debug/index.html'])('keeps a valid cross-origin referrer policy in %s', path => {
   const html = new DOMParser().parseFromString(fs.readFileSync(require.resolve(path), 'utf8'), 'text/html');
   expect(html.querySelector('meta[name="referrer"]').content).toBe('strict-origin-when-cross-origin');
