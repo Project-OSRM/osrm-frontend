@@ -12,6 +12,23 @@ https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf endpoint; the style'
 font stack names are mapped to that service's names. Relative sprite URLs are
 resolved against the style file at runtime for subdirectory deployments.
 
+The selected bundled vector map starts downloading its style and the matching
+local sprite JSON/PNG alongside the renderer module. MapLibre receives the parsed
+style directly, with absolute sprite paths, so it does not request the style a
+second time. Custom styles keep their existing loader. This only warms local
+rendering assets; MapLibre selects and requests tiles for the visible map.
+
+Official OSM tile requests keep their original URLs and the browser's real
+User-Agent, with normal HTTP caching and a `strict-origin-when-cross-origin`
+referrer policy. No no-cache headers or per-build tile query parameters are
+added. Tile responses use their provider's cache lifetime, as required by the
+[OSMF vector usage policy](https://operations.osmfoundation.org/policies/vector/).
+The seven-day alternative applies when a provider expiry is not used; the
+application does not override an explicit shorter provider lifetime. Browser
+cache persistence and eviction remain browser-controlled. Style switching
+continues to reuse the live renderer and its loaded tiles. There is no tile
+archive, bulk prefetcher or caching proxy in front of the OSM service.
+
 The page, map container and initial vector background are transparent while the
 first view loads. Features remain visible as they arrive. Once ready, the vector
 background uses its normal palette color. Later tile requests and palette
@@ -22,6 +39,20 @@ compact, medium and expanded positions. Tapping the grip cycles through
 these sizes; keyboard arrows, Home and End also resize it. Resizing keeps the
 current route, waypoints and pane visibility. The close button controls visibility.
 Desktop and short landscape layouts retain their sidebar.
+
+On mobile, camera targets and zoom buttons use the center of the map area above
+the current directions sheet. Dragging, minimizing, opening or closing the sheet
+moves the map by the corresponding offset while keeping the same geographic
+focus and zoom. Shared URLs store that visible focus, so restoring a view also
+works with a different sheet height. Search results and location fixes use the
+same centering, including cached location requests.
+In short landscape layouts, centering uses the open area beside the sidebar.
+Opening and closing the pane use its final dimensions immediately, so automatic
+route centering does not compete with a height transition. Grip snapping retains
+its resize animation and respects reduced-motion preferences.
+Clicking a waypoint input row or a turn-by-turn instruction centers its location
+in the same unobstructed area without changing zoom or recomputing the route.
+Waypoint rows focus the displayed pin when routing uses a separate entrance.
 
 Water polygons classified as `canal` use the same fill as reservoirs, basins and
 docks. Canals classified as ordinary `water` retain their existing appearance.

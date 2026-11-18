@@ -3,6 +3,7 @@
 var L = require('leaflet');
 var buildTimestamp = require('./version').buildTimestamp;
 var vectorAccess = require('./vector_access');
+var vectorStyleLoader = require('./vector_style_loader');
 var runtimePromise;
 // Resolve assets beside bundle.js, including deployments served from a subpath.
 var scriptUrl = document.currentScript && document.currentScript.src;
@@ -132,16 +133,23 @@ function createLayer(style, options, runtimeLoader) {
         this._showStatus(this.options.errorMessage || 'Vector map could not load. Try again or choose another background.', true);
         this.fire('tileerror', { error: error });
       }.bind(this);
-      (runtimeLoader || loadRuntime)().then(function(runtime) {
+      var renderStyle = style;
+      if (style === 'images/openstreetmap/style.json') {
+        var localStyle = new window.URL(style, assetBase);
+        localStyle.searchParams.set('v', buildTimestamp);
+        renderStyle = localStyle.href;
+      }
+      // Fetch the selected style and its local sprites while the renderer
+      // module downloads, instead of discovering each dependency in series.
+      var preparedStyle = !runtimeLoader && style === 'images/openstreetmap/style.json' && window.fetch
+        ? vectorStyleLoader.loadBundledStyle(renderStyle) : null;
+      var runtimeReady = (runtimeLoader || loadRuntime)();
+      var assetsReady = preparedStyle ? Promise.all([runtimeReady, preparedStyle]) : runtimeReady;
+      assetsReady.then(function(loadedAssets) {
+        var runtime = preparedStyle ? loadedAssets[0] : loadedAssets;
         if (this._generation !== generation || this._map !== map) return;
         try {
-          var renderStyle = style;
-          if (style === 'images/openstreetmap/style.json') {
-            var localStyle = new window.URL(style, assetBase);
-            localStyle.searchParams.set('v', buildTimestamp);
-            renderStyle = localStyle.href;
-          }
-          var renderer = runtime.createLayer(renderStyle, this.options.theme || 'dark');
+          var renderer = runtime.createLayer(preparedStyle ? loadedAssets[1] : renderStyle, this.options.theme || 'dark');
           if (renderer.setLanguage) renderer.setLanguage(this.options.language);
           if (renderer.setRoutingProfile) renderer.setRoutingProfile(this.options.routingProfile);
           // Leaflet stores defaults on the options prototype; preserve them.

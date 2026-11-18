@@ -8,6 +8,7 @@ import resolveStyleAssets from './vector_style_assets';
 import vectorImages from './vector_images';
 import vectorAccess from './vector_access';
 import vectorLabels from './vector_labels';
+import vectorRequests from './vector_requests';
 
 setWorkerUrl(workerUrl);
 
@@ -22,6 +23,7 @@ export function createLayer(style, theme) {
   var renderer = new BackgroundRenderer({
     style: style,
     interactive: false,
+    transformRequest: vectorRequests.transformRequest,
     transformStyle: function(previous, next) {
       var styleUrl = typeof style === 'string' ? new URL(style, document.baseURI).href : document.baseURI;
       original = vectorPalette.vectorStyle(resolveStyleAssets(next, styleUrl));
