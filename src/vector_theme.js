@@ -109,7 +109,7 @@ function transformStyle(previousStyle, style) {
     if (layer.type === 'symbol' && layer.layout && layer.layout['text-field'] && !/shield/.test(name)) {
       paint['text-color'] = /water/.test(name) ? '#a7cce8' : /transportation|highway|roadname|street_labels|streets_polygons_labels/.test(name) ? palette.mutedText : palette.text;
       if (layer['source-layer'] === 'public_transport') paint['icon-color'] = palette.mutedText;
-      if (/poi/.test(name)) {
+      if (/poi/.test(name) && !/^label-address-/.test(layer.id)) {
         paint['text-color'] = ['match', ['coalesce', ['get', 'kind'], ['get', 'class'], ['get', 'amenity'], ['get', 'leisure'], ['get', 'tourism'], ''],
           ['park', 'garden', 'playground'], '#a0c59b',
           ['restaurant', 'cafe', 'bar', 'fast_food'], '#d4af8e',

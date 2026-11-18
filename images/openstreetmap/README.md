@@ -34,6 +34,12 @@ appears only for Satellite; turning it off is remembered independently of the tr
 and component overlays. It shares the OpenStreetMap renderer and tile cache,
 including language and access markings. Disabling it keeps that cache alive.
 
+House numbers stored on POIs fade in between style zooms 16.5 and 17, using the same
+small type as ordinary addresses. They move around existing icons and give
+street names, POI names and icons priority when space is tight. These numbers
+also appear on the Satellite street overlay. Shortbread stores these addresses
+on the POI instead of repeating the same feature in the `addresses` layer.
+
 Local adaptations add reference shields for motorways and main roads at overview
 zooms. `src/road_shields.js` supplies their stretchable neutral background at
 runtime; the original tile source, fonts and attribution are retained.
