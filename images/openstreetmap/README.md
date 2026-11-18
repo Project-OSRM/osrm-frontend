@@ -88,6 +88,14 @@ to symbols, street names and settlement names when space is tight. Other histori
 features keep their existing icon-only treatment. These landmark POIs remain
 hidden on the Satellite street overlay.
 
+Viewpoints show small names beside the bundled viewpoint symbol, fading in
+between style zooms 14 and 14.4 with green accents in both palettes. Names follow
+the selected language and yield to symbols, street names and settlement names
+when space is tight. Unnamed viewpoints retain their symbol. Observation towers
+also tagged as viewpoints use one viewpoint symbol, and ordinary towers keep
+their existing treatment. These POIs remain hidden on the Satellite street
+overlay.
+
 Named footpaths, cycleways, steps and paths fade in at tile zoom 15; named service
 roads follow at zoom 16. These labels follow the way geometry, use a smaller type
 size than ordinary street names, and have lower collision priority. Unnamed ways

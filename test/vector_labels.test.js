@@ -90,7 +90,7 @@ test('updates names on the existing map and restores local names without nesting
   expect(map.addSource).not.toHaveBeenCalled();
 });
 
-test.each(['poi-destination-civic', 'poi-destination-camping'])('localizes new landmark names on initial load and live updates: %s', id => {
+test.each(['poi-destination-civic', 'poi-destination-camping', 'poi-destination-viewpoint'])('localizes new landmark names on initial load and live updates: %s', id => {
   const properties = { name: 'Lokaler Name', name_en: 'English name', name_fr: 'Nom français', name_it: '' };
   const field = language => localizeStyle(original, language).layers.find(layer => layer.id === id).layout['text-field'];
   const evaluate = field => createExpression(field, 'layers[0].layout.text-field').value.evaluate({ zoom: 17 }, { properties });

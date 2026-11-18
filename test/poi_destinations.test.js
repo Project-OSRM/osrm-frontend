@@ -36,7 +36,8 @@ test.each([
   ['amenity', 'embassy', 'poi-destination-civic'],
   ['office', 'diplomatic', 'poi-destination-civic'],
   ['historic', 'castle', 'poi-destination-historic'],
-  ['historic', 'fort', 'poi-destination-historic']
+  ['historic', 'fort', 'poi-destination-historic'],
+  ['tourism', 'viewpoint', 'poi-destination-viewpoint']
 ])('labels %s=%s once with a resolvable icon', (field, kind, id) => {
   const properties = { [field]: kind, name: 'Destination' };
   const layers = style.layers.filter(layer => layer['source-layer'] === 'pois' && matches(layer, properties));
@@ -137,6 +138,56 @@ test('keeps historic destinations readable in both palettes and out of the Satel
   expect(validateStyleMin(overlay)).toEqual([]);
   expect(overlay.sources).toEqual(style.sources);
   expect(overlay.layers.find(layer => layer.id === original.id).layout.visibility).toBe('none');
+});
+
+test.each([
+  { tourism: 'viewpoint' },
+  { tourism: 'viewpoint', man_made: 'tower', 'tower:type': 'observation' }
+])('uses one viewpoint symbol, including observation towers: %j', properties => {
+  const layers = style.layers.filter(layer => layer['source-layer'] === 'pois' && matches(layer, properties));
+  expect(layers.map(layer => layer.id)).toEqual(['poi-destination-viewpoint']);
+  const layer = layers[0];
+  expect(layer.minzoom).toBe(14);
+  expect(layer.layout['icon-image']).toBe('basics:icon-viewpoint');
+  expect(sprites['icon-viewpoint'].sdf).toBe(true);
+  expect(layer.layout['text-size']).toBe(11);
+  expect(layer.paint['text-color']).toBe('#4f7751');
+  expect(layer.layout['text-ignore-placement']).not.toBe(true);
+  const dark = theme.transformStyle(null, style).layers.find(candidate => candidate.id === layer.id);
+  expect(evaluate(dark.paint['text-color'], properties)).toBe('#a0c59b');
+  expect(evaluate(dark.paint['icon-color'], properties)).toBe('#a0c59b');
+  for (const id of ['label-street-primary', 'label-place-city', 'label-place-hamlet']) {
+    expect(style.layers.indexOf(layer)).toBeLessThan(style.layers.findIndex(candidate => candidate.id === id));
+  }
+});
+
+test('keeps ordinary towers and other tourism symbols without promoting them to viewpoints', () => {
+  const viewpoint = style.layers.find(layer => layer.id === 'poi-destination-viewpoint');
+  const manMade = style.layers.find(layer => layer.id === 'poi-man_made');
+  const tourism = style.layers.find(layer => layer.id === 'poi-tourism');
+  for (const properties of [{ man_made: 'tower' }, { man_made: 'lighthouse' }, { man_made: 'windmill' }]) {
+    expect(matches(manMade, properties)).toBe(true);
+    expect(matches(viewpoint, properties)).toBe(false);
+  }
+  for (const kind of ['zoo', 'picnic_site', 'information']) {
+    expect(matches(tourism, { tourism: kind })).toBe(true);
+    expect(matches(viewpoint, { tourism: kind })).toBe(false);
+  }
+  const overlay = satellite.transformStyle(style);
+  expect(validateStyleMin(overlay)).toEqual([]);
+  expect(overlay.sources).toEqual(style.sources);
+  expect(overlay.layers.find(layer => layer.id === viewpoint.id).layout.visibility).toBe('none');
+});
+
+test('uses the tile-provided Spanish viewpoint name and falls back to local names when unavailable', () => {
+  const id = 'poi-destination-viewpoint';
+  const properties = { name: 'Domturm', name_de: 'Domturm', name_es: 'catedral de san bartolome', tourism: 'viewpoint' };
+  const spanish = localizeStyle(style, 'es').layers.find(layer => layer.id === id);
+  expect(evaluate(spanish.layout['text-field'], properties)).toBe('catedral de san bartolome');
+  const french = localizeStyle(style, 'fr').layers.find(layer => layer.id === id);
+  expect(evaluate(french.layout['text-field'], properties)).toBe('Domturm');
+  expect(evaluate(spanish.layout['text-field'], { ...properties, name_es: '' })).toBe('Domturm');
+  expect(evaluate(spanish.layout['text-field'], { tourism: 'viewpoint' })).toBe('');
 });
 
 test('shares one first-request resolver for road plates, exits, and local POI symbols', async () => {
