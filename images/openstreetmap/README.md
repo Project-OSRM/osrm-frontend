@@ -20,6 +20,12 @@ switches keep the existing map visible.
 Water polygons classified as `canal` use the same fill as reservoirs, basins and
 docks. Canals classified as ordinary `water` retain their existing appearance.
 
+Covered waterway sections use thin, translucent blue dashes that fade in between
+style zooms 14 and 14.5. This keeps culverts and covered passages traceable across
+roads and buildings while distinguishing them from open water. Only water lines
+explicitly marked `tunnel: true` receive these dashes, with no additional labels.
+The Satellite street overlay continues to omit water geometry.
+
 Map labels follow the selected UI language when the tiles provide a `name_xx`
 translation. A regional or script-specific name takes priority over the base
 language, followed by the local `name`. Empty translations also fall back.
