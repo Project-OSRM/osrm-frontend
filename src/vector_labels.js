@@ -51,4 +51,32 @@ function applyLanguage(map, original, language) {
   });
 }
 
-module.exports = { localizedTextField: localizedTextField, localizeStyle: localizeStyle, applyLanguage: applyLanguage };
+function configureRenderer(renderer, currentStyle) {
+  var language = 'en';
+  var updatePending = false;
+  renderer.setLanguage = function(nextLanguage) {
+    nextLanguage = nextLanguage || 'en';
+    if (language === nextLanguage) return;
+    language = nextLanguage;
+    var map = renderer.getMaplibreMap();
+    var style = currentStyle();
+    if (!map || !style) return;
+    function apply() {
+      updatePending = false;
+      var latestStyle = currentStyle();
+      if (renderer.getMaplibreMap() === map && latestStyle) applyLanguage(map, latestStyle, language);
+    }
+    // Names can change as soon as the style layers exist, even while tiles are
+    // loading. The map's initial "load" event does not repeat after a pan.
+    if (map.isStyleLoaded() || style.layers.length && map.getLayer && map.getLayer(style.layers[0].id)) apply();
+    else if (!updatePending) {
+      updatePending = true;
+      map.once('style.load', apply);
+    }
+  };
+  return function() {
+    return language;
+  };
+}
+
+module.exports = { localizedTextField: localizedTextField, localizeStyle: localizeStyle, applyLanguage: applyLanguage, configureRenderer: configureRenderer };

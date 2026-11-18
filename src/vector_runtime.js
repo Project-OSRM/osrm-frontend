@@ -17,8 +17,7 @@ export function createLayer(style, theme) {
   var original;
   var currentTheme = theme;
   var renderedTheme = theme;
-  var currentLanguage = 'en';
-  var languageUpdatePending = false;
+  var getLanguage;
   var themeUpdatePending = false;
   var renderer = new BackgroundRenderer({
     style: style,
@@ -28,8 +27,11 @@ export function createLayer(style, theme) {
       original = vectorPalette.vectorStyle(resolveStyleAssets(next, styleUrl));
       renderedTheme = currentTheme;
       var themed = vectorPalette.styleForTheme(original, currentTheme);
-      return vectorLabels.localizeStyle(themed, currentLanguage);
+      return vectorLabels.localizeStyle(themed, getLanguage());
     }
+  });
+  getLanguage = vectorLabels.configureRenderer(renderer, function() {
+    return original;
   });
   var isBackgroundLoading = vectorPalette.configureLoadingBackground(renderer, function() {
     return original && vectorPalette.styleForTheme(original, currentTheme);
@@ -43,22 +45,6 @@ export function createLayer(style, theme) {
     updateLayerOrder();
     vectorImages.registerVectorImages(renderer.getMaplibreMap());
   });
-  renderer.setLanguage = function(nextLanguage) {
-    nextLanguage = nextLanguage || 'en';
-    if (currentLanguage === nextLanguage) return;
-    currentLanguage = nextLanguage;
-    var map = renderer.getMaplibreMap();
-    if (!original || !map) return;
-    function apply() {
-      languageUpdatePending = false;
-      if (renderer.getMaplibreMap() === map) vectorLabels.applyLanguage(map, original, currentLanguage);
-    }
-    if (map.isStyleLoaded()) apply();
-    else if (!languageUpdatePending) {
-      languageUpdatePending = true;
-      map.once('load', apply);
-    }
-  };
   renderer.setTheme = function(nextTheme) {
     if (currentTheme === nextTheme) return;
     currentTheme = nextTheme;

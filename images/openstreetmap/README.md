@@ -26,6 +26,8 @@ language, followed by the local `name`. Empty translations also fall back.
 Language changes update name text on the existing renderer; palette switches
 preserve that language. Road references and house numbers retain their own
 fields. Translations come from the vector tiles, without a translation service.
+Live language changes apply once style layers exist, including while new tiles
+are loading. Early changes wait for the style and use the latest selection.
 
 Satellite enables a Street overlay by default, with translucent roads, pedestrian
 areas, street and place names, reference shields and exit badges. Other ground
