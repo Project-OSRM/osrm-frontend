@@ -132,6 +132,11 @@ function transformStyle(previousStyle, style) {
         paint['icon-color'] = paint['text-color'];
         paint['text-halo-color'] = '#263441';
         paint['text-halo-blur'] = 0;
+      } else if (layer.id === 'poi-destination-education') {
+        paint['text-color'] = '#e3d2b9';
+        paint['icon-color'] = paint['text-color'];
+        paint['text-halo-color'] = '#332d29';
+        paint['text-halo-blur'] = 0;
       }
     }
     if (layer.type === 'hillshade') {

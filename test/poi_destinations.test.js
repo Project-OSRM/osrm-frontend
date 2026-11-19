@@ -61,7 +61,7 @@ test('retains generic amenities while keeping destination detail at street zooms
   for (const layer of selected) {
     expect(matches(layer, { amenity: 'bench' })).toBe(false);
     expect(evaluate(layer.paint['text-opacity'], {}, layer.minzoom)).toBe(0);
-    expect(evaluate(layer.paint['text-opacity'], {}, layer.minzoom + 0.4)).toBe(1);
+    expect(evaluate(layer.paint['text-opacity'], {}, layer.minzoom + 1)).toBe(1);
     expect(layer.layout['text-allow-overlap']).not.toBe(true);
     expect(layer.layout['text-optional']).toBe(true);
   }
@@ -156,6 +156,56 @@ test('keeps cultural names as legible close-zoom detail in both palettes', () =>
   const overlay = satellite.transformStyle(style);
   expect(validateStyleMin(overlay)).toEqual([]);
   expect(overlay.layers.find(layer => layer.id === id).layout.visibility).toBe('none');
+});
+
+test.each([
+  ['school', 'Ponderosa Elementary School', 'icon-school', 'basics:icon-school'],
+  ['college', 'Volkshochschule Frankfurt am Main', 'icon-college', 'basics:icon-college'],
+  ['university', 'University', 'icon-college', '']
+])('shows the name and symbol for %s without duplicating the existing amenity icon', (amenity, name, sprite, genericIcon) => {
+  const id = 'poi-destination-education';
+  const properties = { amenity, name };
+  const matching = style.layers.filter(layer => layer['source-layer'] === 'pois' && matches(layer, properties));
+  expect(matching.map(layer => layer.id)).toEqual([id]);
+  const layer = matching[0];
+  const generic = style.layers.find(candidate => candidate.id === 'poi-amenity');
+  expect(evaluate(layer.layout['text-field'], properties)).toBe(name);
+  expect(evaluate(layer.layout['icon-image'], properties)).toBe('basics:' + sprite);
+  expect(sprites[sprite].sdf).toBe(true);
+  for (const unnamed of [{ amenity }, { amenity, name: '' }]) {
+    expect(matches(layer, unnamed)).toBe(false);
+    expect(matches(generic, unnamed)).toBe(true);
+    expect(evaluate(generic.layout['icon-image'], unnamed)).toBe(genericIcon);
+  }
+  expect(matches(layer, { ...properties, office: 'diplomatic' })).toBe(false);
+});
+
+test('keeps education icons visible before their names fade in at close zooms', () => {
+  const id = 'poi-destination-education';
+  const layer = style.layers.find(candidate => candidate.id === id);
+  expect(layer.minzoom).toBe(16);
+  expect(evaluate(layer.paint['icon-opacity'], {}, 16)).toBe(0);
+  expect(evaluate(layer.paint['icon-opacity'], {}, 16.25)).toBeCloseTo(0.1);
+  expect(evaluate(layer.paint['icon-opacity'], {}, 16.5)).toBe(0.2);
+  expect(evaluate(layer.paint['icon-opacity'], {}, 16.9)).toBe(1);
+  expect(evaluate(layer.paint['text-opacity'], {}, 16.5)).toBe(0);
+  expect(evaluate(layer.paint['text-opacity'], {}, 16.7)).toBeCloseTo(0.5);
+  expect(evaluate(layer.paint['text-opacity'], {}, 16.9)).toBe(1);
+  expect(layer.layout['text-ignore-placement']).not.toBe(true);
+  expect(matches(layer, { amenity: 'kindergarten', name: 'Kindergarten' })).toBe(false);
+  expect(matches(layer, { amenity: 'library', name: 'Library' })).toBe(false);
+  for (const other of ['poi-destination-culture', 'poi-destination-civic', 'label-street-primary', 'label-place-neighbourhood']) {
+    expect(style.layers.indexOf(layer)).toBeLessThan(style.layers.findIndex(candidate => candidate.id === other));
+  }
+  expect(layer.paint['text-color']).toBe('#5d4d3b');
+  const dark = theme.transformStyle(null, style).layers.find(candidate => candidate.id === id);
+  expect(dark.paint).toMatchObject({
+    'text-color': '#e3d2b9', 'icon-color': '#e3d2b9',
+    'text-halo-color': '#332d29', 'text-halo-width': 1, 'text-halo-blur': 0
+  });
+  const overlay = satellite.transformStyle(style);
+  expect(validateStyleMin(overlay)).toEqual([]);
+  expect(overlay.layers.find(candidate => candidate.id === id).layout.visibility).toBe('none');
 });
 
 test('labels castles and forts without promoting every historic feature into a named destination', () => {

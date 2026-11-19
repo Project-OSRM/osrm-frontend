@@ -128,6 +128,13 @@ selected language where available and give street, settlement and civic labels
 priority. Unnamed venues keep their generic icons. These POIs are hidden on the
 Satellite street overlay.
 
+Named schools, colleges and universities use school or tertiary education icons.
+The icons appear from style zoom 16 and the names fade in between 16.5 and 16.9
+with warm accents in both palettes. Names follow the selected language where
+available. Street, place and civic labels retain priority. Unnamed schools and
+colleges keep their generic icons. These POIs are hidden on the Satellite
+street overlay.
+
 Castles and forts show compact names beside the bundled castle symbol, fading
 in between style zooms 15 and 15.4. Names follow the selected language and yield
 to symbols, street names and settlement names when space is tight. Other historic
