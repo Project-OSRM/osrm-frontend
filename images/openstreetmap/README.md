@@ -115,11 +115,12 @@ names fading in alongside the icons between style zooms 14 and 14.4. They use
 subtle green accents in both palettes and ordinary collision handling; names
 may yield to icons in dense areas. Unnamed sites retain the category symbol.
 
-Courthouses, embassies and diplomatic offices use the bundled civic-building and
-flag symbols, with neutral blue-grey names. Icons and names fade in between
-style zooms 15 and 15.4. Street and place labels retain priority, and names may
-yield to symbols in crowded areas. Features tagged as both an embassy and a
-diplomatic office get one civic symbol rather than two overlapping icons.
+Town halls, libraries, courthouses, embassies and diplomatic offices use bundled
+civic-building, book and flag symbols with neutral blue-grey names. Icons and
+names fade in between style zooms 15 and 15.4. Names follow the selected language
+where translations are available. Street and place labels retain priority and
+unnamed facilities keep their symbols. Features with a diplomatic tag use one
+flag symbol. These POIs are hidden on the Satellite street overlay.
 
 Castles and forts show compact names beside the bundled castle symbol, fading
 in between style zooms 15 and 15.4. Names follow the selected language and yield

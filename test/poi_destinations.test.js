@@ -34,6 +34,8 @@ test.each([
   ['tourism', 'caravan_site', 'poi-destination-camping'],
   ['amenity', 'courthouse', 'poi-destination-civic'],
   ['amenity', 'embassy', 'poi-destination-civic'],
+  ['amenity', 'townhall', 'poi-destination-civic'],
+  ['amenity', 'library', 'poi-destination-civic'],
   ['office', 'diplomatic', 'poi-destination-civic'],
   ['historic', 'castle', 'poi-destination-historic'],
   ['historic', 'fort', 'poi-destination-historic'],
@@ -81,21 +83,34 @@ test.each(['camp_site', 'caravan_site'])('uses a green camping accent for %s wit
 
 test.each([
   [{ amenity: 'courthouse' }, 'basics:icon-town_hall'],
+  [{ amenity: 'townhall' }, 'basics:icon-town_hall'],
+  [{ amenity: 'library' }, 'basics:icon-library'],
   [{ amenity: 'embassy' }, 'basics:icon-embassy'],
   [{ office: 'diplomatic' }, 'basics:icon-embassy'],
-  [{ amenity: 'embassy', office: 'diplomatic' }, 'basics:icon-embassy']
+  [{ amenity: 'embassy', office: 'diplomatic' }, 'basics:icon-embassy'],
+  [{ amenity: 'library', office: 'diplomatic' }, 'basics:icon-embassy']
 ])('uses one civic symbol with neutral colors for %j', (properties, icon) => {
   const layers = style.layers.filter(layer => layer['source-layer'] === 'pois' && matches(layer, properties));
   expect(layers.map(layer => layer.id)).toEqual(['poi-destination-civic']);
   const layer = layers[0];
   expect(layer.minzoom).toBe(15);
   expect(evaluate(layer.layout['icon-image'], properties)).toBe(icon);
-  expect(sprites[icon.slice(7)]).toBeTruthy();
+  expect(sprites[icon.slice(7)].sdf).toBe(true);
   expect(layer.paint['text-color']).toBe('#5a6874');
   const dark = theme.transformStyle(null, style).layers.find(candidate => candidate.id === layer.id);
   expect(evaluate(dark.paint['text-color'], properties)).toBe('#a8bacb');
   expect(evaluate(dark.paint['icon-color'], properties)).toBe('#a8bacb');
   expect(style.layers.indexOf(layer)).toBeLessThan(style.layers.findIndex(candidate => candidate.id === 'label-street-primary'));
+});
+
+test('uses translated civic names with local fallback and hides them in the Satellite street overlay', () => {
+  const id = 'poi-destination-civic';
+  const townHall = { amenity: 'townhall', name: 'Römer', name_zh: '老市政厅' };
+  const library = { amenity: 'library', name: 'Gemeinde Bibliothek' };
+  const chinese = localizeStyle(style, 'zh-Hans').layers.find(layer => layer.id === id);
+  expect(evaluate(chinese.layout['text-field'], townHall)).toBe('老市政厅');
+  expect(evaluate(chinese.layout['text-field'], library)).toBe('Gemeinde Bibliothek');
+  expect(satellite.transformStyle(style).layers.find(layer => layer.id === id).layout.visibility).toBe('none');
 });
 
 test('labels castles and forts without promoting every historic feature into a named destination', () => {
