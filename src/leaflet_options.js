@@ -5,6 +5,7 @@ var L = require('leaflet');
 // Load runtime configuration (from window.osrmConfig set by index.html)
 // In Node/test environments, window won't exist, so use empty config
 var config = (typeof window !== 'undefined' ? window.osrmConfig : null) || {};
+var dockerDeployment = config.OSRM_ENVIRONMENT === 'docker';
 
 // The label the coordinates-only geocoder carries. Named here because both the
 // parser and the deployment's own OSRM_GEOCODERS entries can produce it.
@@ -20,7 +21,19 @@ var osmAttribution = '© <a href="https://www.openstreetmap.org/copyright">OpenS
 
 var osmVectorStyle = 'images/openstreetmap/style.json';
 
-var outdoors = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+function createStreetsLayer() {
+  var url = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+  var key = config.OSRM_CARTO_KEY;
+  if (typeof key === 'string' && key.trim()) url += '?key=' + encodeURIComponent(key.trim());
+  return L.tileLayer(url, {
+    attribution: osmAttribution + ' © <a href="https://carto.com/attribution">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19
+  });
+}
+
+var streets = dockerDeployment ? createStreetsLayer() : null,
+  outdoors = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
     attribution: osmAttribution + ', <a href="https://opentopomap.org/">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
     maxZoom: 17
   }),
@@ -36,7 +49,9 @@ var outdoors = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
     minZoom: 1,
     maxZoom: 22
   }),
-  osm = osmBackgrounds.streets,
+  osm = dockerDeployment
+    ? L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: osmAttribution })
+    : osmBackgrounds.streets,
   osm_de = L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
     attribution: osmAttribution
   }),
@@ -451,14 +466,16 @@ function getLanguage() {
  * Returns the configured value; when unset it falls back to `'vector'` if
  * `OSRM_VECTOR_STYLE` supplied a custom vector background, otherwise `'custom'` if
  * `OSRM_TILE_URL` supplied one — a deployment that names its own tile server
- * usually cannot reach the public providers either — and to `'osm'`
- * (OpenStreetMap vector, including the built-in shared style) otherwise. Key validation (and fallback for unrecognized
- * values) happens at the call site via `layerMap[getDefaultLayer()] || vector || osm`.
+ * usually cannot reach the public providers either. The built-in defaults
+ * are CARTO Streets for Docker and OpenStreetMap vector for the demo.
  *
- * @returns {string} The default layer key (default `'osm'`).
+ * @returns {string} The default layer key.
  */
 function getDefaultLayer() {
-  return config.OSRM_DEFAULT_LAYER || (vector && config.OSRM_VECTOR_STYLE.trim() !== osmVectorStyle ? 'vector' : (custom ? 'custom' : 'osm'));
+  if (config.OSRM_DEFAULT_LAYER) return config.OSRM_DEFAULT_LAYER;
+  if (vector && (dockerDeployment || config.OSRM_VECTOR_STYLE.trim() !== osmVectorStyle)) return 'vector';
+  if (custom) return 'custom';
+  return dockerDeployment ? 'streets' : 'osm';
 }
 
 /**
@@ -469,7 +486,7 @@ function getDefaultLayer() {
  * @type {Object<string, L.TileLayer>}
  */
 var layerMap = {
-  streets: vector || osm,
+  streets: streets || vector || osm,
   outdoors: outdoors,
   satellite: satellite,
   osm: osm,
@@ -490,15 +507,30 @@ if (vector) {
  *
  * @type {Object<string, L.TileLayer>}
  */
-var baseLayers = {};
-baseLayers.OpenStreetMap = osm;
+var baseLayers = dockerDeployment ? {
+  'Streets': streets,
+  'Outdoors': outdoors,
+  'Satellite': satellite,
+  'openstreetmap.org': osm,
+  'openstreetmap.de': osm_de
+} : { OpenStreetMap: osm };
 if (vector) baseLayers[vectorName] = vector;
-baseLayers['OpenStreetMap.de'] = osm_de;
-baseLayers.Satellite = satellite;
-baseLayers.Outdoors = outdoors;
+if (!dockerDeployment) {
+  baseLayers['OpenStreetMap.de'] = osm_de;
+  baseLayers.Satellite = satellite;
+  baseLayers.Outdoors = outdoors;
+}
 if (custom) baseLayers[customName] = custom;
 
-var defaultLayer = layerMap[getDefaultLayer()] || vector || osm;
+var defaultLayer = layerMap[getDefaultLayer()] || streets || vector || osm;
+
+var overlays = {};
+if (!dockerDeployment || vectorBackgrounds === osmBackgrounds) {
+  overlays['Street overlay'] = osmBackgrounds.satelliteStreets;
+}
+overlays.Hiking = hiking;
+overlays.Bike = bike;
+overlays['Small Components'] = small_components;
 
 /**
  * The geocoding endpoints the deployment offers, from `OSRM_GEOCODERS`.
@@ -675,7 +707,8 @@ var leafletOptions = {
    * **Default base layers:**
    * - **Outdoors** — OpenTopoMap (max zoom 17)
    * - **Satellite** — ESRI World Imagery (max zoom 19)
-   * - **OpenStreetMap** — OpenStreetMap Shortbread vector layer
+   * - **OpenStreetMap** — OpenStreetMap Shortbread vector layer in the demo
+   * - **Streets** and **openstreetmap.org** — classic raster layers in Docker
    * - **OpenStreetMap.de** — German OSM tile layer
    * - **Custom** — only present when `OSRM_TILE_URL` names a tile server
    *   (labelled by `OSRM_TILE_NAME`)
@@ -713,12 +746,7 @@ var leafletOptions = {
    *
    * @type {Object<string, L.TileLayer>}
    */
-  overlay: {
-    'Street overlay': osmBackgrounds.satelliteStreets,
-    'Hiking': hiking,
-    'Bike': bike,
-    'Small Components': small_components
-  },
+  overlay: overlays,
   /**
    * Geocoding (address search) endpoint configuration.
    *

@@ -23,7 +23,33 @@ test('adds a named vector base layer and makes it the default', () => {
   expect(options.defaultState.layer.options.attribution).toBe('Local provider');
 });
 
-test('preserves explicit raster defaults and all built-in background choices', () => {
+test.each([undefined, 'streets'])('keeps the classic CARTO layer as the Docker default (%s)', layerKey => {
+  const options = load({ OSRM_ENVIRONMENT: 'docker', OSRM_DEFAULT_LAYER: layerKey, OSRM_CARTO_KEY: ' sample+key ' });
+  const layers = options.layer[0];
+  expect(options.defaultState.layer).toBe(layers.Streets);
+  expect(layers.Streets.url).toBe('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=sample%2Bkey');
+  expect(layers.Streets.options.attribution).toContain('CARTO');
+  expect(Object.keys(layers)).toEqual(['Streets', 'Outdoors', 'Satellite', 'openstreetmap.org', 'openstreetmap.de']);
+  expect(options.vectorTheme).toBe('original');
+  expect(options.overlay['Street overlay']).toBeUndefined();
+});
+
+test('preserves the Docker raster OSM key and honors an explicit vector style', () => {
+  const raster = load({ OSRM_ENVIRONMENT: 'docker', OSRM_DEFAULT_LAYER: 'osm' });
+  expect(raster.defaultState.layer).toBe(raster.layer[0]['openstreetmap.org']);
+  expect(raster.defaultState.layer.url).toBe('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
+
+  const vector = load({
+    OSRM_ENVIRONMENT: 'docker',
+    OSRM_VECTOR_STYLE: 'images/openstreetmap/style.json',
+    OSRM_DEFAULT_LAYER: 'vector'
+  });
+  expect(vector.defaultState.layer).toBe(vector.layer[0]['Dark Vector']);
+  expect(vector.defaultState.layer.style).toBe('images/openstreetmap/style.json');
+  expect(vector.overlay['Street overlay']).toBeDefined();
+});
+
+test('honors the chosen OpenStreetMap default alongside a custom vector style', () => {
   const options = load({ OSRM_VECTOR_STYLE: 'https://tiles.example/style.json', OSRM_DEFAULT_LAYER: 'osm' });
   expect(options.layer[0]['Dark Vector']).toBeDefined();
   expect(options.defaultState.layer).toBe(options.layer[0]['OpenStreetMap']);

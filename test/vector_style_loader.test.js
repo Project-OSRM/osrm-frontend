@@ -88,6 +88,33 @@ test('falls back to a normal sprite request if an early download fails', async (
   expect(window.fetch.mock.calls.map(([url]) => url)).toEqual([json, png]);
 });
 
+test('starts Docker with raster defaults when runtime config is unavailable', async () => {
+  const environment = html.querySelector('meta[name="osrm-environment"]').cloneNode();
+  environment.content = 'docker';
+  document.head.appendChild(environment);
+  const warning = jest.spyOn(console, 'warn').mockImplementation();
+  try {
+    runSpriteBootstrap(2);
+    expect(window.fetch).not.toHaveBeenCalled();
+    window.fetch.mockResolvedValueOnce({ ok: false, status: 404 });
+    const configScript = html.querySelector('body script').textContent;
+    new Function('window', 'document', 'fetch', configScript)(window, document, window.fetch);
+    for (let i = 0; i < 5; i++) await Promise.resolve();
+    expect(window.fetch.mock.calls).toEqual([['config.json']]);
+    expect(window.osrmConfig).toMatchObject({
+      OSRM_ENVIRONMENT: 'docker',
+      OSRM_DEFAULT_LAYER: 'streets',
+      OSRM_VECTOR_STYLE: undefined
+    });
+    expect(document.querySelector('script[src="bundle.js"]')).not.toBeNull();
+  } finally {
+    warning.mockRestore();
+    delete window.osrmConfig;
+    document.querySelector('script[src="bundle.js"]')?.remove();
+    environment.remove();
+  }
+});
+
 test('retries a failed style response', async () => {
   window.fetch.mockResolvedValueOnce({ ok: false, status: 503 });
   await expect(loader.loadBundledStyle(styleUrl)).rejects.toThrow('HTTP 503');

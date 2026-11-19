@@ -117,8 +117,8 @@ OpenStreetMap and Dark Vector share one renderer and tile cache: switching betwe
 them changes the palette without reloading tiles. Switching to another provider
 hides and pauses the vector renderer, retaining its loaded tiles for the return
 trip. The cache lasts for the current page session. Dark Vector uses the dark palette;
-OpenStreetMap uses the original light style. Docker deployments can configure
-their own source using `OSRM_VECTOR_STYLE`.
+OpenStreetMap uses the original light style. Docker defaults to the classic
+CARTO Streets raster layer. Set `OSRM_VECTOR_STYLE` to opt in to a vector source.
 
 Set `OSRM_VECTOR_STYLE` to an HTTP(S) or root-relative MapLibre style JSON URL,
 or `images/openstreetmap/style.json` for the built-in shared OSM backgrounds.
@@ -289,7 +289,11 @@ shown as radio buttons in the map's layer control (bottom-left corner).
 | Outdoors | [OpenTopoMap](https://www.opentopomap.org/) | 17 |
 
 **Changing the default layer for Docker deployments:**
-Set `OSRM_DEFAULT_LAYER` to one of: `osm` (demo default), `dark_vector`, `standard` (legacy alias), `outdoors`, `satellite`, `osm_de`. The legacy `streets` key selects Dark Vector when configured, otherwise OpenStreetMap.
+Docker uses CARTO Voyager for `streets` and OpenStreetMap raster tiles for `osm`.
+Set `OSRM_CARTO_KEY` to your deployment's CARTO key for Streets. Set
+`OSRM_DEFAULT_LAYER` to `osm`, `outdoors`, `satellite`, or `osm_de` to select
+another raster layer. With `OSRM_VECTOR_STYLE` configured, the vector style
+becomes the default and is also available as `vector`, `dark_vector`, or `standard`.
 ```bash
 docker run -p 9966:9966 -e OSRM_DEFAULT_LAYER=satellite ghcr.io/project-osrm/osrm-frontend:latest
 ```

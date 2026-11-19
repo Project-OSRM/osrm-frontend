@@ -66,3 +66,11 @@ test('keeps old Standard and Vector links pointing to Dark Vector', () => {
   expect(layerUtils.resolveLayerByName(layers, 'osm.de')).toBe(german);
   expect(layerUtils.resolveLayerByName(layers, 'unknown')).toBeUndefined();
 });
+
+test('resolves shared map layer names to raster layers in Docker', () => {
+  const layers = { Streets: {}, 'openstreetmap.org': {}, 'openstreetmap.de': {}, 'Dark Vector': {} };
+  expect(layerUtils.resolveLayerByName(layers, 'streets')).toBe(layers.Streets);
+  expect(layerUtils.resolveLayerByName(layers, 'OpenStreetMap')).toBe(layers['openstreetmap.org']);
+  expect(layerUtils.resolveLayerByName(layers, 'osm.org')).toBe(layers['openstreetmap.org']);
+  expect(layerUtils.resolveLayerByName(layers, 'osm.de')).toBe(layers['openstreetmap.de']);
+});
