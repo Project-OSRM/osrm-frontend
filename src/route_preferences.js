@@ -15,18 +15,19 @@ function normalize(preferences) {
   preferences = preferences || {};
   return {
     exclude: normalizeExclude(preferences.exclude),
-    allowUTurns: preferences.allowUTurns === true
+    allowUTurns: preferences.allowUTurns === null ? null : preferences.allowUTurns === true
   };
 }
 
 function applyToRouter(router, preferences) {
   var values = normalize(preferences);
-  var parameters = Object.assign({}, router.options.requestParameters, {
-    continue_straight: !values.allowUTurns
-  });
+  var parameters = Object.assign({}, router.options.requestParameters);
+  if (values.allowUTurns === null) delete parameters.continue_straight;
+  else parameters.continue_straight = !values.allowUTurns;
   if (values.exclude) parameters.exclude = values.exclude;
   else delete parameters.exclude;
-  router.options.requestParameters = parameters;
+  // An empty object makes Leaflet Routing Machine append a bare "&".
+  router.options.requestParameters = Object.keys(parameters).length ? parameters : undefined;
 }
 
 function createControl(localization, initial, onChange) {
@@ -45,14 +46,17 @@ function createControl(localization, initial, onChange) {
   var uturnText = L.DomUtil.create('span', '', uturnLabel);
   L.DomEvent.disableClickPropagation(container);
 
+  var allowUTurns;
   function set(preferences) {
     var values = normalize(preferences);
     excludeInput.value = values.exclude;
-    uturnInput.checked = values.allowUTurns;
+    allowUTurns = values.allowUTurns;
+    uturnInput.checked = allowUTurns === true;
   }
 
-  function notifyChange() {
-    var values = normalize({ exclude: excludeInput.value, allowUTurns: uturnInput.checked });
+  function notifyChange(event) {
+    if (event.target === uturnInput) allowUTurns = uturnInput.checked;
+    var values = normalize({ exclude: excludeInput.value, allowUTurns: allowUTurns });
     set(values);
     onChange(values);
   }

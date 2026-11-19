@@ -199,6 +199,8 @@
 .osrm-theme-dark .leaflet-routing-geocoder-selected,
 .osrm-theme-dark .leaflet-routing-geocoder-result tr:hover { background: #454545; }
 .osrm-theme-dark :focus-visible { outline: 2px solid #8bbaff; outline-offset: 3px; }
+.osrm-theme-dark .osrm-edition-switch { background: #303030; }
+.osrm-theme-dark .osrm-edition-switch:hover { background: #444; }
 .osrm-theme-dark * { scrollbar-width: thin; scrollbar-color: #4c6872 transparent; }
 .osrm-theme-dark .leaflet-popup-content-wrapper,
 .osrm-theme-dark .leaflet-popup-tip { background: #303030; color: #e1edf1; }
@@ -215,6 +217,7 @@
   .osrm-theme-dark { --osrm-sidebar-width: 320px; }
 }
 @media (max-width: 900px) {
+  .osrm-theme-dark .osrm-edition-switch { max-width: calc(100% - 2 * (var(--osrm-map-control-size) + 24px)); }
   .osrm-theme-dark .map { left: 0; width: 100%; height: 100%; bottom: 0; }
   .osrm-theme-dark .leaflet-routing-container.dark { inset: auto 0 0; width: 100%; height: var(--osrm-sheet-height, 60dvh); max-height: 90dvh; padding: 14px 16px max(12px, env(safe-area-inset-bottom)); border: 0; border-top: 1px solid #505050; border-radius: 22px 22px 0 0; transition: none; }
   .osrm-theme-dark .leaflet-routing-container.dark.osrm-panel-resizing { transition: height 180ms cubic-bezier(0.2, 0.8, 0.2, 1); }
@@ -245,6 +248,10 @@
   .osrm-theme-dark .leaflet-routing-container.dark.leaflet-routing-container-hide { inset: auto auto max(12px, env(safe-area-inset-bottom)) 12px; }
 }
 @media (max-width: 900px) and (max-height: 500px) and (orientation: landscape) {
+  .osrm-theme-dark:has(.leaflet-routing-container.dark:not(.leaflet-routing-container-hide)) .osrm-edition-switch {
+    left: calc(50% + var(--osrm-sidebar-width) / 2);
+    max-width: calc(100% - var(--osrm-sidebar-width) - 2 * (var(--osrm-map-control-size) + 24px));
+  }
   .osrm-theme-dark { --osrm-sidebar-width: min(320px, 44vw); }
   .osrm-theme-dark .leaflet-routing-container.dark { inset: 0 auto 0 0; width: var(--osrm-sidebar-width); height: 100dvh; max-height: none; padding: 12px; border: 0; border-right: 1px solid #454545; border-radius: 0; }
   .osrm-theme-dark .leaflet-routing-container.dark.leaflet-routing-container-hide { inset: 12px auto auto 12px; }
@@ -270,6 +277,7 @@
 .osrm-vector-status button { float: none; flex: none; width: auto; height: auto; min-height: 32px; margin: 0; padding: 5px 10px; border: 0; border-radius: 6px; background: #2b70df; color: white; cursor: pointer; font: inherit; }
 @keyframes osrm-vector-loading { to { transform: rotate(360deg); } }
 @media (max-width: 720px) { .osrm-vector-status { top: 66px; } }
+body:has(> .osrm-edition-switch) .osrm-vector-status { top: 66px; }
 @media (prefers-reduced-motion: reduce) { .osrm-vector-status:before { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .osrm-theme-dark .leaflet-routing-container.dark.osrm-panel-resizing { transition: none; } }
 

@@ -45,6 +45,17 @@ test('round trips preferences in shared links and plain browser history state', 
   expect(urlState.parse(urlState.format(urlState.parse(encoded)))).toMatchObject({ exclude: 'motorway,toll', allowUTurns: true });
 });
 
+test('preserves the classic backend policy and fractional view on an edition handoff', () => {
+  const search = 'view=keep&center=52.5,13.4&z=14.625&u=default&loc=52.5,13.4&loc=52.6,13.5';
+  const state = urlState.parse(search);
+  expect(state).toMatchObject({ zoom: 14.625, keepView: true, allowUTurns: null });
+  expect(urlState.parse(urlState.format(state))).toEqual(state);
+  expect(urlState.parse('view=keep&z=14.625')).not.toHaveProperty('keepView');
+  const router = { options: { requestParameters: { continue_straight: true } } };
+  preferences.applyToRouter(router, state);
+  expect(router.options.requestParameters).toBeUndefined();
+});
+
 test('keeps default links unchanged and ignores malformed query values', () => {
   expect(links.format({ waypoints })).not.toMatch(/exclude=|u=/);
   expect(links.parse('exclude[]=toll&u[]=true')).not.toHaveProperty('exclude');

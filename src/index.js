@@ -37,6 +37,7 @@ L.Control.Locate = L.Control.Locate || {};
 var locate = require('leaflet.locatecontrol');
 var options = require('./lrm_options');
 var urlState = require('./url_state');
+var mapEdition = require('./map_edition');
 var leafletOptions = require('./leaflet_options');
 var interfaceTheme = require('./interface_theme');
 var darkInterface = leafletOptions.vectorTheme === 'dark';
@@ -103,6 +104,8 @@ if (parsedOptions && parsedOptions.layer) {
     // Non-string or missing -> ignore URL layer and use default
     baselayer = leafletOptions.defaultState.layer;
   }
+} else if (parsedOptions.keepView) {
+  baselayer = leafletOptions.defaultState.layer;
 } else {
   var storedLayerName = ls.get('layer');
   if (storedLayerName) {
@@ -177,6 +180,7 @@ var bikeOverlayAutoActivated = _initResult.bikeOverlayAutoActivated;
 var map = L.map('map', {
   renderer: require('./fixed_width_renderer')(),
   zoomControl: true,
+  zoomSnap: parsedOptions.keepView ? 0 : 1,
   dragging: true,
   layers: layers,
   maxZoom: 18
@@ -510,6 +514,7 @@ applyModeLayersForProfile(activeProfileIndex);
 
 var state = state(map, lrmControl, toolsControl, modeSelector, mergedOptions);
 var routeFitTracker = routeZoom.createRouteFitTracker();
+var keepInitialView = mapEdition.holdInitialView(parsedOptions.keepView, plan, lrmControl);
 var routePreferencesControl;
 
 function applyRoutePreferences(preferences) {
@@ -950,6 +955,11 @@ lrmControl.on('routeselected', function(e) {
   };
   toolsControl.setRouteGeoJSON(routeGeoJSON);
 
+  if (keepInitialView()) {
+    routeFitTracker.clearFitPending();
+    return;
+  }
+
   // Fit/pan: adjust the map view to the newly selected route
   var boundsCoordinates = routeZoom.getBoundsCoordinates(lrmControl && lrmControl._routes, route);
   if (boundsCoordinates.length === 0) {
@@ -1040,6 +1050,19 @@ var locationControl = locate.locate({
 }).addTo(map);
 
 mobileViewport.configureLocationControl(map, locationControl);
+
+var updateEditionLink = mapEdition.attach(document, window.location, function() {
+  return Object.assign({}, state.get(), {
+    center: mobileViewport.getCenter(map),
+    zoom: map.getZoom()
+  });
+}, urlState.format, 'false');
+if (updateEditionLink) {
+  map.on('moveend zoomend', updateEditionLink);
+  plan.on('waypointschanged', updateEditionLink);
+  lrmControl.on('routeselected', updateEditionLink);
+  toolsControl.on('languagechanged unitschanged', updateEditionLink);
+}
 var updateMapControlLanguage = require('./map_control_localization');
 function refreshMapControlLanguage() {
   updateMapControlLanguage(map, layersControl, locationControl, state.options.language);

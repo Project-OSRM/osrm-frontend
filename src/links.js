@@ -68,7 +68,8 @@ function formatLink(options) {
     srv: options.service,
     profile: options.profile,
     exclude: routePreferences.normalize(options).exclude || undefined,
-    u: options.allowUTurns === true ? 'true' : undefined
+    u: options.allowUTurns === true ? 'true' : options.allowUTurns === null ? 'default' : undefined,
+    view: options.keepView ? 'keep' : undefined
   }, {indices: false});
 }
 
@@ -101,6 +102,8 @@ function parseLink(link) {
     if (typeof q.exclude === 'string') parsedValues.exclude = routePreferences.normalize({ exclude: q.exclude }).exclude;
     if (q.u === 'true' || q.u === '1') parsedValues.allowUTurns = true;
     else if (q.u === 'false' || q.u === '0') parsedValues.allowUTurns = false;
+    else if (q.u === 'default') parsedValues.allowUTurns = null;
+    if (q.view === 'keep' && parsedValues.center && parsedValues.zoom !== undefined) parsedValues.keepView = true;
     parsedValues.originAddress = q.src;
     parsedValues.destinationAddress = q.dst;
   } catch (e) {

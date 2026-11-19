@@ -1319,3 +1319,36 @@ td.distance {
     margin-top: 2px;
     padding-top: 2px;
 }
+
+.osrm-edition-switch {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1100;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: calc(100% - 24px);
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: #2b4162;
+  color: #fff;
+  font: 600 14px/1.3 system-ui, sans-serif;
+  text-align: center;
+  text-decoration: none;
+}
+
+.osrm-edition-switch:hover { background: #374f73; color: #fff; }
+.osrm-edition-switch:focus-visible { outline: 2px solid #8bbaff; outline-offset: 2px; }
+
+@media (max-width: 880px) {
+  /* The classic directions pane uses the right side of a narrow screen. */
+  :root:not(.osrm-theme-dark):has(.leaflet-routing-container.dark:not(.leaflet-routing-container-hide)) .osrm-edition-switch {
+    left: 26%;
+    max-width: calc(52% - 24px);
+  }
+}
