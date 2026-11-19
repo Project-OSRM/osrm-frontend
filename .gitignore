@@ -6,6 +6,7 @@ bundle.js.LICENSE.txt
 bundle.js.map
 bundle*raw*
 dist/
+dist-demo/
 vector.js
 vector.css
 assets/

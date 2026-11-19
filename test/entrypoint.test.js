@@ -16,9 +16,7 @@ function generateConfig(envOverrides, options) {
   fs.mkdirSync(outputDir, { recursive: true });
   fs.writeFileSync(
     tempEntrypointPath,
-    fs.readFileSync(entrypointPath, 'utf8')
-      .replaceAll('/usr/share/nginx/html', outputDir)
-      .replaceAll('/etc/nginx/osrm-proxy.conf', path.join(tempDir, 'osrm-proxy.conf'))
+    fs.readFileSync(entrypointPath, 'utf8').replaceAll('/usr/share/nginx/html', outputDir)
   );
   fs.chmodSync(tempEntrypointPath, 0o755);
 
@@ -36,14 +34,6 @@ function generateConfig(envOverrides, options) {
     });
 
     const config = JSON.parse(fs.readFileSync(path.join(outputDir, 'config.json'), 'utf8'));
-
-    if (options.proxy) {
-      return {
-        config: config,
-        proxy: fs.readFileSync(path.join(tempDir, 'osrm-proxy.conf'), 'utf8'),
-        mode: fs.statSync(path.join(tempDir, 'osrm-proxy.conf')).mode & 0o777
-      };
-    }
 
     if (options.indexHtml) {
       let rewritten = null;
@@ -180,54 +170,6 @@ describe('docker entrypoint runtime config', () => {
 
     expect(config.OSRM_BACKEND).toBe('http://legacy:5000');
     expect(JSON.parse(config.OSRM_MODES)).toEqual(JSON.parse(modes));
-  });
-});
-
-describe('authenticated backend proxy (issue #316)', () => {
-  test('keeps credentials in a private nginx file and defaults to same-origin routing', () => {
-    const result = generateConfig({
-      OSRM_BACKEND: 'http://localhost:5000',
-      OSRM_PROXY_URL: 'https://private.example/routing/',
-      OSRM_PROXY_USERNAME: 'test-user',
-      OSRM_PROXY_PASSWORD: 'test-password'
-    }, { proxy: true });
-    const encoded = Buffer.from('test-user:test-password').toString('base64');
-    expect(result.proxy).toContain('proxy_pass https://private.example/routing/;');
-    expect(result.proxy).toContain('proxy_set_header Authorization "Basic ' + encoded + '";');
-    expect(result.proxy).toContain('proxy_ssl_verify on;');
-    expect(result.proxy).toContain('proxy_set_header Host $proxy_host;');
-    expect(result.proxy).toContain('location ^~ /osrm/');
-    expect(result.mode).toBe(0o600);
-    expect(JSON.stringify(result.config)).not.toMatch(/test-user|test-password|private\.example/);
-    expect(JSON.stringify(result.config)).not.toContain(encoded);
-    expect(JSON.parse(result.config.OSRM_MODES)).toEqual([{ name: 'driving', url: '/osrm', profile: 'driving' }]);
-  });
-
-  test('preserves explicitly configured modes and supports an unauthenticated proxy', () => {
-    const modes = '[{"name":"car","url":"/osrm"},{"name":"bike","url":"https://bike.example"}]';
-    const result = generateConfig({ OSRM_PROXY_URL: 'http://backend:5000', OSRM_MODES: modes }, { proxy: true });
-    expect(result.config.OSRM_MODES).toBe(modes);
-    expect(result.proxy).toContain('proxy_pass http://backend:5000/;');
-    expect(result.proxy).toContain('proxy_set_header Authorization "";');
-  });
-
-  test.each([
-    'https://user:password@backend.example',
-    'https://backend.example/?token=secret',
-    'http://backend.example;include /tmp/evil;',
-    'http://backend.example/\nmalicious',
-    'file:///etc/passwd'
-  ])('rejects unsafe proxy URL %s', (url) => {
-    expect(() => generateConfig({ OSRM_PROXY_URL: url })).toThrow();
-  });
-
-  test('rejects ambiguous Basic Auth credentials', () => {
-    expect(() => generateConfig({ OSRM_PROXY_URL: 'http://backend:5000', OSRM_PROXY_USERNAME: 'user:name' })).toThrow();
-    expect(() => generateConfig({ OSRM_PROXY_URL: 'http://backend:5000', OSRM_PROXY_PASSWORD: 'password' })).toThrow();
-  });
-
-  test('leaves no active proxy directives when disabled', () => {
-    expect(generateConfig({ OSRM_PROXY_URL: '' }, { proxy: true }).proxy).toBe('');
   });
 });
 
