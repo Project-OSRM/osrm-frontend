@@ -7,9 +7,35 @@
     <meta name='viewport' content='initial-scale=1.0 maximum-scale=1.0'>
     <link rel="preconnect" href="https://vector.openstreetmap.org" crossorigin="anonymous" />
     <link rel="preconnect" href="https://router.project-osrm.org" crossorigin="anonymous" />
-    <link rel="preload" href="images/openstreetmap/sprites@2x.json" as="fetch" crossorigin="anonymous" media="(resolution > 1dppx)" data-osrm-sprite-preload />
-    <link rel="preload" href="images/openstreetmap/sprites@2x.png" as="fetch" crossorigin="anonymous" media="(resolution > 1dppx)" data-osrm-sprite-preload />
-    <!-- maplibre-worker-preload -->
+    <script>
+      (function() {
+        if (!window.fetch) return;
+        var requests = new Map();
+        function start(styleUrl) {
+          var sprite = window.devicePixelRatio > 1 ? 'sprites@2x' : 'sprites';
+          ['.json', '.png'].forEach(function(extension) {
+            var url = new URL(sprite + extension, styleUrl).href;
+            if (requests.has(url)) return;
+            var pending = window.fetch(url).then(function(response) {
+              if (!response.ok) throw new Error('Could not load sprite ' + url);
+              return extension === '.json' ? response.json() : response.arrayBuffer();
+            }).then(function(data) {
+              return { data: data };
+            }).catch(function() {
+              // MapLibre can retry failed early requests through its normal loader.
+              requests.delete(url);
+              return null;
+            });
+            requests.set(url, pending);
+          });
+        }
+        window.osrmBundledSprites = { start: start, requests: requests };
+        // Retain the response for MapLibre so Safari does not fetch it again.
+        if (window.devicePixelRatio > 1) {
+          start(new URL('images/openstreetmap/style.json', document.baseURI).href);
+        }
+      })();
+    </script>
     <link rel="shortcut icon" href="favicon.ico" />
     <link rel='stylesheet' href="css/leaflet.css" />
     <link rel="stylesheet" href="css/fonts.css" />

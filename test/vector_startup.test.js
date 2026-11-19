@@ -11,6 +11,7 @@ test('fetches the bundled style before the renderer finishes loading and passes 
   const originalFetch = window.fetch;
   let resolveStyle;
   window.fetch = jest.fn(() => new Promise(resolve => { resolveStyle = resolve; }));
+  window.osrmBundledSprites = { start: jest.fn() };
   const events = new L.Evented();
   const renderer = new L.Layer();
   renderer.onAdd = () => {};
@@ -23,7 +24,7 @@ test('fetches the bundled style before the renderer finishes loading and passes 
     expect(script).not.toBeNull();
     expect(window.fetch).toHaveBeenCalledTimes(1);
     expect(window.fetch.mock.calls[0][0]).toMatch(/\/images\/openstreetmap\/style\.json\?v=/);
-    expect(document.querySelectorAll('link[data-osrm-sprite-preload]')).toHaveLength(2);
+    expect(window.osrmBundledSprites.start).toHaveBeenCalledWith(window.fetch.mock.calls[0][0]);
     const style = { version: 8, sources: {}, layers: [], sprite: './sprites' };
     resolveStyle({ ok: true, json: async () => style });
     for (let i = 0; i < 5; i++) await Promise.resolve();
@@ -39,6 +40,7 @@ test('fetches the bundled style before the renderer finishes loading and passes 
     container.remove();
     window.fetch = originalFetch;
     delete window.OSRMVector;
-    document.querySelectorAll('script[src*="vector.js"], link[href*="vector.css"], link[data-osrm-sprite-preload]').forEach(element => element.remove());
+    delete window.osrmBundledSprites;
+    document.querySelectorAll('script[src*="vector.js"], link[href*="vector.css"]').forEach(element => element.remove());
   }
 });

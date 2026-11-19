@@ -9,7 +9,7 @@
     "replace": "node ./scripts/replace.js",
     "clean": "rm -f bundle.raw.js",
     "compile": "vite build && vite build --config vite.vector.config.mjs && cp dist/bundle.js bundle.js && cp dist/bundle.js.map bundle.js.map && cp dist/vector.js dist/vector.css . && cp -r dist/assets .",
-    "build": "npm run clean && npm run replace && npm run compile && cp node_modules/leaflet/dist/leaflet.css css/leaflet.css && cp -r favicon.ico css fonts images i18n debug dist/",
+    "build": "npm run clean && npm run replace && npm run compile && cp node_modules/leaflet/dist/leaflet.css css/leaflet.css && cp -r index.html favicon.ico css fonts images i18n debug dist/",
     "start": "npm run build && vite preview",
     "start-prod": "npm run build && vite preview",
     "prepub": "npm run build"

@@ -1,5 +1,5 @@
 import { MaplibreGL } from '@maplibre/maplibre-gl-leaflet';
-import { setWorkerUrl } from 'maplibre-gl';
+import { addProtocol, setWorkerUrl } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import createBackgroundRenderer from './vector_renderer';
@@ -13,6 +13,7 @@ import vectorRequests from './vector_requests';
 setWorkerUrl(workerUrl);
 
 var BackgroundRenderer = createBackgroundRenderer(MaplibreGL);
+var transformRequest = vectorRequests.withBundledSprites(window.osrmBundledSprites, addProtocol);
 
 export function createLayer(style, theme) {
   var original;
@@ -23,7 +24,7 @@ export function createLayer(style, theme) {
   var renderer = new BackgroundRenderer({
     style: style,
     interactive: false,
-    transformRequest: vectorRequests.transformRequest,
+    transformRequest: transformRequest,
     transformStyle: function(previous, next) {
       var styleUrl = typeof style === 'string' ? new URL(style, document.baseURI).href : document.baseURI;
       original = vectorPalette.vectorStyle(resolveStyleAssets(next, styleUrl));
