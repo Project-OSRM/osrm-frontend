@@ -164,8 +164,9 @@ function createLayer(style, options, runtimeLoader) {
             this._removeStatus();
           }.bind(this));
           renderer.getMaplibreMap().on('error', function(event) {
-            if (this._generation !== generation || this._map !== map) return;
-            if (!loaded || this.options.overlay) failed(event.error);
+            if (this._generation !== generation || this._map !== map || !this.hasLayer(renderer)) return;
+            // MapLibre reports individual tile failures during the initial render too.
+            if (!event.tile && (!loaded || this.options.overlay)) failed(event.error);
             else this.fire('tileerror', { error: event.error });
           }.bind(this));
         } catch (error) {

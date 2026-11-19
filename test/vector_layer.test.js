@@ -145,6 +145,42 @@ test('retains the rendered map after a later tile error without switching to ras
   expect(container.querySelector('.osrm-vector-status')).toBeNull();
 });
 
+test.each([false, true])('keeps a renderer after its first tile fails (overlay %s)', async overlay => {
+  const runtime = fakeRuntime();
+  const layer = vectorLayers.createLayer('/styles/local.json', { overlay }, () => Promise.resolve(runtime)).addTo(map);
+  const errors = jest.fn();
+  layer.on('tileerror', errors);
+  await flush();
+  const failure = new Error('Tile returned HTTP 503');
+  const tile = { tileID: { canonical: { z: 9, x: 3, y: 5 } } };
+  runtime.events.fire('error', { error: failure, tile });
+  expect(map.hasLayer(runtime.renderer)).toBe(true);
+  expect(container.querySelector('.osrm-vector-status-error')).toBeNull();
+  expect(errors).toHaveBeenCalledWith(expect.objectContaining({ error: failure }));
+  runtime.events.fire('load');
+  runtime.events.fire('error', { error: failure, tile });
+  expect(map.hasLayer(runtime.renderer)).toBe(true);
+  expect(container.querySelector('.osrm-vector-status')).toBeNull();
+});
+
+test('hides a suspended renderer’s failure banner even with the theme stylesheet loaded', async () => {
+  const css = document.createElement('style');
+  css.textContent = require('node:fs').readFileSync(require.resolve('../css/theme.css'), 'utf8');
+  document.head.appendChild(css);
+  try {
+    const layer = addVector(() => Promise.reject(new Error('Style unavailable')));
+    await flush();
+    const status = container.querySelector('.osrm-vector-status-error');
+    expect(window.getComputedStyle(status).display).toBe('flex');
+    layer.setVisible(false);
+    expect(window.getComputedStyle(status).display).toBe('none');
+    layer.setVisible(true);
+    expect(window.getComputedStyle(status).display).toBe('flex');
+  } finally {
+    css.remove();
+  }
+});
+
 test('loads local module and CSS assets on demand, retries a failed load, and reuses the runtime', async () => {
   const selector = 'script[src*="vector.js"]';
   expect(document.querySelector(selector)).toBeNull();

@@ -273,6 +273,7 @@
 
 /* Vector startup never loads a raster basemap underneath the renderer. */
 .osrm-vector-status { position: absolute; top: 16px; left: 50%; z-index: 750; display: flex; align-items: center; gap: 10px; max-width: min(480px, calc(100% - 96px)); transform: translateX(-50%); padding: 9px 13px; border: 1px solid #505050; border-radius: 10px; background: var(--osrm-panel, rgb(41 41 41 / 80%)); color: #d4e2ec; box-shadow: 0 3px 16px #00141c22; font: 12px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+.osrm-vector-status[hidden] { display: none; }
 .osrm-vector-status:not(.osrm-vector-status-error):before { content: ''; flex: none; width: 12px; height: 12px; border: 2px solid #7897b355; border-top-color: #9ec5ff; border-radius: 50%; animation: osrm-vector-loading 0.8s linear infinite; }
 .osrm-vector-status button { float: none; flex: none; width: auto; height: auto; min-height: 32px; margin: 0; padding: 5px 10px; border: 0; border-radius: 6px; background: #2b70df; color: white; cursor: pointer; font: inherit; }
 @keyframes osrm-vector-loading { to { transform: rotate(360deg); } }
