@@ -127,6 +127,11 @@ function transformStyle(previousStyle, style) {
         if (layer.layout['icon-image']) paint['icon-color'] = paint['text-color'];
         paint['text-halo-color'] = '#263a2a';
         paint['text-halo-blur'] = 0;
+      } else if (layer.id === 'poi-destination-culture') {
+        paint['text-color'] = '#c3d5e4';
+        paint['icon-color'] = paint['text-color'];
+        paint['text-halo-color'] = '#263441';
+        paint['text-halo-blur'] = 0;
       }
     }
     if (layer.type === 'hillshade') {

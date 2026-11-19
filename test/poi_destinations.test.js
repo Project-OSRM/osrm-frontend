@@ -113,6 +113,51 @@ test('uses translated civic names with local fallback and hides them in the Sate
   expect(satellite.transformStyle(style).layers.find(layer => layer.id === id).layout.visibility).toBe('none');
 });
 
+test.each([
+  ['theatre', 'Theater Koblenz', 'icon-theatre'],
+  ['arts_centre', 'Portikus', 'icon-art_gallery']
+])('labels named %s venues once and retains the generic icon for unnamed venues', (amenity, name, sprite) => {
+  const id = 'poi-destination-culture';
+  const properties = { amenity, name };
+  const matching = style.layers.filter(layer => layer['source-layer'] === 'pois' && matches(layer, properties));
+  expect(matching.map(layer => layer.id)).toEqual([id]);
+  const layer = matching[0];
+  const generic = style.layers.find(candidate => candidate.id === 'poi-amenity');
+  expect(evaluate(layer.layout['text-field'], properties)).toBe(name);
+  expect(evaluate(layer.layout['icon-image'], properties)).toBe('basics:' + sprite);
+  expect(sprites[sprite].sdf).toBe(true);
+  for (const unnamed of [{ amenity }, { amenity, name: '' }]) {
+    expect(matches(layer, unnamed)).toBe(false);
+    expect(matches(generic, unnamed)).toBe(true);
+    expect(evaluate(generic.layout['icon-image'], unnamed)).toBe('basics:' + sprite);
+  }
+  expect(matches(layer, { ...properties, office: 'diplomatic' })).toBe(false);
+});
+
+test('keeps cultural names as legible close-zoom detail in both palettes', () => {
+  const id = 'poi-destination-culture';
+  const culture = style.layers.find(layer => layer.id === id);
+  expect(culture.minzoom).toBe(16);
+  expect(culture.layout['text-ignore-placement']).not.toBe(true);
+  expect(culture.layout['icon-allow-overlap']).not.toBe(true);
+  expect(matches(culture, { amenity: 'cinema', name: 'Cinema' })).toBe(false);
+  expect(matches(culture, { amenity: 'library', name: 'Library' })).toBe(false);
+  expect(evaluate(culture.paint['icon-opacity'], {}, 16)).toBe(0);
+  expect(evaluate(culture.paint['icon-opacity'], {}, 16.4)).toBe(1);
+  for (const other of ['poi-destination-civic', 'label-street-primary', 'label-place-neighbourhood']) {
+    expect(style.layers.indexOf(culture)).toBeLessThan(style.layers.findIndex(layer => layer.id === other));
+  }
+  expect(culture.paint['text-color']).toBe('#4d5c69');
+  const dark = theme.transformStyle(null, style).layers.find(layer => layer.id === id);
+  expect(dark.paint).toMatchObject({
+    'text-color': '#c3d5e4', 'icon-color': '#c3d5e4',
+    'text-halo-color': '#263441', 'text-halo-width': 1, 'text-halo-blur': 0
+  });
+  const overlay = satellite.transformStyle(style);
+  expect(validateStyleMin(overlay)).toEqual([]);
+  expect(overlay.layers.find(layer => layer.id === id).layout.visibility).toBe('none');
+});
+
 test('labels castles and forts without promoting every historic feature into a named destination', () => {
   const destination = style.layers.find(layer => layer.id === 'poi-destination-historic');
   const generic = style.layers.find(layer => layer.id === 'poi-historic');
@@ -443,7 +488,7 @@ test('shares one first-request resolver for road plates, exits, and local POI sy
   expect(imageDefinition('unrelated')).toBeNull();
 });
 
-test('keeps readable category colors and the same sources and layout in both palettes', () => {
+test('keeps the same sources and destination layout in both palettes', () => {
   const dark = theme.transformStyle(null, style);
   expect(validateStyleMin(style)).toEqual([]);
   expect(validateStyleMin(dark)).toEqual([]);
@@ -452,10 +497,14 @@ test('keeps readable category colors and the same sources and layout in both pal
     const counterpart = dark.layers.find(candidate => candidate.id === layer.id);
     expect(counterpart.layout).toEqual(layer.layout);
     expect(counterpart.filter).toEqual(layer.filter);
-    if (['poi-destination-sports', 'poi-destination-playground'].includes(layer.id)) continue;
-    const properties = layer.id.endsWith('lodging') ? { tourism: 'hotel' } : { amenity: 'hospital' };
-    const color = evaluate(counterpart.paint['text-color'], properties);
-    expect(color).toBe(properties.tourism ? '#c3b5df' : '#e4a9b3');
-    expect(evaluate(counterpart.paint['icon-color'], properties)).toBe(color);
+  }
+  for (const [id, properties, color] of [
+    ['poi-destination-lodging', { tourism: 'hotel' }, '#c3b5df'],
+    ['poi-destination-hospital', { amenity: 'hospital' }, '#e4a9b3'],
+    ['poi-destination-medical', { amenity: 'pharmacy' }, '#e4a9b3']
+  ]) {
+    const layer = dark.layers.find(candidate => candidate.id === id);
+    expect(evaluate(layer.paint['text-color'], properties)).toBe(color);
+    expect(evaluate(layer.paint['icon-color'], properties)).toBe(color);
   }
 });

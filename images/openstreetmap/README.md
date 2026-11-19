@@ -122,6 +122,12 @@ where translations are available. Street and place labels retain priority and
 unnamed facilities keep their symbols. Features with a diplomatic tag use one
 flag symbol. These POIs are hidden on the Satellite street overlay.
 
+Named theatres and arts centres use their bundled venue icons and compact
+blue-grey labels, fading in between style zooms 16 and 16.4. Names follow the
+selected language where available and give street, settlement and civic labels
+priority. Unnamed venues keep their generic icons. These POIs are hidden on the
+Satellite street overlay.
+
 Castles and forts show compact names beside the bundled castle symbol, fading
 in between style zooms 15 and 15.4. Names follow the selected language and yield
 to symbols, street names and settlement names when space is tight. Other historic

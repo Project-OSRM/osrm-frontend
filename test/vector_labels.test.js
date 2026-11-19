@@ -93,7 +93,7 @@ test('updates names on the existing map and restores local names without nesting
 test.each([
   'poi-destination-civic', 'poi-destination-camping', 'poi-destination-viewpoint',
   'poi-destination-zoo', 'poi-destination-alpine-hut', 'label-park-name',
-  'poi-destination-sports', 'poi-destination-playground'
+  'poi-destination-sports', 'poi-destination-playground', 'poi-destination-culture'
 ])('localizes new landmark names on initial load and live updates: %s', id => {
   const properties = { name: 'Lokaler Name', name_en: 'English name', name_fr: 'Nom français', name_it: '' };
   const field = language => localizeStyle(original, language).layers.find(layer => layer.id === id).layout['text-field'];
