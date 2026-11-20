@@ -130,7 +130,7 @@
 
           var p = document.createElement('p');
           p.style.margin = '0 0 12px 0';
-          p.textContent = 'The application failed to start or encountered an error. Try enabling cookies/storage and reload the page.';
+          p.textContent = 'The demo could not finish starting. Reload to try again.';
 
           var btnReload = document.createElement('button');
           btnReload.textContent = 'Reload';
@@ -165,10 +165,13 @@
             else if (evt && evt.reason && evt.reason.message) msg = evt.reason.message;
             else if (evt && evt.error && evt.error.message) msg = evt.error.message;
             else msg = String(evt);
+            console.error('OSRM frontend runtime error', evt);
+            // An opaque browser error cannot identify a failure in the demo.
+            if (window.__osrm_app_loaded ||
+                (msg === 'Script error.' && evt && !evt.filename && !evt.error && !evt.reason)) return;
             var details = [];
             try{ if (evt && evt.filename) details.push('file: ' + evt.filename); if (evt && evt.lineno) details.push('line: ' + evt.lineno); }catch(e){}
             window.__osrm_last_error = (msg + (details.length ? ' (' + details.join(', ') + ')' : '') + (evt && evt.error && evt.error.stack ? '\n' + evt.error.stack : (evt && evt.stack ? '\n' + evt.stack : '')));
-            console.error('OSRM frontend runtime error', evt);
             createOverlay();
             if (window.__osrm_error_overlay_pre) window.__osrm_error_overlay_pre.textContent = window.__osrm_last_error;
           }catch(e){}
@@ -177,13 +180,19 @@
         window.addEventListener('error', function(e){ handleError(e); });
         window.addEventListener('unhandledrejection', function(e){ handleError(e); });
 
-        setTimeout(function(){
+        var startupTimeout = setTimeout(function(){
           if (!window.__osrm_app_loaded) {
             window.__osrm_last_error = window.__osrm_last_error || 'Application did not finish startup within 5 seconds.';
             createOverlay();
             if (window.__osrm_error_overlay_pre) window.__osrm_error_overlay_pre.textContent = window.__osrm_last_error;
           }
         }, 5000);
+        window.addEventListener('osrm:ready', function() {
+          clearTimeout(startupTimeout);
+          var overlay = document.getElementById('osrm-error-overlay');
+          if (overlay) overlay.remove();
+          delete window.__osrm_error_overlay_pre;
+        }, { once: true });
       })();
     </script>
   </body>

@@ -1079,3 +1079,4 @@ map.on('locationfound', createLocationFoundHandler(map, lrmControl));
 
 // Mark successful startup so the runtime watchdog does not show the error overlay
 window.__osrm_app_loaded = true;
+window.dispatchEvent(new Event('osrm:ready'));
