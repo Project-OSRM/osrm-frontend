@@ -26,7 +26,7 @@ function transformStyle(style) {
     var paint = copy.paint = Object.assign({}, layer.paint);
     var source = layer['source-layer'];
     var road = layer.type === 'line' && source === 'streets';
-    var label = layer.type === 'symbol' && (labelSources.indexOf(source) !== -1 || source === 'streets' || layer.id === 'label-address-poi-housenumber');
+    var label = layer.type === 'symbol' && (labelSources.indexOf(source) !== -1 || source === 'streets');
     var pedestrian = layer.type === 'fill' && source === 'street_polygons' && /pedestrian-zone/.test(layer.id);
     if (!road && !label && !pedestrian) {
       copy.layout = Object.assign({}, layer.layout, { visibility: 'none' });

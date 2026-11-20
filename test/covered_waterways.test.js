@@ -50,7 +50,7 @@ test('keeps ordinary streams solid and covered segments thin, dashed and limited
   expect(covered.paint['line-dasharray']).toEqual([2, 2]);
   expect(style.layers.indexOf(covered)).toBeGreaterThan(style.layers.findIndex(layer => layer.id === 'bridge-street-motorway'));
   expect(style.layers.indexOf(covered)).toBeGreaterThan(style.layers.findIndex(layer => layer.id === 'building'));
-  expect(style.layers.indexOf(covered)).toBeLessThan(style.layers.findIndex(layer => layer.id === 'label-address-poi-housenumber'));
+  expect(style.layers.indexOf(covered)).toBeLessThan(style.layers.findIndex(layer => layer.id === 'label-place-locality'));
 });
 
 test('preserves covered geometry in both palettes without adding water to the Satellite street overlay', () => {
