@@ -5,7 +5,7 @@ var EventEmitter = require('node:events');
 
 test('switches editions with ordered stops, the fractional view and routing options', function() {
   var search = 'loc=50,8&loc=&loc=51,9&z=14.625&center=50.3,8.2&alt=1&profile=2&hl=de&scale=imperial&exclude=ferry&u=true&ly=Outdoors';
-  var target = new URL(edition.switchUrl('https://maps.example/new/', search, 'default'));
+  var target = new URL(edition.switchUrl('https://maps.example/new/', search, 'default', 'new'));
   expect(target.pathname).toBe('/new/');
   expect(target.searchParams.getAll('loc')).toEqual(['50,8', '', '51,9']);
   expect(Object.fromEntries(target.searchParams)).toMatchObject({
@@ -13,6 +13,35 @@ test('switches editions with ordered stops, the fractional view and routing opti
     scale: 'imperial', exclude: 'ferry', u: 'true', view: 'keep'
   });
   expect(target.searchParams.has('ly')).toBe(false);
+});
+
+test.each(['18.125', '19.625', '20'])('clamps classic and restores vector zoom %s on return', function(zoom) {
+  var search = 'z=' + zoom + '&center=50.3,8.2&loc=50,8&loc=51,9&profile=2';
+  var classic = new URL(edition.switchUrl('https://maps.example/', search, 'false', 'classic'));
+  expect(classic.searchParams.get('z')).toBe('18');
+  expect(classic.searchParams.get('vz')).toBe(zoom);
+
+  // Panning in classic keeps the new center and the saved vector zoom.
+  classic.searchParams.set('center', '50.4,8.3');
+  var vector = new URL(edition.switchUrl('https://maps.example/new/', classic.search, 'default', 'new'));
+  expect(vector.searchParams.get('z')).toBe(zoom);
+  expect(vector.searchParams.get('center')).toBe('50.4,8.3');
+  expect(vector.searchParams.getAll('loc')).toEqual(['50,8', '51,9']);
+  expect(vector.searchParams.get('profile')).toBe('2');
+  expect(vector.searchParams.get('view')).toBe('keep');
+  expect(vector.searchParams.has('vz')).toBe(false);
+});
+
+test('honors a lower zoom chosen in classic', function() {
+  var vector = new URL(edition.switchUrl('https://maps.example/new/', 'z=16.5&vz=20', 'default', 'new'));
+  expect(vector.searchParams.get('z')).toBe('16.5');
+  expect(vector.searchParams.has('vz')).toBe(false);
+});
+
+test.each(['NaN', 'Infinity', '18', '17', '19-invalid'])('ignores an invalid saved vector zoom %s', function(zoom) {
+  var vector = new URL(edition.switchUrl('https://maps.example/new/', 'z=18&vz=' + zoom, 'default', 'new'));
+  expect(vector.searchParams.get('z')).toBe('18');
+  expect(vector.searchParams.has('vz')).toBe(false);
 });
 
 test.each(['default', 'false'])('carries the outgoing U-turn policy %s', function(policy) {

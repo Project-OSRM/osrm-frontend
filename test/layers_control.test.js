@@ -41,3 +41,23 @@ test('keeps keyboard expansion without changing the selected basemap', () => {
   expect(control.getContainer().classList.contains('leaflet-control-layers-expanded')).toBe(true);
   expect(selectedLayer()).toBe(satellite);
 });
+
+test('keeps raster basemaps selectable at vector zoom while respecting overlay limits', () => {
+  const vector = L.layerGroup();
+  const raster = L.layerGroup();
+  const overlay = L.layerGroup();
+  raster.options.maxZoom = 18;
+  overlay.options.maxZoom = 18;
+  vector.addTo(map);
+  const layerControl = createLayersControl({ Vector: vector, Raster: raster }, { Overlay: overlay }).addTo(map);
+
+  map.setZoom(20);
+  const [vectorInput, rasterInput, overlayInput] = layerControl.getContainer().querySelectorAll('input');
+  expect(vectorInput.checked).toBe(true);
+  expect(rasterInput.disabled).toBe(false);
+  expect(overlayInput.disabled).toBe(true);
+
+  rasterInput.click();
+  expect(map.hasLayer(raster)).toBe(true);
+  expect(map.hasLayer(vector)).toBe(false);
+});

@@ -7,7 +7,7 @@ jest.mock('../src/vector_backgrounds', () => require('./__vector_backgrounds'));
 
 // Mock leaflet so this test runs in the node environment without a DOM
 jest.mock('leaflet', () => ({
-  tileLayer: (url, options) => ({ _url: url, _options: options }),
+  tileLayer: (url, options) => ({ _url: url, _options: options, options: { maxZoom: 18, ...options } }),
   latLng: (lat, lng) => ({ lat, lng })
 }));
 
@@ -30,6 +30,31 @@ describe('leaflet_options — tileset migration', () => {
 
     test('OSM.de layer uses openstreetmap.de', () => {
       expect(leafletOptions.layer[0]['OpenStreetMap.de']._url).toContain('tile.openstreetmap.de');
+    });
+  });
+
+  describe('basemap zoom limits', () => {
+    test('the default OpenStreetMap vector layer supports zoom 20', () => {
+      expect(leafletOptions.maxZoomForLayer(leafletOptions.layer[0].OpenStreetMap)).toBe(20);
+    });
+
+    test.each([
+      ['OpenStreetMap.de', 18], ['Satellite', 18], ['Outdoors', 17]
+    ])('%s respects its raster zoom limit', (name, maxZoom) => {
+      expect(leafletOptions.maxZoomForLayer(leafletOptions.layer[0][name])).toBe(maxZoom);
+    });
+
+    test('a configured vector layer supports zoom 20', () => {
+      const previousWindow = global.window;
+      global.window = { osrmConfig: { OSRM_VECTOR_STYLE: 'https://maps.example.org/style.json' } };
+      try {
+        jest.isolateModules(() => {
+          const options = require('../src/leaflet_options');
+          expect(options.maxZoomForLayer(options.layer[0]['Dark Vector'])).toBe(20);
+        });
+      } finally {
+        global.window = previousWindow;
+      }
     });
   });
 
