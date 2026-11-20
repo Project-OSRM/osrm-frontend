@@ -43,11 +43,16 @@ test('loads the vector renderer directly without requesting raster tiles', async
   const layer = addVector(loader);
   expect(layer.getLayers()).toHaveLength(0);
   expect(container.querySelector('[role=status]').textContent).toBe('Loading vector map…');
+  const grid = container.querySelector('.osrm-vector-loading-grid');
+  expect(grid?.getAttribute('aria-hidden')).toBe('true');
   await flush();
   expect(runtime.createLayer).toHaveBeenCalledWith('/styles/local.json', 'dark');
   expect(layer.getLayers()).toEqual([runtime.renderer]);
+  runtime.events.fire('styledata');
+  expect(container.contains(grid)).toBe(true);
   runtime.events.fire('load');
   expect(container.querySelector('[role=status]')).toBeNull();
+  expect(container.contains(grid)).toBe(false);
   expect(map.getMinZoom()).toBe(1);
   map.removeLayer(layer);
   expect(runtime.renderer.onRemove).toHaveBeenCalledTimes(1);
@@ -79,6 +84,24 @@ test('does not attach a late renderer after the user selects another background'
   expect(runtime.createLayer).not.toHaveBeenCalled();
   expect(layer.getLayers()).toHaveLength(0);
   expect(container.querySelector('.osrm-vector-status')).toBeNull();
+  expect(container.querySelector('.osrm-vector-loading-grid')).toBeNull();
+});
+
+test('matches the selected palette and clears the grid over other backgrounds', () => {
+  const layer = vectorLayers.createLayer('/style.json', { theme: 'original' }, () => new Promise(() => {})).addTo(map);
+  const grid = () => container.querySelector('.osrm-vector-loading-grid');
+  expect(grid()?.classList.contains('osrm-vector-loading-grid-dark')).toBe(false);
+  layer.setTheme('dark');
+  expect(grid()?.classList.contains('osrm-vector-loading-grid-dark')).toBe(true);
+  layer.setTheme('satellite');
+  expect(grid()).toBeNull();
+  layer.setVisible(false);
+  layer.setTheme('original');
+  expect(grid()).toBeNull();
+  layer.setVisible(true);
+  expect(grid()).not.toBeNull();
+  map.removeLayer(layer);
+  expect(grid()).toBeNull();
 });
 
 test('offers a retry after loading fails, without starting a raster basemap', async () => {
@@ -87,15 +110,18 @@ test('offers a retry after loading fails, without starting a raster basemap', as
   const layer = addVector(loader);
   const errors = jest.fn();
   const mapClicks = jest.fn();
+  const grid = () => container.querySelector('.osrm-vector-loading-grid');
   layer.on('tileerror', errors);
   map.on('click', mapClicks);
   await flush();
   expect(errors).toHaveBeenCalledTimes(1);
   expect(layer.getLayers()).toHaveLength(0);
+  expect(grid()).toBeNull();
   const button = container.querySelector('.osrm-vector-status button');
   expect(button.type).toBe('button');
   expect(button.textContent).toBe('Try again');
   button.click();
+  expect(grid()).not.toBeNull();
   await flush();
   expect(loader).toHaveBeenCalledTimes(2);
   expect(layer.getLayers()).toEqual([runtime.renderer]);
@@ -155,6 +181,7 @@ test.each([false, true])('keeps a renderer after its first tile fails (overlay %
   const tile = { tileID: { canonical: { z: 9, x: 3, y: 5 } } };
   runtime.events.fire('error', { error: failure, tile });
   expect(map.hasLayer(runtime.renderer)).toBe(true);
+  expect(Boolean(container.querySelector('.osrm-vector-loading-grid'))).toBe(!overlay);
   expect(container.querySelector('.osrm-vector-status-error')).toBeNull();
   expect(errors).toHaveBeenCalledWith(expect.objectContaining({ error: failure }));
   runtime.events.fire('load');
