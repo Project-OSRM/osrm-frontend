@@ -44,8 +44,7 @@ function loadRuntime() {
   return runtimePromise;
 }
 
-// Load the renderer only when selected. Keep the map's plain background until
-// the vector style is ready; never fetch a raster basemap behind it.
+// Load the renderer only when selected, with a local grid behind the first view.
 function createLayer(style, options, runtimeLoader) {
   var VectorLayer = L.LayerGroup.extend({
     initialize: function() {
@@ -55,6 +54,7 @@ function createLayer(style, options, runtimeLoader) {
     setVisible: function(visible) {
       this._visible = visible;
       if (this._status) this._status.hidden = !visible;
+      this._updateLoadingGrid();
       if (this._map) {
         if (visible) this._map._addZoomLimit(this);
         else this._map._removeZoomLimit(this);
@@ -85,6 +85,7 @@ function createLayer(style, options, runtimeLoader) {
     },
     setTheme: function(theme) {
       this.options.theme = theme;
+      this._updateLoadingGrid();
       this.eachLayer(function(renderer) {
         if (renderer.setTheme) renderer.setTheme(theme);
       });
@@ -92,6 +93,20 @@ function createLayer(style, options, runtimeLoader) {
     getAttribution: function() {
       // The renderer owns both provider and configured credits.
       return '';
+    },
+    _updateLoadingGrid: function() {
+      var show = this._status && !this._statusRetry && this._visible !== false &&
+        !this.options.overlay && this.options.theme !== 'satellite';
+      if (!show) {
+        if (this._loadingGrid) this._loadingGrid.remove();
+        this._loadingGrid = null;
+        return;
+      }
+      if (!this._loadingGrid) {
+        this._loadingGrid = L.DomUtil.create('div', 'osrm-vector-loading-grid', this._map.getContainer());
+        this._loadingGrid.setAttribute('aria-hidden', 'true');
+      }
+      this._loadingGrid.classList.toggle('osrm-vector-loading-grid-dark', this.options.theme !== 'original');
     },
     _showStatus: function(message, retry) {
       this._statusMessage = message;
@@ -104,6 +119,7 @@ function createLayer(style, options, runtimeLoader) {
         L.DomEvent.disableScrollPropagation(this._status);
       }
       this._status.hidden = this._visible === false;
+      this._updateLoadingGrid();
       this._status.classList.toggle('osrm-vector-status-error', !!retry);
       this._status.replaceChildren();
       var text = L.DomUtil.create('span', '', this._status);
@@ -122,6 +138,7 @@ function createLayer(style, options, runtimeLoader) {
     _removeStatus: function() {
       if (this._status) this._status.remove();
       this._status = null;
+      this._updateLoadingGrid();
     },
     _loadRenderer: function(map) {
       var generation = this._generation = (this._generation || 0) + 1;

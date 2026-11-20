@@ -271,7 +271,23 @@
   .osrm-theme-dark .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; }
 }
 
-/* Vector startup never loads a raster basemap underneath the renderer. */
+.osrm-vector-loading-grid {
+  --osrm-grid-line: rgb(48 62 80 / 16%);
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: #f4f5f1;
+  background-image:
+    linear-gradient(to right, var(--osrm-grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--osrm-grid-line) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+.osrm-vector-loading-grid-dark {
+  --osrm-grid-line: rgb(190 207 228 / 20%);
+  background-color: #303e50;
+}
+
 .osrm-vector-status { position: absolute; top: 16px; left: 50%; z-index: 750; display: flex; align-items: center; gap: 10px; max-width: min(480px, calc(100% - 96px)); transform: translateX(-50%); padding: 9px 13px; border: 1px solid #505050; border-radius: 10px; background: var(--osrm-panel, rgb(41 41 41 / 80%)); color: #d4e2ec; box-shadow: 0 3px 16px #00141c22; font: 12px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 .osrm-vector-status[hidden] { display: none; }
 .osrm-vector-status:not(.osrm-vector-status-error):before { content: ''; flex: none; width: 12px; height: 12px; border: 2px solid #7897b355; border-top-color: #9ec5ff; border-radius: 50%; animation: osrm-vector-loading 0.8s linear infinite; }

@@ -139,12 +139,12 @@ shares the built-in Shortbread source with Dark Vector in the static demo. The
 layer menu lists OpenStreetMap, Dark Vector, OpenStreetMap.de, Satellite and Outdoors,
 in that order (Dark Vector appears when configured). OpenStreetMap is the demo default.
 
-The renderer is loaded only when a vector background is selected. It starts
-directly on a plain background without loading raster tiles underneath. If the
-renderer or style cannot load, a retry control appears; another background can
-also be selected from the layer control. Styles hosted on another origin must allow CORS requests for
-the style and its tile, font and sprite resources. A configured vector background
-is the default unless `OSRM_DEFAULT_LAYER` selects another layer.
+The renderer loads when a vector background is selected. A coarse grid sits
+behind the first view while vector tiles load. If the renderer or style fails,
+the layer control offers other backgrounds and the loading message offers a
+retry. Styles hosted on another origin must allow CORS requests for the style
+and its tile, font and sprite resources. A configured vector background is the
+default unless `OSRM_DEFAULT_LAYER` selects another layer.
 
 Dark Vector uses a dark slate palette with blue water and muted green land cover.
 The translucent grey directions sidebar has blue route cards, expandable
