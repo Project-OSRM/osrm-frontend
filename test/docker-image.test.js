@@ -5,6 +5,7 @@
 
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
+const execFile = util.promisify(require('child_process').execFile);
 
 const IMAGE_TAG = 'osrm-frontend:test-ci';
 const CONTAINER_NAME = `osrm-frontend-test-${Date.now()}`;
@@ -15,7 +16,7 @@ test('docker image serves a page (index.html)', async () => {
   // Skip when Docker is unavailable (e.g. local dev without Docker).
   // CI always has Docker, so this test runs there automatically.
   try {
-    await exec('docker info');
+    await execFile('docker', ['version', '--format', '{{.Server.Version}}'], { timeout: 10000, killSignal: 'SIGKILL' });
   } catch (err) {
     console.warn('Skipping Docker integration test: Docker daemon not reachable');
     return;

@@ -246,3 +246,24 @@ describe('route fit tracker', function() {
     expect(tracker.waypointGeocoded()).toBe(true);
   });
 });
+
+describe('translucent overlay pane insets', () => {
+  test('reserves the left sidebar while the map extends behind it', () => {
+    const insets = routeZoom.getPaneInsets({ x: 1200, y: 800 }, { width: 360, height: 800 }, true);
+    expect(insets).toEqual({ left: 360, right: 0, top: 0, bottom: 0 });
+    expect(routeZoom.isRouteUnderPane([{ x: 200, y: 200 }], { x: 1200, y: 800 }, insets)).toBe(true);
+    expect(routeZoom.isRouteUnderPane([{ x: 500, y: 200 }], { x: 1200, y: 800 }, insets)).toBe(false);
+  });
+
+  test('reserves the bottom sheet on mobile', () => {
+    const insets = routeZoom.getPaneInsets({ x: 400, y: 800 }, { width: 400, height: 350 }, true);
+    expect(insets).toEqual({ left: 0, right: 0, top: 0, bottom: 350 });
+    expect(routeZoom.isRouteUnderPane([{ x: 200, y: 600 }], { x: 400, y: 800 }, insets)).toBe(true);
+    expect(routeZoom.isRouteUnderPane([{ x: 200, y: 300 }], { x: 400, y: 800 }, insets)).toBe(false);
+  });
+
+  test('preserves classic right-pane padding and clears hidden pane padding', () => {
+    expect(routeZoom.getPaneInsets({ x: 1200, y: 800 }, { width: 360, height: 800 }, false)).toEqual({ left: 0, right: 360, top: 0, bottom: 0 });
+    expect(routeZoom.getPaneInsets({ x: 1200, y: 800 }, null, true)).toEqual({ left: 0, right: 0, top: 0, bottom: 0 });
+  });
+});

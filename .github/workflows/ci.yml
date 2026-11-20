@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
+        with:
+          fetch-depth: ${{ matrix.node-version == '24.x' && '0' || '1' }}
 
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v7
@@ -42,6 +44,10 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+      - name: Assemble classic and vector demos
+        if: matrix.node-version == '24.x'
+        run: npm run assemble:demo-site
 
   docker-build-check:
     runs-on: ubuntu-latest

@@ -3,6 +3,7 @@
 var L = require('leaflet');
 var qs = require('qs');
 var jsonp = require('jsonp');
+var routePreferences = require('./route_preferences');
 
 function _formatCoord(latLng) {
   var precision = 6;
@@ -26,15 +27,15 @@ function _parseCoord(coordStr) {
   return L.latLng(lat, lon);
 }
 
-function _parseInteger(intStr) {
-  var integer = parseInt(intStr, 10);
-  if (isNaN(integer)) {
+function _parseZoom(value) {
+  var zoom = parseFloat(value);
+  if (!isFinite(zoom)) {
     throw {
-      name: 'InvalidInt',
-      message: "\"" + intStr + "\" is not a valid integer."
+      name: 'InvalidZoom',
+      message: "\"" + value + "\" is not a valid zoom."
     };
   }
-  return integer;
+  return zoom;
 }
 
 function _formatLayer(layer) {
@@ -57,7 +58,7 @@ function formatLink(options) {
     });
   }
   return qs.stringify({
-    z: options.zoom,
+    z: typeof options.zoom === 'number' ? Math.round(options.zoom * 1000) / 1000 : options.zoom,
     center: options.center ? _formatCoord(options.center) : undefined,
     loc: locs,
     hl: options.language,
@@ -65,7 +66,10 @@ function formatLink(options) {
     scale: options.units,
     ly: _formatLayer(options.layer),
     srv: options.service,
-    profile: options.profile
+    profile: options.profile,
+    exclude: routePreferences.normalize(options).exclude || undefined,
+    u: options.allowUTurns === true ? 'true' : options.allowUTurns === null ? 'default' : undefined,
+    view: options.keepView ? 'keep' : undefined
   }, {indices: false});
 }
 
@@ -76,7 +80,7 @@ function parseLink(link) {
     options = {},
     k;
   try {
-    if (q.z !== undefined && q.z !== null) parsedValues.zoom = _parseInteger(q.z);
+    if (q.z !== undefined && q.z !== null) parsedValues.zoom = _parseZoom(q.z);
     parsedValues.center = q.center && _parseCoord(q.center);
     if (q.loc) {
       if (q.loc.constructor === Array) {
@@ -95,6 +99,11 @@ function parseLink(link) {
     parsedValues.layer = q.ly;
     parsedValues.service = q.srv;
     parsedValues.profile = q.profile;
+    if (typeof q.exclude === 'string') parsedValues.exclude = routePreferences.normalize({ exclude: q.exclude }).exclude;
+    if (q.u === 'true' || q.u === '1') parsedValues.allowUTurns = true;
+    else if (q.u === 'false' || q.u === '0') parsedValues.allowUTurns = false;
+    else if (q.u === 'default') parsedValues.allowUTurns = null;
+    if (q.view === 'keep' && parsedValues.center && parsedValues.zoom !== undefined) parsedValues.keepView = true;
     parsedValues.originAddress = q.src;
     parsedValues.destinationAddress = q.dst;
   } catch (e) {

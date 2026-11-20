@@ -157,3 +157,13 @@ describe('links.format — coordinate wrapping (issues #206, #307)', () => {
     expect(output).toContain('loc=48.800000%2C2.300000');
   });
 });
+
+describe('fractional zoom in shared links', () => {
+  test('restores continuous zoom without snapping to an integer', () => {
+    expect(links.parse(links.format({ zoom: 13.375 })).zoom).toBe(13.375);
+  });
+  test('limits link precision without adding decimals to integer zooms', () => {
+    expect(links.format({ zoom: 13.37512345 })).toBe('z=13.375');
+    expect(links.format({ zoom: 13 })).toBe('z=13');
+  });
+});

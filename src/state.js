@@ -4,6 +4,7 @@ var L = require('leaflet');
 var links = require('./links');
 var urlState = require('./url_state');
 var waypointReorder = require('./waypoint_reorder');
+var mobileViewport = require('./mobile_viewport');
 
 var State = L.Class.extend({
   options: { },
@@ -22,11 +23,14 @@ var State = L.Class.extend({
     this._lrm.getPlan().on('waypointschanged', function() {
       this.options.waypoints = this._lrm.getWaypoints(); this.update({ push: true });
     }.bind(this));
+    this._map.on('layeradd', function(event) {
+      if (event.layer && typeof event.layer.setLanguage === 'function') event.layer.setLanguage(this.options.language);
+    }.bind(this));
     this._map.on('zoomend', function() {
-      this.options.zoom = this._map.getZoom();  this.update(); 
+      this.options.zoom = this._map.getZoom();  this.update();
     }.bind(this));
     this._map.on('moveend', function() {
-      this.options.center = this._map.getCenter(); this.update(); 
+      this.options.center = mobileViewport.getCenter(this._map); this.update();
     }.bind(this));
     this._tools.on('languagechanged', function(e) {
       this.options.language = e.language;
@@ -35,6 +39,14 @@ var State = L.Class.extend({
       // Update the tools localization and UI
       var localization = require('./localization');
       var newLocalization = localization.get(e.language);
+      localization.setDocumentLanguage(e.language);
+      if (this._map.eachLayer) this._map.eachLayer(function(layer) {
+        if (typeof layer.setLanguage === 'function') layer.setLanguage(e.language);
+      });
+      if (this._lrm.options) this._lrm.options.language = e.language;
+      if (this._lrm._formatter && L.Routing && L.Routing.Formatter) {
+        this._lrm._formatter = new L.Routing.Formatter(L.extend({}, this._lrm._formatter.options, { language: e.language }));
+      }
       var plan = this._lrm.getPlan();
       this._tools.updateLocalization(newLocalization);
       if (this._modeSelector && this._modeSelector.updateLocalization) {
@@ -57,7 +69,7 @@ var State = L.Class.extend({
         });
         waypointReorder.updateLabels(plan._geocoderContainer, e.language);
       }
-      
+
       // Re-render directions with new language if routes exist.
       // lrmControl extends L.Routing.Itinerary directly, so _itineraryBuilder,
       // _routes, and setAlternatives are properties of lrmControl itself.
@@ -66,7 +78,14 @@ var State = L.Class.extend({
           var ItineraryBuilderClass = require('./itinerary_builder')(e.language);
           var newItineraryBuilder = new ItineraryBuilderClass();
           this._lrm._itineraryBuilder = newItineraryBuilder;
+          var alternative = this.options.alternative || 0;
           this._lrm.setAlternatives(this._lrm._routes);
+          if (alternative > 0 && this._lrm._routes[alternative]) {
+            var selectedRoute = this._lrm._routes[alternative];
+            this._lrm.fire('routeselected', { route: selectedRoute, alternatives: this._lrm._routes.filter(function(route) {
+              return route !== selectedRoute;
+            }) });
+          }
         } catch (err) {
           console.error('Error updating itinerary on language change:', err);
         }
@@ -103,6 +122,10 @@ var State = L.Class.extend({
 
   set: function(options) {
     L.setOptions(this, options);
+    require('./localization').setDocumentLanguage(this.options.language);
+    if (this._map.eachLayer) this._map.eachLayer(function(layer) {
+      if (typeof layer.setLanguage === 'function') layer.setLanguage(this.options.language);
+    }, this);
 
     // Normalize center to Leaflet LatLng if a plain {lat,lng} object is provided
     if (this.options.center && typeof this.options.center.lat === 'number' && typeof this.options.center.lng === 'number') {
@@ -155,7 +178,7 @@ var State = L.Class.extend({
     }
     if (this.options.center) {
       try {
-        this._map.setView(this.options.center, this.options.zoom);
+        this._map.setView(mobileViewport.centerForTarget(this._map, this.options.center, this.options.zoom), this.options.zoom);
       } catch (e) {
         console.error('Error setting map view:', e);
       }

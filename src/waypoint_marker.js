@@ -38,6 +38,7 @@ var END = 'end';
 // waypoint, so keeping these three numbers keeps every pin where it was.
 var ICON_SIZE = [20, 56];
 var ICON_ANCHOR = [10, 28];
+var MAP_MARKER_SCALE = 1.5;
 var PIN_HEIGHT = 28;
 
 // Where the glyph sits. The pin's widest point is y=10, the centre of the
@@ -143,8 +144,12 @@ function kindOf(i, n) {
 function waypointIconOptions(i, n) {
   return {
     iconUrl: dataUri(pinMarkup(kindOf(i, n), i, ICON_SIZE[1])),
-    iconSize: ICON_SIZE.slice(),
-    iconAnchor: ICON_ANCHOR.slice()
+    iconSize: ICON_SIZE.map(function(size) {
+      return size * MAP_MARKER_SCALE;
+    }),
+    iconAnchor: ICON_ANCHOR.map(function(offset) {
+      return offset * MAP_MARKER_SCALE;
+    })
   };
 }
 

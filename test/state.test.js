@@ -3,6 +3,7 @@
  */
 'use strict';
 
+jest.mock('../src/itinerary_builder', () => () => function() {});
 var createState = require('../src/state');
 
 function createEmitter() {
@@ -68,4 +69,33 @@ describe('State language updates', function() {
     expect(plan._geocoderElems[1]._element.input.getAttribute('placeholder')).toBe('de-via');
     expect(plan._geocoderElems[2]._element.input.getAttribute('placeholder')).toBe('de-end');
   });
+});
+
+test('preserves the selected route and formatter units while changing language', () => {
+  const L = require('leaflet');
+  const previousRouting = L.Routing;
+  L.Routing = Object.assign({}, previousRouting, { Formatter: function(options) { this.options = options; } });
+  const plan = createEmitter();
+  plan.options = {};
+  const routes = [{ name: 'First' }, { name: 'Selected' }];
+  const control = Object.assign(createEmitter(), {
+    options: {}, _routes: routes,
+    _formatter: { options: Object.create({ units: 'imperial', roundingSensitivity: 2 }) },
+    getPlan: () => plan, setWaypoints: () => {}
+  });
+  const map = Object.assign(createEmitter(), { setView: () => {}, eachLayer: (callback, context) => callback.call(context, layer) });
+  const layer = { setLanguage: jest.fn() };
+  const tools = Object.assign(createEmitter(), { updateLocalization: jest.fn() });
+  const state = createState(map, control, tools, null, { language: 'en', alternative: 1, waypoints: [], center: { lat: 0, lng: 0 }, zoom: 3 });
+  control.setAlternatives = jest.fn(() => { state.options.alternative = 0; });
+  const selected = jest.fn();
+  control.on('routeselected', selected);
+  tools.fire('languagechanged', { language: 'de' });
+  expect(control._formatter.options).toMatchObject({ language: 'de', units: 'imperial', roundingSensitivity: 2 });
+  expect(selected).toHaveBeenCalledWith(expect.objectContaining({ route: routes[1] }));
+  expect(layer.setLanguage).toHaveBeenLastCalledWith('de');
+  const laterLayer = { setLanguage: jest.fn() };
+  map.fire('layeradd', { layer: laterLayer });
+  expect(laterLayer.setLanguage).toHaveBeenCalledWith('de');
+  L.Routing = previousRouting;
 });
