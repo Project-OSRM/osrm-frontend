@@ -1,52 +1,62 @@
 'use strict';
 
-const { featureFilter, createExpression, validateStyleMin } = require('@maplibre/maplibre-gl-style-spec');
+const { createPropertyExpression, featureFilter, latest, validateStyleMin } = require('@maplibre/maplibre-gl-style-spec');
 const style = require('../images/openstreetmap/style.json');
 const { transformStyle } = require('../src/vector_theme');
-const { localizeStyle } = require('../src/vector_labels');
 const satellite = require('../src/vector_satellite');
 
-const layer = style.layers.find(candidate => candidate.id === 'label-address-poi-housenumber');
+const palettes = [
+  ['OpenStreetMap', style],
+  ['Dark Vector', transformStyle(null, style)],
+  ['Satellite street overlay', satellite.transformStyle(style)]
+];
 
-test.each([
-  [{ housenumber: '12', shop: 'bakery' }, true],
-  [{ housenumber: '12a', amenity: 'cafe' }, true],
-  [{ housenumber: '2-14', amenity: 'hospital' }, true],
-  [{ housenumber: '' }, false],
-  [{ name: 'Bakery' }, false]
-])('labels only POIs with a nonempty house number: %j', (properties, expected) => {
-  const filter = featureFilter(layer.filter, 'layers[0].filter');
-  expect(filter.filter({ zoom: 18 }, { type: 1, properties })).toBe(expected);
-  expect(layer['source-layer']).toBe('pois');
-  expect(layer.layout['text-field']).toBe('{housenumber}');
+test.each(palettes)('%s only labels house numbers from the address source layer', (_, palette) => {
+  expect(validateStyleMin(palette)).toEqual([]);
+  const houses = palette.layers.filter(layer => JSON.stringify(layer.layout?.['text-field'] ?? '').includes('housenumber'));
+  expect(houses.map(layer => [layer.id, layer['source-layer']])).toEqual([
+    ['label-address-housenumber', 'addresses']
+  ]);
+  const [address] = houses;
+  expect(address.layout['text-field']).toBe('{housenumber}');
+  expect(address.layout.visibility).not.toBe('none');
+  const filter = featureFilter(address.filter, 'layers[0].filter');
+  expect(filter.filter({ zoom: 18 }, { type: 1, properties: { housenumber: '2' } })).toBe(true);
+  expect(filter.filter({ zoom: 18 }, { type: 1, properties: {} })).toBe(false);
 });
 
-test('adds close-up address detail without displacing names or category icons', () => {
-  const ordinary = style.layers.find(candidate => candidate.id === 'label-address-housenumber');
-  expect(layer.minzoom).toBe(16.5);
-  const opacity = createExpression(layer.paint['text-opacity'], 'layers[0].paint.text-opacity');
-  expect(opacity.result).toBe('success');
-  expect(opacity.value.evaluate({ zoom: 16.5 })).toBe(0);
-  expect(opacity.value.evaluate({ zoom: 17 })).toBe(1);
-  expect(layer.layout['text-size']).toEqual(ordinary.layout['text-size']);
-  expect(layer.layout['text-allow-overlap']).not.toBe(true);
-  expect(layer.layout['text-ignore-placement']).not.toBe(true);
-  expect(layer.layout['text-variable-anchor']).toHaveLength(4);
-  expect(layer.layout['icon-image']).toBeUndefined();
-  const position = style.layers.indexOf(layer);
-  for (const candidate of style.layers.filter(candidate => candidate.id.startsWith('poi-') || candidate.id.startsWith('label-street-'))) {
-    expect(position).toBeLessThan(style.layers.indexOf(candidate));
-  }
+test.each(palettes.slice(0, 2))('%s retains shop icons and destination names', (_, palette) => {
+  const shop = palette.layers.find(layer => layer.id === 'poi-shop');
+  const pharmacy = palette.layers.find(layer => layer.id === 'poi-destination-medical');
+  expect(shop.layout['icon-image']).toBeDefined();
+  expect(pharmacy.layout['icon-image']).toBeDefined();
+  expect(pharmacy.layout['text-field']).toEqual(['coalesce', ['get', 'name'], '']);
 });
 
-test('keeps address numbers neutral, untranslated and visible in all three palettes', () => {
-  const dark = transformStyle(null, style);
-  for (const palette of [style, dark, satellite.transformStyle(style)]) {
-    expect(validateStyleMin(palette)).toEqual([]);
-    const address = palette.layers.find(candidate => candidate.id === layer.id);
-    expect(address.layout.visibility).not.toBe('none');
-    expect(localizeStyle(palette, 'ja').layers.find(candidate => candidate.id === layer.id).layout['text-field']).toBe('{housenumber}');
+function layoutAtZoom(layer, property, zoom) {
+  const expression = createPropertyExpression(layer.layout[property], 'layers[0].layout.' + property, latest.layout_symbol[property]);
+  expect(expression.result).toBe('success');
+  return expression.value.evaluate({ zoom });
+}
+
+test.each(palettes)('%s gives close-up address labels more space and lower placement priority', (_, palette) => {
+  const index = id => palette.layers.findIndex(layer => layer.id === id);
+  const addressIndex = index('label-address-housenumber');
+  const address = palette.layers[addressIndex];
+  expect(address.minzoom).toBe(17);
+  expect(layoutAtZoom(address, 'text-padding', 17)).toBeGreaterThan(2);
+  expect(layoutAtZoom(address, 'text-padding', 19)).toBeGreaterThan(layoutAtZoom(address, 'text-padding', 17));
+  expect(addressIndex).toBeLessThan(index('label-street-primary'));
+  expect(addressIndex).toBeLessThan(index('poi-destination-medical'));
+});
+
+test.each(palettes.slice(0, 2))('%s thins generic POI icons at close zooms', (_, palette) => {
+  const genericIcons = palette.layers.filter(layer =>
+    layer['source-layer'] === 'pois' && layer.layout?.['icon-image'] && !layer.layout['text-field']
+  );
+  expect(genericIcons.some(layer => layer.id === 'poi-shop')).toBe(true);
+  for (const layer of genericIcons) {
+    expect(layoutAtZoom(layer, 'icon-padding', 16).values).toEqual([2, 2, 2, 2]);
+    expect(layoutAtZoom(layer, 'icon-padding', 19).values[0]).toBeGreaterThan(layoutAtZoom(layer, 'icon-padding', 17).values[0]);
   }
-  expect(dark.layers.find(candidate => candidate.id === layer.id).paint['text-color'])
-    .toEqual(dark.layers.find(candidate => candidate.id === 'label-address-housenumber').paint['text-color']);
 });

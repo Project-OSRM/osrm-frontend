@@ -91,11 +91,11 @@ appears only for Satellite; turning it off is remembered independently of the tr
 and component overlays. It shares the OpenStreetMap renderer and tile cache,
 including language and access markings. Disabling it keeps that cache alive.
 
-House numbers stored on POIs fade in between style zooms 16.5 and 17, using the same
-small type as ordinary addresses. They move around existing icons and give
-street names, POI names and icons priority when space is tight. These numbers
-also appear on the Satellite street overlay. Shortbread stores these addresses
-on the POI instead of repeating the same feature in the `addresses` layer.
+House numbers come from the dedicated Shortbread `addresses` layer. POI
+symbols use their existing icons and name labels, keeping shared addresses
+from appearing on every shop in places such as shopping centres. As the map
+zooms in, house numbers and generic POI icons reserve more space between
+symbols. House numbers yield to street and destination labels.
 
 Local adaptations add reference shields for motorways and main roads at overview
 zooms. `src/road_shields.js` supplies their stretchable neutral background at

@@ -14,7 +14,7 @@ test('keeps imagery exposed while drawing roads, names, references and exits', (
     expect(layer(id).layout.visibility).toBe('none');
   }
   expect(layer('background').paint['background-opacity']).toBe(0);
-  for (const id of ['street-primary', 'street-residential', 'label-street-primary', 'label-main-road-shield', 'label-motorway-exit-shield-reference', 'label-place-city', 'label-address-poi-housenumber']) {
+  for (const id of ['street-primary', 'street-residential', 'label-street-primary', 'label-main-road-shield', 'label-motorway-exit-shield-reference', 'label-place-city', 'label-address-housenumber']) {
     expect(layer(id).layout && layer(id).layout.visibility).not.toBe('none');
   }
   const opacity = layer('street-primary').paint['line-opacity'].stops.at(-1)[1];
