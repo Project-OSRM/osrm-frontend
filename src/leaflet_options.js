@@ -20,6 +20,7 @@ var osmAttribution = '© <a href="https://www.openstreetmap.org/copyright">OpenS
   waymarkedtrailsAttribution = '© <a href="https://waymarkedtrails.org/">Sarah Hoffmann</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)';
 
 var osmVectorStyle = 'images/openstreetmap/style.json';
+var vectorMaxZoom = 20;
 
 function createStreetsLayer() {
   var url = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
@@ -47,7 +48,7 @@ var streets = dockerDeployment ? createStreetsLayer() : null,
     attribution: typeof config.OSRM_VECTOR_STYLE === 'string' && config.OSRM_VECTOR_STYLE.trim() === osmVectorStyle && typeof config.OSRM_VECTOR_ATTRIBUTION === 'string' ? config.OSRM_VECTOR_ATTRIBUTION : osmAttribution,
     satelliteLayer: satellite,
     minZoom: 1,
-    maxZoom: 22
+    maxZoom: vectorMaxZoom
   }),
   osm = dockerDeployment
     ? L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: osmAttribution })
@@ -127,7 +128,7 @@ function customVectorLayer() {
     language: getLanguage(),
     attribution: typeof config.OSRM_VECTOR_ATTRIBUTION === 'string' ? config.OSRM_VECTOR_ATTRIBUTION : osmAttribution,
     minZoom: 1,
-    maxZoom: 22
+    maxZoom: vectorMaxZoom
   });
 }
 
@@ -524,6 +525,11 @@ if (custom) baseLayers[customName] = custom;
 
 var defaultLayer = layerMap[getDefaultLayer()] || streets || vector || osm;
 
+function maxZoomForLayer(layer) {
+  if (layer === osmBackgrounds.streets || (vector && layer === vector)) return vectorMaxZoom;
+  return Math.min(18, layer.options.maxZoom ?? 18);
+}
+
 var overlays = {};
 if (!dockerDeployment || vectorBackgrounds === osmBackgrounds) {
   overlays['Street overlay'] = osmBackgrounds.satelliteStreets;
@@ -643,7 +649,7 @@ function buildServices() {
  * | `OSRM_VECTOR_THEME`    | `dark`                           | Dark map palette and sidebar; `original` preserves the provider style and classic interface. |
  * | `OSRM_VECTOR_ATTRIBUTION` | OpenStreetMap credit          | Additional attribution for the vector background. |
  * | `OSRM_CENTER`          | `38.8995,-77.0269`               | Comma-separated "lat,lng" for the initial map center. |
- * | `OSRM_ZOOM`            | `13`                             | Initial zoom level (0–18). |
+ * | `OSRM_ZOOM`            | `13`                             | Initial zoom level (up to 20 on vector backgrounds). |
  * | `OSRM_LANGUAGE`        | (browser language → `'en'`)      | UI language override. |
  * | `OSRM_DEFAULT_LAYER`   | `'osm'`                      | Default base layer key: `streets`, `outdoors`, `satellite`, `osm`, `osm_de`, or `custom` when `OSRM_TILE_URL` is set. |
  * | `OSRM_TILE_URL`        | —                                | Tile URL template (with `{z}`, `{x}`, `{y}`) for a self-hosted or offline tile server. Adds a `custom` base layer and, unless `OSRM_DEFAULT_LAYER` says otherwise, selects it. |
@@ -655,6 +661,7 @@ function buildServices() {
  * @module leaflet_options
  */
 var leafletOptions = {
+  maxZoomForLayer: maxZoomForLayer,
   vectorTheme: vector && config.OSRM_VECTOR_THEME !== 'original' ? 'dark' : 'original',
 
   /**

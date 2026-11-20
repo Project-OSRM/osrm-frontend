@@ -9,6 +9,14 @@ var ClickLayersControl = L.Control.Layers.extend({
     // icon. Keep the existing click and keyboard handlers instead.
     L.DomEvent.off(container, 'mouseenter', this._expandSafely, this);
     return container;
+  },
+
+  _checkDisabledLayers: function() {
+    L.Control.Layers.prototype._checkDisabledLayers.call(this);
+    // Switching basemaps adjusts the map's zoom to the selected layer's limit.
+    this._layerControlInputs.forEach(function(input) {
+      if (!this._getLayer(input.layerId).overlay) input.disabled = false;
+    }, this);
   }
 });
 

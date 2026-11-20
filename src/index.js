@@ -183,8 +183,9 @@ var map = L.map('map', {
   zoomSnap: parsedOptions.keepView ? 0 : 1,
   dragging: true,
   layers: layers,
-  maxZoom: 18
+  maxZoom: leafletOptions.maxZoomForLayer(baselayer)
 }).setView(mergedOptions.center, mergedOptions.zoom);
+mergedOptions.zoom = map.getZoom();
 smoothWheelZoom.enable(map);
 
 // Pass basemap layers
@@ -244,6 +245,10 @@ var scaleControl = L.control.scale({
 // store baselayer changes and update URL/state only when user did the change
 map.on('baselayerchange', function(e) {
   var userInitiated = (Date.now() - (lastUserInitiatedAt || 0)) < 1500;
+  var maxZoom = leafletOptions.maxZoomForLayer(e.layer);
+  var zoom = map.getZoom();
+  if (zoom > maxZoom) map.zoomOut(zoom - maxZoom, { animate: false });
+  map.setMaxZoom(maxZoom);
   layerUtils.handleBaselayerChange(e, ls, state, { userInitiated: userInitiated });
   lastUserInitiatedAt = 0;
 });
