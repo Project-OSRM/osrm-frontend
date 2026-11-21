@@ -16,6 +16,7 @@ var palette = {
   building: '#3e4e62',
   buildingOutline: '#46586b',
   street: '#5e7088',
+  walkingPath: '#788695',
   mainRoad: '#8395ad',
   highway: '#91a4bb',
   secondaryRoad: '#71859a',
@@ -67,6 +68,7 @@ function lineColor(name) {
   if (/motorway|_(?:mot)(?:_|$)/.test(name)) return palette.highway;
   if (/trunk|primary|_(?:pri)(?:_|$)/.test(name)) return palette.mainRoad;
   if (/secondary|tertiary|_sec(?:_|$)/.test(name)) return palette.secondaryRoad;
+  if (/^(?:(?:bridge|tunnel)-)?way-(?:footway|path|steps) streets$/.test(name)) return palette.walkingPath;
   if (/path|service/.test(name)) return '#526d74';
   if (/boundary/.test(name)) return '#53667a';
   if (/rail|aeroway/.test(name)) return '#56677b';

@@ -176,6 +176,10 @@ contrast in both palettes and respect the selected language. Street, park and
 settlement names have priority. Unnamed features retain the regular leisure
 icons. These labels are hidden on the Satellite street overlay.
 
+Footpaths, steps and general paths use dashed slate strokes that contrast with
+the light and dark backgrounds. Tunnel paths have shorter dashes, and bridges
+retain a narrow deck. The access overlay uses its separate red and amber marks.
+
 Named footpaths, cycleways, steps and paths fade in at tile zoom 15; named service
 roads follow at zoom 16. These labels follow the way geometry, use a smaller type
 size than ordinary street names, and have lower collision priority. Unnamed ways
