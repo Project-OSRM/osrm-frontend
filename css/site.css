@@ -352,7 +352,8 @@
   background-position: center;
   background-size: contain;
   cursor: pointer;
-  opacity: 0.75;
+  /* The grip's resting strength, so the two icons in a row read alike. */
+  opacity: 0.6;
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
@@ -368,9 +369,7 @@
 }
 
 .leaflet-routing-approach-toggle:hover,
-.leaflet-routing-approach-toggle:focus,
-.leaflet-routing-approach-toggle[data-approach="curb"],
-.leaflet-routing-approach-toggle[data-approach="opposite"] {
+.leaflet-routing-approach-toggle:focus {
   opacity: 1;
 }
 
