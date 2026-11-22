@@ -28,6 +28,7 @@ var resolveWaypointSlot = require('./waypoint_placement').resolveWaypointSlot;
 }());
 
 var modeSelectorModule = require('./mode_selector');
+var routePreferences = require('./route_preferences');
 // leaflet.locatecontrol@0.89 UMD has a bug: after the CJS IIFE it tries
 // `window.L.Control.Locate.locate` but never sets L.Control.Locate in the
 // CJS path, causing a crash at bundle load time. Pre-initialising the
@@ -36,14 +37,22 @@ L.Control.Locate = L.Control.Locate || {};
 var locate = require('leaflet.locatecontrol');
 var options = require('./lrm_options');
 var urlState = require('./url_state');
+var mapEdition = require('./map_edition');
 var leafletOptions = require('./leaflet_options');
+var interfaceTheme = require('./interface_theme');
+var darkInterface = leafletOptions.vectorTheme === 'dark';
+interfaceTheme.initialize(darkInterface);
 var ls = require('local-storage');
 var tools = require('./tools');
 var state = require('./state');
 var localization = require('./localization');
 var initialLayers = require('./initial_layers');
+var vectorAccess = require('./vector_access');
 var layerUtils = require('./layer_utils');
+var createLayersControl = require('./layers_control');
 var routeZoom = require('./route_zoom');
+var mobileViewport = require('./mobile_viewport');
+var smoothWheelZoom = require('./smooth_wheel_zoom');
 var resolveInitialAlternative = require('./route_alternative');
 var waypointMarker = require('./waypoint_marker');
 var waypointReorder = require('./waypoint_reorder');
@@ -76,20 +85,7 @@ var bikeOverlayOriginallyActive = false;
 var baselayer;
 // Helper to resolve a layer object by name (case-insensitive) from the mapLayer[0] map
 function resolveLayerByName(name) {
-  if (!name || !mapLayer || !mapLayer[0]) return undefined;
-  var map = mapLayer[0];
-  if (map[name]) return map[name];
-  var lower = String(name).toLowerCase();
-  var keys = Object.keys(map);
-  for (var i = 0; i < keys.length; i++) {
-    if (keys[i] && keys[i].toLowerCase() === lower) return map[keys[i]];
-  }
-  // fallback: check id in options if available
-  for (var j = 0; j < keys.length; j++) {
-    var val = map[keys[j]];
-    if (val && val.options && typeof val.options.id === 'string' && val.options.id === name) return val;
-  }
-  return undefined;
+  return layerUtils.resolveLayerByName(mapLayer && mapLayer[0], name);
 }
 
 // Prefer the layer coming from the URL (parsedOptions.layer) over localStorage
@@ -108,6 +104,8 @@ if (parsedOptions && parsedOptions.layer) {
     // Non-string or missing -> ignore URL layer and use default
     baselayer = leafletOptions.defaultState.layer;
   }
+} else if (parsedOptions.keepView) {
+  baselayer = leafletOptions.defaultState.layer;
 } else {
   var storedLayerName = ls.get('layer');
   if (storedLayerName) {
@@ -171,15 +169,24 @@ if (_urlProfile !== undefined && _urlProfile !== null) {
   _initProfileIndex = 0;
 }
 
-var _initResult = initialLayers.determineInitialLayers(baselayer, overlay, services, _initProfileIndex, !!ls.get('getOverlay'));
+if (overlay['Small Components'] && overlay['Small Components'].setService) {
+  overlay['Small Components'].setService(services[_initProfileIndex] || services[0]);
+}
+vectorAccess.applyProfile(mapLayer[0], services[_initProfileIndex] || services[0]);
+var storedComponents = ls.get('smallComponents');
+var _initResult = initialLayers.determineInitialLayers(baselayer, overlay, services, _initProfileIndex, storedComponents === null || storedComponents === undefined ? !!ls.get('getOverlay') : !!storedComponents, ls.get('satelliteStreets'));
 var layers = _initResult.layers;
 var bikeOverlayAutoActivated = _initResult.bikeOverlayAutoActivated;
 var map = L.map('map', {
+  renderer: require('./fixed_width_renderer')(),
   zoomControl: true,
+  zoomSnap: parsedOptions.keepView ? 0 : 1,
   dragging: true,
   layers: layers,
-  maxZoom: 18
+  maxZoom: leafletOptions.maxZoomForLayer(baselayer)
 }).setView(mergedOptions.center, mergedOptions.zoom);
+mergedOptions.zoom = map.getZoom();
+smoothWheelZoom.enable(map);
 
 // Pass basemap layers
 mapLayer = mapLayer.reduce(function(title, layer) {
@@ -190,7 +197,7 @@ mapLayer = mapLayer.reduce(function(title, layer) {
 });
 
 /* Leaflet Controls */
-var layersControl = L.control.layers(mapLayer, overlay, {
+var layersControl = createLayersControl(mapLayer, overlay, {
   position: 'bottomleft'
 }).addTo(map);
 
@@ -238,15 +245,21 @@ var scaleControl = L.control.scale({
 // store baselayer changes and update URL/state only when user did the change
 map.on('baselayerchange', function(e) {
   var userInitiated = (Date.now() - (lastUserInitiatedAt || 0)) < 1500;
+  var maxZoom = leafletOptions.maxZoomForLayer(e.layer);
+  var zoom = map.getZoom();
+  if (zoom > maxZoom) map.zoomOut(zoom - maxZoom, { animate: false });
+  map.setMaxZoom(maxZoom);
   layerUtils.handleBaselayerChange(e, ls, state, { userInitiated: userInitiated });
   lastUserInitiatedAt = 0;
 });
 // store overlay add or remove
 map.on('overlayadd', function(e) {
-  ls.set('getOverlay', true);
+  if (e.layer === overlay['Small Components']) ls.set('smallComponents', true);
+  if (e.layer === overlay['Street overlay']) ls.set('satelliteStreets', true);
 });
 map.on('overlayremove', function(e) {
-  ls.set('getOverlay', false);
+  if (e.layer === overlay['Small Components']) ls.set('smallComponents', false);
+  if (e.layer === overlay['Street overlay']) ls.set('satelliteStreets', false);
 });
 
 /* OSRM setup */
@@ -367,6 +380,7 @@ var controlOptions = {
   plan: plan,
   fitSelectedRoutes: false,
   routeWhileDragging: options.lrm.routeWhileDragging,
+  routeLine: require('./route_reveal').createRouteLineFactory(),
   lineOptions: options.lrm.lineOptions,
   altLineOptions: options.lrm.altLineOptions,
   summaryTemplate: options.lrm.summaryTemplate,
@@ -391,6 +405,7 @@ var controlOptions = {
   collapsible: options.lrm.collapsible,
   itineraryBuilder: new ItineraryBuilder()
 };
+routePreferences.applyToRouter({ options: controlOptions }, mergedOptions);
 // profile labels already translated earlier
 
 
@@ -474,23 +489,62 @@ if (L && L.DomEvent && typeof L.DomEvent.disableScrollPropagation === 'function'
 }
 
 var toolsControl = tools.control(localization.get(mergedOptions.language), localization.getLanguages(), Object.assign({}, options.tools, { initialUnits: mergedOptions.units })).addTo(map);
+if (darkInterface) {
+  interfaceTheme.attach({ map: map, control: lrmControl, tools: toolsControl, modeSelector: modeSelector, language: language });
+}
+if (modeSelector) {
+  var accessLegend = require('./access_legend').createLegend(map, modeSelector.container, language);
+  toolsControl.on('languagechanged', function(event) {
+    accessLegend.updateLocalization(event.language);
+  });
+}
 
 /**
- * Point the tools control's debug map button at the debug map configured for a
- * routing mode. Modes without an explicit `debugUrl` fall back to the bundled
- * debug map at `debug/`.
+ * Apply the routing mode to access markings, small components and the tools
+ * control's debug map button. Modes without `debugUrl` use the bundled debug map.
  *
  * @param {number} profileIndex — Index into `services`.
  */
-function applyDebugUrlForProfile(profileIndex) {
+function applyModeLayersForProfile(profileIndex) {
   var service = services[profileIndex];
+  vectorAccess.applyProfile(mapLayer, service);
+  if (overlay['Small Components'] && overlay['Small Components'].setService) {
+    overlay['Small Components'].setService(service);
+  }
   if (!toolsControl || typeof toolsControl.setDebugUrl !== 'function') return;
   toolsControl.setDebugUrl(service && service.debugUrl);
 }
 
-applyDebugUrlForProfile(activeProfileIndex);
+applyModeLayersForProfile(activeProfileIndex);
 
 var state = state(map, lrmControl, toolsControl, modeSelector, mergedOptions);
+var routeFitTracker = routeZoom.createRouteFitTracker();
+var keepInitialView = mapEdition.holdInitialView(parsedOptions.keepView, plan, lrmControl);
+var routePreferencesControl;
+
+function applyRoutePreferences(preferences) {
+  var values = routePreferences.normalize(preferences);
+  routePreferences.applyToRouter(router, values);
+  state.options.exclude = values.exclude;
+  state.options.allowUTurns = values.allowUTurns;
+  if (routePreferencesControl) routePreferencesControl.set(values);
+}
+
+routePreferencesControl = routePreferences.createControl(localization.get(language), mergedOptions, function(values) {
+  applyRoutePreferences(values);
+  state.update({ push: true });
+  if (lrmControl.getWaypoints().filter(function(wp) {
+    return wp && wp.latLng;
+  }).length >= 2) {
+    routeFitTracker.waypointsReordered();
+    lrmControl.route();
+  }
+});
+plan._geocoderContainer.appendChild(routePreferencesControl.container);
+applyRoutePreferences(mergedOptions);
+toolsControl.on('languagechanged', function(e) {
+  routePreferencesControl.updateLocalization(localization.get(e.language));
+});
 
 // Listen for browser navigation (back/forward) and restore app state
 if (urlState && urlState.listen) {
@@ -536,12 +590,13 @@ if (urlState && urlState.listen) {
       }
 
       // Apply profile/service selection
+      applyRoutePreferences(mergedState);
       if (parsed && parsed.profile !== undefined && parsed.profile !== null) {
         var profileIndex = parseInt(parsed.profile, 10);
         if (!isNaN(profileIndex)) {
           try {
             routerPatches.setActiveService(router, profileIndex, services);
-            applyDebugUrlForProfile(profileIndex);
+            applyModeLayersForProfile(profileIndex);
             ls.set('profile', profileIndex);
             if (modeSelector && modeSelector.select) modeSelector.select.value = profileIndex;
             state.options.profile = profileIndex;
@@ -635,7 +690,7 @@ if (toolsControl && toolsControl.on) {
       var profileIndex = parseInt(event.target.value, 10);
       clearProfileSelectorSelection(event.target);
       routerPatches.setActiveService(router, profileIndex, services);
-      applyDebugUrlForProfile(profileIndex);
+      applyModeLayersForProfile(profileIndex);
       ls.set('profile', profileIndex);
       
       // Also update the state object so profile is preserved on language change
@@ -701,14 +756,7 @@ if (modeSelector && modeSelector.select) {
   });
 }
 
-// Hide directions pane by default
-var routingContainer = document.querySelector('.leaflet-routing-container');
-if (routingContainer) {
-  routingContainer.classList.add('leaflet-routing-container-hide');
-}
-
 // Decides whether the next route or geocode result may move the map view
-var routeFitTracker = routeZoom.createRouteFitTracker();
 
 // Show pane when route is computed
 lrmControl.on('routesfound', function(e) {
@@ -737,10 +785,14 @@ lrmControl.on('routingerror', function() {
 
 /* Entrance picker — see src/entrance_waypoints.js for what it does and why. */
 
-function directionsPaneWidth() {
+function directionsPaneInsets() {
   var pane = document.querySelector('.leaflet-routing-container');
-  if (!pane || pane.classList.contains('leaflet-routing-container-hide')) return 0;
-  return pane.offsetWidth;
+  var size = pane && !pane.classList.contains('leaflet-routing-container-hide') ? pane.getBoundingClientRect() : null;
+  return routeZoom.getPaneInsets(map.getSize(), size, darkInterface);
+}
+
+function directionsPaneWidth() {
+  return directionsPaneInsets().right;
 }
 
 var entranceWaypoints = createEntranceWaypoints({
@@ -748,10 +800,11 @@ var entranceWaypoints = createEntranceWaypoints({
   plan: plan,
   routeFitTracker: routeFitTracker,
   translate: function(key) {
-    return localization.t(mergedOptions.language, key);
+    return localization.t(state.options.language, key);
   },
   fetchOutline: routingGeocoder.fetchOutline,
   paneWidth: directionsPaneWidth,
+  viewInsets: directionsPaneInsets,
   // Read live: a door forbidden to cars may be fine on foot, so the offer has to
   // follow whatever profile is selected right now.
   mode: function() {
@@ -795,7 +848,7 @@ plan.on('waypointgeocoded', function(e) {
   if (plan._waypoints.filter(function(wp) {
     return !!wp.latLng;
   }).length < 2) {
-    map.panTo(e.waypoint.latLng);
+    map.panTo(mobileViewport.centerForTarget(map, e.waypoint.latLng, map.getZoom()));
   }
 });
 
@@ -907,6 +960,11 @@ lrmControl.on('routeselected', function(e) {
   };
   toolsControl.setRouteGeoJSON(routeGeoJSON);
 
+  if (keepInitialView()) {
+    routeFitTracker.clearFitPending();
+    return;
+  }
+
   // Fit/pan: adjust the map view to the newly selected route
   var boundsCoordinates = routeZoom.getBoundsCoordinates(lrmControl && lrmControl._routes, route);
   if (boundsCoordinates.length === 0) {
@@ -915,11 +973,7 @@ lrmControl.on('routeselected', function(e) {
     return;
   }
 
-  var container = document.querySelector('.leaflet-routing-container');
-  var paneWidth = 0;
-  if (container && !container.classList.contains('leaflet-routing-container-hide')) {
-    paneWidth = container.offsetWidth;
-  }
+  var paneInsets = directionsPaneInsets();
 
   // A picker that has just framed the doors it offers keeps the view: the route
   // that follows the geocode must not fit itself over them. Only that route
@@ -935,23 +989,24 @@ lrmControl.on('routeselected', function(e) {
     var containerPoints = boundsCoordinates.map(function(coordinate) {
       return map.latLngToContainerPoint(coordinate);
     });
-    if (!routeZoom.isRouteUnderPane(containerPoints, map.getSize(), paneWidth)) return;
+    if (!routeZoom.isRouteUnderPane(containerPoints, map.getSize(), paneInsets)) return;
   }
   routeFitTracker.clearFitPending();
 
+  mobileViewport.synchronize(map);
   var bounds = L.latLngBounds(boundsCoordinates);
 
   var currentZoom = map.getZoom();
   var fitPadding = 20;
   var paddingOpts = {
-    paddingTopLeft: L.point(fitPadding, fitPadding),
-    paddingBottomRight: L.point(paneWidth + fitPadding, fitPadding)
+    paddingTopLeft: L.point(paneInsets.left + fitPadding, paneInsets.top + fitPadding),
+    paddingBottomRight: L.point(paneInsets.right + fitPadding, paneInsets.bottom + fitPadding)
   };
 
   if (currentZoom >= 13) {
     var mapSize = map.getSize();
-    var availableWidth = mapSize.x - paneWidth - 2 * fitPadding;
-    var availableHeight = mapSize.y - 2 * fitPadding;
+    var availableWidth = mapSize.x - paneInsets.left - paneInsets.right - 2 * fitPadding;
+    var availableHeight = mapSize.y - paneInsets.top - paneInsets.bottom - 2 * fitPadding;
 
     var sw = map.project(bounds.getSouthWest(), currentZoom);
     var ne = map.project(bounds.getNorthEast(), currentZoom);
@@ -961,7 +1016,8 @@ lrmControl.on('routeselected', function(e) {
     if (routePixelWidth <= availableWidth && routePixelHeight <= availableHeight) {
       var center = bounds.getCenter();
       var centerPixel = map.project(center, currentZoom);
-      centerPixel.x += paneWidth / 2;
+      centerPixel.x += (paneInsets.right - paneInsets.left) / 2;
+      centerPixel.y += (paneInsets.bottom - paneInsets.top) / 2;
       var newMapCenter = map.unproject(centerPixel, currentZoom);
       map.panTo(newMapCenter);
     } else {
@@ -979,16 +1035,12 @@ plan.on('waypointschanged', function(e) {
   }).length : 0;
   if (validCount < 2) {
     toolsControl.setRouteGeoJSON(null);
-    var container = document.querySelector('.leaflet-routing-container');
-    if (container) {
-      container.classList.add('leaflet-routing-container-hide');
-    }
   }
 });
 
-locate.locate({
+var locationControl = locate.locate({
   follow: false,
-  setView: true,
+  setView: 'once',
   remainActive: false,
   keepCurrentZoomLevel: true,
   stopFollowingOnDrag: false,
@@ -1002,9 +1054,34 @@ locate.locate({
   locateOptions: {}
 }).addTo(map);
 
+mobileViewport.configureLocationControl(map, locationControl);
+
+var updateEditionLink = mapEdition.attach(document, window.location, function() {
+  return Object.assign({}, state.get(), {
+    center: mobileViewport.getCenter(map),
+    zoom: map.getZoom()
+  });
+}, urlState.format, 'false');
+if (updateEditionLink) {
+  map.on('moveend zoomend', updateEditionLink);
+  plan.on('waypointschanged', updateEditionLink);
+  lrmControl.on('routeselected', updateEditionLink);
+  toolsControl.on('languagechanged unitschanged', updateEditionLink);
+}
+var updateMapControlLanguage = require('./map_control_localization');
+function refreshMapControlLanguage() {
+  updateMapControlLanguage(map, layersControl, locationControl, state.options.language);
+}
+toolsControl.on('languagechanged', function(event) {
+  updateMapControlLanguage(map, layersControl, locationControl, event.language);
+});
+map.on('baselayerchange overlayadd overlayremove', refreshMapControlLanguage);
+refreshMapControlLanguage();
+
 // Zoom to z14 when the user's location is found, but only if no route is computed.
 var createLocationFoundHandler = require('./location_handler');
 map.on('locationfound', createLocationFoundHandler(map, lrmControl));
 
 // Mark successful startup so the runtime watchdog does not show the error overlay
 window.__osrm_app_loaded = true;
+window.dispatchEvent(new Event('osrm:ready'));

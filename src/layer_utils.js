@@ -26,4 +26,23 @@ function handleBaselayerChange(e, ls, state, opts) {
   }
 }
 
-module.exports = { handleBaselayerChange: handleBaselayerChange };
+function resolveLayerByName(layers, name) {
+  if (!layers || !name) return undefined;
+  if (layers[name]) return layers[name];
+  var lower = String(name).toLowerCase();
+  var keys = Object.keys(layers);
+  var exact = keys.find(function(key) {
+    return key.toLowerCase() === lower;
+  });
+  if (exact) return layers[exact];
+  var dark = layers['Dark Vector'] || layers.Standard;
+  if (lower === 'standard' || lower === 'vector') return dark;
+  if (lower === 'streets') return dark || layers.OpenStreetMap;
+  if (lower === 'openstreetmap.org' || lower === 'osm.org' || lower === 'openstreetmap') return layers.OpenStreetMap || layers['openstreetmap.org'];
+  if (lower === 'osm.de') return layers['OpenStreetMap.de'] || layers['openstreetmap.de'];
+  return Object.values(layers).find(function(layer) {
+    return layer && layer.options && layer.options.id === name;
+  });
+}
+
+module.exports = { handleBaselayerChange: handleBaselayerChange, resolveLayerByName: resolveLayerByName };

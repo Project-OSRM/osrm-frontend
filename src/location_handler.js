@@ -1,5 +1,7 @@
 'use strict';
 
+var mobileViewport = require('./mobile_viewport');
+
 module.exports = function createLocationFoundHandler(map, lrmControl) {
   return function(e) {
     try {
@@ -13,7 +15,7 @@ module.exports = function createLocationFoundHandler(map, lrmControl) {
       }
 
       if (!hasRoute) {
-        map.setView(latlng, 14);
+        map.setView(mobileViewport.centerForTarget(map, latlng, 14), 14);
       }
     } catch (err) {
       console.error('Error in locationfound handler:', err);

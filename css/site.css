@@ -36,6 +36,8 @@
     left: 0;
 }
 
+.leaflet-control-layers label[hidden] { display: none; }
+
 /* tool colors and divs */
 .fill-osrm {
   background-color: rgba(37,72,127, 0.8);
@@ -449,6 +451,13 @@
     box-sizing: border-box;
 }
 
+.osrm-access-legend { display: flex; flex-wrap: wrap; clear: both; gap: 4px 12px; padding: 7px 2px 0; font-size: 11px; line-height: 1.4; }
+.osrm-access-legend[hidden] { display: none; }
+.osrm-access-legend-entry { display: inline-flex; align-items: center; gap: 5px; }
+.osrm-access-swatch { display: inline-block; flex: none; width: 18px; height: 2px; }
+.osrm-access-swatch.restricted { background: repeating-linear-gradient(to right, #d19398 0 2px, transparent 2px 8px); }
+.osrm-access-swatch.limited { background: repeating-linear-gradient(to right, #d0b784 0 5px, transparent 5px 10px); }
+
 .leaflet-osrm-mode-selector .osrm-profile-chooser {
     background: transparent;
     border: none;
@@ -476,6 +485,7 @@
 .leaflet-osrm-mode-selector .osrm-profile-chooser:focus {
     outline: none;
 }
+
 
 .leaflet-osrm-tools-hide
 {
@@ -699,6 +709,12 @@
    opacity: 0.5;
 }
 
+/* Keep route strokes at their screen width while Leaflet scales SVG geometry
+   during wheel, pinch, and animated zooms. Applies to casings and alternatives. */
+.leaflet-overlay-pane svg path {
+  vector-effect: non-scaling-stroke;
+}
+
 /* Instructions */
 .osrm-directions-steps {
     position: relative;
@@ -833,6 +849,19 @@ td.distance {
 .leaflet-routing-alt-minimized .leaflet-routing-icon {
     background-image: url('../images/osrm.directions.icons.color.svg');
 }
+
+.osrm-route-preferences {
+  clear: both;
+  padding-top: 8px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.osrm-route-preferences summary { cursor: pointer; }
+.osrm-route-preferences label { display: block; margin-top: 8px; }
+.osrm-route-preferences label > span { margin-right: 6px; }
+.osrm-route-preferences input[type="text"] { box-sizing: border-box; width: 100%; }
+.osrm-route-preferences small { display: block; color: #555; }
 
 .leaflet-routing-icon-continue         { background-position: 2px 0px; }
 .leaflet-routing-icon-sharp-right      { background-position: -24px 0px; }

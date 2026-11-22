@@ -172,3 +172,38 @@ describe('docker entrypoint runtime config', () => {
     expect(JSON.parse(config.OSRM_MODES)).toEqual(JSON.parse(modes));
   });
 });
+
+test('passes vector background settings through runtime configuration', () => {
+  const config = generateConfig({
+    OSRM_VECTOR_STYLE: 'https://tiles.example/style.json',
+    OSRM_VECTOR_NAME: 'Local vector',
+    OSRM_VECTOR_ATTRIBUTION: '© Local provider'
+  });
+  expect(config.OSRM_VECTOR_STYLE).toBe('https://tiles.example/style.json');
+  expect(config.OSRM_VECTOR_NAME).toBe('Local vector');
+  expect(config.OSRM_VECTOR_ATTRIBUTION).toBe('© Local provider');
+  expect(config.OSRM_DEFAULT_LAYER).toBe('vector');
+});
+
+test('prefers a configured vector background over the raster fallback by default', () => {
+  const settings = {
+    OSRM_VECTOR_STYLE: '/styles/local.json',
+    OSRM_TILE_URL: '/tiles/{z}/{x}/{y}.png'
+  };
+  expect(generateConfig(settings).OSRM_DEFAULT_LAYER).toBe('vector');
+  expect(generateConfig({ ...settings, OSRM_DEFAULT_LAYER: 'custom' }).OSRM_DEFAULT_LAYER).toBe('custom');
+});
+
+test('configures the dark vector theme by default and permits original provider styling', () => {
+  expect(generateConfig({ OSRM_VECTOR_STYLE: '/style.json' }).OSRM_VECTOR_THEME).toBe('dark');
+  expect(generateConfig({ OSRM_VECTOR_STYLE: '/style.json', OSRM_VECTOR_THEME: 'original' }).OSRM_VECTOR_THEME).toBe('original');
+});
+
+test('passes per-mode component tile templates and explicit disabled capability through Docker config', () => {
+  const modes = [
+    { name: 'Car', url: '/proxy', path: '/custom/routes', tileUrl: '/proxy/tile/v1/{profile}/tile({x},{y},{z}).mvt' },
+    { name: 'Foot', url: '/foot', tileUrl: false }
+  ];
+  const config = generateConfig({ OSRM_MODES: JSON.stringify(modes) });
+  expect(JSON.parse(config.OSRM_MODES)).toEqual(modes);
+});

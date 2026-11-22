@@ -18,6 +18,11 @@ var language_mapping = {
 };
 
 module.exports = {
+  setDocumentLanguage: function(language) {
+    if (typeof document === 'undefined') return;
+    document.documentElement.lang = language || 'en';
+    document.documentElement.dir = language === 'fa' ? 'rtl' : 'ltr';
+  },
   getLanguages: function() {
     var languages = {};
     for (var key in language_mapping) {

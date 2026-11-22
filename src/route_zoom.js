@@ -16,32 +16,30 @@ function getBoundsCoordinates(routes, fallbackRoute) {
   return coordinates;
 }
 
-// Reports whether any part of the route runs into the directions pane. The route
-// must never disappear underneath the pane, so a drag that pushes it there still
-// refits the view even though drags otherwise leave the view alone.
-//
-// containerPoints are the route coordinates projected to container pixels,
-// mapSize is the map's pixel size, paneWidth the width of the directions pane
-// on the right edge (0 when the pane is hidden). A point counts as covered when
-// it falls inside the pane's rectangle: right of the pane's left edge and still
-// within the viewport. Points beyond the viewport are out of sight rather than
-// covered, and a route that reaches them crosses the pane's rectangle on its way
-// out, so it is caught by the points in between.
-function isRouteUnderPane(containerPoints, mapSize, paneWidth) {
-  if (!containerPoints || !containerPoints.length) return false;
-  if (!mapSize || !paneWidth || paneWidth <= 0) return false;
+// Insets describe the part of the full map covered by the directions pane.
+// Numeric values retain compatibility with the classic right-side pane.
+function normalizePaneInsets(value) {
+  if (typeof value === 'number') return { left: 0, right: value, top: 0, bottom: 0 };
+  return Object.assign({ left: 0, right: 0, top: 0, bottom: 0 }, value);
+}
 
-  var paneLeft = mapSize.x - paneWidth;
+function getPaneInsets(mapSize, paneSize, themed) {
+  var insets = normalizePaneInsets();
+  if (!paneSize || !paneSize.width || !paneSize.height) return insets;
+  if (themed && paneSize.width >= mapSize.x - 1) insets.bottom = Math.min(paneSize.height, mapSize.y);
+  else if (themed) insets.left = Math.min(paneSize.width, mapSize.x);
+  else insets.right = Math.min(paneSize.width, mapSize.x);
+  return insets;
+}
 
-  for (var i = 0; i < containerPoints.length; i++) {
-    var point = containerPoints[i];
-    if (!point) continue;
-    if (point.x > paneLeft && point.x <= mapSize.x && point.y >= 0 && point.y <= mapSize.y) {
-      return true;
-    }
-  }
-
-  return false;
+function isRouteUnderPane(containerPoints, mapSize, paneInsets) {
+  if (!containerPoints || !containerPoints.length || !mapSize) return false;
+  var insets = normalizePaneInsets(paneInsets);
+  return containerPoints.some(function(point) {
+    if (!point || point.x < 0 || point.x > mapSize.x || point.y < 0 || point.y > mapSize.y) return false;
+    return point.x < insets.left || point.x > mapSize.x - insets.right ||
+      point.y < insets.top || point.y > mapSize.y - insets.bottom;
+  });
 }
 
 // Tracks whether the map view should follow waypoint changes.
@@ -99,6 +97,8 @@ function createRouteFitTracker() {
 
 module.exports = {
   getBoundsCoordinates: getBoundsCoordinates,
+  normalizePaneInsets: normalizePaneInsets,
+  getPaneInsets: getPaneInsets,
   isRouteUnderPane: isRouteUnderPane,
   createRouteFitTracker: createRouteFitTracker
 };

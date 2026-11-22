@@ -394,3 +394,10 @@ describe('entranceCenters', () => {
     expect(picker.entranceCenters(choices)).toHaveLength(2);
   });
 });
+
+test('keeps entrance extents out of left and bottom translucent panes', () => {
+  const size = { x: 1000, y: 800 };
+  expect(picker.isExtentClear({ x: 100, y: 100 }, { x: 600, y: 500 }, size, { left: 360 })).toBe(false);
+  expect(picker.isExtentClear({ x: 400, y: 100 }, { x: 800, y: 500 }, size, { left: 360 })).toBe(true);
+  expect(picker.isExtentClear({ x: 100, y: 100 }, { x: 600, y: 600 }, size, { bottom: 300 })).toBe(false);
+});

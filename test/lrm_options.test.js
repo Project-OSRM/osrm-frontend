@@ -1,5 +1,10 @@
 'use strict';
 
+jest.mock('../src/small_components', () => ({ createLayer: () => ({ _url: 'OSRM component tiles', setService: jest.fn() }) }));
+
+jest.mock('../src/vector_layer', () => ({ createLayer: (style, options) => ({ _url: style, style, options, _options: options }) }));
+jest.mock('../src/vector_backgrounds', () => require('./__vector_backgrounds'));
+
 /**
  * The connector Leaflet Routing Machine draws between a waypoint and the point
  * the route actually reaches — the walk across a forecourt, or from a pin

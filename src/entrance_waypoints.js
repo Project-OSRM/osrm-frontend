@@ -242,6 +242,7 @@ function createEntranceWaypoints(options) {
     translate: translate,
     fetchOutline: options.fetchOutline,
     paneWidth: options.paneWidth,
+    viewInsets: options.viewInsets,
     onSelect: applySelection
   });
 

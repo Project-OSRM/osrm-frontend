@@ -17,20 +17,19 @@ function markup(i, n) {
 }
 
 describe('waypoint pin geometry', () => {
-  test('every pin keeps the size and anchor of the bitmaps it replaces', () => {
-    // The anchor is the tip of the pin, so changing these moves every marker
-    // off its waypoint.
+  test('enlarges every map pin by 50 percent while scaling its tip anchor equally', () => {
+    // Scale the artwork and its anchor together so the tip stays on the waypoint.
     for (const [i, n] of [[0, 2], [1, 2], [1, 3], [0, 5], [4, 5]]) {
       const options = marker.waypointIconOptions(i, n);
-      expect(options.iconSize).toEqual([20, 56]);
-      expect(options.iconAnchor).toEqual([10, 28]);
+      expect(options.iconSize).toEqual([30, 84]);
+      expect(options.iconAnchor).toEqual([15, 42]);
     }
   });
 
   test('the returned arrays are copies, so a caller cannot reshape later pins', () => {
     const first = marker.waypointIconOptions(0, 2);
     first.iconSize[0] = 999;
-    expect(marker.waypointIconOptions(0, 2).iconSize).toEqual([20, 56]);
+    expect(marker.waypointIconOptions(0, 2).iconSize).toEqual([30, 84]);
   });
 });
 

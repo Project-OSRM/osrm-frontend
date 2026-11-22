@@ -1,0 +1,147 @@
+--- a/src/index.js
++++ b/src/index.js
+@@ -36,6 +36,8 @@
+ var locate = require('leaflet.locatecontrol');
+ var options = require('./lrm_options');
+ var urlState = require('./url_state');
++var mapEdition = require('./map_edition');
++var routePreferences = require('./route_preferences');
+ var leafletOptions = require('./leaflet_options');
+ var ls = require('local-storage');
+ var tools = require('./tools');
+@@ -108,6 +110,8 @@
+     // Non-string or missing -> ignore URL layer and use default
+     baselayer = leafletOptions.defaultState.layer;
+   }
++} else if (parsedOptions.keepView) {
++  baselayer = leafletOptions.defaultState.layer;
+ } else {
+   var storedLayerName = ls.get('layer');
+   if (storedLayerName) {
+@@ -176,9 +180,10 @@
+ var bikeOverlayAutoActivated = _initResult.bikeOverlayAutoActivated;
+ var map = L.map('map', {
+   zoomControl: true,
++  zoomSnap: parsedOptions.keepView ? 0 : 1,
+   dragging: true,
+   layers: layers,
+-  maxZoom: 18
++  maxZoom: mapEdition.classicMaxZoom
+ }).setView(mergedOptions.center, mergedOptions.zoom);
+
+ // Pass basemap layers
+@@ -419,6 +424,11 @@
+
+ var router = (new L.Routing.OSRMv1(controlOptions));
+ routerPatches.applyPatches(router);
++
++function applyEditionRoutingPreferences(values) {
++  routePreferences.applyToRouter(router, Object.assign({ allowUTurns: null }, values));
++}
++applyEditionRoutingPreferences(mergedOptions);
+ // Dragging routes continuously, and the public demo servers answer a burst of
+ // that with 429s that LRM turns into a cleared route line. Back off the live
+ // preview when the service starts refusing; the route on drag end still runs.
+@@ -498,7 +508,7 @@
+     // When applying a restored state we need to suppress emitting new history
+     // entries from the event handlers in State (waypoint/map changes etc.).
+     try {
+-      var mergedState = L.extend({}, leafletOptions.defaultState, parsed);
++      var mergedState = L.extend({}, leafletOptions.defaultState, { vectorZoom: undefined }, parsed);
+
+       // Temporarily suppress history writes while applying the restored state
+       try {
+@@ -534,6 +544,8 @@
+           console.error('Error applying units from history:', e);
+         }
+       }
++
++      applyEditionRoutingPreferences(mergedState);
+
+       // Apply profile/service selection
+       if (parsed && parsed.profile !== undefined && parsed.profile !== null) {
+@@ -709,6 +721,7 @@
+
+ // Decides whether the next route or geocode result may move the map view
+ var routeFitTracker = routeZoom.createRouteFitTracker();
++var keepInitialView = mapEdition.holdInitialView(parsedOptions.keepView, plan, lrmControl);
+
+ // Show pane when route is computed
+ lrmControl.on('routesfound', function(e) {
+@@ -907,6 +920,11 @@
+   };
+   toolsControl.setRouteGeoJSON(routeGeoJSON);
+
++  if (keepInitialView()) {
++    routeFitTracker.clearFitPending();
++    return;
++  }
++
+   // Fit/pan: adjust the map view to the newly selected route
+   var boundsCoordinates = routeZoom.getBoundsCoordinates(lrmControl && lrmControl._routes, route);
+   if (boundsCoordinates.length === 0) {
+@@ -1006,5 +1024,15 @@
+ var createLocationFoundHandler = require('./location_handler');
+ map.on('locationfound', createLocationFoundHandler(map, lrmControl));
+
++var updateEditionLink = mapEdition.attach(document, window.location, function() {
++  return Object.assign({}, state.get(), { center: map.getCenter(), zoom: map.getZoom() });
++}, urlState.format, 'default');
++if (updateEditionLink) {
++  map.on('moveend zoomend', updateEditionLink);
++  plan.on('waypointschanged', updateEditionLink);
++  lrmControl.on('routeselected', updateEditionLink);
++  toolsControl.on('languagechanged unitschanged', updateEditionLink);
++}
++
+ // Mark successful startup so the runtime watchdog does not show the error overlay
+ window.__osrm_app_loaded = true;
+--- a/src/links.js
++++ b/src/links.js
+@@ -3,6 +3,8 @@
+ var L = require('leaflet');
+ var qs = require('qs');
+ var jsonp = require('jsonp');
++var routePreferences = require('./route_preferences');
++var mapEdition = require('./map_edition');
+
+ function _formatCoord(latLng) {
+   var precision = 6;
+@@ -65,7 +67,11 @@
+     scale: options.units,
+     ly: _formatLayer(options.layer),
+     srv: options.service,
+-    profile: options.profile
++    profile: options.profile,
++    exclude: routePreferences.normalize(options).exclude || undefined,
++    u: options.allowUTurns === true ? 'true' : options.allowUTurns === false ? 'false' : undefined,
++    view: options.keepView ? 'keep' : undefined,
++    vz: options.vectorZoom
+   }, {indices: false});
+ }
+
+@@ -76,7 +82,9 @@
+     options = {},
+     k;
+   try {
+-    if (q.z !== undefined && q.z !== null) parsedValues.zoom = _parseInteger(q.z);
++    if (q.z !== undefined && q.z !== null) {
++      parsedValues.zoom = q.view === 'keep' && q.center && Number.isFinite(Number(q.z)) ? Number(q.z) : _parseInteger(q.z);
++    }
+     parsedValues.center = q.center && _parseCoord(q.center);
+     if (q.loc) {
+       if (q.loc.constructor === Array) {
+@@ -95,6 +103,13 @@
+     parsedValues.layer = q.ly;
+     parsedValues.service = q.srv;
+     parsedValues.profile = q.profile;
++    if (typeof q.exclude === 'string') parsedValues.exclude = routePreferences.normalize({ exclude: q.exclude }).exclude;
++    if (q.u === 'true' || q.u === '1') parsedValues.allowUTurns = true;
++    else if (q.u === 'false' || q.u === '0') parsedValues.allowUTurns = false;
++    if (q.view === 'keep' && parsedValues.center && parsedValues.zoom !== undefined) {
++      parsedValues.keepView = true;
++      parsedValues.vectorZoom = mapEdition.parseVectorZoom(q.vz);
++    }
+     parsedValues.originAddress = q.src;
+     parsedValues.destinationAddress = q.dst;
+   } catch (e) {

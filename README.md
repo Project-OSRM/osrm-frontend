@@ -7,16 +7,24 @@ If you need a simple OSRM integration in your webpage, you should start from the
 
 ## Deploying the demo to GitHub Pages
 
-The `Deploy demo to GitHub Pages` workflow builds and publishes `dist/` on each
+The `Deploy demo to GitHub Pages` workflow builds and publishes `dist-demo/` on each
 push to `gh-pages`, including every pull request merge. Lint, build and tests must
 pass before the site is uploaded and deployed. You can also run it from the
 Actions tab with `gh-pages` selected;
 other branches are skipped. Deployment runs are serialized, and the published
 URL appears in the `github-pages` deployment environment.
 
-This hosts the static demo, including `debug/`; routing, geocoding and tiles
-still use the public services configured in the frontend. Build output is
-uploaded as an artifact, without committing generated files to `gh-pages`.
+The classic demo remains the default at `/`. The new vector demo is available
+at `/new/`. Both include their own `debug/` viewer and use the public services
+configured in the frontend. The links between editions carry stops, routing
+settings and the current map view.
+
+Run `npm run build` followed by `npm run assemble:demo-site` from a clone that
+contains the classic commit pinned in `scripts/build_demo_site.sh`. The
+assembly step builds the classic source with `deploy/classic-demo.patch` and
+combines it with the vector build. Serve `dist-demo/` with a static server to
+check both paths before publishing. GitHub Actions uploads this directory
+without committing generated files to `gh-pages`.
 
 ### One-time setup
 
@@ -77,6 +85,7 @@ with the following fields:
 | `url`      | yes      | Backend base URL. `/route/v1` is appended unless `path` is set. |
 | `path`     | no       | Explicit routing path, e.g. `https://routing.openstreetmap.de/routed-bike/route/v1`. |
 | `profile`  | no       | Internal profile (`driving`, `bike`, `foot`). Defaults by position: 0 → driving, 1 → bike, 2 → foot. |
+| `tileUrl` | no | Component vector tile URL template with `{x}`, `{y}`, `{z}` and optional `{profile}`. Set `false` to disable tiles for this mode. Standard `/route/v1` paths infer the sibling `/tile/v1` endpoint; custom paths require this field. |
 | `debugUrl` | no       | Debug map opened by the "Open in Debug Map" tool button while this mode is active. Defaults to the bundled `debug/`. |
 
 ```bash
@@ -100,6 +109,63 @@ docker run -p 9966:9966 \
 1. If only `OSRM_BACKEND` is set, the frontend configures one backend and emits a deprecation warning.
 2. If only `OSRM_MODES` is set, the frontend parses the JSON and configures the listed modes.
 3. If both are set, `OSRM_MODES` wins and the frontend emits a deprecation warning for `OSRM_BACKEND`.
+
+### Vector backgrounds
+
+The static demo uses Shortbread vector tiles from `vector.openstreetmap.org`.
+OpenStreetMap and Dark Vector share one renderer and tile cache: switching between
+them changes the palette without reloading tiles. Switching to another provider
+hides and pauses the vector renderer, retaining its loaded tiles for the return
+trip. The cache lasts for the current page session. Dark Vector uses the dark palette;
+OpenStreetMap uses the original light style. Docker defaults to the classic
+CARTO Streets raster layer. Set `OSRM_VECTOR_STYLE` to opt in to a vector source.
+
+Set `OSRM_VECTOR_STYLE` to an HTTP(S) or root-relative MapLibre style JSON URL,
+or `images/openstreetmap/style.json` for the built-in shared OSM backgrounds.
+The style specifies vector tile sources, fonts, sprites and their attribution.
+`OSRM_VECTOR_NAME` names the layer in the layer control (default: `Dark Vector`);
+`OSRM_VECTOR_ATTRIBUTION` adds any required provider credit. Set these keys in
+`window.osrmConfig` for a static deployment, or as Docker environment variables.
+
+```bash
+docker run -p 9966:9966 \
+  -e OSRM_VECTOR_STYLE=https://tiles.example.com/style.json \
+  -e OSRM_VECTOR_NAME='Local vector' \
+  ghcr.io/project-osrm/osrm-frontend:latest
+```
+
+Dark Vector uses the configured vector style with the selected theme. OpenStreetMap
+shares the built-in Shortbread source with Dark Vector in the static demo. The
+layer menu lists OpenStreetMap, Dark Vector, OpenStreetMap.de, Satellite and Outdoors,
+in that order (Dark Vector appears when configured). OpenStreetMap is the demo default.
+
+The renderer loads when a vector background is selected. A coarse grid sits
+behind the first view while vector tiles load. If the renderer or style fails,
+the layer control offers other backgrounds and the loading message offers a
+retry. Styles hosted on another origin must allow CORS requests for the style
+and its tile, font and sprite resources. A configured vector background is the
+default unless `OSRM_DEFAULT_LAYER` selects another layer.
+
+Dark Vector uses a dark slate palette with blue water and muted green land cover.
+The translucent grey directions sidebar has blue route cards, expandable
+instructions and selectable duration labels on the map.
+The sidebar stays beside the map on desktop and becomes a bottom sheet on smaller
+screens. The map extends behind the translucent panel; route and entrance fitting reserve
+the unobscured area beside the sidebar or above the mobile sheet.
+Set `OSRM_VECTOR_THEME=original` to keep the provider's original colors and the
+classic interface. The dark theme preserves vector source attribution, fonts,
+labels and road geometry; it removes raster backdrop layers from the vector style.
+
+### Route options
+
+Open **Route options** below the waypoint inputs to exclude a comma-separated list
+of road classes, such as `motorway,toll,ferry`, or allow U-turns at via points.
+The backend's routing profile determines which classes and combinations it supports;
+unsupported exclusions are reported as routing errors. By default no classes are
+excluded and routes continue straight at via points where possible.
+
+These settings travel in shared links as `exclude=motorway,toll` and `u=true`.
+Browser Back and Forward restore them along with the waypoints.
 
 ### Backends behind HTTP authentication
 
@@ -216,14 +282,18 @@ shown as radio buttons in the map's layer control (bottom-left corner).
 
 | Label | Source | Max zoom |
 |-------|--------|----------|
-| Streets | [CartoDB Voyager](https://carto.com/) | 19 |
-| Outdoors | [OpenTopoMap](https://opentopomap.org/) | 17 |
+| OpenStreetMap | [OSM Shortbread vector](https://vector.openstreetmap.org/styles/shortbread/) (demo default) | 22 |
+| Dark Vector | [OSM Shortbread vector](https://vector.openstreetmap.org/) with dark palette (static demo) | 22 |
+| OpenStreetMap.de | [OSM.de](https://openstreetmap.de/) | 19 |
 | Satellite | [ESRI World Imagery](https://www.esri.com/) | 19 |
-| openstreetmap.org | [OSM](https://openstreetmap.org/) | 19 |
-| openstreetmap.de | [OSM.de](https://openstreetmap.de/) | 19 |
+| Outdoors | [OpenTopoMap](https://www.opentopomap.org/) | 17 |
 
 **Changing the default layer for Docker deployments:**
-Set `OSRM_DEFAULT_LAYER` to one of: `streets`, `outdoors`, `satellite`, `osm`, `osm_de`.
+Docker uses CARTO Voyager for `streets` and OpenStreetMap raster tiles for `osm`.
+Set `OSRM_CARTO_KEY` to your deployment's CARTO key for Streets. Set
+`OSRM_DEFAULT_LAYER` to `osm`, `outdoors`, `satellite`, or `osm_de` to select
+another raster layer. With `OSRM_VECTOR_STYLE` configured, the vector style
+becomes the default and is also available as `vector`, `dark_vector`, or `standard`.
 ```bash
 docker run -p 9966:9966 -e OSRM_DEFAULT_LAYER=satellite ghcr.io/project-osrm/osrm-frontend:latest
 ```
@@ -261,7 +331,7 @@ var myTiles = L.tileLayer('https://example.com/tiles/{z}/{x}/{y}.png', {
 // In the leafletOptions object:
 layer: [{
     'My Custom Map': myTiles,
-    'Streets': streets,
+    'OpenStreetMap': osm,
     'Outdoors': outdoors,
     // ... other layers
 }]
@@ -276,9 +346,27 @@ appear as checkboxes in the layer control.
 |---------|--------|-------------|
 | Hiking | [Waymarked Trails](https://waymarkedtrails.org/) | Hiking routes overlay (CC-BY-SA) |
 | Bike | [Waymarked Trails](https://waymarkedtrails.org/) | Cycling routes overlay (CC-BY-SA). **Auto-activated** when a bike profile is selected. |
-| Small Components | [GeoFabrik OSM Inspector](https://tools.geofabrik.de/osmi/tiles/routing/) | Debug overlay highlighting small disconnected road segments. Useful for checking OSM data quality. |
+| Small Components | Active OSRM backend, `speeds` vector layer | Highlights only segments with boolean `is_small: true`, using the selected mode’s graph and extraction threshold. Available at Leaflet zoom 13 and above (OSRM tile zoom 12). |
 
-The user's overlay preference is saved in localStorage and restored on reload.
+The Small Components checkbox is saved separately from the trail overlays and
+restored on reload, including when Bike is auto-enabled. Changing modes or
+restoring a mode from browser history updates the tile source without changing
+the checkbox. This layer does not use OSM Inspector diagnostics: legitimate
+connected dead ends are not highlighted merely for having an endpoint.
+
+For a reverse proxy, `/proxy/route/v1` resolves to
+`/proxy/tile/v1/{profile}/tile({x},{y},{z}).mvt`. Custom routing paths should set
+an explicit per-mode template, for example:
+
+```json
+[{"name":"Car","url":"https://router.example/proxy","path":"https://router.example/custom/route","profile":"driving","tileUrl":"https://router.example/proxy/tile/v1/{profile}/tile({x},{y},{z}).mvt"}]
+```
+
+The same `OSRM_MODES` JSON works in `window.osrmConfig`, the Docker environment,
+or a mounted `modes.json`; Docker passes through `tileUrl` without rewriting it.
+Use `"tileUrl": false` when a backend does not expose vector tiles. Unsupported
+or failing tile services display an unavailable message, with no external
+fallback. A mode's `debugUrl` is independent of its `tileUrl`.
 
 **Adding custom overlays:** Define a `L.tileLayer` and add an entry to the
 `overlay` object in `src/leaflet_options.js`:

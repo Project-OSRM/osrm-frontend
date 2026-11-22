@@ -15,6 +15,10 @@ OSRM_CARTO_KEY="${OSRM_CARTO_KEY:-}"
 OSRM_TILE_URL="${OSRM_TILE_URL:-}"
 OSRM_TILE_NAME="${OSRM_TILE_NAME:-}"
 OSRM_TILE_ATTRIBUTION="${OSRM_TILE_ATTRIBUTION:-}"
+OSRM_VECTOR_STYLE="${OSRM_VECTOR_STYLE:-}"
+OSRM_VECTOR_NAME="${OSRM_VECTOR_NAME:-}"
+OSRM_VECTOR_ATTRIBUTION="${OSRM_VECTOR_ATTRIBUTION:-}"
+OSRM_VECTOR_THEME="${OSRM_VECTOR_THEME:-dark}"
 # Empty by default: the frontend then offers the bundled Nominatim instance.
 # Set to a JSON array of {"name","url"} to choose the geocoders on offer; an
 # entry with an empty url contacts nothing and names waypoints by coordinates.
@@ -23,7 +27,9 @@ OSRM_GEOCODERS="${OSRM_GEOCODERS:-}"
 # A deployment naming its own tile server usually cannot reach the public
 # providers either, so make that layer the default unless the operator picked
 # one. "streets" is the image default, so it reads as "not specified" here.
-if [ -n "$OSRM_TILE_URL" ] && [ "$OSRM_DEFAULT_LAYER" = "streets" ]; then
+if [ -n "$OSRM_VECTOR_STYLE" ] && [ "$OSRM_DEFAULT_LAYER" = "streets" ]; then
+  OSRM_DEFAULT_LAYER=vector
+elif [ -n "$OSRM_TILE_URL" ] && [ "$OSRM_DEFAULT_LAYER" = "streets" ]; then
   OSRM_DEFAULT_LAYER=custom
 fi
 
@@ -83,6 +89,10 @@ cat > /usr/share/nginx/html/config.json << EOF
   "OSRM_TILE_URL": "$(escape_json "$OSRM_TILE_URL")",
   "OSRM_TILE_NAME": "$(escape_json "$OSRM_TILE_NAME")",
   "OSRM_TILE_ATTRIBUTION": "$(escape_json "$OSRM_TILE_ATTRIBUTION")",
+  "OSRM_VECTOR_STYLE": "$(escape_json "$OSRM_VECTOR_STYLE")",
+  "OSRM_VECTOR_NAME": "$(escape_json "$OSRM_VECTOR_NAME")",
+  "OSRM_VECTOR_ATTRIBUTION": "$(escape_json "$OSRM_VECTOR_ATTRIBUTION")",
+  "OSRM_VECTOR_THEME": "$(escape_json "$OSRM_VECTOR_THEME")",
   "OSRM_GEOCODERS": "$(escape_json "$OSRM_GEOCODERS")",
   "OSRM_MODES": "$(escape_json "$MODES_JSON")"
 }
