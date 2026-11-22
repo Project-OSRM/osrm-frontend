@@ -36,13 +36,15 @@ function urlOf(element) {
   return /url\(["']?([^"')]+)["']?\)/.exec(element.style.backgroundImage)[1];
 }
 
-// A plan that does what the real one does on setWaypoints: announces the change,
-// rebuilds its rows and wires them again.
+// A plan that does what the real one does: setWaypoints announces the change
+// and rebuilds the rows, wiring them again; _fireChanged only announces it.
 function fakePlan(count, language) {
   const plan = {
     options: { language: language || 'en' },
     _waypoints: Array.from({ length: count }, (_, i) => ({ name: 'wp' + i, latLng: { lat: i, lng: i } })),
     events: [],
+    rebuildCount: 0,
+    markerUpdateCount: 0,
     fire(type, data) {
       this.events.push({ type, data });
     },
@@ -51,10 +53,17 @@ function fakePlan(count, language) {
     },
     setWaypoints(waypoints) {
       this._waypoints = waypoints;
-      this.fire('waypointschanged');
+      this._fireChanged();
       this.rebuild();
     },
+    _fireChanged() {
+      this.fire('waypointschanged', { waypoints: this.getWaypoints() });
+    },
+    _updateMarkers() {
+      this.markerUpdateCount++;
+    },
     rebuild() {
+      this.rebuildCount++;
       if (this._geocoderContainer) this._geocoderContainer.remove();
       const container = document.createElement('div');
       document.body.appendChild(container);
@@ -158,12 +167,46 @@ describe('pressing the toggle', () => {
     expect(plan._waypoints[0].options).toEqual({ entrance: 'main', approach: 'curb' });
   });
 
-  test('sets the same waypoint objects again, so the plan routes and redraws', () => {
+  test('changes the waypoint objects in place, so the plan routes and redraws', () => {
     const plan = fakePlan(2);
     const before = plan.getWaypoints();
     click(toggle(plan, 1));
     plan.getWaypoints().forEach((wp, i) => expect(wp).toBe(before[i]));
     expect(plan.events.map(e => e.type)).toContain('waypointschanged');
+    expect(plan.markerUpdateCount).toBe(1);
+  });
+
+  test('does not rebuild the rows', () => {
+    const plan = fakePlan(3);
+    const rowsBefore = rows(plan._geocoderContainer);
+    const rebuildsBefore = plan.rebuildCount;
+    click(toggle(plan, 1));
+    key(toggle(plan, 1), 'Enter');
+    expect(plan.rebuildCount).toBe(rebuildsBefore);
+    rows(plan._geocoderContainer).forEach((row, i) => expect(row).toBe(rowsBefore[i]));
+  });
+
+  test('keeps address text typed but not submitted, in its own row and the others', () => {
+    const plan = fakePlan(3);
+    const inputs = rows(plan._geocoderContainer).map(row => row.querySelector('input'));
+    inputs[0].value = 'Alexanderplatz';
+    inputs[2].value = 'Potsdamer Pl';
+    click(toggle(plan, 0));
+    key(toggle(plan, 0), 'Enter');
+    key(toggle(plan, 2), ' ');
+    expect(rows(plan._geocoderContainer).map(row => row.querySelector('input').value))
+      .toEqual(['Alexanderplatz', 'wp1', 'Potsdamer Pl']);
+    expect(plan.approachesNow()).toEqual(['opposite', 'unrestricted', 'curb']);
+  });
+
+  test('changes the approach of a waypoint that has no place yet', () => {
+    const plan = fakePlan(2);
+    plan._waypoints[1] = { name: '', latLng: null };
+    plan.rebuild();
+    rows(plan._geocoderContainer)[1].querySelector('input').value = 'Potsdamer Pl';
+    click(toggle(plan, 1));
+    expect(plan.approachesNow()).toEqual(['unrestricted', 'curb']);
+    expect(rows(plan._geocoderContainer)[1].querySelector('input').value).toBe('Potsdamer Pl');
   });
 
   test('announces the change before the waypoints change', () => {
@@ -174,20 +217,30 @@ describe('pressing the toggle', () => {
     expect(plan.events[0].data).toEqual({ index: 2, approach: 'curb' });
   });
 
-  test('the rebuilt row shows the new approach and its label', () => {
+  test('the row shows the new approach and its label', () => {
     const plan = fakePlan(2);
     click(toggle(plan, 0));
     expect(toggle(plan, 0).getAttribute('data-approach')).toBe('curb');
     expect(toggle(plan, 0).getAttribute('aria-label')).toMatch(/curb side/);
   });
 
-  test('focus stays on the toggle of the same row', () => {
+  test('the row\'s pin shows the new approach', () => {
     const plan = fakePlan(3);
     click(toggle(plan, 1));
+    const pin = rows(plan._geocoderContainer)[1].querySelector('.' + reorder.PIN_CLASS);
+    expect(urlOf(pin)).toBe(marker.panelIconUrlFor(1, 3, 'curb'));
+  });
+
+  test('focus stays on the toggle of the same row', () => {
+    const plan = fakePlan(3);
+    toggle(plan, 1).focus();
+    click(toggle(plan, 1));
+    expect(document.activeElement).toBe(toggle(plan, 1));
+    key(toggle(plan, 1), 'Enter');
     expect(document.activeElement).toBe(toggle(plan, 1));
   });
 
-  test('the rebuilt rows can be pressed again', () => {
+  test('the rows can be pressed again', () => {
     const plan = fakePlan(2);
     click(toggle(plan, 0));
     click(toggle(plan, 1));

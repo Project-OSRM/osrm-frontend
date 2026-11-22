@@ -7,9 +7,10 @@
 // keyboard focus, and Enter or Space presses it, so choosing an approach does
 // not depend on a pointer.
 //
-// The rows are rebuilt by Leaflet Routing Machine every time the waypoints
-// change, so nothing here holds on to a row: attachToPlan runs after every
-// rebuild and wires whatever rows are there now.
+// Leaflet Routing Machine rebuilds the rows when waypoints are added, removed
+// or reordered, so nothing here holds on to a row: attachToPlan runs after
+// every rebuild and wires whatever rows are there now. Pressing a toggle does
+// not rebuild them, so address text typed but not yet submitted stays put.
 
 var L = require('leaflet');
 var approaches = require('./approaches');
@@ -68,42 +69,51 @@ function renderPin(row, index, count, approach) {
   pin.style.backgroundImage = 'url("' + waypointMarker.panelIconUrlFor(index, count, approach) + '")';
 }
 
-// Moves the waypoint at `index` on to its next approach. The waypoints are set
-// again, as they are for a reorder: that re-routes, redraws the pins and the
-// rows, and writes the share link, all from the one change.
-function change(plan, index) {
-  var waypoints = plan.getWaypoints();
-  var waypoint = waypoints[index];
-  if (!waypoint) return;
-  var approach = approaches.nextApproach(approaches.approachOf(waypoint));
-  approaches.setApproach(waypoint, approach);
-  // Fired before the change so a listener can decide how to treat the
-  // waypointschanged and route that follow.
-  plan.fire('waypointapproachchange', {index: index, approach: approach});
-  plan.setWaypoints(waypoints);
-  focusToggle(plan._geocoderContainer, index);
-}
-
-function focusToggle(container, index) {
-  if (!container) return;
-  var row = rowsOf(container)[index];
-  var toggle = row && toggleOf(row);
-  if (toggle) toggle.focus();
-}
-
-// Call after the plan has rebuilt its geocoder rows.
-function attachToPlan(plan) {
+// Redraws what shows the approaches in the rows that are there now: every
+// toggle, and every row's pin.
+function renderRows(plan) {
   var container = plan._geocoderContainer;
   if (!container) return;
   var rows = rowsOf(container);
   var waypoints = plan.getWaypoints();
   var language = plan.options && plan.options.language;
   rows.forEach(function(row, i) {
+    var approach = approaches.approachOf(waypoints[i]);
+    var toggle = toggleOf(row);
+    if (toggle) render(toggle, approach, language);
+    renderPin(row, i, rows.length, approach);
+  });
+}
+
+// Moves the waypoint at `index` on to its next approach, in place. Setting the
+// waypoints again would have Leaflet Routing Machine rebuild every row from
+// the waypoints' committed names, dropping address text the user has typed
+// but not submitted. So the rows are redrawn where they are, the map's pins
+// are redrawn, and the plan announces the change, which re-routes and writes
+// the share link. Focus stays on the toggle, as its row is never replaced.
+function change(plan, index) {
+  var waypoint = plan.getWaypoints()[index];
+  if (!waypoint) return;
+  var approach = approaches.nextApproach(approaches.approachOf(waypoint));
+  approaches.setApproach(waypoint, approach);
+  // Fired before the change so a listener can decide how to treat the
+  // waypointschanged and route that follow.
+  plan.fire('waypointapproachchange', {index: index, approach: approach});
+  renderRows(plan);
+  if (typeof plan._updateMarkers === 'function') plan._updateMarkers();
+  // Without arguments it fires only waypointschanged, not the
+  // waypointsspliced that rebuilds the rows.
+  plan._fireChanged();
+}
+
+// Call after the plan has rebuilt its geocoder rows.
+function attachToPlan(plan) {
+  var container = plan._geocoderContainer;
+  if (!container) return;
+  renderRows(plan);
+  rowsOf(container).forEach(function(row, i) {
     var toggle = toggleOf(row);
     if (!toggle) return;
-    var approach = approaches.approachOf(waypoints[i]);
-    render(toggle, approach, language);
-    renderPin(row, i, rows.length, approach);
     L.DomEvent.on(toggle, 'click', function(e) {
       L.DomEvent.stop(e);
       change(plan, i);
