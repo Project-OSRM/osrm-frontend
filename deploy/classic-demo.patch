@@ -28,10 +28,10 @@
 -  maxZoom: 18
 +  maxZoom: mapEdition.classicMaxZoom
  }).setView(mergedOptions.center, mergedOptions.zoom);
-
+ 
  // Pass basemap layers
 @@ -419,6 +424,11 @@
-
+ 
  var router = (new L.Routing.OSRMv1(controlOptions));
  routerPatches.applyPatches(router);
 +
@@ -48,30 +48,30 @@
      try {
 -      var mergedState = L.extend({}, leafletOptions.defaultState, parsed);
 +      var mergedState = L.extend({}, leafletOptions.defaultState, { vectorZoom: undefined }, parsed);
-
+ 
        // Temporarily suppress history writes while applying the restored state
        try {
-@@ -534,6 +544,8 @@
-           console.error('Error applying units from history:', e);
+@@ -535,6 +545,8 @@
          }
        }
-+
+ 
 +      applyEditionRoutingPreferences(mergedState);
-
++
        // Apply profile/service selection
        if (parsed && parsed.profile !== undefined && parsed.profile !== null) {
+         var profileIndex = parseInt(parsed.profile, 10);
 @@ -709,6 +721,7 @@
-
+ 
  // Decides whether the next route or geocode result may move the map view
  var routeFitTracker = routeZoom.createRouteFitTracker();
 +var keepInitialView = mapEdition.holdInitialView(parsedOptions.keepView, plan, lrmControl);
-
+ 
  // Show pane when route is computed
  lrmControl.on('routesfound', function(e) {
 @@ -907,6 +920,11 @@
    };
    toolsControl.setRouteGeoJSON(routeGeoJSON);
-
+ 
 +  if (keepInitialView()) {
 +    routeFitTracker.clearFitPending();
 +    return;
@@ -83,7 +83,7 @@
 @@ -1006,5 +1024,15 @@
  var createLocationFoundHandler = require('./location_handler');
  map.on('locationfound', createLocationFoundHandler(map, lrmControl));
-
+ 
 +var updateEditionLink = mapEdition.attach(document, window.location, function() {
 +  return Object.assign({}, state.get(), { center: map.getCenter(), zoom: map.getZoom() });
 +}, urlState.format, 'default');
@@ -98,16 +98,17 @@
  window.__osrm_app_loaded = true;
 --- a/src/links.js
 +++ b/src/links.js
-@@ -3,6 +3,8 @@
+@@ -3,6 +3,9 @@
  var L = require('leaflet');
  var qs = require('qs');
  var jsonp = require('jsonp');
 +var routePreferences = require('./route_preferences');
 +var mapEdition = require('./map_edition');
-
++var approaches = require('./approaches');
+ 
  function _formatCoord(latLng) {
    var precision = 6;
-@@ -65,7 +67,11 @@
+@@ -65,7 +68,12 @@
      scale: options.units,
      ly: _formatLayer(options.layer),
      srv: options.service,
@@ -116,11 +117,12 @@
 +    exclude: routePreferences.normalize(options).exclude || undefined,
 +    u: options.allowUTurns === true ? 'true' : options.allowUTurns === false ? 'false' : undefined,
 +    view: options.keepView ? 'keep' : undefined,
-+    vz: options.vectorZoom
++    vz: options.vectorZoom,
++    ap: approaches.formatApproaches(options.waypoints)
    }, {indices: false});
  }
-
-@@ -76,7 +82,9 @@
+ 
+@@ -76,7 +84,9 @@
      options = {},
      k;
    try {
@@ -131,7 +133,16 @@
      parsedValues.center = q.center && _parseCoord(q.center);
      if (q.loc) {
        if (q.loc.constructor === Array) {
-@@ -95,6 +103,13 @@
+@@ -89,12 +99,22 @@
+         parsedValues.waypoints = [L.Routing.waypoint(_parseCoord(q.loc))];
+       }
+     }
++    if (typeof q.ap === 'string' && parsedValues.waypoints) {
++      approaches.applyApproaches(parsedValues.waypoints, q.ap);
++    }
+     parsedValues.language = q.hl;
+     parsedValues.alternative = q.alt;
+     parsedValues.units = q.scale || q.df;
      parsedValues.layer = q.ly;
      parsedValues.service = q.srv;
      parsedValues.profile = q.profile;
@@ -145,3 +156,161 @@
      parsedValues.originAddress = q.src;
      parsedValues.destinationAddress = q.dst;
    } catch (e) {
+--- a/src/router_patches.js
++++ b/src/router_patches.js
+@@ -1,5 +1,7 @@
+ 'use strict';
+ 
++var approaches = require('./approaches');
++
+ // TODO: remove this patch once the upstream bug is fixed in leaflet-routing-machine.
+ // Upstream issue: https://github.com/perliedman/leaflet-routing-machine/issues/719
+ //
+@@ -106,14 +108,37 @@
+   };
+ }
+ 
++// Patch router.buildRouteUrl() to add OSRM's `approaches` parameter, taken from
++// each waypoint's `options.approach`. OSRM wants one entry per coordinate, so the
++// value has to be built from the waypoints of the request at hand. That rules out
++// `requestParameters`, which is fixed for the router's lifetime and is percent-encoded
++// when appended. When no waypoint is restricted nothing is added, so such a request is
++// the one that was always sent.
++function appendApproaches(router) {
++  // Make this idempotent: avoid double-patching the same router instance.
++  if (router._appendApproachesPatched) return;
++  // A router that builds no URL has nothing to add the parameter to.
++  if (typeof router.buildRouteUrl !== 'function') return;
++  router._appendApproachesPatched = true;
++
++  var origBuildRouteUrl = router.buildRouteUrl.bind(router);
++  router.buildRouteUrl = function(waypoints, options) {
++    var url = origBuildRouteUrl(waypoints, options);
++    var value = approaches.formatApproaches(waypoints);
++    return value ? url + '&approaches=' + value : url;
++  };
++}
++
+ module.exports = {
+   applyPatches: function(router) {
+     router._leftOrRight = leftOrRight;
+     wrapWaypoints(router);
++    appendApproaches(router);
+   },
+   // Exported for unit testing
+   leftOrRight: leftOrRight,
+   wrapWaypoints: wrapWaypoints,
++  appendApproaches: appendApproaches,
+   
+   // Allow setting the active service by index
+   setActiveService: function(router, serviceIndex, services) {
+--- a/src/state.js
++++ b/src/state.js
+@@ -3,6 +3,7 @@
+ var L = require('leaflet');
+ var links = require('./links');
+ var urlState = require('./url_state');
++var approaches = require('./approaches');
+ var waypointReorder = require('./waypoint_reorder');
+ 
+ var State = L.Class.extend({
+@@ -123,12 +124,12 @@
+         }
+         // Already a waypoint-like with latLng
+         if (wp.latLng) return wp;
+-        // Plain {lat, lng}
++        // Plain {lat, lng}, with `approach` when the waypoint is restricted
+         if (typeof wp.lat === 'number' && typeof wp.lng === 'number') {
+           if (typeof L.Routing !== 'undefined' && typeof L.Routing.waypoint === 'function' && typeof L.latLng === 'function') {
+-            return L.Routing.waypoint(L.latLng(wp.lat, wp.lng));
++            return approaches.setApproach(L.Routing.waypoint(L.latLng(wp.lat, wp.lng)), wp.approach);
+           }
+-          return { latLng: { lat: wp.lat, lng: wp.lng } };
++          return approaches.setApproach({ latLng: { lat: wp.lat, lng: wp.lng } }, wp.approach);
+         }
+         // array form [lat,lng]
+         if (Array.isArray(wp) && wp.length >= 2) {
+@@ -141,6 +142,13 @@
+             return { latLng: { lat: lat, lng: lng } };
+           }
+         }
++        // An empty slot that carries an approach, as url_state.parse gives it
++        if (typeof wp.approach === 'string') {
++          if (typeof L.Routing !== 'undefined' && typeof L.Routing.waypoint === 'function') {
++            return approaches.setApproach(L.Routing.waypoint(null), wp.approach);
++          }
++          return approaches.setApproach({ latLng: null }, wp.approach);
++        }
+         return wp;
+       });
+     }
+--- a/src/url_state.js
++++ b/src/url_state.js
+@@ -1,6 +1,22 @@
+ 'use strict';
+ 
+ var links = require('./links');
++var approaches = require('./approaches');
++
++// Plain waypoints carry `approach` when restricted; an empty restricted slot
++// is {approach}, so the restriction of a slot without a place is kept.
++function withApproach(plain, approach) {
++  var normalized = approaches.normalizeApproach(approach);
++  if (normalized !== approaches.UNRESTRICTED) plain.approach = normalized;
++  return plain;
++}
++
++// The inverse, for links.format, which reads the approach from options.
++function withOptions(waypoint, approach) {
++  var normalized = approaches.normalizeApproach(approach);
++  if (normalized !== approaches.UNRESTRICTED) waypoint.options = { approach: normalized };
++  return waypoint;
++}
+ 
+ function parse(q) {
+   // Accept either a query-string (without '?') or default to current location
+@@ -19,12 +35,13 @@
+         parsed.waypoints = parsed.waypoints.map(function(wp) {
+           if (!wp) return undefined;
+           if (wp && wp.latLng && typeof wp.latLng.lat === 'number' && typeof wp.latLng.lng === 'number') {
+-            return { lat: wp.latLng.lat, lng: wp.latLng.lng };
++            return withApproach({ lat: wp.latLng.lat, lng: wp.latLng.lng }, approaches.approachOf(wp));
+           }
+           if (wp && typeof wp.lat === 'number' && typeof wp.lng === 'number') {
+-            return { lat: wp.lat, lng: wp.lng };
++            return withApproach({ lat: wp.lat, lng: wp.lng }, wp.approach);
+           }
+-          return undefined;
++          var emptySlot = withApproach({}, approaches.approachOf(wp));
++          return emptySlot.approach ? emptySlot : undefined;
+         });
+       }
+     }
+@@ -46,13 +63,16 @@
+       // Already in waypoint-like form
+       if (wp.latLng) return wp;
+       if (typeof wp.lat === 'number' && typeof wp.lng === 'number') {
+-        return { latLng: { lat: wp.lat, lng: wp.lng } };
++        return withOptions({ latLng: { lat: wp.lat, lng: wp.lng } }, wp.approach);
+       }
+       if (Array.isArray(wp) && wp.length >= 2) {
+         var lat = Number(wp[0]);
+         var lng = Number(wp[1]);
+         if (!isNaN(lat) && !isNaN(lng)) return { latLng: { lat: lat, lng: lng } };
+       }
++      if (!Array.isArray(wp) && typeof wp.approach === 'string') {
++        return withOptions({ latLng: null }, wp.approach);
++      }
+       return wp;
+     });
+   }
+@@ -67,7 +87,8 @@
+   if (typeof window === 'undefined') return '';
+   // Use origin + pathname to avoid preserving fragments when composing query strings
+   var baseURL = (window.location.origin || (window.location.protocol + '//' + window.location.host)) + window.location.pathname;
+-  var newParms = links.format(options);
++  // format(), not links.format(): Back/Forward passes plain waypoints.
++  var newParms = format(options);
+   return baseURL + (newParms ? ('?' + newParms) : '');
+ }
+ 
