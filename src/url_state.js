@@ -94,7 +94,11 @@ function _buildUrlFromOptions(options) {
   if (typeof window === 'undefined') return '';
   // Use origin + pathname to avoid preserving fragments when composing query strings
   var baseURL = (window.location.origin || (window.location.protocol + '//' + window.location.host)) + window.location.pathname;
-  var newParms = links.format(options);
+  // format(), not links.format(): the Back/Forward handler passes the plain
+  // waypoints parse() hands out, and links.format() would write those as empty
+  // loc entries without their approaches. Waypoints that already have a
+  // latLng, as State holds them, pass through unchanged.
+  var newParms = format(options);
   return baseURL + (newParms ? ('?' + newParms) : '');
 }
 

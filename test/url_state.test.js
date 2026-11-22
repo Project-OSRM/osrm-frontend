@@ -159,3 +159,50 @@ describe('url_state — per-waypoint approaches', () => {
     expect(parsed.ap).toBe('curb;');
   });
 });
+
+// The Back/Forward handler parses the restored link and writes it back with
+// replace(), so replace(parse(link)) must give the link it started from.
+describe('url_state — writing a parsed link back to the address bar', () => {
+  const restrictedRoute = 'loc=52.5,13.4&loc=52.6,13.5&ap=curb%3Bopposite';
+
+  beforeEach(() => {
+    window.history.replaceState({}, '', '/');
+  });
+
+  function addressBar() {
+    return qs.parse(window.location.search.slice(1));
+  }
+
+  test('replace() keeps the coordinates and approaches of a restricted route', () => {
+    urlState.replace(urlState.parse(restrictedRoute));
+    expect(addressBar().loc).toEqual(['52.500000,13.400000', '52.600000,13.500000']);
+    expect(addressBar().ap).toBe('curb;opposite');
+  });
+
+  test('push() keeps the coordinates and approaches of a restricted route', () => {
+    urlState.push(urlState.parse(restrictedRoute));
+    expect(addressBar().loc).toEqual(['52.500000,13.400000', '52.600000,13.500000']);
+    expect(addressBar().ap).toBe('curb;opposite');
+  });
+
+  test('replace() of the rewritten link parses back to the same waypoints', () => {
+    const restored = urlState.parse(restrictedRoute);
+    urlState.replace(restored);
+    expect(urlState.parse(window.location.search.slice(1)).waypoints).toEqual(restored.waypoints);
+  });
+
+  test('replace() keeps an empty restricted slot', () => {
+    urlState.replace(urlState.parse('loc=&loc=52.6,13.5&ap=curb%3B'));
+    expect(addressBar().loc).toEqual(['', '52.600000,13.500000']);
+    expect(addressBar().ap).toBe('curb;');
+  });
+
+  test('replace() writes waypoints in the shape State holds them as before', () => {
+    const stateWaypoints = [
+      { latLng: { lat: 52.5, lng: 13.4 }, options: { approach: 'opposite' } },
+      { latLng: { lat: 52.6, lng: 13.5 } }
+    ];
+    urlState.replace({ waypoints: stateWaypoints });
+    expect(window.location.search).toBe('?' + require('../src/links').format({ waypoints: stateWaypoints }));
+  });
+});
