@@ -770,7 +770,10 @@ lrmControl.on('routesfound', function(e) {
 // Dragging a marker (or the route line) recomputes the route in place;
 // the view must stay where the user put it.
 plan.on('waypointdragstart', function() {
-  routeFitTracker.waypointDragStarted();
+  routeFitTracker.waypointDragStarted(!!lrmControl._selectedRoute && plan.isReady());
+});
+plan.on('waypointdragend', function() {
+  routeFitTracker.waypointDragEnded();
 });
 
 // Reordering from the panel rearranges places already on the map; the view
@@ -978,14 +981,14 @@ lrmControl.on('routeselected', function(e) {
   // A picker that has just framed the doors it offers keeps the view: the route
   // that follows the geocode must not fit itself over them. Only that route
   // stands down.
-  if (entranceWaypoints.claimView()) {
+  if (entranceWaypoints.claimView() || routeFitTracker.isSelectionFromDrag()) {
     routeFitTracker.clearFitPending();
     return;
   }
 
   if (!routeFitTracker.isFitPending()) {
-    // A drag leaves the view alone, unless it pushed the route into the
-    // directions pane — the route must never run underneath it.
+    // A route selected without a fit request only needs refitting when the
+    // directions pane covers part of it.
     var containerPoints = boundsCoordinates.map(function(coordinate) {
       return map.latLngToContainerPoint(coordinate);
     });
