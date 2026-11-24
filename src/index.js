@@ -993,40 +993,21 @@ lrmControl.on('routeselected', function(e) {
   }
   routeFitTracker.clearFitPending();
 
-  mobileViewport.synchronize(map);
+  var controls = darkInterface ? routeZoom.getRouteControlInsets(map.getContainer()) : null;
+  var padding = routeZoom.getRouteFitPadding(map.getSize(), paneInsets, waypointMarker.mapMarkerInsets(), controls);
+  if (!padding) return;
+
   var bounds = L.latLngBounds(boundsCoordinates);
+  plan.getWaypoints().forEach(function(waypoint) {
+    // A stop's pin can be away from the route when the road or entrance is elsewhere.
+    var position = entranceWaypointsModule.waypointMarkerLatLng(waypoint);
+    if (position) bounds.extend(position);
+  });
 
+  mobileViewport.synchronize(map);
   var currentZoom = map.getZoom();
-  var fitPadding = 20;
-  var paddingOpts = {
-    paddingTopLeft: L.point(paneInsets.left + fitPadding, paneInsets.top + fitPadding),
-    paddingBottomRight: L.point(paneInsets.right + fitPadding, paneInsets.bottom + fitPadding)
-  };
-
-  if (currentZoom >= 13) {
-    var mapSize = map.getSize();
-    var availableWidth = mapSize.x - paneInsets.left - paneInsets.right - 2 * fitPadding;
-    var availableHeight = mapSize.y - paneInsets.top - paneInsets.bottom - 2 * fitPadding;
-
-    var sw = map.project(bounds.getSouthWest(), currentZoom);
-    var ne = map.project(bounds.getNorthEast(), currentZoom);
-    var routePixelWidth = Math.abs(ne.x - sw.x);
-    var routePixelHeight = Math.abs(sw.y - ne.y);
-
-    if (routePixelWidth <= availableWidth && routePixelHeight <= availableHeight) {
-      var center = bounds.getCenter();
-      var centerPixel = map.project(center, currentZoom);
-      centerPixel.x += (paneInsets.right - paneInsets.left) / 2;
-      centerPixel.y += (paneInsets.bottom - paneInsets.top) / 2;
-      var newMapCenter = map.unproject(centerPixel, currentZoom);
-      map.panTo(newMapCenter);
-    } else {
-      paddingOpts.maxZoom = currentZoom;
-      map.fitBounds(bounds, paddingOpts);
-    }
-  } else {
-    map.fitBounds(bounds, paddingOpts);
-  }
+  if (currentZoom >= 13) padding.maxZoom = currentZoom;
+  map.fitBounds(bounds, padding);
 });
 
 plan.on('waypointschanged', function(e) {
