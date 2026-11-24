@@ -323,3 +323,53 @@ describe('translucent overlay pane insets', () => {
     expect(routeZoom.getPaneInsets({ x: 1200, y: 800 }, null, true)).toEqual({ left: 0, right: 0, top: 0, bottom: 0 });
   });
 });
+
+describe('route fit padding', () => {
+  const pins = require('../src/waypoint_marker').mapMarkerInsets();
+
+  test('reserves the full pin above the anchor and the left pane', () => {
+    const padding = routeZoom.getRouteFitPadding({x: 1000, y: 760}, {left: 360}, pins);
+
+    expect(padding).toEqual({paddingTopLeft: [395, 62], paddingBottomRight: [35, 20]});
+  });
+
+  test('accounts for floating controls and the directions sheet on mobile', () => {
+    const padding = routeZoom.getRouteFitPadding({x: 390, y: 760}, {bottom: 420}, pins, {
+      top: 56, right: 62, bottom: 452
+    });
+
+    expect(padding).toEqual({paddingTopLeft: [35, 118], paddingBottomRight: [97, 472]});
+  });
+
+  test('reduces the gap when the sheet leaves very little room', () => {
+    const padding = routeZoom.getRouteFitPadding({x: 320, y: 600}, {bottom: 540}, pins, {
+      top: 56, bottom: 572
+    });
+
+    expect(padding.paddingTopLeft[1]).toBeGreaterThanOrEqual(pins.top);
+    expect(padding.paddingTopLeft[1] + padding.paddingBottomRight[1]).toBeLessThan(600);
+  });
+
+  test('skips the fit when there is no room for a pin', () => {
+    expect(routeZoom.getRouteFitPadding({x: 320, y: 600}, {bottom: 580}, pins)).toBeNull();
+  });
+
+  test('measures visible controls relative to the map container', () => {
+    function element(rect) {
+      return {getBoundingClientRect: () => rect};
+    }
+    const container = element({top: 20, left: 10, right: 410, bottom: 780});
+    container.ownerDocument = {
+      querySelectorAll: () => [element({top: 32, left: 80, right: 280, bottom: 76, width: 200, height: 44})]
+    };
+    container.querySelectorAll = selector => selector.includes('layers') ? [
+      element({top: 38, left: 348, right: 392, bottom: 82, width: 44, height: 44}),
+      element({top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0})
+    ] : [
+      element({top: 500, left: 188, right: 410, bottom: 527, width: 222, height: 27}),
+      element({top: 800, left: 10, right: 210, bottom: 825, width: 200, height: 25})
+    ];
+
+    expect(routeZoom.getRouteControlInsets(container)).toEqual({left: 0, right: 62, top: 56, bottom: 280});
+  });
+});

@@ -170,9 +170,7 @@
 .osrm-theme-dark .leaflet-control-zoom a { width: 100%; height: var(--osrm-map-control-size); line-height: var(--osrm-map-control-size); box-sizing: border-box; }
 .osrm-theme-dark .leaflet-control-locate { border: 0; box-shadow: none; position: fixed; left: auto; right: 18px; top: calc(18px + var(--osrm-map-control-size) + var(--osrm-map-control-gap)); margin: 0; }
 .osrm-theme-dark .leaflet-control-locate.leaflet-bar a { display: flex; align-items: center; justify-content: center; width: var(--osrm-map-control-size); height: var(--osrm-map-control-size); background-image: none; }
-.osrm-theme-dark .leaflet-control-locate a .leaflet-control-locate-location-arrow,
-.osrm-theme-dark .leaflet-control-locate a .leaflet-control-locate-spinner { display: block; width: 26px; height: 26px; margin: 0; background-color: currentColor; -webkit-mask: url('../images/location.svg') center / contain no-repeat; mask: url('../images/location.svg') center / contain no-repeat; }
-.osrm-theme-dark .leaflet-control-locate.requesting a { opacity: 0.6; }
+.osrm-theme-dark .leaflet-control-locate a .leaflet-control-locate-location-arrow { display: block; width: 26px; height: 26px; margin: 0; background-color: currentColor; -webkit-mask: url('../images/location.svg') center / contain no-repeat; mask: url('../images/location.svg') center / contain no-repeat; }
 .osrm-theme-dark .leaflet-control-layers { background: transparent; border: 0; box-shadow: none; position: fixed; left: auto; right: 18px; top: 18px; bottom: auto; margin: 0; }
 .osrm-theme-dark .leaflet-control-layers-toggle { display: flex; align-items: center; justify-content: center; width: var(--osrm-map-control-size); height: var(--osrm-map-control-size); border-radius: 12px; background: #303030; color: #d2d2d2; box-shadow: none; }
 .osrm-theme-dark .leaflet-control-layers-toggle:before { content: ''; display: block; width: 26px; height: 26px; background-color: currentColor; -webkit-mask: url('../images/layers.svg') center / contain no-repeat; mask: url('../images/layers.svg') center / contain no-repeat; }

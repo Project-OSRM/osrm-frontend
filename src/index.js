@@ -774,7 +774,10 @@ lrmControl.on('routesfound', function(e) {
 // Dragging a marker (or the route line) recomputes the route in place;
 // the view must stay where the user put it.
 plan.on('waypointdragstart', function() {
-  routeFitTracker.waypointDragStarted();
+  routeFitTracker.waypointDragStarted(!!lrmControl._selectedRoute && plan.isReady());
+});
+plan.on('waypointdragend', function() {
+  routeFitTracker.waypointDragEnded();
 });
 
 // Reordering from the panel rearranges places already on the map; the view
@@ -993,14 +996,14 @@ lrmControl.on('routeselected', function(e) {
   // A picker that has just framed the doors it offers keeps the view: the route
   // that follows the geocode must not fit itself over them. Only that route
   // stands down.
-  if (entranceWaypoints.claimView()) {
+  if (entranceWaypoints.claimView() || routeFitTracker.isSelectionFromDrag()) {
     routeFitTracker.clearFitPending();
     return;
   }
 
   if (!routeFitTracker.isFitPending()) {
-    // A drag leaves the view alone, unless it pushed the route into the
-    // directions pane — the route must never run underneath it.
+    // A route selected without a fit request only needs refitting when the
+    // directions pane covers part of it.
     var containerPoints = boundsCoordinates.map(function(coordinate) {
       return map.latLngToContainerPoint(coordinate);
     });
@@ -1008,40 +1011,21 @@ lrmControl.on('routeselected', function(e) {
   }
   routeFitTracker.clearFitPending();
 
-  mobileViewport.synchronize(map);
+  var controls = darkInterface ? routeZoom.getRouteControlInsets(map.getContainer()) : null;
+  var padding = routeZoom.getRouteFitPadding(map.getSize(), paneInsets, waypointMarker.mapMarkerInsets(), controls);
+  if (!padding) return;
+
   var bounds = L.latLngBounds(boundsCoordinates);
+  plan.getWaypoints().forEach(function(waypoint) {
+    // A stop's pin can be away from the route when the road or entrance is elsewhere.
+    var position = entranceWaypointsModule.waypointMarkerLatLng(waypoint);
+    if (position) bounds.extend(position);
+  });
 
+  mobileViewport.synchronize(map);
   var currentZoom = map.getZoom();
-  var fitPadding = 20;
-  var paddingOpts = {
-    paddingTopLeft: L.point(paneInsets.left + fitPadding, paneInsets.top + fitPadding),
-    paddingBottomRight: L.point(paneInsets.right + fitPadding, paneInsets.bottom + fitPadding)
-  };
-
-  if (currentZoom >= 13) {
-    var mapSize = map.getSize();
-    var availableWidth = mapSize.x - paneInsets.left - paneInsets.right - 2 * fitPadding;
-    var availableHeight = mapSize.y - paneInsets.top - paneInsets.bottom - 2 * fitPadding;
-
-    var sw = map.project(bounds.getSouthWest(), currentZoom);
-    var ne = map.project(bounds.getNorthEast(), currentZoom);
-    var routePixelWidth = Math.abs(ne.x - sw.x);
-    var routePixelHeight = Math.abs(sw.y - ne.y);
-
-    if (routePixelWidth <= availableWidth && routePixelHeight <= availableHeight) {
-      var center = bounds.getCenter();
-      var centerPixel = map.project(center, currentZoom);
-      centerPixel.x += (paneInsets.right - paneInsets.left) / 2;
-      centerPixel.y += (paneInsets.bottom - paneInsets.top) / 2;
-      var newMapCenter = map.unproject(centerPixel, currentZoom);
-      map.panTo(newMapCenter);
-    } else {
-      paddingOpts.maxZoom = currentZoom;
-      map.fitBounds(bounds, paddingOpts);
-    }
-  } else {
-    map.fitBounds(bounds, paddingOpts);
-  }
+  if (currentZoom >= 13) padding.maxZoom = currentZoom;
+  map.fitBounds(bounds, padding);
 });
 
 plan.on('waypointschanged', function(e) {
@@ -1053,6 +1037,7 @@ plan.on('waypointschanged', function(e) {
   }
 });
 
+var locationAcquisition = require('./location_acquisition');
 var locationControl = locate.locate({
   follow: false,
   setView: 'once',
@@ -1066,9 +1051,10 @@ var locationControl = locate.locate({
     alert(context.options.strings.outsideMapBoundsMsg);
   },
   showPopup: false,
-  locateOptions: {}
+  locateOptions: { timeout: locationAcquisition.timeout }
 }).addTo(map);
 
+locationAcquisition.attach(map, locationControl);
 mobileViewport.configureLocationControl(map, locationControl);
 
 var updateEditionLink = mapEdition.attach(document, window.location, function() {

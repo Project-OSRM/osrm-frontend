@@ -177,6 +177,17 @@ function waypointIconOptions(i, n, approach) {
   };
 }
 
+// The map icon includes transparent space below the pin, which needs no
+// room in the viewport. These insets describe the artwork around its anchor.
+function mapMarkerInsets() {
+  return {
+    left: ICON_ANCHOR[0] * MAP_MARKER_SCALE,
+    right: (ICON_SIZE[0] - ICON_ANCHOR[0]) * MAP_MARKER_SCALE,
+    top: ICON_ANCHOR[1] * MAP_MARKER_SCALE,
+    bottom: (PIN_HEIGHT - ICON_ANCHOR[1]) * MAP_MARKER_SCALE
+  };
+}
+
 // The same pin for an itinerary row, trimmed to the pin itself. The row knows
 // what the waypoint is and, for a via, which one; it does not know how many
 // waypoints the route has, so it says so directly rather than as i of n.
@@ -193,6 +204,7 @@ function panelIconUrlFor(i, n, approach) {
 
 module.exports = {
   waypointIconOptions: waypointIconOptions,
+  mapMarkerInsets: mapMarkerInsets,
   panelIconUrl: panelIconUrl,
   panelIconUrlFor: panelIconUrlFor,
   START: START,
