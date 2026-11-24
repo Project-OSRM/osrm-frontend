@@ -86,6 +86,31 @@
   z-index: 100;
 }
 
+.leaflet-control-locate.requesting.leaflet-bar a {
+  display: grid;
+  place-items: center;
+  background-image: none;
+}
+
+.leaflet-control-locate-spinner {
+  display: block;
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: osrm-location-spin 0.8s linear infinite;
+}
+
+@keyframes osrm-location-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leaflet-control-locate-spinner { animation: none; }
+}
+
 /* Locate control */
 .leaflet-control-locate {
   left: 355px;

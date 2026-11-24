@@ -1038,6 +1038,7 @@ plan.on('waypointschanged', function(e) {
   }
 });
 
+var locationAcquisition = require('./location_acquisition');
 var locationControl = locate.locate({
   follow: false,
   setView: 'once',
@@ -1051,9 +1052,10 @@ var locationControl = locate.locate({
     alert(context.options.strings.outsideMapBoundsMsg);
   },
   showPopup: false,
-  locateOptions: {}
+  locateOptions: { timeout: locationAcquisition.timeout }
 }).addTo(map);
 
+locationAcquisition.attach(map, locationControl);
 mobileViewport.configureLocationControl(map, locationControl);
 
 var updateEditionLink = mapEdition.attach(document, window.location, function() {
