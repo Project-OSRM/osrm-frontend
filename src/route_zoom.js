@@ -126,6 +126,18 @@ function createRouteFitTracker() {
     waypointsReordered: function() {
       fitSuppression = 'update';
     },
+    // Choosing another approach for a waypoint re-routes the same places, so
+    // the view stays put, as it does for a reorder. Nothing is geocoded.
+    // Only a plan whose waypoints are all placed can be re-routed: with an
+    // empty slot no route follows to consume the flag, and typing the missing
+    // address does not clear it, so the first real route would skip its fit.
+    waypointApproachChanged: function(waypoints) {
+      var routable = Array.isArray(waypoints) && waypoints.length >= 2 &&
+        waypoints.every(function(waypoint) {
+          return !!(waypoint && waypoint.latLng);
+        });
+      if (routable) fitSuppression = 'update';
+    },
     waypointPlaced: function() {
       fitSuppression = undefined;
       preserveViewDuringDrag = false;

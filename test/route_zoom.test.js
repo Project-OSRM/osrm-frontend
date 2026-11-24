@@ -229,6 +229,62 @@ describe('route fit tracker', function() {
     expect(tracker.isFitPending()).toBe(true);
   });
 
+  var placedWaypoints = [{latLng: {lat: 1, lng: 2}}, {latLng: {lat: 3, lng: 4}}];
+
+  test('suppresses the fit for the route that follows an approach change', function() {
+    var tracker = routeZoom.createRouteFitTracker();
+
+    tracker.waypointApproachChanged(placedWaypoints);
+    tracker.routesFound();
+
+    expect(tracker.isFitPending()).toBe(false);
+  });
+
+  test('an approach change does not swallow the pan of the next typed address', function() {
+    var tracker = routeZoom.createRouteFitTracker();
+
+    tracker.waypointApproachChanged(placedWaypoints);
+
+    expect(tracker.waypointGeocoded()).toBe(true);
+  });
+
+  test('fits again on the first route after an approach change', function() {
+    var tracker = routeZoom.createRouteFitTracker();
+
+    tracker.waypointApproachChanged(placedWaypoints);
+    tracker.routesFound();
+    tracker.routesFound();
+
+    expect(tracker.isFitPending()).toBe(true);
+  });
+
+  test('an approach change on a plan with an empty slot does not suppress the next fit', function() {
+    var tracker = routeZoom.createRouteFitTracker();
+
+    tracker.waypointApproachChanged([{latLng: {lat: 1, lng: 2}}, {latLng: null}]);
+    tracker.routesFound();
+
+    expect(tracker.isFitPending()).toBe(true);
+  });
+
+  test('an approach change on a single waypoint does not suppress the next fit', function() {
+    var tracker = routeZoom.createRouteFitTracker();
+
+    tracker.waypointApproachChanged([{latLng: {lat: 1, lng: 2}}]);
+    tracker.routesFound();
+
+    expect(tracker.isFitPending()).toBe(true);
+  });
+
+  test('an approach change on a fully placed plan with a via keeps the view', function() {
+    var tracker = routeZoom.createRouteFitTracker();
+
+    tracker.waypointApproachChanged(placedWaypoints.concat([{latLng: {lat: 5, lng: 6}}]));
+    tracker.routesFound();
+
+    expect(tracker.isFitPending()).toBe(false);
+  });
+
   test('a reorder does not swallow the pan of the next typed address', function() {
     var tracker = routeZoom.createRouteFitTracker();
 

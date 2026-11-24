@@ -32,6 +32,16 @@ test.each(['18.125', '19.625', '20'])('clamps classic and restores vector zoom %
   expect(vector.searchParams.has('vz')).toBe(false);
 });
 
+test('carries the approaches to classic and back to the new edition', function() {
+  var search = 'z=15&center=50.3,8.2&loc=50,8&loc=&loc=51,9&ap=curb%3B%3Bopposite';
+  var classic = new URL(edition.switchUrl('https://maps.example/', search, 'false', 'classic'));
+  expect(classic.searchParams.get('ap')).toBe('curb;;opposite');
+  expect(classic.searchParams.getAll('loc')).toEqual(['50,8', '', '51,9']);
+  var vector = new URL(edition.switchUrl('https://maps.example/new/', classic.search, 'default', 'new'));
+  expect(vector.searchParams.get('ap')).toBe('curb;;opposite');
+  expect(vector.searchParams.getAll('loc')).toEqual(['50,8', '', '51,9']);
+});
+
 test('honors a lower zoom chosen in classic', function() {
   var vector = new URL(edition.switchUrl('https://maps.example/new/', 'z=16.5&vz=20', 'default', 'new'));
   expect(vector.searchParams.get('z')).toBe('16.5');

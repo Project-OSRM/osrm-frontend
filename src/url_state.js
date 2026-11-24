@@ -1,6 +1,26 @@
 'use strict';
 
 var links = require('./links');
+var approaches = require('./approaches');
+
+// The plain waypoints this module hands out are {lat, lng}, plus `approach`
+// when the waypoint is restricted, so a waypoint without one is the object it
+// always was. An empty slot is undefined, or {approach} when it is restricted,
+// so a link such as `loc=&loc=3,4&ap=curb;` keeps the restriction of the slot
+// that has no place yet.
+function withApproach(plain, approach) {
+  var normalized = approaches.normalizeApproach(approach);
+  if (normalized !== approaches.UNRESTRICTED) plain.approach = normalized;
+  return plain;
+}
+
+// The inverse, for links.format: a waypoint-like object that carries the
+// approach in its options, where links.format reads it.
+function withOptions(waypoint, approach) {
+  var normalized = approaches.normalizeApproach(approach);
+  if (normalized !== approaches.UNRESTRICTED) waypoint.options = { approach: normalized };
+  return waypoint;
+}
 
 function parse(q) {
   // Accept either a query-string (without '?') or default to current location
@@ -19,12 +39,14 @@ function parse(q) {
         parsed.waypoints = parsed.waypoints.map(function(wp) {
           if (!wp) return undefined;
           if (wp && wp.latLng && typeof wp.latLng.lat === 'number' && typeof wp.latLng.lng === 'number') {
-            return { lat: wp.latLng.lat, lng: wp.latLng.lng };
+            return withApproach({ lat: wp.latLng.lat, lng: wp.latLng.lng }, approaches.approachOf(wp));
           }
           if (wp && typeof wp.lat === 'number' && typeof wp.lng === 'number') {
-            return { lat: wp.lat, lng: wp.lng };
+            return withApproach({ lat: wp.lat, lng: wp.lng }, wp.approach);
           }
-          return undefined;
+          // An empty slot: only its approach, if it has one, is worth keeping.
+          var emptySlot = withApproach({}, approaches.approachOf(wp));
+          return emptySlot.approach ? emptySlot : undefined;
         });
       }
     }
@@ -46,12 +68,17 @@ function format(options) {
       // Already in waypoint-like form
       if (wp.latLng) return wp;
       if (typeof wp.lat === 'number' && typeof wp.lng === 'number') {
-        return { latLng: { lat: wp.lat, lng: wp.lng } };
+        return withOptions({ latLng: { lat: wp.lat, lng: wp.lng } }, wp.approach);
       }
       if (Array.isArray(wp) && wp.length >= 2) {
         var lat = Number(wp[0]);
         var lng = Number(wp[1]);
         if (!isNaN(lat) && !isNaN(lng)) return { latLng: { lat: lat, lng: lng } };
+      }
+      // An empty slot that carries an approach: an empty loc entry, with the
+      // approach in its place in ap.
+      if (!Array.isArray(wp) && typeof wp.approach === 'string') {
+        return withOptions({ latLng: null }, wp.approach);
       }
       return wp;
     });
@@ -67,7 +94,11 @@ function _buildUrlFromOptions(options) {
   if (typeof window === 'undefined') return '';
   // Use origin + pathname to avoid preserving fragments when composing query strings
   var baseURL = (window.location.origin || (window.location.protocol + '//' + window.location.host)) + window.location.pathname;
-  var newParms = links.format(options);
+  // format(), not links.format(): the Back/Forward handler passes the plain
+  // waypoints parse() hands out, and links.format() would write those as empty
+  // loc entries without their approaches. Waypoints that already have a
+  // latLng, as State holds them, pass through unchanged.
+  var newParms = format(options);
   return baseURL + (newParms ? ('?' + newParms) : '');
 }
 

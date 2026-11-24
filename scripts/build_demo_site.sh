@@ -9,7 +9,7 @@ trap 'rm -rf "$classic_source"' EXIT
 git archive "$classic_ref" > "$classic_source/source.tar"
 tar -xf "$classic_source/source.tar" -C "$classic_source"
 git -C "$classic_source" apply "$PWD/deploy/classic-demo.patch"
-cp src/map_edition.js src/route_preferences.js "$classic_source/src/"
+cp src/map_edition.js src/route_preferences.js src/approaches.js "$classic_source/src/"
 
 (
     cd "$classic_source"
