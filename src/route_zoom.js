@@ -136,7 +136,7 @@ function createRouteFitTracker() {
         waypoints.every(function(waypoint) {
           return !!(waypoint && waypoint.latLng);
         });
-      if (routable) routeRequestFromDrag = true;
+      if (routable) fitSuppression = 'update';
     },
     waypointPlaced: function() {
       fitSuppression = undefined;
