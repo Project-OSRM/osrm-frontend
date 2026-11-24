@@ -51,14 +51,22 @@ function isRouteUnderPane(containerPoints, mapSize, paneInsets) {
 // results can arrive in either order, so each is tracked with its own flag and
 // cleared by the result it belongs to.
 function createRouteFitTracker() {
-  var routeRequestFromDrag = false;
+  var fitSuppression;
   var geocodeFromDrag = false;
   var fitPending = false;
+  var selectionFromDrag = false;
+  var preserveViewDuringDrag = false;
 
   return {
-    waypointDragStarted: function() {
-      routeRequestFromDrag = true;
+    waypointDragStarted: function(preserveView) {
+      preserveViewDuringDrag = preserveView === true;
+      fitSuppression = preserveViewDuringDrag ? 'drag' : 'update';
       geocodeFromDrag = true;
+    },
+    waypointDragEnded: function() {
+      // A route already in flight can consume the drag flag before the drop.
+      if (preserveViewDuringDrag) fitSuppression = 'drag';
+      preserveViewDuringDrag = false;
     },
     // Reordering from the panel is a rearrangement of places the user has
     // already put on the map, so the view stays put like it does for a drag.
@@ -66,18 +74,20 @@ function createRouteFitTracker() {
     // only the route request is marked; marking the geocode too would swallow
     // the pan of the next typed address.
     waypointsReordered: function() {
-      routeRequestFromDrag = true;
+      fitSuppression = 'update';
     },
     waypointPlaced: function() {
-      routeRequestFromDrag = false;
+      fitSuppression = undefined;
+      preserveViewDuringDrag = false;
       geocodeFromDrag = false;
     },
     routesFound: function() {
-      fitPending = !routeRequestFromDrag;
-      routeRequestFromDrag = false;
+      fitPending = !fitSuppression;
+      selectionFromDrag = fitSuppression === 'drag';
+      fitSuppression = undefined;
     },
     routingFailed: function() {
-      routeRequestFromDrag = false;
+      fitSuppression = undefined;
     },
     // Reports whether the geocoded waypoint should be centered, and consumes the
     // drag state so a later typed geocode recenters as usual.
@@ -89,8 +99,12 @@ function createRouteFitTracker() {
     isFitPending: function() {
       return fitPending;
     },
+    isSelectionFromDrag: function() {
+      return selectionFromDrag;
+    },
     clearFitPending: function() {
       fitPending = false;
+      selectionFromDrag = false;
     }
   };
 }
