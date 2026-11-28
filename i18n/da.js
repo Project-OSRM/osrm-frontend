@@ -5,6 +5,9 @@ module.exports = {
   "Shortest": "Kortest",
   "Similar arrival time": "Lignende ankomsttid",
   "Fewer turns": "Færre sving",
+  "Less emissions": "Lavere udledning",
+  "{percent} less CO₂": "{percent} mindre CO₂",
+  "Estimated CO₂ emissions for a medium petrol car": "Anslået CO₂-udledning for en mellemstor benzinbil",
   "Compared with the displayed routes": "Sammenlignet med de viste ruter",
 
   "Loading small routing components…": "Indlæser små komponenter i vejnettet…",

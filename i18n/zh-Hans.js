@@ -5,6 +5,9 @@ module.exports = {
   "Shortest": "距离最短",
   "Similar arrival time": "到达时间相近",
   "Fewer turns": "转弯更少",
+  "Less emissions": "排放更少",
+  "{percent} less CO₂": "CO₂ 减少 {percent}",
+  "Estimated CO₂ emissions for a medium petrol car": "中型汽油车的估算 CO₂ 排放量",
   "Compared with the displayed routes": "与显示的路线相比",
 
   "Loading small routing components…": "正在加载小型路网分量…",

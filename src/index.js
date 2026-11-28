@@ -56,6 +56,7 @@ var smoothWheelZoom = require('./smooth_wheel_zoom');
 var resolveInitialAlternative = require('./route_alternative');
 var waypointMarker = require('./waypoint_marker');
 var waypointReorder = require('./waypoint_reorder');
+var routeEmissions = require('./route_emissions');
 var entranceWaypointsModule = require('./entrance_waypoints');
 var createEntranceWaypoints = entranceWaypointsModule.createEntranceWaypoints;
 require('./polyfill');
@@ -390,7 +391,6 @@ var controlOptions = {
   language: mergedOptions.language, // we are injecting own translations via osrm-text-instructions
   showAlternatives: options.lrm.showAlternatives,
   units: mergedOptions.units,
-  serviceUrl: services[0].path,
   useHints: false,
   // Left to itself OSRM will u-turn at a via point rather than take a slightly
   // longer way round, so the route is drawn back over the leg it just arrived
@@ -424,13 +424,11 @@ if (urlProfile !== undefined && urlProfile !== null) {
 }
 
 // Ensure valid profile index
-if (activeProfileIndex < 0 || activeProfileIndex >= services.length) {
+if (!services[activeProfileIndex]) {
   activeProfileIndex = 0;
 }
 
-// Set the initial serviceUrl and profile on controlOptions
-controlOptions.serviceUrl = services[activeProfileIndex].path;
-controlOptions.profile = services[activeProfileIndex].profile;
+routerPatches.setActiveService({ options: controlOptions }, activeProfileIndex, services);
 
 var router = (new L.Routing.OSRMv1(controlOptions));
 routerPatches.applyPatches(router);
@@ -448,6 +446,10 @@ router._convertRouteOriginal = router._convertRoute;
 router._convertRoute = function(responseRoute) {
   // monkey-patch L.Routing.OSRMv1 until it's easier to overwrite with a hook
   var resp = this._convertRouteOriginal(responseRoute);
+
+  if (darkInterface && this.options.showEmissionsBadge) {
+    resp.estimatedEmissionsGrams = routeEmissions.estimateGrams(responseRoute);
+  }
 
   if (resp.instructions && resp.instructions.length) {
     var i = 0;

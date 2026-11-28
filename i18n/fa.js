@@ -5,6 +5,9 @@ module.exports = {
   "Shortest": "کوتاه‌ترین",
   "Similar arrival time": "زمان رسیدن مشابه",
   "Fewer turns": "پیچ‌های کمتر",
+  "Less emissions": "آلایندگی کمتر",
+  "{percent} less CO₂": "{percent} کاهش CO₂",
+  "Estimated CO₂ emissions for a medium petrol car": "برآورد انتشار CO₂ برای خودروی بنزینی متوسط",
   "Compared with the displayed routes": "در مقایسه با مسیرهای نمایش‌داده‌شده",
 
   "Loading small routing components…": "در حال بارگیری مؤلفه‌های کوچک شبکهٔ مسیر…",

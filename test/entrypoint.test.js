@@ -131,6 +131,7 @@ describe('docker entrypoint runtime config', () => {
     const modes = JSON.parse(config.OSRM_MODES);
     expect(modes.length).toBe(3);
     expect(modes[0].url).toBe('https://router.project-osrm.org');
+    expect(modes.filter(mode => mode.showEmissionsBadge).map(mode => mode.profile)).toEqual(['driving']);
   });
 
   test('keeps legacy single-backend config when only OSRM_BACKEND is set', () => {
@@ -145,8 +146,8 @@ describe('docker entrypoint runtime config', () => {
 
   test('stores JSON modes config when only OSRM_MODES is set', () => {
     const modes = JSON.stringify([
-      { name: 'car', url: 'http://car:5000' },
-      { name: 'bike', url: 'http://bike:5000' }
+      { name: 'car', url: 'http://car:5000', showEmissionsBadge: true },
+      { name: 'bike', url: 'http://bike:5000', showEmissionsBadge: false }
     ]);
     const config = generateConfig({
       OSRM_BACKEND: 'http://localhost:5000',

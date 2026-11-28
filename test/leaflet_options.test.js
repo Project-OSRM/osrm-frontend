@@ -316,6 +316,7 @@ describe('leaflet_options — runtime configuration overrides', () => {
       expect(leafletOptions.services.length).toBe(3);
       expect(leafletOptions.services[0].label).toBe('driving');
       expect(leafletOptions.services[0].path).toContain('router.project-osrm.org');
+      expect(leafletOptions.services.map(service => service.showEmissionsBadge)).toEqual([true, false, false]);
       delete global.window;
     });
 
@@ -374,6 +375,18 @@ describe('leaflet_options — runtime configuration overrides', () => {
       delete global.window;
     });
 
+    test('enables emissions comparisons only for explicitly opted-in custom modes', () => {
+      global.window = { osrmConfig: { OSRM_MODES: [
+        { name: 'Car', url: '/car', profile: 'petrol', showEmissionsBadge: true },
+        { name: 'Car without comparisons', url: '/car', profile: 'petrol', showEmissionsBadge: false },
+        { name: 'Other backend', url: '/other', profile: 'driving' },
+        { name: 'Bike', url: '/bike', profile: 'bike', showEmissionsBadge: 'true' }
+      ] } };
+      const leafletOptions = require('../src/leaflet_options');
+      expect(leafletOptions.services.map(service => service.showEmissionsBadge)).toEqual([true, false, false, false]);
+      delete global.window;
+    });
+
     test('preserves explicit path from OSRM_MODES (e.g. routed-bike subdirectory)', () => {
       const modesJSON = JSON.stringify([
         { name: 'driving', url: 'https://router.project-osrm.org', path: 'https://router.project-osrm.org/route/v1' },
@@ -420,6 +433,7 @@ describe('leaflet_options — runtime configuration overrides', () => {
       expect(leafletOptions.services[1].path).toContain('routing.openstreetmap.de');
       expect(leafletOptions.services[2].label).toBe('foot');
       expect(leafletOptions.services[2].path).toContain('routing.openstreetmap.de');
+      expect(leafletOptions.services.map(service => service.showEmissionsBadge)).toEqual([true, false, false]);
       delete global.window;
     });
 

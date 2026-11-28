@@ -5,6 +5,9 @@
   "Shortest": "Legrövidebb",
   "Similar arrival time": "Hasonló érkezési idő",
   "Fewer turns": "Kevesebb kanyar",
+  "Less emissions": "Kisebb kibocsátás",
+  "{percent} less CO₂": "{percent}-kal kevesebb CO₂",
+  "Estimated CO₂ emissions for a medium petrol car": "Becsült CO₂-kibocsátás egy közepes méretű benzines autóra",
   "Compared with the displayed routes": "A megjelenített útvonalakhoz képest",
 
   "Loading small routing components…": "Kis úthálózati komponensek betöltése…",

@@ -15,6 +15,7 @@ let control;
 let tools;
 let selector;
 let theme;
+let router;
 
 beforeEach(() => {
   mapContainer = document.createElement('div');
@@ -29,6 +30,8 @@ beforeEach(() => {
   panel.querySelector('.leaflet-routing-geocoders').appendChild(selector.container);
   control = new L.Evented();
   control.getContainer = () => panel;
+  router = { options: { showEmissionsBadge: true } };
+  control.getRouter = () => router;
   control._altContainer = panel.querySelector('.leaflet-routing-alternatives-container');
   control._routes = [];
   control._formatter = { formatTime: seconds => Math.round(seconds / 60) + ' min' };
@@ -234,4 +237,61 @@ test('displays the Fewer turns shield for a route with one fewer turn', () => {
   const cards = panel.querySelectorAll('.leaflet-routing-alt');
   expect([...cards[0].querySelectorAll('.osrm-route-badge')].map(badge => badge.textContent)).toContain('Fewer turns');
   expect(cards[1].textContent).not.toContain('Fewer turns');
+});
+
+test('adds estimated CO₂ savings on the map and card of the lowest-emission alternative', () => {
+  showRoutes();
+  control._routes[0].estimatedEmissionsGrams = 1000;
+  control._routes[1].estimatedEmissionsGrams = 750;
+  theme.decorateRoutes();
+
+  const mapBadges = () => mapContainer.querySelectorAll('.osrm-route-label .osrm-route-emissions-badge');
+  expect(mapBadges()).toHaveLength(1);
+  expect(mapBadges()[0].textContent).toBe('25% less CO₂');
+  expect(mapBadges()[0].title).toBe('Estimated CO₂ emissions for a medium petrol car');
+  expect(mapBadges()[0].closest('.osrm-route-label').textContent).toContain('16 min');
+  const card = panel.querySelectorAll('.leaflet-routing-alt')[1];
+  expect(card.querySelector('.osrm-route-emissions-badge').textContent).toBe('25% less CO₂');
+
+  // Switching the selected route leaves the comparison against OSRM's first route.
+  card.click();
+  expect(mapBadges()[0].textContent).toBe('25% less CO₂');
+  expect(mapBadges()[0].closest('.osrm-route-label').classList.contains('selected')).toBe(true);
+
+  tools.fire('languagechanged', { language: 'de' });
+  const germanPercent = new Intl.NumberFormat('de', { style: 'percent' }).format(0.25);
+  expect(mapBadges()[0].textContent).toBe(germanPercent + ' weniger CO₂');
+});
+
+test('adds Less emissions without a percentage when the main route emits less', () => {
+  showRoutes();
+  control._routes[0].estimatedEmissionsGrams = 999;
+  control._routes[1].estimatedEmissionsGrams = 1000;
+  theme.decorateRoutes();
+  const label = mapContainer.querySelector('.osrm-route-label.selected');
+  expect(label.querySelector('.osrm-route-emissions-badge').textContent).toBe('Less emissions');
+  expect(label.textContent).toContain('Fastest');
+});
+
+test('clears emissions badges immediately when routing starts with them disabled', () => {
+  showRoutes();
+  control._routes[0].estimatedEmissionsGrams = 750;
+  control._routes[1].estimatedEmissionsGrams = 1000;
+  theme.decorateRoutes();
+  expect(document.querySelectorAll('.osrm-route-emissions-badge')).toHaveLength(2);
+
+  router.options.showEmissionsBadge = false;
+  control.fire('routingstart');
+
+  expect(document.querySelector('.osrm-route-emissions-badge')).toBeNull();
+  expect(mapContainer.querySelectorAll('.osrm-route-label')).toHaveLength(2);
+  expect(panel.querySelector('.osrm-route-badge').textContent).toBe('Fastest');
+});
+
+test('does not display a rounded zero-percent saving', () => {
+  showRoutes();
+  control._routes[0].estimatedEmissionsGrams = 1000;
+  control._routes[1].estimatedEmissionsGrams = 999;
+  theme.decorateRoutes();
+  expect(mapContainer.querySelector('.osrm-route-emissions-badge').textContent).toBe('<1% less CO₂');
 });

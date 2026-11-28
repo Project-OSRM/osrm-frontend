@@ -73,7 +73,7 @@ elif [ -n "$OSRM_BACKEND" ] && [ "$OSRM_BACKEND" != "http://localhost:5000" ]; t
 else
   # Default: use the three public OSRM profiles (same as non-Docker mode).
   # Override with OSRM_MODES or OSRM_BACKEND to point at a self-hosted server.
-  MODES_JSON='[{"name":"driving","url":"https://router.project-osrm.org","path":"https://router.project-osrm.org/route/v1","profile":"driving"},{"name":"bike","url":"https://routing.openstreetmap.de","path":"https://routing.openstreetmap.de/routed-bike/route/v1","profile":"bike"},{"name":"foot","url":"https://routing.openstreetmap.de","path":"https://routing.openstreetmap.de/routed-foot/route/v1","profile":"foot"}]'
+  MODES_JSON='[{"name":"driving","url":"https://router.project-osrm.org","path":"https://router.project-osrm.org/route/v1","profile":"driving","showEmissionsBadge":true},{"name":"bike","url":"https://routing.openstreetmap.de","path":"https://routing.openstreetmap.de/routed-bike/route/v1","profile":"bike"},{"name":"foot","url":"https://routing.openstreetmap.de","path":"https://routing.openstreetmap.de/routed-foot/route/v1","profile":"foot"}]'
 fi
 
 # Generate config.json with proper JSON escaping
