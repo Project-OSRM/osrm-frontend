@@ -3,6 +3,7 @@
 var L = require('leaflet');
 var localization = require('./localization');
 var routeProperties = require('./route_properties');
+var routeEmissions = require('./route_emissions');
 var mobilePanel = require('./mobile_panel');
 var mobileViewport = require('./mobile_viewport');
 
@@ -96,10 +97,25 @@ function attach(options) {
     });
   }
 
+  function addEmissionsBadge(container, comparison, index) {
+    if (!comparison || comparison.index !== index) return;
+    var badge = L.DomUtil.create('span', 'osrm-route-badge osrm-route-emissions-badge', container);
+    if (comparison.savings === null) {
+      badge.textContent = translate('Less emissions');
+    } else {
+      var strings = localization.get(language) || localization.get('en');
+      var format = new Intl.NumberFormat(strings.key, { style: 'percent', maximumFractionDigits: 0 });
+      var percent = comparison.savings < 0.01 ? '<' + format.format(0.01) : format.format(comparison.savings);
+      badge.textContent = translate('{percent} less CO₂').replace('{percent}', percent);
+    }
+    badge.title = translate('Estimated CO₂ emissions for a medium petrol car');
+  }
+
   function renderLabels() {
     labels.clearLayers();
     var routes = control._routes || [];
     var properties = routeProperties.describeRoutes(routes);
+    var emissions = routeEmissions.lowestEmissions(routes);
     routes.forEach(function(route, index) {
       if (!alternatives.querySelector('.leaflet-routing-alt')) return;
       var position = routeLabelCoordinate(route.coordinates, [0.48, 0.68, 0.3][index % 3]);
@@ -115,6 +131,7 @@ function attach(options) {
         var description = L.DomUtil.create('span', '', content);
         description.textContent = translate(properties[index][0]);
       }
+      addEmissionsBadge(content, emissions, index);
       var marker = L.marker(position, {
         icon: L.divIcon({ className: 'osrm-route-label-marker', html: content, iconSize: [0, 0], iconAnchor: [0, 0] }),
         title: duration.textContent + ' · ' + route.name,
@@ -136,6 +153,7 @@ function attach(options) {
     var cards = Array.prototype.slice.call(alternatives.querySelectorAll('.leaflet-routing-alt'));
     var routes = control._routes || [];
     var properties = routeProperties.describeRoutes(routes);
+    var emissions = routeEmissions.lowestEmissions(routes);
     cards.forEach(function(card, index) {
       var summary = card.querySelector('.osrm-directions-summary');
       if (!summary) return;
@@ -157,6 +175,7 @@ function attach(options) {
         badge.textContent = translate(property);
         if (property !== 'Alternative') badge.title = translate('Compared with the displayed routes');
       });
+      addEmissionsBadge(badges, emissions, index);
       var table = card.querySelector('table');
       if (table && !card.querySelector('.osrm-turn-list')) {
         var details = L.DomUtil.create('details', 'osrm-turn-list');

@@ -5,6 +5,9 @@ module.exports = {
   "Shortest": "最短距離",
   "Similar arrival time": "到着時刻がほぼ同じ",
   "Fewer turns": "曲がる回数が少ない",
+  "Less emissions": "排出量が少ない",
+  "{percent} less CO₂": "CO₂を{percent}削減",
+  "Estimated CO₂ emissions for a medium petrol car": "中型ガソリン車の推定CO₂排出量",
   "Compared with the displayed routes": "表示されているルートとの比較",
 
   "Loading small routing components…": "小さな経路ネットワークを読み込み中…",

@@ -56,6 +56,7 @@ var smoothWheelZoom = require('./smooth_wheel_zoom');
 var resolveInitialAlternative = require('./route_alternative');
 var waypointMarker = require('./waypoint_marker');
 var waypointReorder = require('./waypoint_reorder');
+var routeEmissions = require('./route_emissions');
 var entranceWaypointsModule = require('./entrance_waypoints');
 var createEntranceWaypoints = entranceWaypointsModule.createEntranceWaypoints;
 require('./polyfill');
@@ -448,6 +449,10 @@ router._convertRouteOriginal = router._convertRoute;
 router._convertRoute = function(responseRoute) {
   // monkey-patch L.Routing.OSRMv1 until it's easier to overwrite with a hook
   var resp = this._convertRouteOriginal(responseRoute);
+
+  if (darkInterface && (this.options.profile === 'driving' || this.options.profile === 'car')) {
+    resp.estimatedEmissionsGrams = routeEmissions.estimateGrams(responseRoute);
+  }
 
   if (resp.instructions && resp.instructions.length) {
     var i = 0;

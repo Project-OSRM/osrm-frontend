@@ -5,6 +5,9 @@ module.exports = {
   "Shortest": "Ngắn nhất",
   "Similar arrival time": "Giờ đến tương tự",
   "Fewer turns": "Ít chỗ rẽ hơn",
+  "Less emissions": "Ít phát thải hơn",
+  "{percent} less CO₂": "Giảm {percent} CO₂",
+  "Estimated CO₂ emissions for a medium petrol car": "Lượng CO₂ ước tính cho ô tô chạy xăng cỡ trung",
   "Compared with the displayed routes": "So với các tuyến đường được hiển thị",
 
   "Loading small routing components…": "Đang tải các thành phần nhỏ của mạng đường…",
