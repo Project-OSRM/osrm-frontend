@@ -97,6 +97,10 @@ function attach(options) {
     });
   }
 
+  function compareEmissions(routes) {
+    return control.getRouter().options.showEmissionsBadge ? routeEmissions.lowestEmissions(routes) : null;
+  }
+
   function addEmissionsBadge(container, comparison, index) {
     if (!comparison || comparison.index !== index) return;
     var badge = L.DomUtil.create('span', 'osrm-route-badge osrm-route-emissions-badge', container);
@@ -115,7 +119,7 @@ function attach(options) {
     labels.clearLayers();
     var routes = control._routes || [];
     var properties = routeProperties.describeRoutes(routes);
-    var emissions = routeEmissions.lowestEmissions(routes);
+    var emissions = compareEmissions(routes);
     routes.forEach(function(route, index) {
       if (!alternatives.querySelector('.leaflet-routing-alt')) return;
       var position = routeLabelCoordinate(route.coordinates, [0.48, 0.68, 0.3][index % 3]);
@@ -153,7 +157,7 @@ function attach(options) {
     var cards = Array.prototype.slice.call(alternatives.querySelectorAll('.leaflet-routing-alt'));
     var routes = control._routes || [];
     var properties = routeProperties.describeRoutes(routes);
-    var emissions = routeEmissions.lowestEmissions(routes);
+    var emissions = compareEmissions(routes);
     cards.forEach(function(card, index) {
       var summary = card.querySelector('.osrm-directions-summary');
       if (!summary) return;

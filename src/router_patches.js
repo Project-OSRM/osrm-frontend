@@ -120,6 +120,7 @@ module.exports = {
     if (serviceIndex >= 0 && serviceIndex < services.length) {
       var service = services[serviceIndex];
       router.options.serviceUrl = service.path;
+      router.options.showEmissionsBadge = service.showEmissionsBadge === true;
       if (service.profile) {
         router.options.profile = service.profile;
       }

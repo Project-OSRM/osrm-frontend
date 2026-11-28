@@ -87,10 +87,11 @@ with the following fields:
 | `profile`  | no       | Internal profile (`driving`, `bike`, `foot`). Defaults by position: 0 → driving, 1 → bike, 2 → foot. |
 | `tileUrl` | no | Component vector tile URL template with `{x}`, `{y}`, `{z}` and optional `{profile}`. Set `false` to disable tiles for this mode. Standard `/route/v1` paths infer the sibling `/tile/v1` endpoint; custom paths require this field. |
 | `debugUrl` | no       | Debug map opened by the "Open in Debug Map" tool button while this mode is active. Defaults to the bundled `debug/`. |
+| `showEmissionsBadge` | no | Set to `true` for a car routing mode to compare estimated CO₂ emissions on the vector demo. Enabled for the built-in car mode. Custom modes must opt in. |
 
 ```bash
 docker run -p 9966:9966 \
-  -e 'OSRM_MODES=[{"name":"car","url":"https://routing.openstreetmap.de/routed-car"},{"name":"foot","url":"https://routing.openstreetmap.de/routed-foot"},{"name":"bike","url":"https://routing.openstreetmap.de/routed-bike"}]' \
+  -e 'OSRM_MODES=[{"name":"car","url":"https://routing.openstreetmap.de/routed-car","profile":"driving","showEmissionsBadge":true},{"name":"foot","url":"https://routing.openstreetmap.de/routed-foot","profile":"foot"},{"name":"bike","url":"https://routing.openstreetmap.de/routed-bike","profile":"bike"}]' \
   ghcr.io/project-osrm/osrm-frontend:latest
 ```
 

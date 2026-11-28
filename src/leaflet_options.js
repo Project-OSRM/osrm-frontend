@@ -181,18 +181,17 @@ function getLabel() {
  * Parse routing modes from the runtime config.
  *
  * **Precedence (highest to lowest):**
- * 1. `OSRM_MODES` — preferred JSON array of `{name, url, path?, profile?, debugUrl?, tileUrl?}` objects.
+ * 1. `OSRM_MODES` — preferred JSON array of `{name, url, path?, profile?, debugUrl?, tileUrl?, showEmissionsBadge?}` objects.
  *    Also accepts a plain array of URL strings (auto-named "Mode 1", "Mode 2", …).
  *    When `profile` is not specified it defaults by position: index 0 → `'driving'`,
  *    index 1 → `'bike'`, index 2 → `'foot'`, index ≥ 3 → `'driving'`.
  * 2. `OSRM_BACKEND` — **deprecated** single-backend string. Emits a console warning.
- * 3. Environment defaults — three public profiles (driving, bike, foot) in dev mode;
- *    same three profiles in Docker mode when neither env var is set.
+ * 3. Default public profiles (driving, bike, foot) when neither env var is set.
  *
  * If both `OSRM_MODES` and `OSRM_BACKEND` are set, `OSRM_MODES` wins and a
  * deprecation warning is emitted.
  *
- * @returns {Array<{name: string, url: string, path?: string, profile: string, debugUrl?: string}>}
+ * @returns {Array<{name: string, url: string, path?: string, profile: string, debugUrl?: string, showEmissionsBadge?: boolean}>}
  *   An array of mode objects, each with a display name, backend URL, optional
  *   explicit routing path, an internal routing profile (`driving`, `bike`, `foot`),
  *   and an optional debug map URL for the “Open in Debug Map” tool button.
@@ -258,7 +257,8 @@ function parseModes() {
           var result = {
             name: mode.name || ('Mode ' + (index + 1)),
             url: mode.url || 'http://localhost:5000',
-            profile: mode.profile || profileNames[index] || 'driving'  // Honor explicit profile, fall back to positional
+            profile: mode.profile || profileNames[index] || 'driving',
+            showEmissionsBadge: mode.showEmissionsBadge === true
           };
           if (mode.path) result.path = mode.path;  // preserve explicit path (e.g. routed-bike/route/v1)
           if (Object.prototype.hasOwnProperty.call(mode, 'tileUrl')) result.tileUrl = mode.tileUrl;
@@ -283,19 +283,8 @@ function parseModes() {
     ];
   }
   
-  // If in dev mode (no OSRM_ENVIRONMENT or not 'docker'), use three public profiles
-  if (currentConfig.OSRM_ENVIRONMENT !== 'docker') {
-    return [
-      { name: 'driving', url: 'https://router.project-osrm.org', path: 'https://router.project-osrm.org/route/v1', profile: 'driving' },
-      { name: 'bike', url: 'https://routing.openstreetmap.de', path: 'https://routing.openstreetmap.de/routed-bike/route/v1', profile: 'bike' },
-      { name: 'foot', url: 'https://routing.openstreetmap.de', path: 'https://routing.openstreetmap.de/routed-foot/route/v1', profile: 'foot' }
-    ];
-  }
-  
-  // Docker mode default: same three public profiles as non-Docker mode.
-  // Override via OSRM_MODES or OSRM_BACKEND env vars to point at a self-hosted server.
   return [
-    { name: 'driving', url: 'https://router.project-osrm.org', path: 'https://router.project-osrm.org/route/v1', profile: 'driving' },
+    { name: 'driving', url: 'https://router.project-osrm.org', path: 'https://router.project-osrm.org/route/v1', profile: 'driving', showEmissionsBadge: true },
     { name: 'bike', url: 'https://routing.openstreetmap.de', path: 'https://routing.openstreetmap.de/routed-bike/route/v1', profile: 'bike' },
     { name: 'foot', url: 'https://routing.openstreetmap.de', path: 'https://routing.openstreetmap.de/routed-foot/route/v1', profile: 'foot' }
   ];
@@ -594,7 +583,7 @@ function parseGeocoders() {
  * by default), an internal `profile` identifier (`driving`, `bike`, `foot`), and
  * an optional `debugUrl` pointing at the debug map for that mode.
  *
- * @returns {Array<{label: string, labelKey: string, path: string, profile: string, debugUrl?: string}>}
+ * @returns {Array<{label: string, labelKey: string, path: string, profile: string, debugUrl?: string, showEmissionsBadge: boolean}>}
  *   An array of service descriptors, one per configured routing mode.
  */
 function buildServices() {
@@ -613,7 +602,8 @@ function buildServices() {
       label: label,
       labelKey: labelKey,
       path: mode.path || (mode.url.replace(/\/+$/, '') + '/route/v1'),
-      profile: mode.profile
+      profile: mode.profile,
+      showEmissionsBadge: mode.showEmissionsBadge === true
     };
     if (Object.prototype.hasOwnProperty.call(mode, 'tileUrl')) service.tileUrl = mode.tileUrl;
     if (mode.debugUrl) service.debugUrl = mode.debugUrl;
@@ -642,7 +632,7 @@ function buildServices() {
  *
  * | Variable               | Default                          | Description |
  * |------------------------|----------------------------------|-------------|
- * | `OSRM_MODES`           | (public OSRM services)           | JSON array of `{name, url, path?, profile?, debugUrl?, tileUrl?}` routing backends. `profile` defaults by position (driving → bike → foot). `debugUrl` overrides the debug map link for that mode. |
+ * | `OSRM_MODES`           | (public OSRM services)           | JSON array of `{name, url, path?, profile?, debugUrl?, tileUrl?, showEmissionsBadge?}` routing backends. `profile` defaults by position (driving → bike → foot). `showEmissionsBadge` opts a car mode in to the CO₂ comparison. |
  * | `OSRM_BACKEND`         | —                                | **Deprecated.** Single backend URL. Use `OSRM_MODES` instead. |
  * | `OSRM_VECTOR_STYLE`    | —                                | MapLibre style JSON URL for an optional vector background. |
  * | `OSRM_VECTOR_NAME`     | `Dark Vector`                    | Name of the vector background in the layer control. |
@@ -695,10 +685,11 @@ var leafletOptions = {
    * - `labelKey`   — localization key (e.g. "Car", "Bike", "Foot")
    * - `path`       — full routing endpoint (e.g. `https://…/route/v1`)
    * - `profile`    — internal routing profile: `'driving'`, `'bike'`, or `'foot'`
+   * - `showEmissionsBadge` — whether to estimate and compare CO₂ emissions for the mode
    *
    * Built from `OSRM_MODES` (preferred) or `OSRM_BACKEND` (deprecated).
    *
-   * @type {Array<{label: string, labelKey: string, path: string, profile: string}>}
+   * @type {Array<{label: string, labelKey: string, path: string, profile: string, showEmissionsBadge: boolean}>}
    */
   get services() {
     return buildServices();

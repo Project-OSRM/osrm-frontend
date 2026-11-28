@@ -15,6 +15,7 @@ let control;
 let tools;
 let selector;
 let theme;
+let router;
 
 beforeEach(() => {
   mapContainer = document.createElement('div');
@@ -29,6 +30,8 @@ beforeEach(() => {
   panel.querySelector('.leaflet-routing-geocoders').appendChild(selector.container);
   control = new L.Evented();
   control.getContainer = () => panel;
+  router = { options: { showEmissionsBadge: true } };
+  control.getRouter = () => router;
   control._altContainer = panel.querySelector('.leaflet-routing-alternatives-container');
   control._routes = [];
   control._formatter = { formatTime: seconds => Math.round(seconds / 60) + ' min' };
@@ -268,6 +271,21 @@ test('adds Less emissions without a percentage when the main route emits less', 
   const label = mapContainer.querySelector('.osrm-route-label.selected');
   expect(label.querySelector('.osrm-route-emissions-badge').textContent).toBe('Less emissions');
   expect(label.textContent).toContain('Fastest');
+});
+
+test('clears emissions badges immediately when routing starts with them disabled', () => {
+  showRoutes();
+  control._routes[0].estimatedEmissionsGrams = 750;
+  control._routes[1].estimatedEmissionsGrams = 1000;
+  theme.decorateRoutes();
+  expect(document.querySelectorAll('.osrm-route-emissions-badge')).toHaveLength(2);
+
+  router.options.showEmissionsBadge = false;
+  control.fire('routingstart');
+
+  expect(document.querySelector('.osrm-route-emissions-badge')).toBeNull();
+  expect(mapContainer.querySelectorAll('.osrm-route-label')).toHaveLength(2);
+  expect(panel.querySelector('.osrm-route-badge').textContent).toBe('Fastest');
 });
 
 test('does not display a rounded zero-percent saving', () => {
